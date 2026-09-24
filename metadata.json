@@ -1,0 +1,6 @@
+{
+  "name": "MaqamFlow: Arabic Music Theory & Violin Studio",
+  "description": "Interactive 24-EDO Arabic music theory engine, 8 Maqam families, violin fingerboard ergonomics, Sayr & Qafla analysis, and microtonal score notation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
