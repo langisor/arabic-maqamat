@@ -170,7 +170,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
                   The 8 Fundamental Families
                 </span>
-                <Badge variant="amber" className="font-mono text-[10px]">
+                <Badge variant="secondary" className="font-mono text-[10px]">
                   صُـنِـعَ بِـسِـحْـرِكَ
                 </Badge>
               </div>
@@ -227,7 +227,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                     {currentMaqam.arabicName}
                   </span>
                 )}
-                <Badge variant="amber">
+                <Badge variant="secondary">
                   Family: {currentMaqam.family}
                 </Badge>
 

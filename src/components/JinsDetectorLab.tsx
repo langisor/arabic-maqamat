@@ -249,7 +249,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                 <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
                   Modal Analysis Engine
                 </span>
-                <Badge variant="amber" className="font-mono text-[10px]">
+                <Badge variant="secondary" className="font-mono text-[10px]">
                   Jins &amp; Root Identifier
                 </Badge>
               </div>
@@ -329,7 +329,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">Current Input Phrase</span>
-                <Badge variant="amber" className="font-mono text-xs">
+                <Badge variant="secondary" className="font-mono text-xs">
                   {phrase.length} Notes
                 </Badge>
               </div>

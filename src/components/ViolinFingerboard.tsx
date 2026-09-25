@@ -373,7 +373,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
                   Acoustic Violin Simulator
                 </span>
-                <Badge variant="amber" className="text-[10px]">
+                <Badge variant="secondary" className="text-[10px]">
                   24-EDO Micro-Positions
                 </Badge>
                 <Badge variant="sky" className="text-[10px] hidden sm:inline-flex">
@@ -1001,7 +1001,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                       <span className="text-base font-bold text-white">
                         {selectedPlacement.string} String &bull; Finger {selectedPlacement.finger === 0 ? 'Open (0)' : selectedPlacement.finger}
                       </span>
-                      <Badge variant="amber" className="text-xs">
+                      <Badge variant="secondary" className="text-xs">
                         {selectedPlacement.position}{selectedPlacement.position === 1 ? 'st' : selectedPlacement.position === 2 ? 'nd' : selectedPlacement.position === 3 ? 'rd' : 'th'} Position
                       </Badge>
                       {(() => {
@@ -1104,7 +1104,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 <Badge variant={rangeValidation.valid ? 'emerald' : 'rose'} className="text-[10px]">
                   {rangeValidation.valid ? 'Max 2 Octaves Valid' : 'Range Exceeded'}
                 </Badge>
-                <Badge variant="amber" className="text-[10px] font-mono">
+                <Badge variant="secondary" className="text-[10px] font-mono">
                   {customSequence.length} Notes
                 </Badge>
               </div>

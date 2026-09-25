@@ -14,13 +14,13 @@ import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
 import { Card } from './components/ui/card';
 import { Slider } from './components/ui/slider';
-import { 
-  Music, 
-  Radio, 
-  Layers, 
-  Compass, 
-  Sliders, 
-  FileMusic, 
+import {
+  Music,
+  Radio,
+  Layers,
+  Compass,
+  Sliders,
+  FileMusic,
   Sparkles,
   ArrowLeftRight,
   ChevronDown,
@@ -118,8 +118,8 @@ export default function App() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight text-white">MaqamFlow</span>
-                <Badge variant="amber" className="text-[10px] font-bold">
+                <span className="text-lg font-black tracking-tight text-white">Arabic Maqamat</span>
+                <Badge variant="secondary" className="text-[10px] font-bold">
                   24-EDO Studio
                 </Badge>
               </div>
@@ -176,27 +176,24 @@ export default function App() {
             <div className="flex bg-slate-900 p-0.5 sm:p-1 rounded-xl border border-slate-800 text-[11px] sm:text-xs">
               <button
                 onClick={() => setTimbre('violin')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${
-                  timbre === 'violin' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'violin' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                  }`}
                 title="Violin Bowed Sound (Tone.js Model)"
               >
                 Violin
               </button>
               <button
                 onClick={() => setTimbre('oud')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${
-                  timbre === 'oud' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'oud' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                  }`}
                 title="Oud Plucked Sound (Tone.js Model)"
               >
                 Oud
               </button>
               <button
                 onClick={() => setTimbre('kanun')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${
-                  timbre === 'kanun' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'kanun' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                  }`}
                 title="Kanun Zither Sound (Tone.js Model)"
               >
                 Kanun
@@ -205,7 +202,7 @@ export default function App() {
 
             {/* Continuous Drone Shortcut */}
             <Button
-              variant={isDroneActive ? "emerald" : "dark"}
+              variant={isDroneActive ? "default" : "ghost"}
               size="sm"
               onClick={() => handleToggleDrone(tonic)}
               className="gap-1.5 px-2.5 sm:px-3"
@@ -236,11 +233,10 @@ export default function App() {
               onClick={() => setActiveTab('explorer')}
               aria-label="Maqam & 8 Families"
               title="Maqam & 8 Families"
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                activeTab === 'explorer'
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'explorer'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
+                }`}
             >
               <Layers className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Maqam &amp; 8 Families</span>
@@ -250,11 +246,10 @@ export default function App() {
               onClick={() => setActiveTab('transposition')}
               aria-label="Transposition Lab (Taswir)"
               title="Transposition Lab (Taswir)"
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                activeTab === 'transposition'
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'transposition'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
+                }`}
             >
               <ArrowLeftRight className="w-4 h-4 shrink-0 text-amber-400" />
               <span className="hidden sm:inline">Transposition Lab</span>
@@ -264,11 +259,10 @@ export default function App() {
               onClick={() => setActiveTab('violin')}
               aria-label="Violin Fingerboard"
               title="Violin Fingerboard"
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                activeTab === 'violin'
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'violin'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
+                }`}
             >
               <Music className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Violin Fingerboard</span>
@@ -278,11 +272,10 @@ export default function App() {
               onClick={() => setActiveTab('sayr')}
               aria-label="Sayr, Modulation & Qafla"
               title="Sayr, Modulation & Qafla"
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                activeTab === 'sayr'
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'sayr'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
+                }`}
             >
               <Compass className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Sayr &amp; Qafla</span>
@@ -292,11 +285,10 @@ export default function App() {
               onClick={() => setActiveTab('score')}
               aria-label="Score & MusicXML 4.0"
               title="Score & MusicXML 4.0"
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                activeTab === 'score'
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'score'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
+                }`}
             >
               <FileMusic className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">Score &amp; MusicXML</span>
@@ -306,11 +298,10 @@ export default function App() {
               onClick={() => setActiveTab('tuning')}
               aria-label="24-EDO Tuning & Spine"
               title="24-EDO Tuning & Spine"
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                activeTab === 'tuning'
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'tuning'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
+                }`}
             >
               <Sliders className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">24-EDO Tuning</span>
@@ -320,11 +311,10 @@ export default function App() {
               onClick={() => setActiveTab('detector')}
               aria-label="Jins Phrase Classifier"
               title="Jins Phrase Classifier"
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${
-                activeTab === 'detector'
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'detector'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-              }`}
+                }`}
             >
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
               <span className="hidden sm:inline">Jins Classifier</span>
@@ -445,7 +435,7 @@ export default function App() {
                 <div>
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
                     Tone.js Audio DSP Engine
-                    <Badge variant="amber" className="text-[10px]">
+                    <Badge variant="secondary" className="text-[10px]">
                       v15.1
                     </Badge>
                   </h3>
@@ -522,11 +512,10 @@ export default function App() {
                     <button
                       key={item.freq}
                       onClick={() => handleA4Change(item.freq)}
-                      className={`p-2 rounded-xl border text-center transition cursor-pointer ${
-                        referenceA4 === item.freq
+                      className={`p-2 rounded-xl border text-center transition cursor-pointer ${referenceA4 === item.freq
                           ? 'border-amber-400 bg-amber-500/20 text-white font-bold'
                           : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
-                      }`}
+                        }`}
                     >
                       <div className="font-mono text-xs">{item.label}</div>
                       <div className="text-[10px] text-slate-400">{item.desc}</div>
@@ -541,33 +530,30 @@ export default function App() {
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setTimbre('violin')}
-                    className={`p-2 rounded-xl border text-left transition cursor-pointer ${
-                      timbre === 'violin'
+                    className={`p-2 rounded-xl border text-left transition cursor-pointer ${timbre === 'violin'
                         ? 'border-amber-400 bg-amber-500/20 text-white'
                         : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <div className="font-bold">Violin (كمان)</div>
                     <div className="text-[10px] text-slate-400">Bowed string + 5.2Hz LFO</div>
                   </button>
                   <button
                     onClick={() => setTimbre('oud')}
-                    className={`p-2 rounded-xl border text-left transition cursor-pointer ${
-                      timbre === 'oud'
+                    className={`p-2 rounded-xl border text-left transition cursor-pointer ${timbre === 'oud'
                         ? 'border-amber-400 bg-amber-500/20 text-white'
                         : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <div className="font-bold">Oud (عود)</div>
                     <div className="text-[10px] text-slate-400">Plucked lute + bowl body</div>
                   </button>
                   <button
                     onClick={() => setTimbre('kanun')}
-                    className={`p-2 rounded-xl border text-left transition cursor-pointer ${
-                      timbre === 'kanun'
+                    className={`p-2 rounded-xl border text-left transition cursor-pointer ${timbre === 'kanun'
                         ? 'border-amber-400 bg-amber-500/20 text-white'
                         : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <div className="font-bold">Kanun (قانون)</div>
                     <div className="text-[10px] text-slate-400">Bright 78-string zither</div>

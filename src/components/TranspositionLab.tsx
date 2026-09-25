@@ -281,7 +281,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <Badge variant="amber" className="gap-1.5 px-3 py-1 text-xs">
+              <Badge variant="secondary" className="gap-1.5 px-3 py-1 text-xs">
                 <ArrowLeftRight className="w-3.5 h-3.5" />
                 Taswīr Studio (مختبر التصوير)
               </Badge>
@@ -515,7 +515,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                 {transInfo?.name || transposedMaqam.name}
               </h3>
               {transInfo?.traditionalTitle && (
-                <Badge variant="amber" className="text-xs font-bold">
+                <Badge variant="secondary" className="text-xs font-bold">
                   {transInfo.traditionalTitle}
                 </Badge>
               )}
@@ -614,7 +614,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                 Transposed Scale Pitches (المقام المصوّر)
               </h4>
             </div>
-            <Badge variant="amber" className="text-[10px] font-mono">
+            <Badge variant="secondary" className="text-[10px] font-mono">
               Root: {targetTonic.toScientificString()}{targetTonic.octave} ({targetTonic.toFrequency().toFixed(1)} Hz)
             </Badge>
           </div>
@@ -649,7 +649,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                       #{idx + 1}
                     </span>
                     {isTonic && (
-                      <Badge variant="amber" className="text-[9px] px-1.5 py-0 h-4">
+                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">
                         Tonic
                       </Badge>
                     )}
@@ -770,7 +770,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                 <span className="font-bold text-amber-400">
                   Lower Jins: {transposedMaqam.lowerJins.definition.name}
                 </span>
-                <Badge variant="amber" className="text-[10px]">
+                <Badge variant="secondary" className="text-[10px]">
                   Tonic Jins
                 </Badge>
               </div>
@@ -839,7 +839,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                   <span className="font-bold text-slate-200">
                     Transposed Tonic Stop:
                   </span>
-                  <Badge variant="amber" className="text-[10px]">
+                  <Badge variant="secondary" className="text-[10px]">
                     {primaryPlacement.string} String &bull; Position {primaryPlacement.position}
                   </Badge>
                 </div>

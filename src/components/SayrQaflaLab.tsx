@@ -324,7 +324,7 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
               <div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                   <span>Passage Duration:</span>
-                  <Badge variant="amber" className="font-mono text-xs">
+                  <Badge variant="secondary" className="font-mono text-xs">
                     {measureDuration} Measures
                   </Badge>
                 </div>

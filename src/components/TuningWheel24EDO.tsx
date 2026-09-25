@@ -74,7 +74,7 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
                 <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
                   Microtonal Foundation
                 </span>
-                <Badge variant="amber" className="text-[10px]">
+                <Badge variant="secondary" className="text-[10px]">
                   24 Equal Divisions of Octave (24-EDO)
                 </Badge>
               </div>
@@ -87,7 +87,7 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
             </div>
 
             <div className="flex items-center gap-2 text-xs">
-              <Badge variant="amber" className="text-xs">
+              <Badge variant="secondary" className="text-xs">
                 Quarter-Tones (50¢, 150¢, 350¢...)
               </Badge>
               <Badge variant="secondary" className="text-xs">
@@ -165,7 +165,7 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
                     </Badge>
                   )}
                   {!selectedStep.isWesternSemitone && (
-                    <Badge variant="amber" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       Microtonal (Quarter-Tone)
                     </Badge>
                   )}
@@ -232,7 +232,7 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Arabic Neutral 3rd (Sikah)</span>
-                  <Badge variant="amber" className="text-[10px]">
+                  <Badge variant="secondary" className="text-[10px]">
                     AUTHENTIC
                   </Badge>
                 </div>
