@@ -63,7 +63,15 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'maqam' | 'sequence'>('maqam');
 
+  // Touch & Tablet Optimizations
+  const [touchZoom, setTouchZoom] = useState<boolean>(false);
+  const [stringFilter, setStringFilter] = useState<'all' | ViolinStringName>('all');
+
   const strings: ViolinStringName[] = ['G', 'D', 'A', 'E'];
+  const displayedStrings = useMemo(
+    () => (stringFilter === 'all' ? strings : [stringFilter]),
+    [stringFilter]
+  );
   const stringOpenNotes: Record<ViolinStringName, string> = {
     G: 'G3 (196 Hz)',
     D: 'D4 (293.7 Hz)',
@@ -287,6 +295,13 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   };
 
   const handleNoteClick = (placement: ViolinFingerPlacement) => {
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate(10);
+      } catch {
+        // safe
+      }
+    }
     setSelectedPlacement(placement);
     MicrotonalAudioEngine.playPitch(placement.pitch, 0.8, timbre);
 
