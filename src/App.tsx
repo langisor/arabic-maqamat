@@ -12,6 +12,7 @@ import { JinsDetectorLab } from './components/JinsDetectorLab';
 import { TranspositionLab } from './components/TranspositionLab';
 import { ThemeToggle } from './components/ThemeToggle';
 import { Metronome } from './components/Metronome';
+import { TrainingLab } from './components/TrainingLab';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
 import { Card } from './components/ui/card';
@@ -28,13 +29,14 @@ import {
   Volume2,
   Settings2,
   X,
-  CheckCircle2
+  CheckCircle2,
+  GraduationCap
 } from 'lucide-react';
 
 export default function App() {
   const allMaqamat = MaqamatCatalogue.getAllMaqamat();
   const [currentMaqam, setCurrentMaqam] = useState<Maqam>(MaqamatCatalogue.buildRast());
-  const [activeTab, setActiveTab] = useState<'explorer' | 'transposition' | 'violin' | 'sayr' | 'score' | 'tuning' | 'detector'>('explorer');
+  const [activeTab, setActiveTab] = useState<'explorer' | 'transposition' | 'violin' | 'sayr' | 'score' | 'tuning' | 'detector' | 'training'>('explorer');
   const [timbre, setTimbre] = useState<TimbreType>('violin');
   const [isDroneActive, setIsDroneActive] = useState(false);
   const [isPlayingScale, setIsPlayingScale] = useState(false);
@@ -327,12 +329,33 @@ export default function App() {
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
               <span className="hidden sm:inline">Jins Classifier</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('training')}
+              aria-label="Practice & Training Mode"
+              title="Practice & Training Mode: Scale memorization, sight-reading & recording"
+              className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'training'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                }`}
+            >
+              <GraduationCap className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="hidden sm:inline">Practice &amp; Training</span>
+            </button>
           </nav>
         </div>
       </header>
 
       {/* Main Studio Viewport */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {activeTab === 'training' && (
+          <TrainingLab
+            currentMaqam={currentMaqam}
+            allMaqamat={allMaqamat}
+            onSelectMaqam={handleSelectMaqam}
+            timbre={timbre}
+          />
+        )}
         {activeTab === 'explorer' && (
           <MaqamExplorer
             currentMaqam={currentMaqam}
