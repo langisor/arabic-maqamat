@@ -1,5 +1,5 @@
 // src/violin/ergonomics.ts
-import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
+import { ArabicPitch,   } from "@/core/pitch"
 
 export type ViolinStringName = 'G' | 'D' | 'A' | 'E';
 export type ViolinFinger = 0 | 1 | 2 | 3 | 4;
@@ -173,8 +173,8 @@ export class ViolinErgonomicsEngine {
     }
 
     // Calculate finger number relative to position
-    let finger: ViolinFinger = 1;
-    let offset: FingerMicroOffset = 'standard';
+    let finger: ViolinFinger;
+    let offset: FingerMicroOffset;
 
     if (targetPosition === 1) {
       // 1st position finger mapping

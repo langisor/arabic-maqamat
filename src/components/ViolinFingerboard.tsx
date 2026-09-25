@@ -373,10 +373,10 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
                   Acoustic Violin Simulator
                 </span>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="default" className="text-[10px]">
                   24-EDO Micro-Positions
                 </Badge>
-                <Badge variant="sky" className="text-[10px] hidden sm:inline-flex">
+                <Badge variant="default" className="text-[10px] hidden sm:inline-flex">
                   G3 - D4 - A4 - E5
                 </Badge>
               </div>
@@ -501,7 +501,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={customSequence.length > 0 ? 'amber' : 'secondary'} className="text-[11px] font-mono">
+                <Badge variant={customSequence.length > 0 ? 'default' : 'secondary'} className="text-[11px] font-mono">
                   {customSequence.length} Notes Selected
                 </Badge>
                 {customSequence.length > 0 && (
@@ -686,7 +686,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                     )}
 
                     {/* 4 STRINGS (G - D - A - E running vertically) */}
-                    {strings.map((strName, strIdx) => {
+                    {strings.map((strName) => {
                       const stringPlacements = placements.filter(p => p.string === strName);
 
                       return (

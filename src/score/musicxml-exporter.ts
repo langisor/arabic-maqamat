@@ -1,5 +1,5 @@
 // src/score/musicxml-exporter.ts
-import { ArabicPitch, MicrotonalAccidental } from '../core/pitch';
+import { ArabicPitch, type MicrotonalAccidental } from '../core/pitch';
 import { Maqam } from '../theory/maqam';
 
 export class MusicXMLExporter {

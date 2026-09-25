@@ -1,9 +1,9 @@
 // src/components/MaqamExplorer.tsx
 import React, { useState } from 'react';
-import { Maqam, MaqamatCatalogue, MaqamFamilyMnemonic } from '../theory/maqam';
-import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
+import { Maqam, MaqamatCatalogue, type MaqamFamilyMnemonic } from '../theory/maqam';
+import { ArabicPitch, type DiatonicBase, type MicrotonalAccidental } from '../core/pitch';
 import { ArabicNoteSpine } from '../core/note-spine';
-import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
+import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
@@ -15,10 +15,10 @@ import {
   RotateCcw, 
   Sparkles, 
   SlidersHorizontal,
-  Music,
-  ArrowRight,
-  Layers,
-  Volume2
+  // Music2,
+  // ArrowRight,
+  // Layers,
+  // Volume2
 } from 'lucide-react';
 
 interface Props {
@@ -162,7 +162,7 @@ export const MaqamExplorer: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* 8 Families Mnemonic Banner (صُنِعَ بِسِحْرِك) */}
-      <Card className="bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40 border-amber-800/30">
+      <Card className="bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40 border-amber-800/30">
         <CardHeader className="pb-3 border-b border-border/50">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -288,7 +288,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Jins al-Asl (جنس الأصل)</span>
-                  <Badge variant="muted" className="text-[10px]">
+                  <Badge variant="default" className="text-[10px]">
                     {currentMaqam.lowerJins.definition.type}
                   </Badge>
                 </div>
@@ -320,7 +320,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-sky-400">Connection &amp; Pivot</span>
                   <Badge 
-                    variant={currentMaqam.connection === 'Ittisal' ? 'sky' : currentMaqam.connection === 'Infisal' ? 'purple' : 'amber'}
+                    variant="default"
                     className="text-[10px]"
                   >
                     {currentMaqam.connection} ({currentMaqam.connection === 'Ittisal' ? 'اتصال' : currentMaqam.connection === 'Infisal' ? 'انفصال' : 'تداخل'})
@@ -348,7 +348,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400">Jins al-Far' (جنس الفرع)</span>
-                  <Badge variant="muted" className="text-[10px]">
+                  <Badge variant="default" className="text-[10px]">
                     {currentMaqam.upperJins.definition.type}
                   </Badge>
                 </div>
@@ -427,7 +427,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                       Maqam Transposition Hub (تـصـويـر الـمـقـامـات)
                     </span>
                     {isTransposed && (
-                      <Badge variant="sky" className="font-mono text-[10px]">
+                      <Badge variant="secondary" className="font-mono text-[10px]">
                         Shift: {deltaQt > 0 ? '+' : ''}{centsOffset}¢ ({deltaQt > 0 ? '+' : ''}{deltaQt} qt)
                       </Badge>
                     )}
@@ -631,7 +631,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                       </div>
 
                       <Button
-                        variant="amber"
+                        variant="default"
                         onClick={() => handleTransposeToPitch(candidatePitch)}
                         className="gap-2"
                       >

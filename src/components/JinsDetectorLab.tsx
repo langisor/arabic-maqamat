@@ -1,8 +1,8 @@
 // src/components/JinsDetectorLab.tsx
 import React, { useState, useMemo } from 'react';
-import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
+import { ArabicPitch,type DiatonicBase,type MicrotonalAccidental } from '../core/pitch';
 import { identifyJins } from '../theory/jins-detector';
-import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
+import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
 import { ArabicNoteSpine } from '../core/note-spine';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';

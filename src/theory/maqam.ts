@@ -1,6 +1,6 @@
 // src/theory/maqam.ts
 import { ArabicPitch } from '../core/pitch';
-import { Jins, AjnasLibrary, JinsDefinition } from './jins';
+import { Jins, AjnasLibrary, type JinsDefinition } from './jins';
 
 export type MaqamConnection = 'Ittisal' | 'Infisal' | 'Tadakhul';
 

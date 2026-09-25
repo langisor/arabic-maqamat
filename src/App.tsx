@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Maqam, MaqamatCatalogue } from './theory/maqam';
 import { ArabicPitch } from './core/pitch';
-import { MicrotonalAudioEngine, TimbreType } from './audio/microtonal-audio';
+import { MicrotonalAudioEngine, type TimbreType } from './audio/microtonal-audio';
 import { MaqamExplorer } from './components/MaqamExplorer';
 import { ViolinFingerboard } from './components/ViolinFingerboard';
 import { ScoreViewer } from './components/ScoreViewer';
@@ -13,7 +13,6 @@ import { TranspositionLab } from './components/TranspositionLab';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
 import { Card } from './components/ui/card';
-import { Slider } from './components/ui/slider';
 import {
   Music,
   Radio,

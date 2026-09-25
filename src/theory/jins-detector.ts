@@ -1,6 +1,6 @@
 // src/theory/jins-detector.ts
 import { ArabicPitch } from '../core/pitch';
-import { Jins, JinsDefinition, AjnasLibrary } from './jins';
+import { Jins, type JinsDefinition, AjnasLibrary } from './jins';
 
 export interface JinsCandidateScore {
   readonly jins: Jins;
