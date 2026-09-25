@@ -333,7 +333,7 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
                   max={8}
                   step={1}
                   value={[measureDuration]}
-                  onValueChange={(val) => setMeasureDuration(val[0])}
+                  onValueChange={(val) => setMeasureDuration(Array.isArray(val) ? val[0] : (typeof val === 'number' ? val : measureDuration))}
                   className="my-3"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500 mt-1">

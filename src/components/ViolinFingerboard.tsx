@@ -1,5 +1,5 @@
 // src/components/ViolinFingerboard.tsx
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
 import {
   ViolinErgonomicsEngine,
@@ -26,8 +26,7 @@ import {
   ChevronRight,
   ListMusic,
   ArrowUpDown,
-  MoveHorizontal,
-  Compass
+  MoveHorizontal
 } from 'lucide-react';
 
 interface Props {
@@ -55,6 +54,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
   // Custom Sequence Builder state (Max 2 octaves) - starts empty so user selects notes one by one
   const [customSequence, setCustomSequence] = useState<ArabicPitch[]>([]);
+  const [sequenceWarning, setSequenceWarning] = useState<string | null>(null);
 
   // Sequence playback state
   const [isPlayingSeq, setIsPlayingSeq] = useState(false);
@@ -136,11 +136,15 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     };
   }, []);
 
-  // Set default orientation based on screen size on mount
+  // Handle window resize orientation
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setOrientation('vertical');
-    }
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setOrientation('vertical');
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Classical violin phrase presets (all ≤ 2 octaves)
@@ -268,6 +272,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     setIsPlayingSeq(false);
     setSeqActiveIndex(null);
     setSelectedPlacement(null);
+    setSequenceWarning(null);
     // When user clicks Custom Sequence, all current highlighted notes are cleared
     setCustomSequence([]);
   };
@@ -278,6 +283,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     setIsPlayingSeq(false);
     setSeqActiveIndex(null);
     setSelectedPlacement(null);
+    setSequenceWarning(null);
   };
 
   const handleNoteClick = (placement: ViolinFingerPlacement) => {
@@ -295,9 +301,11 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     const candidateSequence = [...customSequence, pitch];
     const validation = ViolinErgonomicsEngine.validateSequenceRange(candidateSequence);
     if (!validation.valid) {
-      alert(`Cannot add note: ${validation.message}`);
+      setSequenceWarning(`Cannot add note: ${validation.message || 'Exceeds pedagogical 2-octave range limit'}`);
+      setTimeout(() => setSequenceWarning(null), 4000);
       return;
     }
+    setSequenceWarning(null);
     setCustomSequence(candidateSequence);
     if (playSound) {
       MicrotonalAudioEngine.playPitch(pitch, 0.5, timbre);
@@ -313,6 +321,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     setIsPlayingSeq(false);
     setSeqActiveIndex(null);
     setSelectedPlacement(null);
+    setSequenceWarning(null);
     setCustomSequence([]);
   };
 
@@ -492,28 +501,36 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
         <CardContent className="pt-6">
           {/* Finger legend / Custom Sequence Mode Banner */}
           {viewMode === 'sequence' ? (
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-4 px-3.5 py-2.5 bg-amber-500/10 rounded-xl border border-amber-500/30">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                <span className="font-bold text-amber-300">Custom Sequence Active:</span>
-                <span className="text-slate-300 text-[11px] sm:text-xs">
-                  All highlights cleared. Click notes one by one on the fingerboard below to compose your melody (max 2 octaves).
-                </span>
+            <div className="space-y-2 mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs px-3.5 py-2.5 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                  <span className="font-bold text-amber-300">Custom Sequence Active:</span>
+                  <span className="text-slate-300 text-[11px] sm:text-xs">
+                    All highlights cleared. Click notes one by one on the fingerboard below to compose your melody (max 2 octaves).
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={customSequence.length > 0 ? 'default' : 'secondary'} className="text-[11px] font-mono">
+                    {customSequence.length} Notes Selected
+                  </Badge>
+                  {customSequence.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearSequence}
+                      className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[11px] border border-rose-500/40 transition cursor-pointer"
+                    >
+                      Clear All Notes
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={customSequence.length > 0 ? 'default' : 'secondary'} className="text-[11px] font-mono">
-                  {customSequence.length} Notes Selected
-                </Badge>
-                {customSequence.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleClearSequence}
-                    className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[11px] border border-rose-500/40 transition cursor-pointer"
-                  >
-                    Clear All Notes
-                  </button>
-                )}
-              </div>
+              {sequenceWarning && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium animate-in fade-in slide-in-from-top-1">
+                  <Info className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{sequenceWarning}</span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-4 px-3 py-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
@@ -1183,7 +1200,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 min={40}
                 max={180}
                 step={5}
-                onValueChange={(val) => setSeqBpm(val[0])}
+                onValueChange={(val) => setSeqBpm(Array.isArray(val) ? val[0] : (typeof val === 'number' ? val : seqBpm))}
                 className="w-28"
               />
               <span className="text-xs font-mono font-bold text-amber-300 min-w-[55px]">

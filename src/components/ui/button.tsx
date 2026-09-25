@@ -17,6 +17,16 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        amber: "bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold shadow-md shadow-amber-500/20 active:scale-95 transition",
+        amberOutline: "border border-amber-500/50 text-amber-300 hover:bg-amber-500/10 hover:border-amber-400 active:scale-95 transition",
+        emerald: "bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-md shadow-emerald-600/20 active:scale-95 transition",
+        emeraldOutline: "border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 active:scale-95 transition",
+        sky: "bg-sky-600 hover:bg-sky-500 text-white font-semibold shadow-md shadow-sky-600/20 active:scale-95 transition",
+        skyOutline: "border border-sky-500/50 text-sky-300 hover:bg-sky-500/10 active:scale-95 transition",
+        purple: "bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md shadow-purple-600/20 active:scale-95 transition",
+        rose: "bg-rose-600 hover:bg-rose-500 text-white font-semibold shadow-md shadow-rose-600/20 active:scale-95 transition",
+        dark: "bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 active:scale-95 transition",
+        muted: "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 active:scale-95 transition",
       },
       size: {
         default:

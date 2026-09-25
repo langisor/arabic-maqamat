@@ -65,8 +65,12 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
         });
     } catch (err) {
       console.error('Failed to init OSMD:', err);
-      setRenderError(String(err));
-      setIsRendering(false);
+      queueMicrotask(() => {
+        if (isMounted) {
+          setRenderError(String(err));
+          setIsRendering(false);
+        }
+      });
     }
 
     return () => {
