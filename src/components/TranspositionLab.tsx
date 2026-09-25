@@ -192,8 +192,8 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
   };
 
   const handleTonicSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const qtIndex = Number(e.target.value);
-    const candidate = CANDIDATE_TONICS.find(p => p.toQuarterToneIndex() === qtIndex);
+    const noteId = e.target.value;
+    const candidate = CANDIDATE_TONICS.find(p => p.toString() === noteId);
     if (candidate) {
       setTargetTonic(candidate);
       stopPlayback();
@@ -370,10 +370,15 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
             </label>
             <div className="relative">
               <select
-                value={targetTonic.toQuarterToneIndex()}
+                value={targetTonic.toString()}
                 onChange={handleTonicSelect}
                 className="w-full bg-slate-950 border border-amber-500/50 hover:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm font-bold text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer shadow-inner"
               >
+                {!CANDIDATE_TONICS.some(p => p.toString() === targetTonic.toString()) && (
+                  <option key={targetTonic.toString()} value={targetTonic.toString()}>
+                    {targetTonic.toScientificString()}{targetTonic.octave} (Custom Shift) — {targetTonic.toFrequency().toFixed(1)} Hz
+                  </option>
+                )}
                 {CANDIDATE_TONICS.map((p) => {
                   const spine = ArabicNoteSpine.findByPitch(p);
                   const isCurrentOriginal = p.equals(originalTonic);
@@ -383,7 +388,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                   const freq = p.toFrequency().toFixed(1);
 
                   return (
-                    <option key={p.toQuarterToneIndex()} value={p.toQuarterToneIndex()}>
+                    <option key={p.toString()} value={p.toString()}>
                       {p.toScientificString()}{p.octave} {spineName} — {freq} Hz{diffText}{isCurrentOriginal ? ' ★' : ''}
                     </option>
                   );

@@ -10,6 +10,8 @@ import { SayrQaflaLab } from './components/SayrQaflaLab';
 import { TuningWheel24EDO } from './components/TuningWheel24EDO';
 import { JinsDetectorLab } from './components/JinsDetectorLab';
 import { TranspositionLab } from './components/TranspositionLab';
+import { ThemeToggle } from './components/ThemeToggle';
+import { Metronome } from './components/Metronome';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
 import { Card } from './components/ui/card';
@@ -106,18 +108,19 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-200">
       {/* Top Heritage Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-border shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 bg-card/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-border shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-3 sm:gap-4">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-amber-600 to-amber-400 p-0.5 shadow-lg shadow-amber-500/20">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-amber-600 to-amber-400 p-0.5 shadow-lg shadow-amber-500/20 shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Music className="w-5 h-5 text-amber-400" />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight text-white">Arabic Maqamat</span>
+                <span className="text-lg font-black tracking-tight text-foreground">Arabic Maqamat</span>
+                <span className="text-base font-bold text-amber-500 font-arabic hidden lg:inline" dir="rtl">المقامات العربية</span>
                 <Badge variant="secondary" className="text-[10px] font-bold">
                   24-EDO Studio
                 </Badge>
@@ -128,7 +131,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Quick Maqam Selector Dropdown & Sound Controls */}
+          {/* Quick Maqam Selector Dropdown, Sound Controls & Theme Toggler */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             <div className="relative">
               <select
@@ -137,7 +140,7 @@ export default function App() {
                   const found = allMaqamat.find(m => m.id === e.target.value);
                   if (found) handleSelectMaqam(found);
                 }}
-                className="appearance-none bg-slate-900 border border-slate-700/80 hover:border-amber-500/60 rounded-xl pl-2.5 pr-7 py-1.5 sm:py-2 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer transition shadow-sm max-w-32.5 xs:max-w-[170px] sm:max-w-none truncate"
+                className="appearance-none bg-muted/60 dark:bg-slate-900 border border-border hover:border-amber-500/60 rounded-xl pl-2.5 pr-7 py-1.5 sm:py-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer transition shadow-xs max-w-28 xs:max-w-[160px] sm:max-w-none truncate"
                 title="Select Maqam"
               >
                 {currentMaqam.id.includes('-transposed-') && (
@@ -151,7 +154,7 @@ export default function App() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
             {currentMaqam.id.includes('-transposed-') && (
@@ -167,15 +170,15 @@ export default function App() {
                 title="Reset to natural tonic"
               >
                 <span>Tonic: {tonic.toScientificString()}{tonic.octave}</span>
-                <span className="text-slate-400 hover:text-white">✕</span>
+                <span className="text-muted-foreground hover:text-foreground">✕</span>
               </Button>
             )}
 
             {/* Timbre Toggle (Violin / Oud / Kanun) */}
-            <div className="flex bg-slate-900 p-0.5 sm:p-1 rounded-xl border border-slate-800 text-[11px] sm:text-xs">
+            <div className="flex bg-muted/60 dark:bg-slate-900 p-0.5 sm:p-1 rounded-xl border border-border text-[11px] sm:text-xs">
               <button
                 onClick={() => setTimbre('violin')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'violin' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'violin' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 title="Violin Bowed Sound (Tone.js Model)"
               >
@@ -183,7 +186,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setTimbre('oud')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'oud' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'oud' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 title="Oud Plucked Sound (Tone.js Model)"
               >
@@ -191,7 +194,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setTimbre('kanun')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'kanun' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'kanun' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 title="Kanun Zither Sound (Tone.js Model)"
               >
@@ -207,21 +210,27 @@ export default function App() {
               className="gap-1.5 px-2.5 sm:px-3"
               title="Continuous Tonic Qarar Drone"
             >
-              <Radio className={`w-3.5 h-3.5 ${isDroneActive ? 'animate-pulse' : ''}`} />
+              <Radio className={`w-3.5 h-3.5 ${isDroneActive ? 'animate-pulse text-amber-400' : ''}`} />
               <span className="hidden md:inline">{isDroneActive ? 'Drone: ON' : 'Drone'}</span>
             </Button>
+
+            {/* Synchronized Visual Metronome */}
+            <Metronome />
 
             {/* Audio Settings / Tone.js DSP Controls */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowAudioSettings(true)}
-              className="gap-1.5 px-2.5 sm:px-3 text-slate-300 hover:text-white"
+              className="gap-1.5 px-2.5 sm:px-3 text-muted-foreground hover:text-foreground"
               title="Tone.js DSP Audio Settings"
             >
               <Settings2 className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden lg:inline text-xs font-medium">Audio DSP</span>
             </Button>
+
+            {/* Theme Toggler (Light / Dark / Auto) */}
+            <ThemeToggle />
           </div>
         </div>
 
@@ -233,8 +242,8 @@ export default function App() {
               aria-label="Maqam & 8 Families"
               title="Maqam & 8 Families"
               className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'explorer'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
             >
               <Layers className="w-4 h-4 shrink-0" />
@@ -246,8 +255,8 @@ export default function App() {
               aria-label="Transposition Lab (Taswir)"
               title="Transposition Lab (Taswir)"
               className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'transposition'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
             >
               <ArrowLeftRight className="w-4 h-4 shrink-0 text-amber-400" />
@@ -259,8 +268,8 @@ export default function App() {
               aria-label="Violin Fingerboard"
               title="Violin Fingerboard"
               className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'violin'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
             >
               <Music className="w-4 h-4 shrink-0" />
@@ -272,8 +281,8 @@ export default function App() {
               aria-label="Sayr, Modulation & Qafla"
               title="Sayr, Modulation & Qafla"
               className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'sayr'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
             >
               <Compass className="w-4 h-4 shrink-0" />
@@ -285,8 +294,8 @@ export default function App() {
               aria-label="Score & MusicXML 4.0"
               title="Score & MusicXML 4.0"
               className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'score'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
             >
               <FileMusic className="w-4 h-4 shrink-0" />
@@ -298,8 +307,8 @@ export default function App() {
               aria-label="24-EDO Tuning & Spine"
               title="24-EDO Tuning & Spine"
               className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'tuning'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
             >
               <Sliders className="w-4 h-4 shrink-0" />
@@ -311,8 +320,8 @@ export default function App() {
               aria-label="Jins Phrase Classifier"
               title="Jins Phrase Classifier"
               className={`flex items-center justify-center gap-1.5 sm:gap-2 p-2.5 sm:px-3 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap ${activeTab === 'detector'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  ? 'bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 }`}
             >
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
@@ -405,16 +414,16 @@ export default function App() {
       </main>
 
       {/* Footer Heritage & Credit */}
-      <footer className="border-t border-border/40 bg-slate-950 py-6 mt-12 text-center text-xs text-muted-foreground">
+      <footer className="border-t border-border/40 bg-card/40 dark:bg-slate-950 py-6 mt-12 text-center text-xs text-muted-foreground">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-serif text-amber-400 font-bold text-sm">مقام فلو</span>
+            <span className="font-arabic text-amber-400 font-bold text-sm">مقام فلو</span>
             <span>• Foundations of Arabic Music Theory &amp; Violin Pedagogy (Levels 1 &amp; 2)</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
             <span>Tone.js 24-EDO Microtonal Audio</span>
             <span>•</span>
-            <span>صُنِعَ بِسِحْرِك (8 Families)</span>
+            <span className="font-arabic font-medium text-amber-500/90">صُنِعَ بِسِحْرِك (8 Families)</span>
             <span>•</span>
             <span>MusicXML 4.0</span>
           </div>

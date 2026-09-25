@@ -770,7 +770,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
                               return (
                                 <div
-                                  key={idx}
+                                  key={`${p.string}-${p.pitch.toString()}-${p.position}-${idx}`}
                                   style={{ top: `${topPercent}%` }}
                                   className="absolute transform -translate-y-1/2 flex items-center z-20 group"
                                 >
@@ -949,7 +949,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
                               return (
                                 <div
-                                  key={idx}
+                                  key={`${p.string}-${p.pitch.toString()}-${p.position}-${idx}`}
                                   style={{ left: `${leftPercent}%` }}
                                   className="absolute transform -translate-x-1/2 flex flex-col items-center group z-20"
                                 >
