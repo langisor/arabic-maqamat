@@ -40,7 +40,7 @@ export function useSwipeMaqam({
       setSwipeFeedback({
         direction: direction === 'next' ? 'left' : 'right',
         maqamName: targetMaqam.name,
-        arabicName: targetMaqam.arabicName
+        arabicName: targetMaqam.arabicName ?? 'N/A'
       });
 
       // Subtle haptic feedback if supported on mobile

@@ -176,48 +176,7 @@ export default function App() {
               </Button>
             )}
 
-            {/* Timbre Toggle (Violin / Oud / Kanun) */}
-            <div className="flex bg-muted/60 dark:bg-slate-900 p-0.5 sm:p-1 rounded-xl border border-border text-[11px] sm:text-xs">
-              <button
-                onClick={() => setTimbre('violin')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'violin' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                title="Violin Bowed Sound (Tone.js Model)"
-              >
-                Violin
-              </button>
-              <button
-                onClick={() => setTimbre('oud')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'oud' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                title="Oud Plucked Sound (Tone.js Model)"
-              >
-                Oud
-              </button>
-              <button
-                onClick={() => setTimbre('kanun')}
-                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'kanun' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                title="Kanun Zither Sound (Tone.js Model)"
-              >
-                Kanun
-              </button>
-            </div>
-
-            {/* Continuous Drone Shortcut */}
-            <Button
-              variant={isDroneActive ? "default" : "ghost"}
-              size="sm"
-              onClick={() => handleToggleDrone(tonic)}
-              className="gap-1.5 px-2.5 sm:px-3"
-              title="Continuous Tonic Qarar Drone"
-            >
-              <Radio className={`w-3.5 h-3.5 ${isDroneActive ? 'animate-pulse text-amber-400' : ''}`} />
-              <span className="hidden md:inline">{isDroneActive ? 'Drone: ON' : 'Drone'}</span>
-            </Button>
-
-            {/* Synchronized Visual Metronome */}
-            <Metronome />
+         
 
             {/* Audio Settings / Tone.js DSP Controls */}
             <Button
@@ -344,6 +303,51 @@ export default function App() {
             </button>
           </nav>
         </div>
+
+        <div className="flex max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 border-t border-border/60">
+           {/* Timbre Toggle (Violin / Oud / Kanun) */}
+            <div className="flex bg-muted/60 dark:bg-slate-900 p-0.5 sm:p-1 rounded-xl border border-border text-[11px] sm:text-xs">
+              <button
+                onClick={() => setTimbre('violin')}
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'violin' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                title="Violin Bowed Sound (Tone.js Model)"
+              >
+                Violin
+              </button>
+              <button
+                onClick={() => setTimbre('oud')}
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'oud' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                title="Oud Plucked Sound (Tone.js Model)"
+              >
+                Oud
+              </button>
+              <button
+                onClick={() => setTimbre('kanun')}
+                className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition cursor-pointer font-medium ${timbre === 'kanun' ? 'bg-amber-500 text-slate-950 font-bold shadow' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                title="Kanun Zither Sound (Tone.js Model)"
+              >
+                Kanun
+              </button>
+            </div>
+
+            {/* Continuous Drone Shortcut */}
+            <Button
+              variant={isDroneActive ? "default" : "ghost"}
+              size="sm"
+              onClick={() => handleToggleDrone(tonic)}
+              className="gap-1.5 px-2.5 sm:px-3"
+              title="Continuous Tonic Qarar Drone"
+            >
+              <Radio className={`w-3.5 h-3.5 ${isDroneActive ? 'animate-pulse text-amber-400' : ''}`} />
+              <span className="hidden md:inline">{isDroneActive ? 'Drone: ON' : 'Drone'}</span>
+            </Button>
+
+            {/* Synchronized Visual Metronome */}
+            <Metronome />
+          </div>
       </header>
 
       {/* Main Studio Viewport */}
