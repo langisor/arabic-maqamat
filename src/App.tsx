@@ -111,7 +111,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 p-0.5 shadow-lg shadow-amber-500/20">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-amber-600 to-amber-400 p-0.5 shadow-lg shadow-amber-500/20">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <Music className="w-5 h-5 text-amber-400" />
               </div>
@@ -138,7 +138,7 @@ export default function App() {
                   const found = allMaqamat.find(m => m.id === e.target.value);
                   if (found) handleSelectMaqam(found);
                 }}
-                className="appearance-none bg-slate-900 border border-slate-700/80 hover:border-amber-500/60 rounded-xl pl-2.5 pr-7 py-1.5 sm:py-2 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer transition shadow-sm max-w-[130px] xs:max-w-[170px] sm:max-w-none truncate"
+                className="appearance-none bg-slate-900 border border-slate-700/80 hover:border-amber-500/60 rounded-xl pl-2.5 pr-7 py-1.5 sm:py-2 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer transition shadow-sm max-w-32.5 xs:max-w-[170px] sm:max-w-none truncate"
                 title="Select Maqam"
               >
                 {currentMaqam.id.includes('-transposed-') && (
@@ -157,7 +157,7 @@ export default function App() {
 
             {currentMaqam.id.includes('-transposed-') && (
               <Button
-                variant="amberOutline"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   const baseId = currentMaqam.id.split('-transposed-')[0];
@@ -214,7 +214,7 @@ export default function App() {
 
             {/* Audio Settings / Tone.js DSP Controls */}
             <Button
-              variant="dark"
+              variant="ghost"
               size="sm"
               onClick={() => setShowAudioSettings(true)}
               className="gap-1.5 px-2.5 sm:px-3 text-slate-300 hover:text-white"
@@ -368,7 +368,7 @@ export default function App() {
               </div>
 
               <Button
-                variant="amber"
+                variant="default"
                 size="sm"
                 onClick={() => isPlayingScale ? handleStopScale() : handlePlayScale(scalePitches)}
               >
@@ -579,7 +579,7 @@ export default function App() {
             {/* Modal Actions */}
             <div className="flex items-center justify-between pt-2 border-t border-slate-800">
               <Button
-                variant="amberOutline"
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   // Audition neutral third (D4 -> E𝄳4 -> A4)
@@ -597,7 +597,7 @@ export default function App() {
               </Button>
 
               <Button
-                variant="amber"
+                variant="default"
                 size="sm"
                 onClick={() => setShowAudioSettings(false)}
               >

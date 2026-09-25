@@ -232,7 +232,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 </Badge>
 
                 {isTransposed && (
-                  <Badge variant="sky" className="animate-pulse flex items-center gap-1">
+                  <Badge variant="default" className="animate-pulse flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-sky-400" />
                     Transposed ({deltaQt > 0 ? '+' : ''}{centsOffset}¢ from {originalTonic.toScientificString()})
                   </Badge>
@@ -247,7 +247,7 @@ export const MaqamExplorer: React.FC<Props> = ({
             {/* Scale Audio Playback & Tonic Drone */}
             <div className="flex flex-wrap items-center gap-2">
               <Button
-                variant={isPlayingScale ? "destructive" : "amber"}
+                variant={isPlayingScale ? "destructive" : "default"}
                 onClick={() => isPlayingScale ? onStopScale() : onPlayScale(scalePitches)}
                 className="gap-2"
               >
@@ -256,7 +256,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               </Button>
 
               <Button
-                variant={isDroneActive ? "emerald" : "dark"}
+                variant={isDroneActive ? "default" : "outline"}
                 onClick={() => onToggleDrone(tonic)}
                 className="gap-2"
               >
@@ -266,7 +266,7 @@ export const MaqamExplorer: React.FC<Props> = ({
 
               {isTransposed && (
                 <Button
-                  variant="dark"
+                  variant="outline"
                   size="default"
                   onClick={handleResetTransposition}
                   className="gap-1.5"

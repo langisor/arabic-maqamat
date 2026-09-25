@@ -241,7 +241,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <Card className="bg-gradient-to-r from-amber-950/70 via-slate-900 to-indigo-950/70 border-amber-800/40">
+      <Card className="bg-linear-to-r from-amber-950/70 via-slate-900 to-indigo-950/70 border-amber-800/40">
         <CardHeader className="pb-4 border-b border-border/60">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -262,7 +262,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
             </div>
 
             <Button
-              variant={phrase.length === 0 ? "outline" : isPlaying ? "destructive" : "amber"}
+              variant={phrase.length === 0 ? "outline" : isPlaying ? "destructive" : "default"}
               onClick={handlePlayPhrase}
               disabled={phrase.length === 0}
               className="gap-2"
@@ -339,7 +339,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
             </div>
 
             <Button
-              variant="dark"
+              variant="ghost"
               size="sm"
               onClick={handleClearPhrase}
               disabled={phrase.length === 0}
@@ -358,7 +358,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
               Phrase is empty. Select a preset above or add notes below using the Interactive Note Builder.
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 items-center p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 min-h-[72px]">
+            <div className="flex flex-wrap gap-2 items-center p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 min-h-18">
               {phrase.map((p, idx) => {
                 const isActive = activeNoteIdx === idx;
                 const isFirst = idx === 0;
@@ -526,7 +526,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
             </div>
 
             <Button
-              variant="amber"
+              variant="default"
               size="sm"
               onClick={handleAddNote}
               className="gap-1.5"
@@ -583,7 +583,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
             {/* Primary Winner Banner */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Jins Identity */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-slate-950 to-amber-950/20 border-2 border-amber-500/40 flex flex-col justify-between shadow-lg">
+              <div className="p-5 rounded-2xl bg-linear-to-br from-amber-500/10 via-slate-950 to-amber-950/20 border-2 border-amber-500/40 flex flex-col justify-between shadow-lg">
                 <div>
                   <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Identified Jins</span>
                   <div className="flex items-baseline justify-between mt-1">
@@ -608,7 +608,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
               </div>
 
               {/* Root Pitch & Frequency */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-sky-500/10 via-slate-950 to-indigo-950/20 border-2 border-sky-500/40 flex flex-col justify-between shadow-lg">
+              <div className="p-5 rounded-2xl bg-linear-to-br from-sky-500/10 via-slate-950 to-indigo-950/20 border-2 border-sky-500/40 flex flex-col justify-between shadow-lg">
                 <div>
                   <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider">Identified Root Pitch</span>
                   <div className="flex items-baseline gap-2 mt-1">
