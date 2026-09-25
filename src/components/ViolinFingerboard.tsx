@@ -1,6 +1,6 @@
 // src/components/ViolinFingerboard.tsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ArabicPitch } from '../core/pitch';
+import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
 import {
   ViolinErgonomicsEngine,
   ViolinFingerPlacement,
@@ -53,18 +53,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   // Inspector state: selected placement for deep dive
   const [selectedPlacement, setSelectedPlacement] = useState<ViolinFingerPlacement | null>(null);
 
-  // Custom Sequence Builder state (Max 2 octaves)
-  const [customSequence, setCustomSequence] = useState<ArabicPitch[]>([
-    new ArabicPitch('G', '♮', 3), // G string open
-    new ArabicPitch('C', '♮', 4), // C4 Rast
-    new ArabicPitch('D', '♮', 4), // D4 Dukah
-    new ArabicPitch('E', '𝄳', 4), // E𝄳4 Sikah
-    new ArabicPitch('F', '♮', 4), // F4 Jaharkah
-    new ArabicPitch('G', '♮', 4), // G4 Nawa
-    new ArabicPitch('A', '♮', 4), // A4 Husayni
-    new ArabicPitch('B', '𝄳', 4), // B𝄳4 Awj
-    new ArabicPitch('C', '♮', 5)  // C5 Kardan
-  ]);
+  // Custom Sequence Builder state (Max 2 octaves) - starts empty so user selects notes one by one
+  const [customSequence, setCustomSequence] = useState<ArabicPitch[]>([]);
 
   // Sequence playback state
   const [isPlayingSeq, setIsPlayingSeq] = useState(false);
@@ -81,8 +71,47 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     E: 'E5 (659.3 Hz)'
   };
 
-  // Generate fingering chart for the current maqam or custom sequence
-  const currentPitches = viewMode === 'maqam' ? scalePitches : customSequence;
+  // Expand active maqam scale pitches across full violin range (G3 to A5)
+  // so all 4 strings have realistic finger positions to click and select in sequence mode
+  const fullViolinScalePitches = useMemo(() => {
+    const pcs: { diatonic: DiatonicBase; accidental: MicrotonalAccidental }[] = [];
+    for (const sp of scalePitches) {
+      if (!pcs.some(pc => pc.diatonic === sp.diatonic && pc.accidental === sp.accidental)) {
+        pcs.push({ diatonic: sp.diatonic, accidental: sp.accidental });
+      }
+    }
+
+    const expanded: ArabicPitch[] = [];
+    // Ensure open strings (G3, D4, A4, E5) are available
+    const openStrings: ArabicPitch[] = [
+      new ArabicPitch('G', '♮', 3),
+      new ArabicPitch('D', '♮', 4),
+      new ArabicPitch('A', '♮', 4),
+      new ArabicPitch('E', '♮', 5)
+    ];
+    for (const op of openStrings) {
+      expanded.push(op);
+    }
+
+    for (const oct of [3, 4, 5]) {
+      for (const pc of pcs) {
+        const p = new ArabicPitch(pc.diatonic, pc.accidental, oct);
+        const qt = p.toQuarterToneIndex();
+        if (qt >= 86 && qt <= 138) { // Range: G3 to A5
+          if (!expanded.some(ep => ep.equals(p))) {
+            expanded.push(p);
+          }
+        }
+      }
+    }
+
+    return expanded.sort((a, b) => a.toQuarterToneIndex() - b.toQuarterToneIndex());
+  }, [scalePitches]);
+
+  // In maqam mode, display the active scale notes.
+  // In sequence mode, display candidate violin positions across all 4 strings
+  // so the user can select notes one by one, where unselected notes are cleared/unhighlighted.
+  const currentPitches = viewMode === 'maqam' ? scalePitches : fullViolinScalePitches;
   const placements = useMemo(() => {
     return ViolinErgonomicsEngine.generateFingeringChart(currentPitches, selectedPosition);
   }, [currentPitches, selectedPosition]);
@@ -233,12 +262,35 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     }
   };
 
+  const handleSwitchToCustomSequence = () => {
+    setViewMode('sequence');
+    MicrotonalAudioEngine.stopSequence();
+    setIsPlayingSeq(false);
+    setSeqActiveIndex(null);
+    setSelectedPlacement(null);
+    // When user clicks Custom Sequence, all current highlighted notes are cleared
+    setCustomSequence([]);
+  };
+
+  const handleSwitchToMaqamMode = () => {
+    setViewMode('maqam');
+    MicrotonalAudioEngine.stopSequence();
+    setIsPlayingSeq(false);
+    setSeqActiveIndex(null);
+    setSelectedPlacement(null);
+  };
+
   const handleNoteClick = (placement: ViolinFingerPlacement) => {
     setSelectedPlacement(placement);
     MicrotonalAudioEngine.playPitch(placement.pitch, 0.8, timbre);
+
+    // In sequence mode, clicking any note on the fingerboard directly selects and appends it!
+    if (viewMode === 'sequence') {
+      handleAddToSequence(placement.pitch, false);
+    }
   };
 
-  const handleAddToSequence = (pitch: ArabicPitch) => {
+  const handleAddToSequence = (pitch: ArabicPitch, playSound: boolean = true) => {
     // Check if adding this pitch would exceed 2 octaves
     const candidateSequence = [...customSequence, pitch];
     const validation = ViolinErgonomicsEngine.validateSequenceRange(candidateSequence);
@@ -247,7 +299,9 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
       return;
     }
     setCustomSequence(candidateSequence);
-    MicrotonalAudioEngine.playPitch(pitch, 0.5, timbre);
+    if (playSound) {
+      MicrotonalAudioEngine.playPitch(pitch, 0.5, timbre);
+    }
   };
 
   const handleRemoveFromSequence = (index: number) => {
@@ -258,6 +312,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     MicrotonalAudioEngine.stopSequence();
     setIsPlayingSeq(false);
     setSeqActiveIndex(null);
+    setSelectedPlacement(null);
     setCustomSequence([]);
   };
 
@@ -366,7 +421,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
               {/* View Mode Switcher: Maqam Scale vs Custom Sequence */}
               <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
                 <button
-                  onClick={() => setViewMode('maqam')}
+                  type="button"
+                  onClick={handleSwitchToMaqamMode}
                   className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer font-medium ${
                     viewMode === 'maqam'
                       ? 'bg-amber-500 text-slate-950 font-bold shadow'
@@ -376,12 +432,14 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                   Maqam Scale
                 </button>
                 <button
-                  onClick={() => setViewMode('sequence')}
+                  type="button"
+                  onClick={handleSwitchToCustomSequence}
                   className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition cursor-pointer font-medium ${
                     viewMode === 'sequence'
                       ? 'bg-amber-500 text-slate-950 font-bold shadow'
                       : 'text-slate-400 hover:text-white'
                   }`}
+                  title="Click Custom Sequence: clears all highlighted notes to select one by one"
                 >
                   <ListMusic className="w-3.5 h-3.5" />
                   <span>Custom Sequence</span>
@@ -432,39 +490,65 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
         </CardHeader>
 
         <CardContent className="pt-6">
-          {/* Finger legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-4 px-3 py-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow"></span>
-                <span className="text-slate-300 text-[11px]">0 Open</span>
+          {/* Finger legend / Custom Sequence Mode Banner */}
+          {viewMode === 'sequence' ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-4 px-3.5 py-2.5 bg-amber-500/10 rounded-xl border border-amber-500/30">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                <span className="font-bold text-amber-300">Custom Sequence Active:</span>
+                <span className="text-slate-300 text-[11px] sm:text-xs">
+                  All highlights cleared. Click notes one by one on the fingerboard below to compose your melody (max 2 octaves).
+                </span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-sky-500 inline-block shadow"></span>
-                <span className="text-slate-300 text-[11px]">1 Index</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-indigo-500 inline-block shadow"></span>
-                <span className="text-slate-300 text-[11px]">2 Middle</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-fuchsia-500 inline-block shadow"></span>
-                <span className="text-slate-300 text-[11px]">3 Ring</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-purple-500 inline-block shadow"></span>
-                <span className="text-slate-300 text-[11px]">4 Little</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block ring-2 ring-amber-300 shadow"></span>
-                <span className="text-amber-300 font-bold text-[11px]">Neutral (𝄳/𝄵)</span>
+              <div className="flex items-center gap-2">
+                <Badge variant={customSequence.length > 0 ? 'amber' : 'secondary'} className="text-[11px] font-mono">
+                  {customSequence.length} Notes Selected
+                </Badge>
+                {customSequence.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearSequence}
+                    className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[11px] border border-rose-500/40 transition cursor-pointer"
+                  >
+                    Clear All Notes
+                  </button>
+                )}
               </div>
             </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-4 px-3 py-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow"></span>
+                  <span className="text-slate-300 text-[11px]">0 Open</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-sky-500 inline-block shadow"></span>
+                  <span className="text-slate-300 text-[11px]">1 Index</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-indigo-500 inline-block shadow"></span>
+                  <span className="text-slate-300 text-[11px]">2 Middle</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-fuchsia-500 inline-block shadow"></span>
+                  <span className="text-slate-300 text-[11px]">3 Ring</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-purple-500 inline-block shadow"></span>
+                  <span className="text-slate-300 text-[11px]">4 Little</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block ring-2 ring-amber-300 shadow"></span>
+                  <span className="text-amber-300 font-bold text-[11px]">Neutral (𝄳/𝄵)</span>
+                </div>
+              </div>
 
-            <span className="text-[11px] text-muted-foreground">
-              Click any note to audition &bull; Click + to add to Sequence
-            </span>
-          </div>
+              <span className="text-[11px] text-muted-foreground">
+                Click any note to audition &bull; Click &quot;Custom Sequence&quot; to build melodies
+              </span>
+            </div>
+          )}
 
           {/* REALISTIC VIOLIN RENDERING */}
           {orientation === 'vertical' ? (
@@ -635,58 +719,93 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                               const isSelected = selectedPlacement && selectedPlacement.pitch.equals(p.pitch);
                               const isQuarter = p.pitch.accidental === '𝄳' || p.pitch.accidental === '𝄵';
 
+                              // In sequence mode, track sequence step numbers
+                              const seqStepIndices = viewMode === 'sequence'
+                                ? customSequence
+                                    .map((cp, sIdx) => (cp.equals(p.pitch) ? sIdx + 1 : null))
+                                    .filter((x): x is number => x !== null)
+                                : [];
+                              const isInSequence = seqStepIndices.length > 0;
+
                               // Vertical physical placement: from nut (0%) down the neck (~85%)
                               const topPercent = p.finger === 0 ? 0 : Math.min(Math.max((p.distanceRatioFromNut / 0.32) * 82 + 8, 8), 92);
+
+                              // Visual styling: In sequence mode, unselected notes are cleared/unhighlighted!
+                              const noteScaleClass = isSounding
+                                ? 'scale-135 ring-4 ring-amber-300 z-35 shadow-2xl animate-pulse'
+                                : isInSequence
+                                ? 'scale-115 ring-2 ring-amber-400 z-30 shadow-xl'
+                                : isSelected
+                                ? 'scale-120 ring-2 ring-white z-25'
+                                : 'hover:scale-115 z-20';
+
+                              const circleColorClass = viewMode === 'sequence'
+                                ? isInSequence
+                                  ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-200 ring-2 ring-amber-400/60 shadow-amber-500/40 font-black'
+                                  : 'bg-slate-900/95 text-slate-300 border-slate-700/80 hover:border-amber-400 hover:text-white hover:bg-slate-800'
+                                : getFingerColor(p.finger, isQuarter);
+
+                              const circleLabel = viewMode === 'sequence'
+                                ? isInSequence
+                                  ? `#${seqStepIndices.join(',')}`
+                                  : p.pitch.toScientificString()
+                                : p.finger === 0 ? '0' : p.finger;
 
                               return (
                                 <div
                                   key={idx}
                                   style={{ top: `${topPercent}%` }}
-                                  className="absolute transform -translate-y-1/2 flex items-center z-20"
+                                  className="absolute transform -translate-y-1/2 flex items-center z-20 group"
                                 >
                                   <button
+                                    type="button"
                                     onClick={() => handleNoteClick(p)}
-                                    className={`relative group flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${
-                                      isSounding
-                                        ? 'scale-135 ring-4 ring-amber-300 z-30 shadow-2xl animate-pulse'
-                                        : isSelected
-                                        ? 'scale-120 ring-2 ring-white z-25'
-                                        : 'hover:scale-115'
-                                    }`}
+                                    className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${noteScaleClass}`}
+                                    title={viewMode === 'sequence' ? `Click to select ${p.pitch.toScientificString()} into sequence` : `Play ${p.pitch.toScientificString()}`}
                                   >
                                     <div
-                                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex flex-col items-center justify-center font-bold text-xs shadow-xl border-2 transition-all ${
-                                        getFingerColor(p.finger, isQuarter)
-                                      }`}
+                                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex flex-col items-center justify-center font-bold text-[11px] sm:text-xs shadow-xl border-2 transition-all ${circleColorClass}`}
                                     >
-                                      <span>{p.finger === 0 ? '0' : p.finger}</span>
+                                      <span>{circleLabel}</span>
                                     </div>
+                                  </button>
 
-                                    {/* Quick + Add to Sequence hover button */}
+                                  {/* Quick + Add to Sequence hover button in Maqam mode */}
+                                  {viewMode === 'maqam' && (
                                     <button
+                                      type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleAddToSequence(p.pitch);
                                       }}
-                                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"
+                                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow z-30 cursor-pointer hover:bg-amber-300 hover:scale-110"
                                       title={`Append ${p.pitch.toScientificString()} to sequence`}
                                     >
                                       +
                                     </button>
+                                  )}
 
-                                    {/* Note label overlay */}
-                                    <div className="absolute left-full ml-1.5 hidden group-hover:flex flex-col bg-slate-950/95 border border-slate-700 px-2 py-1 rounded shadow-xl pointer-events-none z-30 whitespace-nowrap">
+                                  {/* Note label overlay */}
+                                  <div className="absolute left-full ml-1.5 hidden group-hover:flex flex-col bg-slate-950/95 border border-slate-700 px-2 py-1 rounded shadow-xl pointer-events-none z-30 whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5">
                                       <span className="text-xs font-bold text-white font-mono">
                                         {p.pitch.toScientificString()} ({p.pitch.octave})
                                       </span>
-                                      <span className="text-[10px] text-amber-300 font-mono">
-                                        {p.centsAboveOpenString}¢ above {p.string}
-                                      </span>
-                                      <span className="text-[9px] text-slate-400">
-                                        {p.pitch.toFrequency().toFixed(1)} Hz
-                                      </span>
+                                      {viewMode === 'sequence' && (
+                                        <span className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold ${
+                                          isInSequence ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-800 text-slate-300'
+                                        }`}>
+                                          {isInSequence ? `Step #${seqStepIndices.join(', #')}` : `Click to select (#${customSequence.length + 1})`}
+                                        </span>
+                                      )}
                                     </div>
-                                  </button>
+                                    <span className="text-[10px] text-amber-300 font-mono">
+                                      {p.centsAboveOpenString}¢ above {p.string}
+                                    </span>
+                                    <span className="text-[9px] text-slate-400">
+                                      {p.pitch.toFrequency().toFixed(1)} Hz &bull; Pos {p.position}
+                                    </span>
+                                  </div>
                                 </div>
                               );
                             })}
@@ -780,52 +899,81 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                               const isSelected = selectedPlacement && selectedPlacement.pitch.equals(p.pitch);
                               const isQuarter = p.pitch.accidental === '𝄳' || p.pitch.accidental === '𝄵';
 
+                              // In sequence mode, track sequence step numbers
+                              const seqStepIndices = viewMode === 'sequence'
+                                ? customSequence
+                                    .map((cp, sIdx) => (cp.equals(p.pitch) ? sIdx + 1 : null))
+                                    .filter((x): x is number => x !== null)
+                                : [];
+                              const isInSequence = seqStepIndices.length > 0;
+
                               // Calculate physical position percentage
                               const leftPercent = p.finger === 0 ? 0 : Math.min(Math.max((p.distanceRatioFromNut / 0.28) * 85 + 6, 8), 94);
+
+                              const noteScaleClass = isSounding
+                                ? 'scale-125 z-30'
+                                : isInSequence
+                                ? 'scale-115 z-25'
+                                : isSelected
+                                ? 'scale-115 z-20'
+                                : 'hover:scale-110 z-10';
+
+                              const circleColorClass = viewMode === 'sequence'
+                                ? isInSequence
+                                  ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-200 ring-2 ring-amber-400/60 shadow-lg font-black'
+                                  : 'bg-slate-900/95 text-slate-300 border-slate-700/80 hover:border-amber-400 hover:text-white hover:bg-slate-800'
+                                : `${getFingerColor(p.finger, isQuarter)} ${isSounding ? 'ring-4 ring-amber-300 animate-pulse' : ''} ${isSelected ? 'ring-2 ring-white' : ''}`;
+
+                              const circleLabel = viewMode === 'sequence'
+                                ? isInSequence
+                                  ? `#${seqStepIndices.join(',')}`
+                                  : p.pitch.toScientificString()
+                                : p.finger === 0 ? '0' : p.finger;
 
                               return (
                                 <div
                                   key={idx}
                                   style={{ left: `${leftPercent}%` }}
-                                  className="absolute transform -translate-x-1/2 flex flex-col items-center"
+                                  className="absolute transform -translate-x-1/2 flex flex-col items-center group z-20"
                                 >
                                   <button
+                                    type="button"
                                     onClick={() => handleNoteClick(p)}
-                                    className={`relative group flex flex-col items-center transition-all duration-200 cursor-pointer ${
-                                      isSounding ? 'scale-125 z-30' : isSelected ? 'scale-115 z-20' : 'hover:scale-110 z-10'
-                                    }`}
+                                    className={`relative flex flex-col items-center transition-all duration-200 cursor-pointer ${noteScaleClass}`}
+                                    title={viewMode === 'sequence' ? `Click to select ${p.pitch.toScientificString()} into sequence` : `Play ${p.pitch.toScientificString()}`}
                                   >
                                     <div
-                                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 transition-all ${
-                                        getFingerColor(p.finger, isQuarter)
-                                      } ${isSounding ? 'ring-4 ring-amber-300 animate-pulse' : ''} ${
-                                        isSelected ? 'ring-2 ring-white' : ''
-                                      }`}
+                                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 transition-all ${circleColorClass}`}
                                     >
-                                      {p.finger === 0 ? '0' : p.finger}
+                                      {circleLabel}
                                     </div>
-
-                                    {/* Quick + Add to Sequence hover button */}
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAddToSequence(p.pitch);
-                                      }}
-                                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"
-                                      title={`Append ${p.pitch.toScientificString()} to sequence`}
-                                    >
-                                      +
-                                    </button>
 
                                     <div className="mt-1 flex flex-col items-center">
                                       <span className="text-[11px] font-bold text-white bg-slate-950/80 px-1.5 py-0.5 rounded shadow">
                                         {p.pitch.toScientificString()}
                                       </span>
                                       <span className="text-[9px] text-amber-300/80 font-mono">
-                                        +{p.centsAboveOpenString}¢
+                                        {viewMode === 'sequence' && isInSequence
+                                          ? `Step #${seqStepIndices.join(',')}`
+                                          : `+${p.centsAboveOpenString}¢`}
                                       </span>
                                     </div>
                                   </button>
+
+                                  {/* Quick + Add to Sequence hover button in Maqam mode */}
+                                  {viewMode === 'maqam' && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddToSequence(p.pitch);
+                                      }}
+                                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow z-30 cursor-pointer hover:bg-amber-300 hover:scale-110"
+                                      title={`Append ${p.pitch.toScientificString()} to sequence`}
+                                    >
+                                      +
+                                    </button>
+                                  )}
                                 </div>
                               );
                             })}
