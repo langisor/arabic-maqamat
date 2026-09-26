@@ -26,7 +26,9 @@ import {
   ChevronRight,
   ListMusic,
   ArrowUpDown,
-  MoveHorizontal
+  MoveHorizontal,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react';
 
 interface Props {
@@ -41,6 +43,8 @@ interface MelodicPreset {
   description: string;
   pitches: ArabicPitch[];
 }
+
+const STRINGS: ViolinStringName[] = ['G', 'D', 'A', 'E'];
 
 export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIndex, timbre }) => {
   // Orientation: 'vertical' (natural violin player POV) vs 'horizontal' (studio/pedagogical layout)
@@ -67,9 +71,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   const [touchZoom, setTouchZoom] = useState<boolean>(false);
   const [stringFilter, setStringFilter] = useState<'all' | ViolinStringName>('all');
 
-  const strings: ViolinStringName[] = ['G', 'D', 'A', 'E'];
   const displayedStrings = useMemo(
-    () => (stringFilter === 'all' ? strings : [stringFilter]),
+    () => (stringFilter === 'all' ? STRINGS : [stringFilter]),
     [stringFilter]
   );
   const stringOpenNotes: Record<ViolinStringName, string> = {
@@ -582,6 +585,43 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
             </div>
           )}
 
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-slate-300">Strings:</span>
+              <div className="flex flex-wrap gap-1" role="group" aria-label="Filter fingerboard strings">
+                {(['all', ...STRINGS] as const).map((stringName) => (
+                  <button
+                    key={stringName}
+                    type="button"
+                    onClick={() => setStringFilter(stringName)}
+                    aria-pressed={stringFilter === stringName}
+                    className={`min-h-10 min-w-10 rounded-lg px-3 text-xs font-bold transition touch-manipulation ${
+                      stringFilter === stringName
+                        ? 'bg-amber-500 text-slate-950 shadow'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {stringName === 'all' ? 'All' : stringName}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTouchZoom((enabled) => !enabled)}
+              aria-pressed={touchZoom}
+              title={touchZoom ? 'Use compact fingerboard targets' : 'Enlarge fingerboard for touch'}
+              className={`min-h-10 rounded-lg border px-3 text-xs font-semibold transition touch-manipulation flex items-center gap-2 ${
+                touchZoom
+                  ? 'border-amber-400/60 bg-amber-500/15 text-amber-300'
+                  : 'border-slate-700 text-slate-300 hover:border-slate-500'
+              }`}
+            >
+              {touchZoom ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
+              Touch targets {touchZoom ? 'on' : 'off'}
+            </button>
+          </div>
+
           {/* REALISTIC VIOLIN RENDERING */}
           {orientation === 'vertical' ? (
             /* ========================================================================= */
@@ -690,8 +730,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                   <div
                     className="relative bg-gradient-to-b from-stone-900 via-neutral-950 to-stone-950 rounded-b-xl border-x-2 border-b-2 border-stone-800 shadow-2xl z-10 flex justify-between px-3 sm:px-6 py-4"
                     style={{
-                      width: '240px',
-                      minHeight: '480px',
+                      width: touchZoom ? 'min(300px, 85vw)' : 'min(240px, 85vw)',
+                      minHeight: touchZoom ? '600px' : '480px',
                       clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)'
                     }}
                   >
@@ -718,7 +758,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                     )}
 
                     {/* 4 STRINGS (G - D - A - E running vertically) */}
-                    {strings.map((strName) => {
+                    {displayedStrings.map((strName) => {
                       const stringPlacements = placements.filter(p => p.string === strName);
 
                       return (
@@ -731,7 +771,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                           </div>
 
                           {/* The physical vertical string line */}
-                          <div className="relative w-full h-[400px] flex justify-center">
+                          <div className={`relative w-full ${touchZoom ? 'h-[500px]' : 'h-[400px]'} flex justify-center`}>
                             {/* Realistic metallic string wire */}
                             <div
                               className={`h-full shadow-md rounded-full ${
@@ -792,11 +832,11 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                                   <button
                                     type="button"
                                     onClick={() => handleNoteClick(p)}
-                                    className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${noteScaleClass}`}
+                                    className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer touch-manipulation ${touchZoom ? 'h-14 w-14' : 'h-11 w-11 sm:h-8 sm:w-8'} ${noteScaleClass}`}
                                     title={viewMode === 'sequence' ? `Click to select ${p.pitch.toScientificString()} into sequence` : `Play ${p.pitch.toScientificString()}`}
                                   >
                                     <div
-                                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex flex-col items-center justify-center font-bold text-[11px] sm:text-xs shadow-xl border-2 transition-all ${circleColorClass}`}
+                                      className={`h-full w-full rounded-full flex flex-col items-center justify-center font-bold text-[11px] sm:text-xs shadow-xl border-2 transition-all ${circleColorClass}`}
                                     >
                                       <span>{circleLabel}</span>
                                     </div>
@@ -901,7 +941,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
                 {/* Strings List */}
                 <div className="space-y-6 pt-2 pb-2 pl-4">
-                  {strings.map((strName) => {
+                  {displayedStrings.map((strName) => {
                     const stringPlacements = placements.filter(p => p.string === strName);
 
                     return (
