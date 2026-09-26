@@ -1,0 +1,76 @@
+# Arabic Maqamat enhancement backlog
+
+These are the most common and highest-impact enhancements identified from the
+current app structure. Prioritize the first five before adding more specialist
+features.
+
+## Highest priority
+
+1. **Persist the full practice workspace**
+   - Save the selected maqam, active lab, timbre, drone state, audio settings,
+     metronome settings, custom phrases, and recording metadata.
+   - Let users resume the exact session they left.
+
+2. **Add one global audio transport**
+   - Provide a visible global stop/pause control and playback status.
+   - Stop or clean up sequences, drones, and lab-specific playback when users
+     change maqam or switch labs.
+   - Prevent overlapping Tone.js voices and make audio-permission recovery clear.
+
+3. **Create guided onboarding and learning paths**
+   - Offer a short first-run orientation for the eight labs.
+   - Add beginner/intermediate paths such as Explorer -> Sayr -> Training.
+   - Recommend the next exercise based on the learner's recent activity.
+
+4. **Make the workspace linkable and mobile-friendly**
+   - Store the active lab and selected maqam in the URL.
+   - Support browser back/forward navigation and shareable exercise links.
+   - Replace the crowded mobile tab row with an accessible overflow menu when
+     needed, while preserving keyboard navigation and active-state semantics.
+
+5. **Finish the install and offline experience**
+   - Render the existing PWA install control in the app shell.
+   - Show online/offline status and whether core maqam data and audio assets are
+     available offline.
+   - Add a clear recovery path when a browser blocks audio or score rendering.
+
+## Practice and content
+
+6. **Turn recordings into a durable practice workflow**
+   - Store takes in IndexedDB with names, notes, dates, and maqam context.
+   - Add rename, delete, download, and A/B comparison actions.
+   - Compare pitch and rhythm against the reference exercise where possible.
+
+7. **Add adaptive progress analytics**
+   - Track accuracy by maqam, interval, exercise type, and difficulty rather
+     than only XP, streaks, and badges.
+   - Surface weak areas and use them to choose the next exercise.
+
+8. **Save and share user-created material**
+   - Persist Jins phrases, Sayr/Qafla sequences, and custom melodies as named
+     collections.
+   - Support shareable links plus JSON, MIDI, and MusicXML export where the
+     notation supports it.
+
+9. **Make maqam changes reset every dependent exercise state**
+   - Reset quiz and ear-training answer/selection state alongside generated
+     questions and melodies.
+   - Ensure a newly selected maqam cannot display stale feedback from the prior
+     exercise.
+
+## Clarity and accessibility
+
+10. **Improve loading, error, and recovery states**
+   - Replace silent score/sight-reading failures with actionable messages,
+     retry controls, and browser compatibility guidance.
+   - Give every audio-heavy lab a consistent loading and failure state.
+
+11. **Add language, direction, and notation support**
+  - Add an English/Arabic language switch with RTL layout support.
+  - Load the intended Arabic and Latin fonts explicitly.
+  - Explain quarter-tone notation and maqam terminology in context.
+
+12. **Add a compact session workspace**
+   - Keep tonic, ghammaz, scale, drone, playback, and quick links visible while
+     moving between Explorer, Fingerboard, Score, and Training.
+   - Reduce repeated navigation when comparing theory, notation, and fingering.
