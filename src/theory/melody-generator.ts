@@ -6,7 +6,7 @@ export type MelodyDifficulty = 'level1' | 'level2' | 'level3';
 
 export interface GeneratedNote {
   pitch: ArabicPitch;
-  durationQuarter: number; // 1 = quarter note, 0.5 = eighth, 2 = half
+  durationQuarter: number; // e.g. 0.25 (sixteenth), 0.5 (eighth), 0.75 (dotted eighth), 1.0 (quarter), 2.0 (half)
   arabicName: string;
 }
 
@@ -19,83 +19,144 @@ export interface GeneratedMelody {
   tempoBpm: number;
   notes: GeneratedNote[];
   pitches: ArabicPitch[];
+  totalBeats: number;
   description: string;
 }
 
 export class MelodyGenerator {
+  /**
+   * Traditional Arabic pitch degree names mapped by scale index
+   */
+  private static readonly ARABIC_DEGREE_NAMES: Record<number, string> = {
+    0: 'القرار / Rast (Degree 1)',
+    1: 'الدكاه / Dukah (Degree 2)',
+    2: 'السيكاه / Sikah (Degree 3)',
+    3: 'الجهاركاه / Jaharkah (Degree 4)',
+    4: 'الغمّاز / Nawa (Degree 5)',
+    5: 'الحسيني / Husayni (Degree 6)',
+    6: 'الأوج / Awj (Degree 7)',
+    7: 'الجواب / Kirdan (Octave)'
+  };
+
   /**
    * Generates an authentic melodic phrase for sight-reading based on the target Maqam.
    */
   public static generateMelody(
     maqam: Maqam,
     difficulty: MelodyDifficulty = 'level1',
-    noteCount: number = 8,
+    targetMeasures: number = 2,
     timeSignature: '4/4' | '3/4' | '2/4' = '4/4',
-    tempoBpm: number = 96
+    tempoBpm: number = 80
   ): GeneratedMelody {
     const scale = maqam.getScale();
     if (scale.length === 0) {
       throw new Error('Maqam scale cannot be empty');
     }
 
-    const tonic = scale[0];
+    const beatsPerMeasure = timeSignature === '4/4' ? 4 : timeSignature === '3/4' ? 3 : 2;
+    const totalTargetBeats = targetMeasures * beatsPerMeasure;
+    
+    // Cadence (Qafla) consumes the last 1.5 - 2 beats
+    const cadentialBeats = 2.0;
+    const targetMelodicBeats = Math.max(beatsPerMeasure, totalTargetBeats - cadentialBeats);
+
     const notes: GeneratedNote[] = [];
+    let currentBeats = 0;
 
-    // Scale degree subsets based on difficulty
-    const eligibleIndices: number[] =
-      difficulty === 'level1'
-        ? [0, 1, 2, 3, 4].filter(idx => idx < scale.length)
-        : scale.map((_, i) => i);
+    // Scale indices setup
+    const lowerJinsPitches = maqam.lowerJins.getPitches();
+    const lowerJinsCount = lowerJinsPitches.length;
+    const maxIndex = scale.length - 1;
 
-    // Melodic generation with authentic contours:
-    // 1. Start on Tonic or Dominant (degree 0 or degree 4)
-    let currentIdx = Math.random() > 0.4 ? 0 : Math.min(4, scale.length - 1);
+    // Starting pitch selection: Tonic (0) or Ghammaz (degree 4/5 depending on jins)
+    const ghammazIdx = scale.findIndex(p => p.equals(maqam.getGhammaz()));
+    const validStartIndices = difficulty === 'level1' 
+      ? [0] 
+      : [0, ghammazIdx > 0 ? ghammazIdx : Math.min(4, maxIndex)];
+
+    let currentIdx = validStartIndices[Math.floor(Math.random() * validStartIndices.length)];
+
+    // 1. Initial Note
+    const initialDuration = difficulty === 'level1' ? 1.0 : 0.5;
     notes.push({
       pitch: scale[currentIdx],
-      durationQuarter: 1,
+      durationQuarter: initialDuration,
       arabicName: this.getArabicDegreeName(currentIdx)
     });
+    currentBeats += initialDuration;
 
-    for (let i = 1; i < noteCount - 1; i++) {
+    // 2. Middle Phrase Generation
+    while (currentBeats < targetMelodicBeats) {
+      const remaining = targetMelodicBeats - currentBeats;
+      const duration = this.getRandomDuration(difficulty, remaining);
+
       let nextIdx: number;
-
       if (difficulty === 'level1') {
-        // Stepwise motion (+1, -1, or repeat)
-        const step = Math.random() < 0.4 ? 1 : Math.random() < 0.75 ? -1 : 0;
-        nextIdx = Math.max(0, Math.min(eligibleIndices.length - 1, currentIdx + step));
+        // Strict stepwise within lower Jins
+        const step = Math.random() < 0.45 ? 1 : Math.random() < 0.9 ? -1 : 0;
+        nextIdx = Math.max(0, Math.min(lowerJinsCount - 1, currentIdx + step));
       } else if (difficulty === 'level2') {
-        // Steps and thirds (+1, -1, +2, -2)
+        // Steps, thirds, and mild pivots to Ghammaz
         const moves = [-2, -1, -1, 0, 1, 1, 2];
         const move = moves[Math.floor(Math.random() * moves.length)];
-        nextIdx = Math.max(0, Math.min(eligibleIndices.length - 1, currentIdx + move));
+        nextIdx = Math.max(0, Math.min(maxIndex, currentIdx + move));
       } else {
-        // Leaps, octave returns, ornamental turns
+        // Level 3: Leaps, ornamentations, octave returns
         const moves = [-3, -2, -1, -1, 1, 1, 2, 3];
         const move = moves[Math.floor(Math.random() * moves.length)];
-        nextIdx = Math.max(0, Math.min(eligibleIndices.length - 1, currentIdx + move));
+        
+        // Occasional ornamental turn (mordent motion)
+        if (Math.random() < 0.25 && currentIdx > 0 && currentIdx < maxIndex && remaining >= 1.0) {
+          notes.push({
+            pitch: scale[currentIdx + 1],
+            durationQuarter: 0.25,
+            arabicName: `${this.getArabicDegreeName(currentIdx + 1)} (زخرفة)`
+          });
+          notes.push({
+            pitch: scale[currentIdx],
+            durationQuarter: 0.25,
+            arabicName: this.getArabicDegreeName(currentIdx)
+          });
+          currentBeats += 0.5;
+        }
+
+        nextIdx = Math.max(0, Math.min(maxIndex, currentIdx + move));
       }
 
       currentIdx = nextIdx;
       notes.push({
         pitch: scale[currentIdx],
-        durationQuarter: 1,
+        durationQuarter: duration,
         arabicName: this.getArabicDegreeName(currentIdx)
       });
+      currentBeats += duration;
     }
 
-    // Last note: Cadence (Qafla) resolving to Tonic
+    // 3. Cadence Phrase (قَفلة - Qafla)
+    // Stepwise descent from 2nd degree (Dukah/Thani) to 1st degree (Qarar/Tonic)
+    const cadenceSubtonicIdx = 1 < scale.length ? 1 : 0;
+    
+    // Penultimate Note (Leading / Step degree)
     notes.push({
-      pitch: tonic,
-      durationQuarter: 2, // Longer note on cadence
+      pitch: scale[cadenceSubtonicIdx],
+      durationQuarter: 0.5,
+      arabicName: `${this.getArabicDegreeName(cadenceSubtonicIdx)} (مسار القَفلة)`
+    });
+
+    // Final Cadential Resolution Note (Tonic)
+    notes.push({
+      pitch: scale[0],
+      durationQuarter: 1.5,
       arabicName: `${this.getArabicDegreeName(0)} (قَفلة / Qarar)`
     });
 
+    const totalBeats = notes.reduce((acc, n) => acc + n.durationQuarter, 0);
     const pitches = notes.map(n => n.pitch);
 
     const descMap: Record<MelodyDifficulty, string> = {
-      level1: 'Level 1: Stepwise motion within primary Jins. Ideal for learning microtonal intonation.',
-      level2: 'Level 2: Stepwise and 3rd intervals across primary and secondary Jins.',
-      level3: 'Level 3: Expressive leaps and ornamental turns with classical Qafla resolution.'
+      level1: 'Level 1: Stepwise motion within lower Jins. Ideal for learning microtonal intonation and steady rhythm.',
+      level2: 'Level 2: Stepwise and 3rd intervals across primary/secondary Ajnas with varied rhythmic values.',
+      level3: 'Level 3: Expressive leaps, ornamental turns, microtonal inflections, and classical Qafla resolution.'
     };
 
     return {
@@ -107,21 +168,34 @@ export class MelodyGenerator {
       tempoBpm,
       notes,
       pitches,
+      totalBeats,
       description: descMap[difficulty]
     };
   }
 
+  /**
+   * Helper to select varied durations based on difficulty tier and remaining beat budget.
+   */
+  private static getRandomDuration(difficulty: MelodyDifficulty, remainingBeats: number): number {
+    let pool: number[];
+
+    if (difficulty === 'level1') {
+      pool = [1.0, 1.0, 0.5, 0.5];
+    } else if (difficulty === 'level2') {
+      pool = [0.5, 0.5, 0.5, 1.0, 0.75, 0.25];
+    } else {
+      pool = [0.25, 0.5, 0.5, 0.75, 1.0];
+    }
+
+    const filtered = pool.filter(d => d <= remainingBeats);
+    if (filtered.length === 0) {
+      return remainingBeats;
+    }
+
+    return filtered[Math.floor(Math.random() * filtered.length)];
+  }
+
   private static getArabicDegreeName(index: number): string {
-    const names = [
-      'Qarar (القرار)',
-      'Thani (الثاني)',
-      'Thalith / Sikah (الثالث)',
-      'Rabi (الرابع)',
-      'Ghammaz (الغمّاز / Dominant)',
-      'Sadis (السادس)',
-      'Sabi (السابع)',
-      'Jawab (الجواب / Octave)'
-    ];
-    return names[index] || `Degree ${index + 1}`;
+    return this.ARABIC_DEGREE_NAMES[index] || `Degree ${index + 1}`;
   }
 }
