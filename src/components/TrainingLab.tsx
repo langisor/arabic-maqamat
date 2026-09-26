@@ -4,7 +4,7 @@ import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Maqam } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
-import { MetronomeAudioEngine } from '../audio/metronome-engine';
+import { MetronomeAudioEngine, TIME_SIGNATURE_PRESETS } from '../audio/metronome-engine';
 import { MusicXMLExporter } from '../score/musicxml-exporter';
 import { ViolinErgonomicsEngine } from '../violin/ergonomics';
 import {
@@ -218,6 +218,9 @@ export const TrainingLab: React.FC<Props> = ({
   );
   const [activeMelodyStep, setActiveMelodyStep] = useState<number>(-1);
   const [isMelodyPlaying, setIsMelodyPlaying] = useState<boolean>(false);
+  const [melodyCountIn, setMelodyCountIn] = useState<number | null>(null);
+  const countInTimeoutRef = useRef<number | null>(null);
+  const countInRunRef = useRef<number>(0);
 
   // Synchronize state when selected Maqam changes (React 19 pattern avoiding cascading renders)
   const [prevMaqamId, setPrevMaqamId] = useState(currentMaqam.id);
@@ -360,6 +363,13 @@ export const TrainingLab: React.FC<Props> = ({
       setGeneratedMelody(melody);
       setActiveMelodyStep(-1);
       setIsMelodyPlaying(false);
+      countInRunRef.current += 1;
+      if (countInTimeoutRef.current !== null) {
+        window.clearInterval(countInTimeoutRef.current);
+        countInTimeoutRef.current = null;
+      }
+      setMelodyCountIn(null);
+      MetronomeAudioEngine.stop();
       MicrotonalAudioEngine.stopSequence();
     } catch {
       // safe
@@ -410,33 +420,71 @@ export const TrainingLab: React.FC<Props> = ({
     };
   }, [activeMode, generatedMelody]);
 
-  // Play generated melody with synchronized step highlighting
-  const handlePlayMelody = () => {
+  // Count in before starting the metronome and melody on the same audio timestamp.
+  const handlePlayMelody = async () => {
     if (!generatedMelody) return;
 
     if (isMelodyPlaying) {
+      countInRunRef.current += 1;
+      if (countInTimeoutRef.current !== null) {
+        window.clearInterval(countInTimeoutRef.current);
+        countInTimeoutRef.current = null;
+      }
+      setMelodyCountIn(null);
       MicrotonalAudioEngine.stopSequence();
+      MetronomeAudioEngine.stop();
       setIsMelodyPlaying(false);
       setActiveMelodyStep(-1);
       return;
     }
 
+    const countInRun = ++countInRunRef.current;
     setIsMelodyPlaying(true);
-    const intervalMs = (60 / melodyTempo) * 1000;
-
-    MicrotonalAudioEngine.playSequence(
-      generatedMelody.pitches,
-      intervalMs,
-      timbre,
-      (idx) => {
-        setActiveMelodyStep(idx);
-      },
-      () => {
-        setIsMelodyPlaying(false);
-        setActiveMelodyStep(-1);
-        triggerXpGain(15);
-      }
+    setMelodyCountIn(4);
+    MicrotonalAudioEngine.stopSequence();
+    MetronomeAudioEngine.stop();
+    MetronomeAudioEngine.setBpm(melodyTempo);
+    MetronomeAudioEngine.setTimeSignature(
+      TIME_SIGNATURE_PRESETS.find((preset) => preset.name === melodyMeter) ?? TIME_SIGNATURE_PRESETS[0]
     );
+    await MetronomeAudioEngine.startAudioContext();
+    if (countInRunRef.current !== countInRun) return;
+
+    let remainingCount = 4;
+    countInTimeoutRef.current = window.setInterval(() => {
+      if (countInRunRef.current !== countInRun) return;
+      remainingCount -= 1;
+      if (remainingCount > 0) {
+        setMelodyCountIn(remainingCount);
+        return;
+      }
+
+      if (countInTimeoutRef.current !== null) {
+        window.clearInterval(countInTimeoutRef.current);
+        countInTimeoutRef.current = null;
+      }
+      setMelodyCountIn(null);
+
+      const startTime = MetronomeAudioEngine.getAudioTime() + 0.1;
+      void MetronomeAudioEngine.start(startTime);
+      const intervalMs = (60 / melodyTempo) * 1000;
+
+      MicrotonalAudioEngine.playSequence(
+        generatedMelody.pitches,
+        intervalMs,
+        timbre,
+        (idx) => {
+          setActiveMelodyStep(idx);
+        },
+        () => {
+          MetronomeAudioEngine.stop();
+          setIsMelodyPlaying(false);
+          setActiveMelodyStep(-1);
+          triggerXpGain(15);
+        },
+        startTime
+      );
+    }, 1000);
   };
 
   const handleExportMelodyXml = () => {
@@ -1305,7 +1353,7 @@ export const TrainingLab: React.FC<Props> = ({
                     {isMelodyPlaying ? (
                       <>
                         <Square className="w-4 h-4 fill-current" />
-                        <span>Stop Melody</span>
+                        <span>{melodyCountIn !== null ? 'Cancel Count-in' : 'Stop Melody'}</span>
                       </>
                     ) : (
                       <>
@@ -1321,12 +1369,24 @@ export const TrainingLab: React.FC<Props> = ({
                       MetronomeAudioEngine.setBpm(melodyTempo);
                       void MetronomeAudioEngine.start();
                     }}
+                    disabled={isMelodyPlaying}
                     className="gap-2 cursor-pointer"
                   >
                     <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span>Start Metronome ({melodyTempo} BPM)</span>
+                    <span>{isMelodyPlaying ? 'Metronome Synced' : `Start Metronome (${melodyTempo} BPM)`}</span>
                   </Button>
                 </div>
+
+                {melodyCountIn !== null && (
+                  <div
+                    role="status"
+                    aria-live="assertive"
+                    className="flex items-center gap-3 rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-foreground"
+                  >
+                    <span className="font-mono text-2xl font-black text-amber-500">{melodyCountIn}</span>
+                    <span>Melody starts in {melodyCountIn}...</span>
+                  </div>
+                )}
 
                 <Button
                   variant="outline"

@@ -255,13 +255,16 @@ export class MetronomeAudioEngine {
   /**
    * Starts the metronome.
    */
-  public static async start(): Promise<void> {
+  public static async start(audioTime?: number): Promise<void> {
     await this.startAudioContext();
-    if (this.isPlaying) return;
+    if (this.isPlaying) {
+      if (audioTime === undefined) return;
+      this.stop();
+    }
 
     this.isPlaying = true;
     this.currentBeatIndex = 0;
-    this.nextBeatAudioTime = Tone.now() + 0.05;
+    this.nextBeatAudioTime = audioTime ?? Tone.now() + 0.05;
 
     this.notifyState(true);
     this.runScheduler();
@@ -440,6 +443,10 @@ export class MetronomeAudioEngine {
 
   public static getIsPlaying(): boolean {
     return this.isPlaying;
+  }
+
+  public static getAudioTime(): number {
+    return Tone.now();
   }
 
   // --- Subscriptions ---

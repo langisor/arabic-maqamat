@@ -35,7 +35,6 @@ export class MicrotonalAudioEngine {
   private static isDroneRunning = false;
 
   // Sequencer state
-  private static sequenceTimeouts: number[] = [];
   private static activePitchCancelToken = 0;
 
   /**
@@ -266,7 +265,8 @@ export class MicrotonalAudioEngine {
     intervalMs: number = 550,
     timbre: TimbreType = 'violin',
     onStepChange?: (index: number) => void,
-    onComplete?: () => void
+    onComplete?: () => void,
+    audioTime?: number
   ): void {
     this.stopSequence();
     this.startAudioContext();
@@ -277,29 +277,23 @@ export class MicrotonalAudioEngine {
     }
 
     const currentToken = ++this.activePitchCancelToken;
-    let currentIdx = 0;
+    const startTime = audioTime ?? Tone.now();
+    const intervalSeconds = intervalMs / 1000;
 
-    const playNext = () => {
+    pitches.forEach((pitch, index) => {
+      const stepTime = startTime + index * intervalSeconds;
+      Tone.getDraw().schedule(() => {
+        if (this.activePitchCancelToken !== currentToken) return;
+        this.playPitch(pitch, intervalSeconds * 0.92, timbre, 0.75);
+        if (onStepChange) onStepChange(index);
+      }, stepTime);
+    });
+
+    Tone.getDraw().schedule(() => {
       if (this.activePitchCancelToken !== currentToken) return;
-
-      if (currentIdx >= pitches.length) {
-        if (onStepChange) onStepChange(-1);
-        if (onComplete) onComplete();
-        return;
-      }
-
-      const p = pitches[currentIdx];
-      const durationSec = (intervalMs / 1000) * 0.92;
-      this.playPitch(p, durationSec, timbre, 0.75);
-
-      if (onStepChange) onStepChange(currentIdx);
-      currentIdx++;
-
-      const tid = window.setTimeout(playNext, intervalMs);
-      this.sequenceTimeouts.push(tid);
-    };
-
-    playNext();
+      if (onStepChange) onStepChange(-1);
+      if (onComplete) onComplete();
+    }, startTime + pitches.length * intervalSeconds);
   }
 
   /**
@@ -307,8 +301,6 @@ export class MicrotonalAudioEngine {
    */
   public static stopSequence(): void {
     this.activePitchCancelToken++;
-    this.sequenceTimeouts.forEach(id => clearTimeout(id));
-    this.sequenceTimeouts = [];
 
     // Release any lingering active voices
     try {
