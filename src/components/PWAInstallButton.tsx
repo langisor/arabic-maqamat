@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from './ui/sheet';
 import { useLanguage } from '../state/language';
 import {
   Download,
@@ -163,16 +163,16 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
       )}
 
       {/* iOS Installation Instructions Modal */}
-      <Dialog open={showIOSModal} onOpenChange={setShowIOSModal}>
-          <DialogContent className="max-w-sm space-y-4 p-5">
+        <Sheet open={showIOSModal} onOpenChange={setShowIOSModal}>
+          <SheetContent side="bottom" className="max-h-[85dvh] gap-4 overflow-y-auto rounded-t-2xl p-5">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
                   <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
-                  <DialogTitle className="text-sm font-bold text-foreground">{t('iosInstallTitle')}</DialogTitle>
-                  <DialogDescription className="text-[10px] text-muted-foreground">{t('iosInstallDescription')}</DialogDescription>
+                  <SheetTitle className="text-sm font-bold text-foreground">{t('iosInstallTitle')}</SheetTitle>
+                  <SheetDescription className="text-[10px] text-muted-foreground">{t('iosInstallDescription')}</SheetDescription>
                 </div>
               </div>
             </div>
@@ -227,8 +227,8 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
                 {t('gotIt')}
               </Button>
             </div>
-          </DialogContent>
-      </Dialog>
+            </SheetContent>
+          </Sheet>
     </>
   );
 };

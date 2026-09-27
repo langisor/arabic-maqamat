@@ -31,7 +31,7 @@ import { useLanguage } from "./state/language"
 import { Button } from "./components/ui/button"
 import { Badge } from "./components/ui/badge"
 import { Card } from "./components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "./components/ui/dialog"
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./components/ui/sheet"
 import {
   Music,
   Radio,
@@ -490,11 +490,11 @@ export default function App() {
           )}
         </div>
         {/* Studio Navigation Tabs (Responsive scrollable tablist with active semantics & keyboard navigation) */}
-        <div className="mx-auto max-w-7xl border-t border-border/60 px-2 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl rounded-lg border border-border/60 dark:bg-slate-600 px-2 sm:px-6 lg:px-8">
           <nav
             role="tablist"
             aria-label={t("studioNavigation")}
-            className="flex items-center gap-1 overflow-x-auto py-2.5 text-xs font-semibold scrollbar-none sm:gap-1.5 md:flex-wrap"
+            className="flex items-center gap-1 overflow-x-auto py-2.5 text-xs font-semibold scrollbar-none sm:gap-1.5  md:flex-wrap"
           >
             {NAV_TABS.map((tab, index) => {
               const Icon = tab.icon
@@ -644,7 +644,7 @@ export default function App() {
       </main>
 
       {/* Footer Heritage & Credit */}
-      <footer className="mt-12 border-t border-border/40 bg-card/40 py-6 text-center text-xs text-muted-foreground dark:bg-slate-950">
+      <footer className="mt-12 border-t border-border/40 bg-card/40 py-6 text-center text-xs text-muted-foreground dark:bg-slate-700">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="font-arabic text-sm font-bold text-amber-400">
@@ -668,8 +668,12 @@ export default function App() {
       </footer>
 
       {/* Tone.js Audio DSP Studio Modal */}
-      <Dialog open={showAudioSettings} onOpenChange={setShowAudioSettings}>
-          <DialogContent className="relative flex! w-full max-w-lg flex-col space-y-5  rounded-2xl border border-slate-700/80 bg-slate-900 p-6 text-slate-100 shadow-2xl" showCloseButton>
+      <Sheet open={showAudioSettings} onOpenChange={setShowAudioSettings}>
+          <SheetContent
+            side={language === "ar" ? "left" : "right"}
+            className="w-[min(32rem,90vw)] max-w-none max-h-dvh gap-5 overflow-y-auto border-slate-700/80 bg-slate-900 p-6 text-slate-100 shadow-2xl"
+            showCloseButton
+          >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
@@ -677,15 +681,15 @@ export default function App() {
                   <Settings2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <DialogTitle className="flex items-center gap-2 text-base font-bold text-white">
+                  <SheetTitle className="flex items-center gap-2 text-base font-bold text-white">
                     {t("dspTitle")}
                     <Badge variant="secondary" className="text-[10px]">
                       v15.1
                     </Badge>
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-400">
+                  </SheetTitle>
+                  <SheetDescription className="text-xs text-slate-400">
                     {t("dspDescription")}
-                  </DialogDescription>
+                  </SheetDescription>
                 </div>
               </div>
             </div>
@@ -880,8 +884,8 @@ export default function App() {
                 {t("done")}
               </Button>
             </div>
-          </DialogContent>
-      </Dialog>
+            </SheetContent>
+          </Sheet>
     </div>
   )
 }
