@@ -784,6 +784,7 @@ export default function App() {
                   {t("instrumentModel")}
                 </span>
                 <div className="grid grid-cols-3 gap-2" role="group" aria-label={t("instrumentModel")}>
+                  {/* Violin */}
                   <button
                     onClick={() => handleTimbreChange("violin")}
                     aria-pressed={timbre === "violin"}
@@ -798,7 +799,9 @@ export default function App() {
                       Bowed string + 5.2Hz LFO
                     </div>
                   </button>
+                  {/* Oud */}
                   <button
+                    disabled
                     onClick={() => handleTimbreChange("oud")}
                     aria-pressed={timbre === "oud"}
                     className={`cursor-pointer rounded-xl border p-2 text-left transition ${
@@ -812,7 +815,9 @@ export default function App() {
                       Plucked lute + bowl body
                     </div>
                   </button>
+                  {/* Kanun */}
                   <button
+                    disabled
                     onClick={() => handleTimbreChange("kanun")}
                     aria-pressed={timbre === "kanun"}
                     className={`cursor-pointer rounded-xl border p-2 text-left transition ${

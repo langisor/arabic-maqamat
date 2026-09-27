@@ -31,9 +31,9 @@ The studio navigation opens these labs:
 - **Score & MusicXML:** render notation, inspect or copy MusicXML, and download exports.
 - **24-EDO Tuning:** inspect quarter-tone pitch positions and note relationships.
 - **Jins Classifier:** analyze a pitch phrase against the available ajnas.
-- **Practice & Training:** build and quiz scales, practice pitch recognition and sight-reading, and record takes for playback and comparison.
+- **Practice & Training:** build and quiz scales, practice pitch recognition and sight-reading, and record takes for playback and comparison. Takes persist in browser IndexedDB and can be renamed, downloaded, and deleted.
 
-The app also provides synthesized violin, oud, and kanun timbres, drone and metronome controls, theme and language selection, shareable lab/maqam URLs, and installable PWA support.
+The app also provides synthesized violin, oud, and kanun timbres, drone and metronome controls, theme and language selection, shareable lab/maqam URLs, an always-visible session summary, and installable PWA support. Shared async feedback patterns expose loading, status, and recoverable errors.
 
 ## Technology
 
@@ -73,7 +73,13 @@ Audio playback must be started from a user interaction in browsers that require 
 | `npm run preview` | Serve the generated production build locally. Run `npm run build` first. |
 | `npm run format` | Format TypeScript and TSX files with Prettier. This command writes files. |
 
-There is currently no dedicated automated test script in `package.json`.
+There is no test script or test framework configured in `package.json`. The MusicXML fidelity checks are exported from `src/score/musicxml-exporter.test.ts` and can be run directly with Bun:
+
+```bash
+bun -e 'import("./src/score/musicxml-exporter.test.ts").then(({ runMusicXMLTests }) => runMusicXMLTests())'
+```
+
+This check covers XML escaping, pitch/duration round trips, validation, and catalogue-wide scale exports. It is a standalone assertion runner, not a general test framework.
 
 ## Repository map
 
@@ -88,6 +94,8 @@ src/
   components/
     *Lab.tsx                    Individual learning and exploration labs
     ScoreViewer.tsx             MusicXML view, sheet rendering, export controls
+    SessionBar.tsx              Shared maqam, tonic, ghammaz, drone/audio and lab links
+    AsyncFeedback.tsx           Shared loading, error, retry and status UI
     ui/                         Shared UI primitives
   core/
     pitch.ts                    ArabicPitch and 24-EDO arithmetic
@@ -111,7 +119,7 @@ src/
 
 ## Application architecture
 
-`src/main.tsx` mounts the app in React Strict Mode and installs the `ThemeProvider` and `LanguageProvider`. `src/App.tsx` owns the selected maqam, active lab, instrument timbre, global audio settings, drone, and transport status. It passes the active maqam and callbacks into the lab components.
+`src/main.tsx` mounts the app in React Strict Mode and installs the `ThemeProvider` and `LanguageProvider`. `src/App.tsx` owns the selected maqam, active lab, instrument timbre, global audio settings, drone, and transport status. It passes the active maqam and callbacks into the lab components. The `SessionBar` is rendered from this shared state, so labs do not own duplicate session summaries. `AsyncFeedback` provides common accessible loading, error, retry, and status presentation.
 
 Lab selection and maqam selection are synchronized with the URL query string. For example:
 
@@ -145,7 +153,9 @@ The app stores user data locally in the browser; there is no account sync or ser
 - **Training progress:** `training-progress.ts` stores XP, streak, counters, and unlocked badge IDs under `arabic_maqamat_training_stats_v1`.
 - **Theme:** the theme provider uses localStorage key `theme`.
 - **Language:** `language.tsx` stores `en` or `ar` under `arabic-maqamat-language` and sets the document `lang` and `dir` attributes.
-- **Practice recordings:** `recording-storage.ts` uses IndexedDB database `arabic-maqamat-recordings`, version 1, object store `takes`. Each take includes its audio Blob and metadata. The UI creates temporary object URLs for playback/download and revokes them when takes are deleted or the lab unmounts.
+- **Practice recordings:** `recording-storage.ts` uses IndexedDB database `arabic-maqamat-recordings`, version 1, object store `takes`. Each take includes its audio Blob and metadata. The UI creates temporary object URLs for playback/download and revokes them when takes are deleted or the lab unmounts. Storage errors are surfaced with a retry action where possible.
+
+Workspace preferences, language, theme, training progress, and recordings are independent stores. Clearing site data removes browser-local user data. There is currently no cloud backup, cross-device sync, or export/import flow for recordings.
 
 When changing stored schemas, validate untrusted data, keep storage versions explicit, and preserve fallback behavior for unavailable or quota-limited browser storage. Never persist `Maqam`/`ArabicPitch` instances, Tone objects, Audio nodes, streams, MediaRecorder instances, or object URLs.
 
@@ -167,7 +177,7 @@ The notation layer represents microtonal alteration in quarter-tone steps. Confi
 
 - Use the shared primitives in `src/components/ui/` for buttons, dialogs, tabs, labels, inputs, and other common controls.
 - The `@/` alias points to `src/` (for example, `@/components/ui/button`). `components.json` contains the shadcn configuration.
-- English and Arabic messages live in `src/state/language.tsx`. Add keys to both language maps and use the language context for shared, translated UI.
+- English and Arabic messages live in `src/state/language.tsx`. Add keys to both language maps and use the language context for shared, translated UI. Current localization is strongest in the shell and shared controls; many lab-specific descriptions and interactions are still English.
 - Arabic mode sets document direction to RTL. Prefer logical CSS properties such as `ms-*`, `me-*`, `text-start`, and `ps-*` where direction matters.
 - Give icon-only controls accessible names. Preserve keyboard access, focus indication, and appropriate live/status semantics for state changes.
 - Global design tokens and typography are defined in `src/index.css`; document metadata, font links, and initial language direction are in `index.html`.
@@ -212,12 +222,19 @@ Review the generated component and its dependencies before committing it. Prefer
 
 ## Quality checks and troubleshooting
 
-Before submitting a change, run the checks relevant to it:
+A practical change workflow is:
+
+1. Make the smallest change in the owning layer (domain logic, shared state/engine, or lab UI).
+2. Run `npm run typecheck` and `npm run lint` while iterating.
+3. Run `npm run build` before submitting changes that affect app code or bundling.
+4. Run the standalone MusicXML check when changing pitch conversion, MusicXML generation/parsing, or notation fidelity.
+5. Manually check the affected browser flow, including keyboard use and Arabic RTL if the change touches the UI. Audio changes should be exercised after a user gesture; recording changes should be checked with microphone permission granted and denied.
 
 ```bash
 npm run typecheck
 npm run lint
 npm run build
+bun -e 'import("./src/score/musicxml-exporter.test.ts").then(({ runMusicXMLTests }) => runMusicXMLTests())'
 ```
 
 Common issues:
@@ -225,7 +242,8 @@ Common issues:
 - **No sound:** click a playback control to unlock audio; check browser tab/device output and site audio permissions. Stop stale transport sessions before starting a replacement.
 - **Microphone unavailable:** use localhost or HTTPS, grant microphone permission, and ensure another application/browser tab is not holding the device exclusively.
 - **Sheet music blank:** inspect the generated MusicXML view first. Rendering depends on browser SVG support and OpenSheetMusicDisplay; the XML/download path is a useful fallback.
-- **Workspace did not persist:** check browser storage/privacy settings and console errors. Local data is per browser origin and is not synchronized across devices.
+- **Workspace did not persist:** check browser storage/privacy settings and console errors. Local data is per browser origin and is not synchronized across devices. Workspace/theme/language/progress use localStorage; take blobs use IndexedDB.
+- **A recording is missing:** make sure you are in the same browser profile and origin, and that site data was not cleared. Check IndexedDB availability and available storage; recordings do not sync to another device.
 - **Old UI after a PWA update:** reload after the service worker updates, or clear the site’s cached data during local debugging.
 - **Build output is large:** the current app bundles substantial audio and notation dependencies. Check the Vite build report before introducing more large libraries.
 
