@@ -24,6 +24,7 @@ import { RecordingStorage } from '../state/recording-storage';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { AsyncFeedback } from './AsyncFeedback';
 import {
   Play,
   Square,
@@ -78,6 +79,10 @@ interface QuizQuestion {
   options: ArabicPitch[];
   correctIndex: number;
   explanation: string;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
 }
 
 // Helper initializers
@@ -254,16 +259,32 @@ export const TrainingLab: React.FC<Props> = ({
     updateWorkspaceDraft('training', { melodyTempo: tempo });
   };
 
-  const [generatedMelody, setGeneratedMelody] = useState<GeneratedMelody | null>(() => {
+  const [initialMelodyResult] = useState(() => {
     const draft = getWorkspaceState().drafts.training;
-    return MelodyGenerator.generateMelody(
-      currentMaqam,
-      draft.sightReadingDifficulty || 'level1',
-      8,
-      draft.melodyMeter || '4/4',
-      draft.melodyTempo || 90
-    );
+    try {
+      return {
+        melody: MelodyGenerator.generateMelody(
+          currentMaqam,
+          draft.sightReadingDifficulty || 'level1',
+          8,
+          draft.melodyMeter || '4/4',
+          draft.melodyTempo || 90
+        ),
+        error: null as string | null,
+      };
+    } catch (error: unknown) {
+      return {
+        melody: null,
+        error: getErrorMessage(error, 'Could not generate a practice phrase.'),
+      };
+    }
   });
+  const [generatedMelody, setGeneratedMelody] = useState<GeneratedMelody | null>(initialMelodyResult.melody);
+  const [melodyGenerationError, setMelodyGenerationError] = useState<string | null>(initialMelodyResult.error);
+  const [osmdRenderError, setOsmdRenderError] = useState<string | null>(null);
+  const [isRenderingMelody, setIsRenderingMelody] = useState(false);
+  const [renderRevision, setRenderRevision] = useState(0);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [activeMelodyStep, setActiveMelodyStep] = useState<number>(-1);
   const [isMelodyPlaying, setIsMelodyPlaying] = useState<boolean>(false);
   const [melodyCountIn, setMelodyCountIn] = useState<number | null>(null);
@@ -292,7 +313,13 @@ export const TrainingLab: React.FC<Props> = ({
     const newEar = createEarData(currentMaqam);
     setMysteryPitch(newEar.target);
     setEarOptions(newEar.options);
-    setGeneratedMelody(MelodyGenerator.generateMelody(currentMaqam, difficulty, melodyLength, melodyMeter, melodyTempo));
+    try {
+      setGeneratedMelody(MelodyGenerator.generateMelody(currentMaqam, difficulty, melodyLength, melodyMeter, melodyTempo));
+      setMelodyGenerationError(null);
+    } catch (error: unknown) {
+      setGeneratedMelody(null);
+      setMelodyGenerationError(getErrorMessage(error, 'Could not generate a practice phrase for this maqam.'));
+    }
   }
 
   // Handle clicking a note in the candidate pool
@@ -419,6 +446,7 @@ export const TrainingLab: React.FC<Props> = ({
         melodyTempo
       );
       setGeneratedMelody(melody);
+      setMelodyGenerationError(null);
       setActiveMelodyStep(-1);
       setIsMelodyPlaying(false);
       countInRunRef.current += 1;
@@ -427,8 +455,8 @@ export const TrainingLab: React.FC<Props> = ({
       MetronomeAudioEngine.stop();
       MicrotonalAudioEngine.stopSequence('training-melody');
       MicrotonalAudioEngine.stopSequence('training-reference');
-    } catch {
-      // safe
+    } catch (error: unknown) {
+      setMelodyGenerationError(getErrorMessage(error, 'Could not generate a practice phrase. Adjust the phrase settings and retry.'));
     }
   }, [currentMaqam, difficulty, melodyLength, melodyMeter, melodyTempo]);
 
@@ -441,6 +469,8 @@ export const TrainingLab: React.FC<Props> = ({
     let isMounted = true;
     const container = osmdContainerRef.current;
     container.innerHTML = '';
+    setIsRenderingMelody(true);
+    setOsmdRenderError(null);
 
     const xml = MusicXMLExporter.generatePhraseMusicXML(
       generatedMelody.title,
@@ -464,17 +494,27 @@ export const TrainingLab: React.FC<Props> = ({
       osmd.load(xml).then(() => {
         if (isMounted) {
           osmd.render();
+          setIsRenderingMelody(false);
+        }
+      }).catch((error: unknown) => {
+        if (isMounted) {
+          setOsmdRenderError(getErrorMessage(error, 'The notation renderer could not load this phrase.'));
+          setIsRenderingMelody(false);
         }
       });
-    } catch {
-      // safe
+    } catch (error: unknown) {
+      queueMicrotask(() => {
+        if (!isMounted) return;
+        setOsmdRenderError(getErrorMessage(error, 'The notation renderer could not be initialized.'));
+        setIsRenderingMelody(false);
+      });
     }
 
     return () => {
       isMounted = false;
       osmdInstanceRef.current = null;
     };
-  }, [activeMode, generatedMelody]);
+  }, [activeMode, generatedMelody, renderRevision]);
 
   // Count in before starting the metronome and melody on the same audio timestamp.
   const handlePlayMelody = async () => {
@@ -488,6 +528,7 @@ export const TrainingLab: React.FC<Props> = ({
       MetronomeAudioEngine.stop();
       setIsMelodyPlaying(false);
       setActiveMelodyStep(-1);
+      setPlaybackError(null);
       return;
     }
 
@@ -506,6 +547,7 @@ export const TrainingLab: React.FC<Props> = ({
     });
     setIsMelodyPlaying(true);
     setMelodyCountIn(4);
+    setPlaybackError(null);
     MicrotonalAudioEngine.stopSequence('training-melody');
     MetronomeAudioEngine.stop();
     MetronomeAudioEngine.setBpm(melodyTempo);
@@ -513,11 +555,13 @@ export const TrainingLab: React.FC<Props> = ({
       TIME_SIGNATURE_PRESETS.find((preset) => preset.name === melodyMeter) ?? TIME_SIGNATURE_PRESETS[0]
     );
     try {
+      await MicrotonalAudioEngine.startAudioContext();
       await MetronomeAudioEngine.startAudioContext();
-    } catch {
+    } catch (error: unknown) {
       melodySession.finish();
       setIsMelodyPlaying(false);
       setMelodyCountIn(null);
+      setPlaybackError(getErrorMessage(error, 'Audio could not start. Check browser audio permissions, then retry playback.'));
       return;
     }
     if (!melodySession.isActive() || countInRunRef.current !== countInRun) return;
@@ -538,7 +582,11 @@ export const TrainingLab: React.FC<Props> = ({
       setMelodyCountIn(null);
 
       const startTime = MetronomeAudioEngine.getAudioTime() + 0.1;
-      void MetronomeAudioEngine.start(startTime);
+      void MetronomeAudioEngine.start(startTime).catch((error: unknown) => {
+        if (!melodySession.isActive()) return;
+        melodySession.finish();
+        setPlaybackError(getErrorMessage(error, 'The metronome could not start. Retry playback after checking browser audio access.'));
+      });
       const intervalMs = (60 / melodyTempo) * 1000;
 
       MicrotonalAudioEngine.playSequence(
@@ -586,6 +634,21 @@ export const TrainingLab: React.FC<Props> = ({
   const [selectedTakeId, setSelectedTakeId] = useState<string | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
   const [recordingStorageError, setRecordingStorageError] = useState<string | null>(null);
+  const [storageRetryAction, setStorageRetryAction] = useState<(() => void) | null>(null);
+  const [recordingLoadAttempt, setRecordingLoadAttempt] = useState(0);
+
+  async function persistRecordingAction(action: () => Promise<unknown>, fallback: string) {
+    try {
+      await action();
+      setRecordingStorageError(null);
+      setStorageRetryAction(null);
+    } catch (error: unknown) {
+      setRecordingStorageError(getErrorMessage(error, fallback));
+      setStorageRetryAction(() => () => {
+        void persistRecordingAction(action, fallback);
+      });
+    }
+  }
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -637,11 +700,15 @@ export const TrainingLab: React.FC<Props> = ({
       takeNamesRef.current = takes.length;
       setRecordedTakes(takes);
       setRecordingStorageError(null);
+      setStorageRetryAction(null);
     }).catch((error: unknown) => {
-      if (!cancelled) setRecordingStorageError(error instanceof Error ? error.message : 'Could not load saved recordings.');
+      if (!cancelled) {
+        setRecordingStorageError(getErrorMessage(error, 'Could not load saved recordings.'));
+        setStorageRetryAction(() => () => setRecordingLoadAttempt((attempt) => attempt + 1));
+      }
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [recordingLoadAttempt]);
 
   // Waveform loop using stable ref
   const drawWaveformRef = useRef<() => void>(() => {});
@@ -689,6 +756,12 @@ export const TrainingLab: React.FC<Props> = ({
     audioChunksRef.current = [];
 
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Microphone recording requires a secure browser context with media-device support.');
+      }
+      if (typeof MediaRecorder === 'undefined') {
+        throw new Error('This browser does not support audio recording. Try a current version of Chrome, Firefox, or Safari.');
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!isMountedRef.current) {
         stream.getTracks().forEach((track) => track.stop());
@@ -696,6 +769,7 @@ export const TrainingLab: React.FC<Props> = ({
       }
       audioStreamRef.current = stream;
 
+      await MicrotonalAudioEngine.startAudioContext();
       const audioCtx = MicrotonalAudioEngine.getAudioContext();
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
@@ -730,9 +804,8 @@ export const TrainingLab: React.FC<Props> = ({
         takeNamesRef.current += 1;
         setRecordedTakes(prev => [newTake, ...prev]);
         setSelectedTakeId(newTake.id);
-        void RecordingStorage.put({ id, title, maqamId: currentMaqam.id, maqamName: currentMaqam.name, createdAt, durationSeconds: recordingSecondsRef.current, mimeType, blob: audioBlob })
-          .then(() => setRecordingStorageError(null))
-          .catch((error: unknown) => setRecordingStorageError(error instanceof Error ? error.message : 'Recording was created but could not be saved for future sessions.'));
+        const storedTake = { id, title, maqamId: currentMaqam.id, maqamName: currentMaqam.name, createdAt, durationSeconds: recordingSecondsRef.current, mimeType, blob: audioBlob };
+        void persistRecordingAction(() => RecordingStorage.put(storedTake), 'Recording was created but could not be saved for future sessions.');
         triggerXpGain(25);
       };
 
@@ -760,8 +833,12 @@ export const TrainingLab: React.FC<Props> = ({
         recordingSecondsRef.current += 1;
         setRecordingSeconds(recordingSecondsRef.current);
       }, 1000);
-    } catch {
-      setMicError('Microphone access was denied or is unavailable on this device.');
+    } catch (error: unknown) {
+      audioStreamRef.current?.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+      setMicError(error instanceof DOMException && error.name === 'NotAllowedError'
+        ? 'Microphone permission was denied. Allow microphone access in this site’s browser settings, then retry.'
+        : getErrorMessage(error, 'Microphone access is unavailable. Check permissions and device settings, then retry.'));
     }
   };
 
@@ -790,9 +867,8 @@ export const TrainingLab: React.FC<Props> = ({
     if (!title || title === take.title) return;
     const updated = { ...take, title };
     setRecordedTakes((takes) => takes.map((item) => item.id === take.id ? updated : item));
-    void RecordingStorage.put({ id: take.id, title, maqamId: take.maqamId, maqamName: take.maqamName, createdAt: take.createdAt, durationSeconds: take.durationSeconds, mimeType: take.mimeType, blob: take.blob })
-      .then(() => setRecordingStorageError(null))
-      .catch((error: unknown) => setRecordingStorageError(error instanceof Error ? error.message : 'Could not save the new recording title.'));
+    const updatedTake = { id: take.id, title, maqamId: take.maqamId, maqamName: take.maqamName, createdAt: take.createdAt, durationSeconds: take.durationSeconds, mimeType: take.mimeType, blob: take.blob };
+    void persistRecordingAction(() => RecordingStorage.put(updatedTake), 'Could not save the new recording title.');
   };
 
   const deleteTake = (take: RecordedTake) => {
@@ -806,19 +882,21 @@ export const TrainingLab: React.FC<Props> = ({
     takeObjectUrlsRef.current.delete(take.url);
     setRecordedTakes((takes) => takes.filter((item) => item.id !== take.id));
     setSelectedTakeId((selected) => selected === take.id ? null : selected);
-    void RecordingStorage.delete(take.id)
-      .then(() => setRecordingStorageError(null))
-      .catch((error: unknown) => setRecordingStorageError(error instanceof Error ? error.message : 'Could not delete the recording from storage.'));
+    void persistRecordingAction(() => RecordingStorage.delete(take.id), 'Could not delete the recording from storage.');
   };
 
   const selectedTake = recordedTakes.find(t => t.id === selectedTakeId);
 
-  const handleTogglePlayTake = () => {
+  const handleTogglePlayTake = async () => {
     if (!selectedTake) return;
 
     if (!takeAudioRef.current) {
       takeAudioRef.current = new Audio(selectedTake.url);
       takeAudioRef.current.onended = () => setIsPlayingTake(false);
+      takeAudioRef.current.onerror = () => {
+        setIsPlayingTake(false);
+        setPlaybackError('The saved take could not be decoded or played by this browser.');
+      };
     } else if (takeAudioRef.current.src !== selectedTake.url) {
       takeAudioRef.current.src = selectedTake.url;
     }
@@ -827,8 +905,14 @@ export const TrainingLab: React.FC<Props> = ({
       takeAudioRef.current.pause();
       setIsPlayingTake(false);
     } else {
-      takeAudioRef.current.play();
-      setIsPlayingTake(true);
+      try {
+        await takeAudioRef.current.play();
+        setPlaybackError(null);
+        setIsPlayingTake(true);
+      } catch (error: unknown) {
+        setIsPlayingTake(false);
+        setPlaybackError(getErrorMessage(error, 'The saved take could not be played.'));
+      }
     }
   };
 
@@ -936,6 +1020,7 @@ export const TrainingLab: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setActiveMode('memorization')}
+            aria-pressed={activeMode === 'memorization'}
             className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
               activeMode === 'memorization'
                 ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
@@ -949,6 +1034,7 @@ export const TrainingLab: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setActiveMode('sightreading')}
+            aria-pressed={activeMode === 'sightreading'}
             className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
               activeMode === 'sightreading'
                 ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
@@ -962,6 +1048,7 @@ export const TrainingLab: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => setActiveMode('recording')}
+            aria-pressed={activeMode === 'recording'}
             className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
               activeMode === 'recording'
                 ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
@@ -1054,10 +1141,13 @@ export const TrainingLab: React.FC<Props> = ({
                       const isWrong = builderValidated && (!slotPitch || (correctTarget && !slotPitch.equals(correctTarget)));
 
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={idx}
+                          disabled={isRoot}
+                          aria-label={isRoot ? `Degree ${idx + 1}, fixed qarar ${slotPitch?.toString() ?? ''}` : slotPitch ? `Remove ${slotPitch.toString()} from degree ${idx + 1}` : `Degree ${idx + 1}, empty slot`}
                           onClick={() => handleRemoveSlot(idx)}
-                          className={`p-3 rounded-xl border flex flex-col items-center justify-center min-h-[90px] transition-all cursor-pointer select-none relative ${
+                          className={`p-3 rounded-xl border flex flex-col items-center justify-center min-h-22.5 transition-all cursor-pointer select-none relative disabled:cursor-default ${
                             isCorrect
                               ? 'bg-emerald-500/15 border-emerald-500/70 text-emerald-400 shadow-sm'
                               : isWrong
@@ -1091,7 +1181,7 @@ export const TrainingLab: React.FC<Props> = ({
                               Qarar (Root)
                             </Badge>
                           )}
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -1146,6 +1236,7 @@ export const TrainingLab: React.FC<Props> = ({
                       <button
                         key={idx}
                         type="button"
+                        aria-label={`Add ${p.toString()} to the scale ladder`}
                         onClick={() => handleSelectPoolNote(p)}
                         className="p-2.5 rounded-xl bg-card border border-border hover:border-amber-500 hover:bg-amber-500/10 text-foreground transition flex flex-col items-center justify-center cursor-pointer shadow-xs active:scale-95"
                       >
@@ -1472,9 +1563,23 @@ export const TrainingLab: React.FC<Props> = ({
               </div>
 
               {/* Sheet Music Notation Display (OpenSheetMusicDisplay) */}
-              <div className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-[160px] flex items-center justify-center overflow-x-auto">
-                <div ref={osmdContainerRef} className="w-full flex justify-center" />
+                      <div className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-40 flex items-center justify-center overflow-x-auto" aria-busy={isRenderingMelody}>
+                        {isRenderingMelody && <AsyncFeedback kind="loading" title="Rendering sight-reading notation" className="absolute inset-x-3 top-3 z-10 flex items-center justify-center gap-2 rounded-lg bg-white/95 p-2 text-xs text-slate-700" />}
+                        <div ref={osmdContainerRef} className="w-full flex justify-center" />
+                        {osmdRenderError && (
+                          <AsyncFeedback
+                            kind="error"
+                            title="Notation unavailable"
+                            description={<>You can still practice from the note guide below. {osmdRenderError}</>}
+                            action={{ label: "Retry notation", onClick: () => setRenderRevision((revision) => revision + 1) }}
+                            className="absolute inset-x-3 bottom-3 z-10"
+                          />
+                        )}
               </div>
+
+                      {melodyGenerationError && (
+                        <AsyncFeedback kind="error" title="Melody generation failed" description={melodyGenerationError} action={{ label: "Retry generation", onClick: handleGenerateMelody }} />
+                      )}
 
               {/* Note-by-Note Interactive Guided Practice Strip */}
               {generatedMelody && (
@@ -1495,8 +1600,11 @@ export const TrainingLab: React.FC<Props> = ({
                       const violinHint = ViolinErgonomicsEngine.mapPitchToPosition(n.pitch, 1);
 
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={idx}
+                          aria-label={`Play ${n.pitch.toString()}, violin string ${violinHint.string}, finger ${violinHint.finger}`}
+                          aria-pressed={isActive}
                           onClick={() => MicrotonalAudioEngine.playPitch(n.pitch, 0.6, timbre)}
                           className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer select-none ${
                             isActive
@@ -1511,7 +1619,7 @@ export const TrainingLab: React.FC<Props> = ({
                           <div className="text-[10px] font-semibold text-muted-foreground mt-0.5">
                             {violinHint.string}-Str, F{violinHint.finger}
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -1547,7 +1655,9 @@ export const TrainingLab: React.FC<Props> = ({
                     variant="outline"
                     onClick={() => {
                       MetronomeAudioEngine.setBpm(melodyTempo);
-                      void MetronomeAudioEngine.start();
+                      void MetronomeAudioEngine.start().catch((error: unknown) => {
+                        setPlaybackError(getErrorMessage(error, 'The metronome could not start. Check browser audio access, then retry.'));
+                      });
                     }}
                     disabled={isMelodyPlaying}
                     className="gap-2 cursor-pointer"
@@ -1577,6 +1687,9 @@ export const TrainingLab: React.FC<Props> = ({
                   <span>Download MusicXML 4.0</span>
                 </Button>
               </div>
+              {playbackError && (
+                <AsyncFeedback kind="error" title="Playback failed" description={playbackError} action={{ label: "Retry playback", onClick: () => void handlePlayMelody() }} />
+              )}
             </CardContent>
           </Card>
         </div>
@@ -1605,12 +1718,14 @@ export const TrainingLab: React.FC<Props> = ({
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Mic error notice */}
-              {recordingStorageError && <div role="status" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">{recordingStorageError}</div>}
+              {recordingStorageError && (
+                <AsyncFeedback kind="error" title="Recording storage failed" description={recordingStorageError} action={storageRetryAction ? { label: "Retry storage", onClick: storageRetryAction } : undefined} />
+              )}
               {micError && (
-                <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/50 text-red-300 text-xs flex items-center gap-2">
-                  <XCircle className="w-4 h-4 shrink-0" />
-                  <span>{micError}</span>
-                </div>
+                <AsyncFeedback kind="error" title="Microphone unavailable" description={micError} action={{ label: "Retry microphone", onClick: () => void startRecording() }} />
+              )}
+              {playbackError && (
+                <AsyncFeedback kind="error" title="Take playback failed" description={playbackError} action={selectedTake ? { label: "Retry playback", onClick: () => void handleTogglePlayTake() } : undefined} />
               )}
 
               {/* Live Recording Console */}
@@ -1621,6 +1736,7 @@ export const TrainingLab: React.FC<Props> = ({
                     ref={canvasRef}
                     width={500}
                     height={96}
+                    aria-label="Live recording waveform"
                     className="w-full h-full"
                   />
                   {!isRecording && (
@@ -1631,7 +1747,7 @@ export const TrainingLab: React.FC<Props> = ({
                 </div>
 
                 {/* Live Timer */}
-                <div className="font-mono text-3xl font-black text-foreground flex items-center gap-2">
+                <div className="font-mono text-3xl font-black text-foreground flex items-center gap-2" role="timer" aria-live="off" aria-label={`Recording duration ${formatTime(recordingSeconds)}`}>
                   {isRecording && <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />}
                   <span>{formatTime(recordingSeconds)}</span>
                 </div>
@@ -1676,19 +1792,18 @@ export const TrainingLab: React.FC<Props> = ({
                       {recordedTakes.map((take) => (
                         <div
                           key={take.id}
-                          onClick={() => setSelectedTakeId(take.id)}
-                          className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                          className={`p-3 rounded-xl border flex items-center justify-between transition ${
                             selectedTakeId === take.id
                               ? 'bg-amber-500/15 border-amber-500/70 text-foreground font-semibold shadow-xs'
                               : 'bg-muted/30 border-border text-muted-foreground hover:bg-muted/60'
                           }`}
                         >
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex min-w-0 items-center gap-2.5">
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              aria-label={`${selectedTakeId === take.id && isPlayingTake ? 'Stop' : 'Play'} ${take.title}`}
+                              onClick={() => {
                                 setSelectedTakeId(take.id);
                                 if (takeAudioRef.current) takeAudioRef.current.pause();
                                 takeAudioRef.current = new Audio(take.url);
@@ -1703,27 +1818,33 @@ export const TrainingLab: React.FC<Props> = ({
                                 <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                               )}
                             </Button>
-                            <div>
-                              <div className="text-xs font-bold text-foreground">{take.title}</div>
-                              <div className="text-[10px] text-muted-foreground">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTakeId(take.id)}
+                              aria-pressed={selectedTakeId === take.id}
+                              aria-label={`Select recording ${take.title}`}
+                              className="min-w-0 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2"
+                            >
+                              <span className="block truncate text-xs font-bold text-foreground">{take.title}</span>
+                              <span className="block text-[10px] text-muted-foreground">
                                 {take.timestamp} • Duration: {formatTime(take.durationSeconds)}
-                              </div>
-                            </div>
+                              </span>
+                            </button>
                           </div>
 
                           <div className="flex items-center gap-1">
-                            <Button size="icon" variant="ghost" aria-label={`Rename ${take.title}`} title="Rename recording" onClick={(e) => { e.stopPropagation(); renameTake(take); }} className="h-8 w-8">
+                            <Button size="icon" variant="ghost" aria-label={`Rename ${take.title}`} title="Rename recording" onClick={() => renameTake(take)} className="h-8 w-8">
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" aria-label={`Delete ${take.title}`} title="Delete recording" onClick={(e) => { e.stopPropagation(); deleteTake(take); }} className="h-8 w-8 text-red-400 hover:text-red-300">
+                            <Button size="icon" variant="ghost" aria-label={`Delete ${take.title}`} title="Delete recording" onClick={() => deleteTake(take)} className="h-8 w-8 text-red-400 hover:text-red-300">
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           <a
                             href={take.url}
                             download={`${take.title}.${take.mimeType.includes("ogg") ? "ogg" : take.mimeType.includes("mp4") ? "m4a" : take.mimeType.includes("webm") ? "webm" : "audio"}`}
-                            onClick={(e) => e.stopPropagation()}
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition"
                             title="Download audio recording"
+                            aria-label={`Download ${take.title}`}
                           >
                             <Download className="w-4 h-4" />
                           </a>
@@ -1848,7 +1969,7 @@ export const TrainingLab: React.FC<Props> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-90 overflow-y-auto pr-1">
               {badges.map((b) => (
                 <div
                   key={b.id}

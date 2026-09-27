@@ -5,6 +5,8 @@ export interface TransportSessionStatus {
 
 export interface AudioTransportStatus {
   audioContextReady: boolean;
+  audioStarting: boolean;
+  audioStartupError: string | null;
   activeSessions: TransportSessionStatus[];
 }
 
@@ -34,10 +36,13 @@ export class AudioTransport {
   private static nextSessionId = 1;
   private static audioContextReady = false;
   private static audioStartup: Promise<void> | null = null;
+  private static audioStartupError: string | null = null;
 
   public static getStatus(): AudioTransportStatus {
     return {
       audioContextReady: this.audioContextReady,
+      audioStarting: this.audioStartup !== null,
+      audioStartupError: this.audioStartupError,
       activeSessions: Array.from(this.sessions.values(), ({ scope, activity }) => ({
         scope,
         activity,
@@ -60,24 +65,40 @@ export class AudioTransport {
     if (this.audioContextReady && (!isReady || isReady())) return Promise.resolve();
     if (this.audioContextReady) {
       this.audioContextReady = false;
-      this.publish();
     }
     if (this.audioStartup) return this.audioStartup;
 
-    this.audioStartup = start()
+    this.audioStartupError = null;
+    let startupPromise: Promise<void>;
+    try {
+      startupPromise = start();
+    } catch (error: unknown) {
+      this.audioContextReady = false;
+      this.audioStartupError = error instanceof Error ? error.message : String(error);
+      this.publish();
+      return Promise.reject(error);
+    }
+
+    this.audioStartup = startupPromise
       .then(() => {
         this.audioContextReady = true;
+        this.audioStartupError = null;
         this.publish();
       })
       .catch((error: unknown) => {
         this.audioContextReady = false;
+        this.audioStartupError = error instanceof Error
+          ? error.message
+          : String(error);
         this.publish();
         throw error;
       })
       .finally(() => {
         this.audioStartup = null;
+        this.publish();
       });
 
+    this.publish();
     return this.audioStartup;
   }
 

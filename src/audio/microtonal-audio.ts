@@ -164,11 +164,15 @@ export class MicrotonalAudioEngine {
     , () => Tone.context.state === 'running');
   }
 
+  private static requestAudioContext(): void {
+    void this.startAudioContext().catch(() => {});
+  }
+
   /**
    * Compatibility accessor returning the raw AudioContext.
    */
   public static getAudioContext(): AudioContext {
-    this.startAudioContext();
+    this.requestAudioContext();
     return Tone.getContext().rawContext as AudioContext;
   }
 
@@ -189,7 +193,7 @@ export class MicrotonalAudioEngine {
    * Controls master volume (0.0 to 1.0).
    */
   public static setMasterVolume(vol: number): void {
-    this.startAudioContext();
+    this.requestAudioContext();
     if (this.masterGain) {
       const clamped = Math.max(0, Math.min(1, vol));
       this.masterGain.gain.rampTo(clamped, 0.05);
@@ -200,7 +204,7 @@ export class MicrotonalAudioEngine {
    * Controls master reverb wetness (0.0 to 1.0).
    */
   public static setReverbWet(wet: number): void {
-    this.startAudioContext();
+    this.requestAudioContext();
     if (this.masterReverb) {
       this.masterReverb.wet.value = Math.max(0, Math.min(1, wet));
     }
@@ -215,7 +219,7 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = 'violin',
     velocity: number = 0.7
   ): void {
-    this.startAudioContext();
+    this.requestAudioContext();
     const freq = pitch.toFrequency(this.referenceA4);
     const now = Tone.now();
 
@@ -243,7 +247,7 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = 'violin',
     velocity: number = 0.7
   ): void {
-    this.startAudioContext();
+    this.requestAudioContext();
     const now = Tone.now();
 
     try {
@@ -272,7 +276,7 @@ export class MicrotonalAudioEngine {
     scope: string = 'microtonal-sequence'
   ): void {
     this.stopSequence(scope);
-    this.startAudioContext();
+    this.requestAudioContext();
 
     if (pitches.length === 0) {
       if (onComplete) onComplete();
@@ -327,7 +331,7 @@ export class MicrotonalAudioEngine {
    * Continuous background drone (Qarar / Tanpura) on the Maqam root note.
    */
   public static toggleDrone(pitch: ArabicPitch, enable: boolean): void {
-    this.startAudioContext();
+    this.requestAudioContext();
 
     if (!enable) {
       const session = this.droneSession;

@@ -26,12 +26,15 @@ import {
   PopoverTrigger,
 } from './ui/popover';
 import { getWorkspaceState, updateWorkspaceGlobal } from '../state/workspace-state';
+import { AsyncFeedback } from './AsyncFeedback';
+import { useLanguage } from '../state/language';
 
 interface MetronomeProps {
   className?: string;
 }
 
 export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
+  const { t } = useLanguage();
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [bpm, setBpm] = useState<number>(() => getWorkspaceState().global.metronome.bpm);
   const [timeSignature, setTimeSignature] = useState<TimeSignatureOption>(() => {
@@ -46,6 +49,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
   const [isAccent, setIsAccent] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isTapping, setIsTapping] = useState<boolean>(false);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
   
   void className; // unused prop for now, but can be used for styling
   // Pendulum swing angle state (-28 to +28 degrees)
@@ -146,7 +150,13 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
 
   const togglePlayback = useCallback(async (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    await MetronomeAudioEngine.toggle();
+    try {
+      await MetronomeAudioEngine.toggle();
+      setPlaybackError(null);
+    } catch (error: unknown) {
+      setPlaybackError(error instanceof Error ? error.message : 'Audio could not start. Check browser audio permissions, then retry.');
+      setIsOpen(true);
+    }
   }, []);
 
   // Tap Tempo Handler
@@ -317,6 +327,15 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
         align="end"
         className="flex w-[min(calc(100vw-1rem),42rem)] max-h-[calc(100dvh-1rem)] flex-col gap-0 overflow-hidden rounded-xl border border-border bg-popover p-0 text-popover-foreground shadow-lg"
       >
+        {playbackError && (
+          <AsyncFeedback
+            kind="error"
+            title={t("audioStartupFailed")}
+            description={playbackError}
+            action={{ label: t("retryAudio"), onClick: () => void togglePlayback() }}
+            className="m-3"
+          />
+        )}
         <div className="flex items-center justify-between border-b border-border p-4 pb-3">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-500">

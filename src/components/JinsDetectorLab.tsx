@@ -1,6 +1,6 @@
 // src/components/JinsDetectorLab.tsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArabicPitch,type DiatonicBase,type MicrotonalAccidental } from '../core/pitch';
+import { ArabicPitch, getAccidentalLabel, type DiatonicBase, type MicrotonalAccidental } from '../core/pitch';
 import { identifyJins } from '../theory/jins-detector';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
 import { ArabicNoteSpine } from '../core/note-spine';
@@ -13,6 +13,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { useLanguage } from '../state/language';
 import {
   Play,
   Square,
@@ -36,6 +37,7 @@ interface PhrasePreset {
 }
 
 export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
+  const { language, t } = useLanguage();
   useEffect(() => () => MicrotonalAudioEngine.stopSequence('jins-detector'), []);
 
   // Preset catalog of authentic melodic phrases
@@ -393,9 +395,12 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                 const isQuarter = p.accidental === '𝄳' || p.accidental === '𝄵';
 
                 return (
-                  <div
-                    key={idx}
-                    className={`relative group flex flex-col items-center p-2 rounded-xl border transition-all cursor-pointer ${
+                  <div key={idx} className="relative group">
+                    <button
+                      type="button"
+                      aria-label={`${t('play')} ${p.toString()} ${t('atFrequency')} ${p.toFrequency().toFixed(1)} Hz${isLast ? `, ${t('cadence')}` : isFirst ? `, ${t('phraseStart')}` : ''}`}
+                      aria-pressed={isActive}
+                      className={`relative flex min-w-18 flex-col items-center p-2 rounded-xl border transition-all ${
                       isActive
                         ? 'bg-amber-400 text-slate-950 border-amber-300 ring-4 ring-amber-400/40 scale-110 shadow-xl z-20'
                         : isLast
@@ -405,9 +410,9 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                         : isQuarter
                         ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                         : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
-                    }`}
-                    onClick={() => MicrotonalAudioEngine.playPitch(p, 0.6, timbre)}
-                  >
+                      }`}
+                      onClick={() => MicrotonalAudioEngine.playPitch(p, 0.6, timbre)}
+                    >
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-bold font-mono">
                         {p.toScientificString()}
@@ -432,14 +437,16 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                         Start
                       </span>
                     )}
+                    </button>
 
                     {/* Delete button on hover */}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      type="button"
+                      onClick={() => {
                         handleRemoveNote(idx);
                       }}
-                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"
+                      aria-label={`${t('removePhrasePitch')} ${p.toString()} ${t('fromPhrase')}`}
+                      className="absolute -top-1.5 inset-e-1.5 size-4 rounded-full bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition shadow"
                       title="Remove note"
                     >
                       &times;
@@ -477,6 +484,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                 <button
                   key={idx}
                   onClick={() => handleQuickAdd(p)}
+                  aria-label={`${t('addPitch')} ${p.toString()} ${t('toPhrase')}`}
                   className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer hover:scale-105 ${
                     p.accidental === '𝄳' || p.accidental === '𝄵'
                       ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
@@ -489,17 +497,17 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
             </div>
           </div>
 
-          {/* Custom Note Builder */}
           <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-xs font-bold text-white uppercase tracking-wider">Note Builder:</span>
 
               {/* Diatonic */}
-              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
+              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800" role="group" aria-label="Select diatonic note">
                 {(['C', 'D', 'E', 'F', 'G', 'A', 'B'] as DiatonicBase[]).map((d) => (
                   <button
                     key={d}
                     onClick={() => setBuilderDiatonic(d)}
+                    aria-pressed={builderDiatonic === d}
                     className={`px-2 py-1 rounded text-xs font-mono font-bold cursor-pointer transition ${
                       builderDiatonic === d
                         ? 'bg-amber-500 text-slate-950 shadow'
@@ -512,17 +520,20 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
               </div>
 
               {/* Accidental */}
-              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
+              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800" role="group" aria-label="Select accidental">
                 {([
-                  { acc: '♭', label: '♭ Flat' },
-                  { acc: '𝄳', label: '𝄳 Quarter-Flat' },
-                  { acc: '♮', label: '♮ Natural' },
-                  { acc: '𝄵', label: '𝄵 Quarter-Sharp' },
-                  { acc: '♯', label: '♯ Sharp' }
-                ] as { acc: MicrotonalAccidental; label: string }[]).map((item) => (
+                  { acc: '♭' },
+                  { acc: '𝄳' },
+                  { acc: '♮' },
+                  { acc: '𝄵' },
+                  { acc: '♯' }
+                ] as { acc: MicrotonalAccidental }[]).map((item) => (
                   <button
                     key={item.acc}
                     onClick={() => setBuilderAccidental(item.acc)}
+                    aria-label={`${item.acc} ${getAccidentalLabel(item.acc, language)}`}
+                    aria-pressed={builderAccidental === item.acc}
+                    title={`${item.acc} ${getAccidentalLabel(item.acc, language)}`}
                     className={`px-2.5 py-1 rounded text-xs font-bold cursor-pointer transition ${
                       builderAccidental === item.acc
                         ? 'bg-amber-500 text-slate-950 shadow'
@@ -535,11 +546,12 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
               </div>
 
               {/* Octave */}
-              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
+              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800" role="group" aria-label="Select octave">
                 {[3, 4, 5].map((oct) => (
                   <button
                     key={oct}
                     onClick={() => setBuilderOctave(oct)}
+                    aria-pressed={builderOctave === oct}
                     className={`px-2.5 py-1 rounded text-xs font-mono font-bold cursor-pointer transition ${
                       builderOctave === oct
                         ? 'bg-amber-500 text-slate-950 shadow'

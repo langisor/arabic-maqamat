@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
+import { useLanguage } from '../state/language';
 import {
   Download,
   Smartphone,
@@ -11,7 +13,6 @@ import {
   WifiOff,
   CheckCircle2,
   RefreshCw,
-  X,
   ShieldCheck
 } from 'lucide-react';
 
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'compact' }) => {
+  const { t } = useLanguage();
   const {
     canInstall,
     isInstalled,
@@ -35,16 +37,17 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
   const [installedNotice, setInstalledNotice] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
   const [onlineAlert, setOnlineAlert] = useState<string | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
 
   // Monitor connectivity transitions
   useEffect(() => {
     let timer: number | null = null;
     const handleOnline = () => {
-      setOnlineAlert('Back Online: Cloud connections restored');
+      setOnlineAlert(t('backOnline'));
       timer = window.setTimeout(() => setOnlineAlert(null), 3500);
     };
     const handleOffline = () => {
-      setOnlineAlert('Offline Mode: Using cached 24-EDO assets & Tone.js synthesis');
+      setOnlineAlert(t('offlineMode'));
     };
 
     window.addEventListener('online', handleOnline);
@@ -55,18 +58,23 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
       window.removeEventListener('offline', handleOffline);
       if (timer) window.clearTimeout(timer);
     };
-  }, []);
+  }, [t]);
 
   const handleClick = async () => {
+    setInstallError(null);
     if (isIOS) {
       setShowIOSModal(true);
       return;
     }
 
-    const success = await promptInstall();
-    if (success) {
-      setInstalledNotice(true);
-      setTimeout(() => setInstalledNotice(false), 4000);
+    try {
+      const success = await promptInstall();
+      if (success) {
+        setInstalledNotice(true);
+        setTimeout(() => setInstalledNotice(false), 4000);
+      }
+    } catch {
+      setInstallError(t('installFailed'));
     }
   };
 
@@ -83,21 +91,21 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
           <Badge
             variant="destructive"
             className="text-[10px] px-2 py-0.5 gap-1 font-semibold animate-pulse"
-            title="Running in offline mode with cached 24-EDO assets and service worker"
+            title={t('offlineMode')}
             role="status"
             aria-live="polite"
           >
             <WifiOff className="w-3 h-3" />
-            <span>Offline</span>
+            <span>{t('offline')}</span>
           </Badge>
         ) : isServiceWorkerReady ? (
           <Badge
             variant="secondary"
             className="text-[10px] px-1.5 py-0.5 gap-1 font-medium hidden xl:inline-flex text-muted-foreground bg-muted/50 border-border"
-            title="Service Worker active: App shell, audio synthesis & assets cached for offline use"
+            title={t('cachedOffline')}
           >
             <ShieldCheck className="w-3 h-3 text-emerald-500" />
-            <span>Cached Offline</span>
+            <span>{t('cachedOffline')}</span>
           </Badge>
         ) : null}
 
@@ -109,11 +117,11 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
             onClick={handleReload}
             disabled={isReloading}
             className="gap-1.5 h-8 px-2.5 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer shadow-md animate-bounce"
-            title="New version available. Click to reload and apply latest updates."
-            aria-label="Update available, reload app"
+            title={t('updateReady')}
+            aria-label={t('updateReady')}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isReloading ? 'animate-spin' : ''}`} />
-            <span>{isReloading ? 'Reloading...' : 'Update Ready'}</span>
+            <span>{isReloading ? `${t('reloading')}...` : t('updateReady')}</span>
           </Button>
         )}
 
@@ -124,29 +132,30 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
             size="sm"
             onClick={handleClick}
             className="gap-1.5 h-8 px-2.5 text-xs font-bold border-amber-500/50 hover:border-amber-400 bg-amber-500/10 text-amber-500 hover:text-amber-400 cursor-pointer shadow-xs"
-            title="Install Arabic Maqamat as a native Progressive Web App (PWA)"
-            aria-label="Install Arabic Maqamat app"
+            title={t('installApp')}
+            aria-label={t('installApp')}
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{variant === 'full' ? 'Install App (PWA)' : 'Install'}</span>
+            <span>{variant === 'full' ? t('installApp') : t('install')}</span>
           </Button>
         )}
 
         {/* Success Notice */}
         {installedNotice && (
-          <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/40">
+          <Badge variant="secondary" role="status" aria-live="polite" className="text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/40">
             <CheckCircle2 className="w-3 h-3 mr-1" />
-            Installed!
+            {t('installed')}!
           </Badge>
         )}
+        {installError && <span role="alert" className="basis-full text-xs text-destructive">{installError}</span>}
       </div>
 
       {/* Floating Connectivity Banner (transient) */}
-      {onlineAlert && !isOnline && (
+      {onlineAlert && (
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-xl border border-amber-500/50 bg-slate-900/95 px-3.5 py-2 text-xs text-amber-200 shadow-xl backdrop-blur-md"
+          className="fixed bottom-4 inset-s-4 z-50 flex items-center gap-2 rounded-xl border border-amber-500/50 bg-slate-900/95 px-3.5 py-2 text-xs text-amber-200 shadow-xl backdrop-blur-md"
         >
           <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
           <span>{onlineAlert}</span>
@@ -154,33 +163,18 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
       )}
 
       {/* iOS Installation Instructions Modal */}
-      {showIOSModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="ios-install-title"
-        >
-          <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-5 text-foreground space-y-4">
+      <Dialog open={showIOSModal} onOpenChange={setShowIOSModal}>
+          <DialogContent className="max-w-sm space-y-4 p-5">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
                   <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 id="ios-install-title" className="text-sm font-bold text-foreground">
-                    Install on iOS (iPhone / iPad)
-                  </h4>
-                  <p className="text-[10px] text-muted-foreground">Add to Home Screen for offline standalone play</p>
+                  <DialogTitle className="text-sm font-bold text-foreground">{t('iosInstallTitle')}</DialogTitle>
+                  <DialogDescription className="text-[10px] text-muted-foreground">{t('iosInstallDescription')}</DialogDescription>
                 </div>
               </div>
-              <button
-                onClick={() => setShowIOSModal(false)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer"
-                aria-label="Close installation guide"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             <div className="space-y-3 text-xs">
@@ -189,11 +183,11 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
                   1
                 </div>
                 <div>
-                  <span className="font-semibold text-foreground">Tap the Share button</span>
+                  <span className="font-semibold text-foreground">{t('tapShare')}</span>
                   <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
-                    <span>Look for</span>
+                    <span>{t('lookFor')}</span>
                     <Share className="w-3.5 h-3.5 text-amber-400 inline" />
-                    <span>in your Safari toolbar at bottom or top.</span>
+                    <span>{t('safariToolbar')}</span>
                   </div>
                 </div>
               </div>
@@ -203,11 +197,11 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
                   2
                 </div>
                 <div>
-                  <span className="font-semibold text-foreground">Select &quot;Add to Home Screen&quot;</span>
+                  <span className="font-semibold text-foreground">{t('addHomeScreen')}</span>
                   <div className="flex items-center gap-1.5 text-muted-foreground mt-0.5">
-                    <span>Scroll down and tap</span>
+                    <span>{t('scrollTap')}</span>
                     <PlusSquare className="w-3.5 h-3.5 text-amber-400 inline" />
-                    <span className="font-arabic" dir="rtl">(إضافة إلى الشاشة الرئيسية)</span>
+                    <span className="font-arabic" lang="ar" dir="rtl">(إضافة إلى الشاشة الرئيسية)</span>
                   </div>
                 </div>
               </div>
@@ -217,9 +211,9 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
                   3
                 </div>
                 <div>
-                  <span className="font-semibold text-foreground">Launch Offline Anytime</span>
+                  <span className="font-semibold text-foreground">{t('launchOffline')}</span>
                   <p className="text-muted-foreground mt-0.5">
-                    The app will launch full-screen with offline caching, Tone.js synthesis, and instant touch responsiveness.
+                    {t('iosOfflineDescription')}
                   </p>
                 </div>
               </div>
@@ -230,12 +224,11 @@ export const PWAInstallButton: React.FC<Props> = ({ className = '', variant = 'c
                 onClick={() => setShowIOSModal(false)}
                 className="w-full bg-amber-500 text-slate-950 font-bold hover:bg-amber-400"
               >
-                Got it
+                {t('gotIt')}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
     </>
   );
 };

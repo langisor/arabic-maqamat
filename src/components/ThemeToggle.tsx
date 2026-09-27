@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from './theme-provider';
 import { Sun, Moon, Monitor } from 'lucide-react';
+import { useLanguage } from '../state/language';
 
 interface ThemeToggleProps {
   className?: string;
@@ -8,6 +9,8 @@ interface ThemeToggleProps {
 
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
+  const themeLabel = theme === 'light' ? t('themeLight') : theme === 'dark' ? t('themeDark') : t('themeAuto');
 
   const toggleSingle = () => {
     if (theme === 'dark') {
@@ -30,8 +33,8 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
         type="button"
         onClick={toggleSingle}
         className="sm:hidden p-1.5 sm:p-2 rounded-xl bg-muted/60 dark:bg-slate-900 border border-border text-foreground hover:border-amber-500/50 hover:bg-muted transition cursor-pointer flex items-center justify-center shadow-xs"
-        title={`Theme: ${theme}. Click to switch theme.`}
-        aria-label={`Toggle theme (current: ${theme})`}
+        title={`${t('toggleTheme')} (${t('currentTheme')}: ${themeLabel})`}
+        aria-label={`${t('toggleTheme')} (${t('currentTheme')}: ${themeLabel})`}
       >
         {theme === 'light' ? (
           <Sun className="w-3.5 h-3.5 text-amber-500 transition-transform duration-200" />
@@ -45,52 +48,55 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
       {/* Tablet & Desktop Segmented 3-Way Control (Light / Dark / Auto) */}
       <div
         role="group"
-        aria-label="Theme selection"
+        aria-label={t('themeSelection')}
         className="hidden sm:inline-flex items-center bg-muted/60 dark:bg-slate-900 p-0.5 rounded-xl border border-border text-[11px] sm:text-xs shadow-xs"
       >
         <button
           type="button"
           onClick={() => setTheme('light')}
+          aria-pressed={theme === 'light'}
           className={`px-2 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 font-medium ${
             theme === 'light'
               ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
           }`}
-          title="Light theme"
-          aria-label="Set light theme"
+          title={t('themeLight')}
+          aria-label={t('themeLight')}
         >
           <Sun className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden xl:inline text-[11px]">Light</span>
+          <span className="hidden xl:inline text-[11px]">{t('themeLight')}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setTheme('dark')}
+          aria-pressed={theme === 'dark'}
           className={`px-2 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 font-medium ${
             theme === 'dark'
               ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
           }`}
-          title="Dark theme (Keyboard: D)"
-          aria-label="Set dark theme"
+          title={`${t('themeDark')} (D)`}
+          aria-label={t('themeDark')}
         >
           <Moon className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden xl:inline text-[11px]">Dark</span>
+          <span className="hidden xl:inline text-[11px]">{t('themeDark')}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setTheme('system')}
+          aria-pressed={theme === 'system'}
           className={`px-2 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1 font-medium ${
             theme === 'system'
               ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
           }`}
-          title="System Auto theme"
-          aria-label="Set system theme"
+          title={t('themeAuto')}
+          aria-label={t('themeAuto')}
         >
           <Monitor className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden xl:inline text-[11px]">Auto</span>
+          <span className="hidden xl:inline text-[11px]">{t('themeAuto')}</span>
         </button>
       </div>
     </div>

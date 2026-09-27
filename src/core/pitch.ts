@@ -11,6 +11,20 @@ export type MicrotonalAccidental =
   | '♯'   // sharp (+2 quarter tones / +100 cents)
   | '𝄪';  // double sharp (+4 quarter tones / +200 cents)
 
+const ACCIDENTAL_LABELS: Record<MicrotonalAccidental, { en: string; ar: string }> = {
+  '𝄫': { en: 'double flat', ar: 'خفض مزدوج' },
+  '♭': { en: 'flat', ar: 'بيمول' },
+  '𝄳': { en: 'quarter-tone flat', ar: 'خفض ربع نغمة' },
+  '♮': { en: 'natural', ar: 'طبيعي' },
+  '𝄵': { en: 'quarter-tone sharp', ar: 'رفع ربع نغمة' },
+  '♯': { en: 'sharp', ar: 'دييز' },
+  '𝄪': { en: 'double sharp', ar: 'رفع مزدوج' }
+};
+
+export function getAccidentalLabel(accidental: MicrotonalAccidental, language: 'en' | 'ar' = 'en'): string {
+  return ACCIDENTAL_LABELS[accidental][language];
+}
+
 export interface PitchConfig {
   readonly diatonic: DiatonicBase;
   readonly accidental: MicrotonalAccidental;
