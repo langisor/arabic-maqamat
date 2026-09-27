@@ -92,6 +92,7 @@ export default function App() {
   })
 
   const [currentMaqam, setCurrentMaqam] = useState<Maqam>(initialNav.maqam)
+  const [maqamRevision, setMaqamRevision] = useState(0)
   const [activeTab, setActiveTab] = useState<ValidLab>(initialNav.lab)
   const [timbre, setTimbre] = useState<TimbreType>(initialNav.stored.global.timbre)
   const [isDroneActive, setIsDroneActive] = useState(false)
@@ -150,6 +151,7 @@ export default function App() {
           setIsPlayingScale(false)
           setActivePitchIndex(null)
           setCurrentMaqam(found)
+          setMaqamRevision((revision) => revision + 1)
           updateWorkspaceGlobal({ selectedMaqamId: maqamId })
         }
       }
@@ -229,6 +231,7 @@ export default function App() {
     setIsPlayingScale(false)
     setActivePitchIndex(null)
     setCurrentMaqam(m)
+    setMaqamRevision((revision) => revision + 1)
     updateWorkspaceGlobal({ selectedMaqamId: m.id })
     if (!isPopNavigatingRef.current) {
       syncNavigationToUrl(activeTab, m.id, "push")
@@ -520,6 +523,7 @@ export default function App() {
         {activeTab === "training" && (
           <TrainingLab
             currentMaqam={currentMaqam}
+            maqamRevision={maqamRevision}
             allMaqamat={allMaqamat}
             onSelectMaqam={handleSelectMaqam}
             timbre={timbre}
@@ -587,7 +591,7 @@ export default function App() {
         )}
 
         {activeTab === "sayr" && (
-          <SayrQaflaLab currentMaqam={currentMaqam} timbre={timbre} />
+          <SayrQaflaLab currentMaqam={currentMaqam} maqamRevision={maqamRevision} timbre={timbre} />
         )}
 
         {activeTab === "score" && (

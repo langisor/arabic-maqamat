@@ -14,9 +14,10 @@ import { Play, Square, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Zap } 
 interface Props {
   currentMaqam: Maqam;
   timbre: TimbreType;
+  maqamRevision?: number;
 }
 
-export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
+export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0, timbre }) => {
   useEffect(() => () => {
     MicrotonalAudioEngine.stopSequence('sayr');
     MicrotonalAudioEngine.stopSequence('qafla');
@@ -26,7 +27,6 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
   const sayrData = SayrEngine.getSayrForMaqam(currentMaqam.id) || SayrEngine.getSayrForMaqam('rast')!;
   const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null);
   const [isPlayingSayr, setIsPlayingSayr] = useState(false);
-
   // Modulation analysis state
   const [targetMaqamId, setTargetMaqamIdState] = useState<string>(
     () => getWorkspaceState().drafts.sayr.targetMaqamId
@@ -51,6 +51,18 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
     new ArabicPitch('D', '♮', 4),
     currentMaqam.getTonic()
   ]);
+
+  const [previousMaqamKey, setPreviousMaqamKey] = useState(`${currentMaqam.id}:${maqamRevision}`);
+  const maqamKey = `${currentMaqam.id}:${maqamRevision}`;
+  if (maqamKey !== previousMaqamKey) {
+    setPreviousMaqamKey(maqamKey);
+    MicrotonalAudioEngine.stopSequence('sayr');
+    MicrotonalAudioEngine.stopSequence('qafla');
+    setActiveStepIndex(null);
+    setIsPlayingSayr(false);
+    setQaflaPhrase([currentMaqam.getGhammaz(), currentMaqam.getTonic().transpose(2), currentMaqam.getTonic()]);
+  }
+
 
   const targetMaqam = MaqamatCatalogue.findById(targetMaqamId) || MaqamatCatalogue.buildNahawand();
   const modulationAnalysis = SayrEngine.analyzeModulation(currentMaqam, targetMaqam, measureDuration);

@@ -114,6 +114,22 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
   const [playingOriginal, setPlayingOriginal] = useState(false);
   const [appliedNotification, setAppliedNotification] = useState(false);
 
+  const previousMaqamIdRef = React.useRef(currentMaqam.id);
+  useEffect(() => {
+    if (previousMaqamIdRef.current === currentMaqam.id) return;
+    previousMaqamIdRef.current = currentMaqam.id;
+    const nextBaseId = currentMaqam.id.split('-transposed-')[0];
+    setSelectedBaseId(nextBaseId);
+    const tonic = currentMaqam.getTonic();
+    setTargetTonicState(tonic);
+    updateWorkspaceDraft('transposition', { targetTonic: serializePitch(tonic) });
+    MicrotonalAudioEngine.stopSequence('transposition');
+    MicrotonalAudioEngine.stopSequence('transposition-compare');
+    setIsPlayingScale(false);
+    setActiveStepIndex(null);
+    setPlayingOriginal(false);
+  }, [currentMaqam]);
+
   // CORE TRANSPOSITION: Apply maqam.transpose()
   const transposedMaqam = useMemo(() => {
     return selectedBaseMaqam.transpose(targetTonic);

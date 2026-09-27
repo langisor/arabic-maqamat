@@ -20,6 +20,7 @@ import {
   MelodyDifficulty
 } from '../theory/melody-generator';
 import { getWorkspaceState, updateWorkspaceDraft } from '../state/workspace-state';
+import { RecordingStorage } from '../state/recording-storage';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -33,6 +34,8 @@ import {
   Trophy,
   Sparkles,
   Download,
+  Pencil,
+  Trash2,
   CheckCircle2,
   XCircle,
   Check,
@@ -50,6 +53,7 @@ interface Props {
   allMaqamat: Maqam[];
   onSelectMaqam: (maqam: Maqam) => void;
   timbre: TimbreType;
+  maqamRevision?: number;
 }
 
 type TrainingMode = 'memorization' | 'sightreading' | 'recording';
@@ -63,6 +67,9 @@ interface RecordedTake {
   timestamp: string;
   maqamName: string;
   title: string;
+  maqamId: string;
+  createdAt: string;
+  mimeType: string;
 }
 
 interface QuizQuestion {
@@ -166,7 +173,8 @@ export const TrainingLab: React.FC<Props> = ({
   currentMaqam,
   allMaqamat,
   onSelectMaqam,
-  timbre
+  timbre,
+  maqamRevision = 0
 }) => {
   // Main Navigation Mode
   const [activeMode, setActiveModeState] = useState<TrainingMode>(() => {
@@ -263,13 +271,23 @@ export const TrainingLab: React.FC<Props> = ({
   const countInRunRef = useRef<number>(0);
 
   // Synchronize state when selected Maqam changes (React 19 pattern avoiding cascading renders)
-  const [prevMaqamId, setPrevMaqamId] = useState(currentMaqam.id);
-  if (currentMaqam.id !== prevMaqamId) {
-    setPrevMaqamId(currentMaqam.id);
+  const [prevMaqamId, setPrevMaqamId] = useState(`${currentMaqam.id}:${maqamRevision}`);
+  const maqamKey = `${currentMaqam.id}:${maqamRevision}`;
+  if (maqamKey !== prevMaqamId) {
+    setPrevMaqamId(maqamKey);
     setBuilderSlots(createInitialSlots(currentMaqam));
     setNotePool(createInitialNotePool(currentMaqam));
     setBuilderValidated(false);
     setBuilderSuccess(false);
+    setSelectedQuizOption(null);
+    setQuizAnswered(false);
+    setSelectedEarIdx(null);
+    setEarAnswered(false);
+    setActiveMelodyStep(-1);
+    countInRunRef.current += 1;
+    AudioTransport.stopWhere(({ scope }) => scope === 'training-melody' || scope === 'training-count-in');
+    setIsMelodyPlaying(false);
+    setMelodyCountIn(null);
     setCurrentQuestion(createQuizQuestion(currentMaqam));
     const newEar = createEarData(currentMaqam);
     setMysteryPitch(newEar.target);
@@ -563,9 +581,11 @@ export const TrainingLab: React.FC<Props> = ({
   // -------------------------------------------------------------
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const recordingSecondsRef = useRef(0);
   const [recordedTakes, setRecordedTakes] = useState<RecordedTake[]>([]);
   const [selectedTakeId, setSelectedTakeId] = useState<string | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
+  const [recordingStorageError, setRecordingStorageError] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -577,6 +597,7 @@ export const TrainingLab: React.FC<Props> = ({
 
   const takeAudioRef = useRef<HTMLAudioElement | null>(null);
   const isMountedRef = useRef(true);
+  const takeNamesRef = useRef(0);
   const takeObjectUrlsRef = useRef<Set<string>>(new Set());
   const [isPlayingTake, setIsPlayingTake] = useState<boolean>(false);
   const [isComparingSimultaneously, setIsComparingSimultaneously] = useState<boolean>(false);
@@ -605,6 +626,21 @@ export const TrainingLab: React.FC<Props> = ({
       takeObjectUrls.clear();
       MetronomeAudioEngine.stop();
     };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void RecordingStorage.list().then((stored) => {
+      if (cancelled) return;
+      const takes = stored.map((recording) => ({ ...recording, url: URL.createObjectURL(recording.blob), timestamp: new Date(recording.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }));
+      takes.forEach((take) => takeObjectUrlsRef.current.add(take.url));
+      takeNamesRef.current = takes.length;
+      setRecordedTakes(takes);
+      setRecordingStorageError(null);
+    }).catch((error: unknown) => {
+      if (!cancelled) setRecordingStorageError(error instanceof Error ? error.message : 'Could not load saved recordings.');
+    });
+    return () => { cancelled = true; };
   }, []);
 
   // Waveform loop using stable ref
@@ -679,27 +715,30 @@ export const TrainingLab: React.FC<Props> = ({
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const mimeType = mediaRecorder.mimeType || audioChunksRef.current.find((chunk) => chunk.type)?.type || 'application/octet-stream';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const audioUrl = URL.createObjectURL(audioBlob);
         takeObjectUrlsRef.current.add(audioUrl);
-
+        const createdAt = new Date().toISOString();
+        const id = `take-${Date.now()}`;
+        const title = `Take ${takeNamesRef.current + 1} - ${currentMaqam.name}`;
         const newTake: RecordedTake = {
-          id: `take-${Date.now()}`,
-          blob: audioBlob,
-          url: audioUrl,
-          durationSeconds: recordingSeconds,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          maqamName: currentMaqam.name,
-          title: `Take ${recordedTakes.length + 1} - ${currentMaqam.name}`
+          id, blob: audioBlob, url: audioUrl, durationSeconds: recordingSecondsRef.current,
+          timestamp: new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          maqamName: currentMaqam.name, maqamId: currentMaqam.id, title, createdAt, mimeType
         };
-
+        takeNamesRef.current += 1;
         setRecordedTakes(prev => [newTake, ...prev]);
         setSelectedTakeId(newTake.id);
+        void RecordingStorage.put({ id, title, maqamId: currentMaqam.id, maqamName: currentMaqam.name, createdAt, durationSeconds: recordingSecondsRef.current, mimeType, blob: audioBlob })
+          .then(() => setRecordingStorageError(null))
+          .catch((error: unknown) => setRecordingStorageError(error instanceof Error ? error.message : 'Recording was created but could not be saved for future sessions.'));
         triggerXpGain(25);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      recordingSecondsRef.current = 0;
       setRecordingSeconds(0);
       const recordingSession = AudioTransport.startSession('training-recording', 'Recording');
       recordingSession.onCancel(() => {
@@ -718,7 +757,8 @@ export const TrainingLab: React.FC<Props> = ({
       });
 
       recordTimerRef.current = window.setInterval(() => {
-        setRecordingSeconds(prev => prev + 1);
+        recordingSecondsRef.current += 1;
+        setRecordingSeconds(recordingSecondsRef.current);
       }, 1000);
     } catch {
       setMicError('Microphone access was denied or is unavailable on this device.');
@@ -743,6 +783,32 @@ export const TrainingLab: React.FC<Props> = ({
     }
     AudioTransport.stopScope('training-recording');
     setIsRecording(false);
+  };
+
+  const renameTake = (take: RecordedTake) => {
+    const title = window.prompt('Rename practice take', take.title)?.trim();
+    if (!title || title === take.title) return;
+    const updated = { ...take, title };
+    setRecordedTakes((takes) => takes.map((item) => item.id === take.id ? updated : item));
+    void RecordingStorage.put({ id: take.id, title, maqamId: take.maqamId, maqamName: take.maqamName, createdAt: take.createdAt, durationSeconds: take.durationSeconds, mimeType: take.mimeType, blob: take.blob })
+      .then(() => setRecordingStorageError(null))
+      .catch((error: unknown) => setRecordingStorageError(error instanceof Error ? error.message : 'Could not save the new recording title.'));
+  };
+
+  const deleteTake = (take: RecordedTake) => {
+    if (!window.confirm(`Delete “${take.title}”? This cannot be undone.`)) return;
+    if (takeAudioRef.current?.src === take.url) {
+      takeAudioRef.current.pause();
+      takeAudioRef.current = null;
+      setIsPlayingTake(false);
+    }
+    URL.revokeObjectURL(take.url);
+    takeObjectUrlsRef.current.delete(take.url);
+    setRecordedTakes((takes) => takes.filter((item) => item.id !== take.id));
+    setSelectedTakeId((selected) => selected === take.id ? null : selected);
+    void RecordingStorage.delete(take.id)
+      .then(() => setRecordingStorageError(null))
+      .catch((error: unknown) => setRecordingStorageError(error instanceof Error ? error.message : 'Could not delete the recording from storage.'));
   };
 
   const selectedTake = recordedTakes.find(t => t.id === selectedTakeId);
@@ -1539,6 +1605,7 @@ export const TrainingLab: React.FC<Props> = ({
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Mic error notice */}
+              {recordingStorageError && <div role="status" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">{recordingStorageError}</div>}
               {micError && (
                 <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/50 text-red-300 text-xs flex items-center gap-2">
                   <XCircle className="w-4 h-4 shrink-0" />
@@ -1623,7 +1690,10 @@ export const TrainingLab: React.FC<Props> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedTakeId(take.id);
-                                handleTogglePlayTake();
+                                if (takeAudioRef.current) takeAudioRef.current.pause();
+                                takeAudioRef.current = new Audio(take.url);
+                                takeAudioRef.current.onended = () => setIsPlayingTake(false);
+                                void takeAudioRef.current.play().then(() => setIsPlayingTake(true)).catch(() => setIsPlayingTake(false));
                               }}
                               className="w-8 h-8 rounded-lg cursor-pointer"
                             >
@@ -1641,15 +1711,23 @@ export const TrainingLab: React.FC<Props> = ({
                             </div>
                           </div>
 
+                          <div className="flex items-center gap-1">
+                            <Button size="icon" variant="ghost" aria-label={`Rename ${take.title}`} title="Rename recording" onClick={(e) => { e.stopPropagation(); renameTake(take); }} className="h-8 w-8">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" aria-label={`Delete ${take.title}`} title="Delete recording" onClick={(e) => { e.stopPropagation(); deleteTake(take); }} className="h-8 w-8 text-red-400 hover:text-red-300">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           <a
                             href={take.url}
-                            download={`${take.title}.webm`}
+                            download={`${take.title}.${take.mimeType.includes("ogg") ? "ogg" : take.mimeType.includes("mp4") ? "m4a" : take.mimeType.includes("webm") ? "webm" : "audio"}`}
                             onClick={(e) => e.stopPropagation()}
                             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition"
                             title="Download audio recording"
                           >
                             <Download className="w-4 h-4" />
                           </a>
+                          </div>
                         </div>
                       ))}
                     </div>
