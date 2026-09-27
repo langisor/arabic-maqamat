@@ -2,27 +2,6 @@
 
 This roadmap reflects the current implementation. Shared workspace persistence, the audio transport controller, accessible shell tabs, bilingual font styling, and MusicXML viewing/download are already present. The work below focuses on completing and hardening those foundations.
 
-## Practice, recordings, and saved material
-
-Make practice state reliable across maqam changes, preserve recordings and user-created material across reloads, and use real practice activity for progress summaries.
-
-1. Define shared serializable models for maqam references, practice events, saved material, and recording metadata. Reuse the validated pitch serialization in [workspace-state.ts](src/state/workspace-state.ts); never persist class instances, media streams, or audio objects.
-2. Add a maqam revision/change signal from [App.tsx](src/App.tsx) to labs that keep maqam-dependent local state.
-3. Clear or regenerate stale exercises, quiz selections, feedback, playback, and timers in [TrainingLab.tsx](src/components/TrainingLab.tsx) when the maqam changes.
-4. Reset qafla state and playback in [SayrQaflaLab.tsx](src/components/SayrQaflaLab.tsx), and keep transposition controls synchronized in [TranspositionLab.tsx](src/components/TranspositionLab.tsx).
-5. Add versioned IndexedDB storage for recording blobs and metadata, with graceful handling for unavailable or full storage.
-6. Support recording reload, rename, notes, delete, download, and playback. Detect supported MIME types, release object URLs, and stop recording resources on cancellation or unmount.
-7. Record structured practice events by maqam, skill, difficulty, interval, and correctness. Derive progress summaries and use weak areas to choose future exercises.
-8. Connect existing training counters and badges in [training-progress.ts](src/theory/training-progress.ts) to completed activity while retaining current XP, streak, and local stats compatibility.
-9. Add named saved material for Jins phrases, Qafla sequences, and generated melodies.
-10. Add versioned, validated JSON import/export and bounded share payloads; report malformed or unsupported data clearly.
-11. Validate reload persistence, rename/delete, object URL cleanup, quota/storage failures, microphone denial, malformed imports, quarter-tone round trips, and maqam-change scenarios.
-
-**Decisions**
-
-- Keep workspace settings/drafts in the existing local storage layer; use IndexedDB for recordings and saved material.
-- Use JSON and MusicXML for exchange. Revisit MIDI after the serializable material model and MusicXML fidelity are stable.
-- Keep migrations explicit and versioned; preserve existing theme, XP, streak, and training-statistics compatibility.
 
 ## Accessibility, recovery, and localization
 
