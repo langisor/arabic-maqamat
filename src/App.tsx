@@ -611,7 +611,7 @@ export default function App() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="font-arabic text-sm font-bold text-amber-400">
-              مقام فلو
+            مقامات عربية
             </span>
             <span>
               • Foundations of Arabic Music Theory &amp; Violin Pedagogy (Levels
