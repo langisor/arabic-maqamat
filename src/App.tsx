@@ -669,7 +669,7 @@ export default function App() {
 
       {/* Tone.js Audio DSP Studio Modal */}
       <Dialog open={showAudioSettings} onOpenChange={setShowAudioSettings}>
-          <DialogContent className="relative flex! w-full max-w-lg flex-col space-y-5 rounded-2xl border border-slate-700/80 bg-slate-900 p-6 text-slate-100 shadow-2xl" showCloseButton>
+          <DialogContent className="relative flex! w-full max-w-lg flex-col space-y-5  rounded-2xl border border-slate-700/80 bg-slate-900 p-6 text-slate-100 shadow-2xl" showCloseButton>
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
