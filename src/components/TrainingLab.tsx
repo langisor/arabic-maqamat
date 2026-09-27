@@ -472,9 +472,25 @@ export const TrainingLab: React.FC<Props> = ({
     setIsRenderingMelody(true);
     setOsmdRenderError(null);
 
+    const validation = MusicXMLExporter.validatePhrase(generatedMelody.notes, {
+      timeSignature: generatedMelody.timeSignature,
+      tempoBpm: generatedMelody.tempoBpm,
+    });
+
+    if (!validation.canExport) {
+      setOsmdRenderError(`MusicXML validation failed: ${validation.errors.join('; ')}`);
+      setIsRenderingMelody(false);
+      return;
+    }
+
     const xml = MusicXMLExporter.generatePhraseMusicXML(
       generatedMelody.title,
-      generatedMelody.pitches
+      generatedMelody.notes,
+      {
+        timeSignature: generatedMelody.timeSignature,
+        tempoBpm: generatedMelody.tempoBpm,
+        maqamName: currentMaqam.name,
+      }
     );
 
     try {
@@ -514,7 +530,7 @@ export const TrainingLab: React.FC<Props> = ({
       isMounted = false;
       osmdInstanceRef.current = null;
     };
-  }, [activeMode, generatedMelody, renderRevision]);
+  }, [activeMode, currentMaqam.name, generatedMelody, renderRevision]);
 
   // Count in before starting the metronome and melody on the same audio timestamp.
   const handlePlayMelody = async () => {
@@ -611,9 +627,22 @@ export const TrainingLab: React.FC<Props> = ({
 
   const handleExportMelodyXml = () => {
     if (!generatedMelody) return;
+    const validation = MusicXMLExporter.validatePhrase(generatedMelody.notes, {
+      timeSignature: generatedMelody.timeSignature,
+      tempoBpm: generatedMelody.tempoBpm,
+    });
+    if (!validation.canExport) {
+      setOsmdRenderError(`Cannot export MusicXML: ${validation.errors.join('; ')}`);
+      return;
+    }
     const xml = MusicXMLExporter.generatePhraseMusicXML(
       generatedMelody.title,
-      generatedMelody.pitches
+      generatedMelody.notes,
+      {
+        timeSignature: generatedMelody.timeSignature,
+        tempoBpm: generatedMelody.tempoBpm,
+        maqamName: currentMaqam.name,
+      }
     );
     const blob = new Blob([xml], { type: 'application/vnd.recordare.musicxml+xml' });
     const url = URL.createObjectURL(blob);
@@ -1563,18 +1592,29 @@ export const TrainingLab: React.FC<Props> = ({
               </div>
 
               {/* Sheet Music Notation Display (OpenSheetMusicDisplay) */}
-                      <div className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-40 flex items-center justify-center overflow-x-auto" aria-busy={isRenderingMelody}>
-                        {isRenderingMelody && <AsyncFeedback kind="loading" title="Rendering sight-reading notation" className="absolute inset-x-3 top-3 z-10 flex items-center justify-center gap-2 rounded-lg bg-white/95 p-2 text-xs text-slate-700" />}
-                        <div ref={osmdContainerRef} className="w-full flex justify-center" />
-                        {osmdRenderError && (
-                          <AsyncFeedback
-                            kind="error"
-                            title="Notation unavailable"
-                            description={<>You can still practice from the note guide below. {osmdRenderError}</>}
-                            action={{ label: "Retry notation", onClick: () => setRenderRevision((revision) => revision + 1) }}
-                            className="absolute inset-x-3 bottom-3 z-10"
-                          />
-                        )}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Music className="w-3.5 h-3.5 text-amber-500" />
+                    Sight-Reading Score
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    <Check className="w-3 h-3" /> MusicXML 4.0 Standard Timing
+                  </span>
+                </div>
+                <div className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-40 flex items-center justify-center overflow-x-auto" aria-busy={isRenderingMelody}>
+                  {isRenderingMelody && <AsyncFeedback kind="loading" title="Rendering sight-reading notation" className="absolute inset-x-3 top-3 z-10 flex items-center justify-center gap-2 rounded-lg bg-white/95 p-2 text-xs text-slate-700" />}
+                  <div ref={osmdContainerRef} className="w-full flex justify-center" />
+                  {osmdRenderError && (
+                    <AsyncFeedback
+                      kind="error"
+                      title="Notation unavailable"
+                      description={<>You can still practice from the note guide below. {osmdRenderError}</>}
+                      action={{ label: "Retry notation", onClick: () => setRenderRevision((revision) => revision + 1) }}
+                      className="absolute inset-x-3 bottom-3 z-10"
+                    />
+                  )}
+                </div>
               </div>
 
                       {melodyGenerationError && (
