@@ -26,11 +26,3 @@ Complete actionable feedback for async failures, keyboard and screen-reader supp
 - Keep failures visible and actionable; keep the SessionBar a view over shared state rather than a new state owner.
 - Keep durable recordings and workspace persistence as separate feature areas.
 
-## MusicXML fidelity
-
-MusicXML export and display/download are already wired through [musicxml-exporter.ts](src/score/musicxml-exporter.ts) and [ScoreViewer.tsx](src/components/ScoreViewer.tsx). Harden the output before using it as the stable interchange path.
-
-1. Escape XML text and attribute values, including maqam names and user-provided phrase titles.
-2. Preserve note durations and phrase timing instead of assigning every note a quarter-note duration.
-3. Verify quarter-tone accidentals and pitch spelling survive export and re-import in supported notation software.
-4. Add validation for empty phrases, unusual durations, and unsupported pitch data, with clear user-facing feedback.
