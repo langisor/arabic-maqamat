@@ -28,14 +28,14 @@ export class MelodyGenerator {
    * Traditional Arabic pitch degree names mapped by scale index
    */
   private static readonly ARABIC_DEGREE_NAMES: Record<number, string> = {
-    0: 'القرار / Rast (Degree 1)',
-    1: 'الدكاه / Dukah (Degree 2)',
-    2: 'السيكاه / Sikah (Degree 3)',
-    3: 'الجهاركاه / Jaharkah (Degree 4)',
-    4: 'الغمّاز / Nawa (Degree 5)',
-    5: 'الحسيني / Husayni (Degree 6)',
-    6: 'الأوج / Awj (Degree 7)',
-    7: 'الجواب / Kirdan (Octave)'
+    0: 'القرار / Rast (Deg. 1)',
+    1: 'الدوكه / Dukah (Deg. 2)',
+    2: 'السيكاه / Sikah (Deg. 3)',
+    3: 'الجهاركاه / Jaharkah (Deg. 4)',
+    4: 'الغمّاز / Nawa (Deg. 5)',
+    5: 'الحسيني / Husayni (Deg. 6)',
+    6: 'الأوج / Awj (Deg.7)',
+    7: 'الجواب / Kirdan (Oct. 8)',
   };
 
   /**

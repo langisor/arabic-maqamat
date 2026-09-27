@@ -142,6 +142,10 @@
   font-family: 'Noto Naskh Arabic', 'Amiri', Georgia, serif;
 }
 
+.osmd-responsive-lyrics g.vf-text.lyrics text {
+  font-size: var(--osmd-lyric-font-size, 10px) !important;
+}
+
 [lang="ar"],
 :lang(ar) {
   font-family: 'Noto Naskh Arabic', 'Amiri', Georgia, serif;

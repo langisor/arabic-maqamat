@@ -435,6 +435,20 @@ export const TrainingLab: React.FC<Props> = ({
   // -------------------------------------------------------------
   const osmdContainerRef = useRef<HTMLDivElement>(null);
   const osmdInstanceRef = useRef<OpenSheetMusicDisplay | null>(null);
+  const [lyricFontSize, setLyricFontSize] = useState(10);
+
+  useEffect(() => {
+    if (activeMode !== 'sightreading') return;
+    const container = osmdContainerRef.current?.parentElement;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      setLyricFontSize(Math.max(9, Math.min(13, Math.round(entry.contentRect.width * 0.005 + 7.5))));
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [activeMode]);
 
   const handleGenerateMelody = useCallback(() => {
     try {
@@ -496,6 +510,7 @@ export const TrainingLab: React.FC<Props> = ({
     try {
       const osmd = new OpenSheetMusicDisplay(container, {
         autoResize: true,
+
         backend: 'svg',
         drawTitle: true,
         drawSubtitle: false,
@@ -530,7 +545,7 @@ export const TrainingLab: React.FC<Props> = ({
       isMounted = false;
       osmdInstanceRef.current = null;
     };
-  }, [activeMode, currentMaqam.name, generatedMelody, renderRevision]);
+  }, [activeMode, currentMaqam.name, generatedMelody, lyricFontSize, renderRevision]);
 
   // Count in before starting the metronome and melody on the same audio timestamp.
   const handlePlayMelody = async () => {
@@ -1604,7 +1619,11 @@ export const TrainingLab: React.FC<Props> = ({
                 </div>
                 <div className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-40 flex items-center justify-center overflow-x-auto" aria-busy={isRenderingMelody}>
                   {isRenderingMelody && <AsyncFeedback kind="loading" title="Rendering sight-reading notation" className="absolute inset-x-3 top-3 z-10 flex items-center justify-center gap-2 rounded-lg bg-white/95 p-2 text-xs text-slate-700" />}
-                  <div ref={osmdContainerRef} className="w-full flex justify-center" />
+                  <div
+                    ref={osmdContainerRef}
+                    className="osmd-responsive-lyrics w-full flex justify-center"
+                    style={{ "--osmd-lyric-font-size": `${lyricFontSize}px` } as React.CSSProperties}
+                  />
                   {osmdRenderError && (
                     <AsyncFeedback
                       kind="error"
