@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import {
@@ -6,6 +6,15 @@ import {
   type TimbreType,
 } from "./audio/microtonal-audio"
 import { AudioTransport, type AudioTransportStatus } from "./audio/audio-transport"
+import {
+  getWorkspaceState,
+  updateWorkspaceGlobal,
+  parseNavigationFromUrl,
+  syncNavigationToUrl,
+  type ValidLab,
+  VALID_LABS,
+} from "./state/workspace-state"
+import { PWAInstallButton } from "./components/PWAInstallButton"
 import { MaqamExplorer } from "./components/MaqamExplorer"
 import { ViolinFingerboard } from "./components/ViolinFingerboard"
 import { ScoreViewer } from "./components/ScoreViewer"
@@ -37,22 +46,54 @@ import {
   Square,
 } from "lucide-react"
 
+interface NavTabItem {
+  id: ValidLab
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+}
+
+const NAV_TABS: NavTabItem[] = [
+  { id: "explorer", label: "Maqam & 8 Families", icon: Layers, title: "Maqam & 8 Families" },
+  { id: "transposition", label: "Transposition Lab", icon: ArrowLeftRight, title: "Transposition Lab (Taswir)" },
+  { id: "violin", label: "Violin Fingerboard", icon: Music, title: "Violin Fingerboard" },
+  { id: "sayr", label: "Sayr & Qafla", icon: Compass, title: "Sayr, Modulation & Qafla" },
+  { id: "score", label: "Score & MusicXML", icon: FileMusic, title: "Score & MusicXML 4.0" },
+  { id: "tuning", label: "24-EDO Tuning", icon: Sliders, title: "24-EDO Tuning & Spine" },
+  { id: "detector", label: "Jins Classifier", icon: Sparkles, title: "Jins Phrase Classifier" },
+  { id: "training", label: "Practice & Training", icon: GraduationCap, title: "Practice & Training Mode: Scale memorization, sight-reading & recording" },
+]
+
 export default function App() {
   const allMaqamat = MaqamatCatalogue.getAllMaqamat()
-  const [currentMaqam, setCurrentMaqam] = useState<Maqam>(
-    MaqamatCatalogue.buildRast()
-  )
-  const [activeTab, setActiveTab] = useState<
-    | "explorer"
-    | "transposition"
-    | "violin"
-    | "sayr"
-    | "score"
-    | "tuning"
-    | "detector"
-    | "training"
-  >("explorer")
-  const [timbre, setTimbre] = useState<TimbreType>("violin")
+
+  // Resolve initial state from URL parameters or stored workspace state
+  const [initialNav] = useState(() => {
+    const urlParams = parseNavigationFromUrl()
+    const stored = getWorkspaceState()
+
+    let resolvedLab: ValidLab = stored.global.activeLab
+    if (urlParams.lab && VALID_LABS.includes(urlParams.lab)) {
+      resolvedLab = urlParams.lab
+    }
+
+    let resolvedMaqamId = stored.global.selectedMaqamId
+    if (urlParams.maqamId) {
+      resolvedMaqamId = urlParams.maqamId
+    }
+    const baseId = resolvedMaqamId.split("-transposed-")[0]
+    const initialMaqam = MaqamatCatalogue.findById(baseId) || MaqamatCatalogue.buildRast()
+
+    return {
+      lab: resolvedLab,
+      maqam: initialMaqam,
+      stored,
+    }
+  })
+
+  const [currentMaqam, setCurrentMaqam] = useState<Maqam>(initialNav.maqam)
+  const [activeTab, setActiveTab] = useState<ValidLab>(initialNav.lab)
+  const [timbre, setTimbre] = useState<TimbreType>(initialNav.stored.global.timbre)
   const [isDroneActive, setIsDroneActive] = useState(false)
   const [isPlayingScale, setIsPlayingScale] = useState(false)
   const [activePitchIndex, setActivePitchIndex] = useState<number | null>(null)
@@ -61,10 +102,12 @@ export default function App() {
   )
 
   // Tone.js Audio DSP Studio Controls
-  const [masterVolume, setMasterVolume] = useState<number>(85)
-  const [reverbWet, setReverbWet] = useState<number>(20)
-  const [referenceA4, setReferenceA4State] = useState<number>(440)
+  const [masterVolume, setMasterVolume] = useState<number>(initialNav.stored.global.audioSettings.masterVolume)
+  const [reverbWet, setReverbWet] = useState<number>(initialNav.stored.global.audioSettings.reverbWet)
+  const [referenceA4, setReferenceA4State] = useState<number>(initialNav.stored.global.audioSettings.referenceA4)
   const [showAudioSettings, setShowAudioSettings] = useState<boolean>(false)
+
+  const isPopNavigatingRef = useRef(false)
 
   const scalePitches = currentMaqam.getScale()
   const tonic = currentMaqam.getTonic()
@@ -77,28 +120,107 @@ export default function App() {
     }
   }, [])
 
-  const handleSelectTab = (tab: typeof activeTab) => {
+  // Initialize engine with persisted settings and sync URL on mount
+  useEffect(() => {
+    MicrotonalAudioEngine.setMasterVolume(masterVolume / 100)
+    MicrotonalAudioEngine.setReverbWet(reverbWet / 100)
+    MicrotonalAudioEngine.setReferenceA4(referenceA4)
+    syncNavigationToUrl(activeTab, currentMaqam.id, "replace")
+  }, [])
+
+  // Handle browser back/forward navigation without synchronization loops
+  useEffect(() => {
+    const handlePopState = () => {
+      isPopNavigatingRef.current = true
+      const { lab, maqamId } = parseNavigationFromUrl()
+      if (lab && VALID_LABS.includes(lab) && lab !== activeTab) {
+        AudioTransport.stopAll()
+        setIsDroneActive(false)
+        setIsPlayingScale(false)
+        setActivePitchIndex(null)
+        setActiveTab(lab)
+        updateWorkspaceGlobal({ activeLab: lab })
+      }
+      if (maqamId && maqamId !== currentMaqam.id) {
+        const baseId = maqamId.split("-transposed-")[0]
+        const found = MaqamatCatalogue.findById(baseId)
+        if (found) {
+          AudioTransport.stopAll()
+          setIsDroneActive(false)
+          setIsPlayingScale(false)
+          setActivePitchIndex(null)
+          setCurrentMaqam(found)
+          updateWorkspaceGlobal({ selectedMaqamId: maqamId })
+        }
+      }
+      setTimeout(() => {
+        isPopNavigatingRef.current = false
+      }, 50)
+    }
+
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [activeTab, currentMaqam.id])
+
+  const handleSelectTab = (tab: ValidLab) => {
     if (tab === activeTab) return
     AudioTransport.stopAll()
     setIsDroneActive(false)
     setIsPlayingScale(false)
     setActivePitchIndex(null)
     setActiveTab(tab)
+    updateWorkspaceGlobal({ activeLab: tab })
+    if (!isPopNavigatingRef.current) {
+      syncNavigationToUrl(tab, currentMaqam.id, "push")
+    }
+  }
+
+  const handleTabKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const total = NAV_TABS.length
+    let nextIndex: number
+    if (e.key === "ArrowRight") {
+      e.preventDefault()
+      nextIndex = (index + 1) % total
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault()
+      nextIndex = (index - 1 + total) % total
+    } else if (e.key === "Home") {
+      e.preventDefault()
+      nextIndex = 0
+    } else if (e.key === "End") {
+      e.preventDefault()
+      nextIndex = total - 1
+    } else {
+      return
+    }
+
+    const nextTab = NAV_TABS[nextIndex]
+    handleSelectTab(nextTab.id)
+    const nextElem = document.getElementById(`tab-${nextTab.id}`)
+    nextElem?.focus()
+  }
+
+  const handleTimbreChange = (t: TimbreType) => {
+    setTimbre(t)
+    updateWorkspaceGlobal({ timbre: t })
   }
 
   const handleVolumeChange = (val: number) => {
     setMasterVolume(val)
     MicrotonalAudioEngine.setMasterVolume(val / 100)
+    updateWorkspaceGlobal({ audioSettings: { masterVolume: val, reverbWet, referenceA4 } })
   }
 
   const handleReverbChange = (val: number) => {
     setReverbWet(val)
     MicrotonalAudioEngine.setReverbWet(val / 100)
+    updateWorkspaceGlobal({ audioSettings: { masterVolume, reverbWet: val, referenceA4 } })
   }
 
   const handleA4Change = (val: number) => {
     setReferenceA4State(val)
     MicrotonalAudioEngine.setReferenceA4(val)
+    updateWorkspaceGlobal({ audioSettings: { masterVolume, reverbWet, referenceA4: val } })
   }
 
   const handleSelectMaqam = (m: Maqam) => {
@@ -107,6 +229,10 @@ export default function App() {
     setIsPlayingScale(false)
     setActivePitchIndex(null)
     setCurrentMaqam(m)
+    updateWorkspaceGlobal({ selectedMaqamId: m.id })
+    if (!isPopNavigatingRef.current) {
+      syncNavigationToUrl(activeTab, m.id, "push")
+    }
   }
 
   const handleToggleDrone = (pitch: ArabicPitch) => {
@@ -234,6 +360,9 @@ export default function App() {
               </span>
             </Button>
 
+            {/* PWA Install & Offline Status */}
+            <PWAInstallButton />
+
             {/* Theme Toggler (Light / Dark / Auto) */}
             <ThemeToggle />
           </div>
@@ -244,7 +373,7 @@ export default function App() {
             <Button
               variant={timbre === "violin" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setTimbre("violin")}
+              onClick={() => handleTimbreChange("violin")}
               className={`cursor-pointer rounded-lg px-2 py-1 font-medium transition sm:px-2.5 sm:py-1.5 ${
                 timbre === "violin"
                   ? "bg-amber-500 font-bold text-slate-950 shadow"
@@ -258,7 +387,7 @@ export default function App() {
               disabled
               variant={timbre === "oud" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setTimbre("oud")}
+              onClick={() => handleTimbreChange("oud")}
 
               className={`cursor-pointer rounded-lg px-2 py-1 font-medium transition sm:px-2.5 sm:py-1.5 ${
                 timbre === "oud"
@@ -273,7 +402,7 @@ export default function App() {
               disabled
               variant={timbre === "kanun" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setTimbre("kanun")}
+              onClick={() => handleTimbreChange("kanun")}
               className={`cursor-pointer rounded-lg px-2 py-1 font-medium transition sm:px-2.5 sm:py-1.5 ${
                 timbre === "kanun"
                   ? "bg-amber-500 font-bold text-slate-950 shadow"
@@ -336,126 +465,58 @@ export default function App() {
             </Button>
           )}
         </div>
-        {/* Studio Navigation Tabs (Mobile: Icons Only, Tablet/Desktop: Wrapped with Labels) */}
+        {/* Studio Navigation Tabs (Responsive scrollable tablist with active semantics & keyboard navigation) */}
         <div className="mx-auto max-w-7xl border-t border-border/60 px-2 sm:px-6 lg:px-8">
-          <nav className="flex flex-wrap items-center justify-around gap-1 py-2 text-xs font-semibold sm:justify-start sm:gap-2">
-            <button
-              onClick={() => handleSelectTab("explorer")}
-              aria-label="Maqam & 8 Families"
-              title="Maqam & 8 Families"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "explorer"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <Layers className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Maqam &amp; 8 Families</span>
-            </button>
-
-            <button
-              onClick={() => handleSelectTab("transposition")}
-              aria-label="Transposition Lab (Taswir)"
-              title="Transposition Lab (Taswir)"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "transposition"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <ArrowLeftRight className="h-4 w-4 shrink-0 text-amber-400" />
-              <span className="hidden sm:inline">Transposition Lab</span>
-            </button>
-
-            <button
-              onClick={() => handleSelectTab("violin")}
-              aria-label="Violin Fingerboard"
-              title="Violin Fingerboard"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "violin"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <Music className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Violin Fingerboard</span>
-            </button>
-
-            <button
-              onClick={() => handleSelectTab("sayr")}
-              aria-label="Sayr, Modulation & Qafla"
-              title="Sayr, Modulation & Qafla"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "sayr"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <Compass className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Sayr &amp; Qafla</span>
-            </button>
-
-            <button
-              onClick={() => handleSelectTab("score")}
-              aria-label="Score & MusicXML 4.0"
-              title="Score & MusicXML 4.0"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "score"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <FileMusic className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Score &amp; MusicXML</span>
-            </button>
-
-            <button
-              onClick={() => handleSelectTab("tuning")}
-              aria-label="24-EDO Tuning & Spine"
-              title="24-EDO Tuning & Spine"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "tuning"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <Sliders className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">24-EDO Tuning</span>
-            </button>
-
-            <button
-              onClick={() => handleSelectTab("detector")}
-              aria-label="Jins Phrase Classifier"
-              title="Jins Phrase Classifier"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "detector"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <Sparkles className="h-4 w-4 shrink-0 text-amber-400" />
-              <span className="hidden sm:inline">Jins Classifier</span>
-            </button>
-
-            <button
-              onClick={() => handleSelectTab("training")}
-              aria-label="Practice & Training Mode"
-              title="Practice & Training Mode: Scale memorization, sight-reading & recording"
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
-                activeTab === "training"
-                  ? "border border-amber-500/40 bg-amber-500/20 text-amber-600 shadow-xs dark:text-amber-300"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-            >
-              <GraduationCap className="h-4 w-4 shrink-0 text-amber-400" />
-              <span className="hidden sm:inline">Practice &amp; Training</span>
-            </button>
+          <nav
+            role="tablist"
+            aria-label="Maqam Studio Navigation Tabs"
+            className="flex items-center gap-1 overflow-x-auto py-2.5 text-xs font-semibold scrollbar-none sm:gap-1.5 md:flex-wrap"
+          >
+            {NAV_TABS.map((tab, index) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  id={`tab-${tab.id}`}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`panel-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onKeyDown={(e) => handleTabKeyDown(e, index)}
+                  onClick={() => handleSelectTab(tab.id)}
+                  aria-label={tab.title}
+                  title={tab.title}
+                  className={`flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2 whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-95 ${
+                    isActive
+                      ? "border border-amber-500/50 bg-amber-500/15 font-bold text-amber-500 shadow-xs dark:bg-amber-500/20 dark:text-amber-300"
+                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                  }`}
+                >
+                  <Icon
+                    className={`h-4 w-4 shrink-0 ${
+                      isActive
+                        ? "text-amber-500 dark:text-amber-400"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <span className="inline text-[11px] sm:text-xs">
+                    {tab.label}
+                  </span>
+                </button>
+              )
+            })}
           </nav>
         </div>
       </header>
 
       {/* Main Studio Viewport */}
-      <main className="mx-auto w-full max-w-7xl flex-1 space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <main
+        id={`panel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${activeTab}`}
+        className="mx-auto w-full max-w-7xl flex-1 space-y-8 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8"
+      >
         {activeTab === "training" && (
           <TrainingLab
             currentMaqam={currentMaqam}
@@ -684,7 +745,7 @@ export default function App() {
                 </span>
                 <div className="grid grid-cols-3 gap-2">
                   <button
-                    onClick={() => setTimbre("violin")}
+                    onClick={() => handleTimbreChange("violin")}
                     className={`cursor-pointer rounded-xl border p-2 text-left transition ${
                       timbre === "violin"
                         ? "border-amber-400 bg-amber-500/20 text-white"
@@ -697,7 +758,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => setTimbre("oud")}
+                    onClick={() => handleTimbreChange("oud")}
                     className={`cursor-pointer rounded-xl border p-2 text-left transition ${
                       timbre === "oud"
                         ? "border-amber-400 bg-amber-500/20 text-white"
@@ -710,7 +771,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => setTimbre("kanun")}
+                    onClick={() => handleTimbreChange("kanun")}
                     className={`cursor-pointer rounded-xl border p-2 text-left transition ${
                       timbre === "kanun"
                         ? "border-amber-400 bg-amber-500/20 text-white"

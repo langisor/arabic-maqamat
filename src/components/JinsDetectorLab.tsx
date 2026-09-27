@@ -4,6 +4,12 @@ import { ArabicPitch,type DiatonicBase,type MicrotonalAccidental } from '../core
 import { identifyJins } from '../theory/jins-detector';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
 import { ArabicNoteSpine } from '../core/note-spine';
+import {
+  getWorkspaceState,
+  updateWorkspaceDraft,
+  deserializePitch,
+  serializePitch
+} from '../state/workspace-state';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -176,7 +182,24 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
   ], []);
 
   // Phrase under active analysis
-  const [phrase, setPhrase] = useState<ArabicPitch[]>(presets[0].pitches);
+  const [phrase, setPhraseState] = useState<ArabicPitch[]>(() => {
+    const saved = getWorkspaceState().drafts.jinsDetector.customPhrase;
+    if (saved && saved.length > 0) {
+      const restored = saved.map(deserializePitch).filter((p): p is ArabicPitch => p !== null);
+      if (restored.length > 0) return restored;
+    }
+    return presets[0].pitches;
+  });
+
+  const setPhrase = (action: React.SetStateAction<ArabicPitch[]>) => {
+    setPhraseState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      updateWorkspaceDraft('jinsDetector', {
+        customPhrase: next.length > 0 ? next.map(serializePitch) : null,
+      });
+      return next;
+    });
+  };
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);

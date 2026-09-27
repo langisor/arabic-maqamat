@@ -1,5 +1,5 @@
 // src/hooks/usePWAInstall.ts
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,6 +11,8 @@ export function usePWAInstall() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isServiceWorkerReady, setIsServiceWorkerReady] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     // Detect standalone mode (already installed or running as PWA)
@@ -42,6 +44,49 @@ export function usePWAInstall() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Track Service Worker lifecycle
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        setIsServiceWorkerReady(true);
+
+        // Check if there is already a waiting worker
+        if (registration.waiting) {
+          setUpdateAvailable(true);
+        }
+
+        // Listen for new service worker installation
+        registration.addEventListener('updatefound', () => {
+          const installingWorker = registration.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', () => {
+              if (
+                installingWorker.state === 'installed' &&
+                navigator.serviceWorker.controller
+              ) {
+                setUpdateAvailable(true);
+              }
+            });
+          }
+        });
+      }).catch(() => {
+        // SW not supported or failed
+      });
+
+      // Controller change implies new SW took over
+      const handleControllerChange = () => {
+        setIsServiceWorkerReady(true);
+      };
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      };
+    }
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
@@ -66,11 +111,29 @@ export function usePWAInstall() {
     return false;
   };
 
+  const reloadApp = useCallback(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (reg?.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        window.location.reload();
+      }).catch(() => {
+        window.location.reload();
+      });
+    } else {
+      window.location.reload();
+    }
+  }, []);
+
   return {
     canInstall: !!deferredPrompt || (isIOS && !isInstalled),
     isInstalled,
     isIOS,
     isOnline,
-    promptInstall
+    isServiceWorkerReady,
+    updateAvailable,
+    promptInstall,
+    reloadApp
   };
 }

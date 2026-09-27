@@ -11,6 +11,12 @@ import {
 } from '../violin/ergonomics';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
 import { AudioTransport } from '../audio/audio-transport';
+import {
+  getWorkspaceState,
+  updateWorkspaceDraft,
+  deserializePitch,
+  serializePitch
+} from '../state/workspace-state';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -49,7 +55,9 @@ const STRINGS: ViolinStringName[] = ['G', 'D', 'A', 'E'];
 
 export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIndex, timbre }) => {
   // Orientation: 'vertical' (natural violin player POV) vs 'horizontal' (studio/pedagogical layout)
-  const [orientation, setOrientation] = useState<'vertical' | 'horizontal'>('vertical');
+  const [orientation, setOrientationState] = useState<'vertical' | 'horizontal'>(
+    () => getWorkspaceState().drafts.violin.orientation
+  );
 
   // Position control: 1, 2, 3, 4, or 'auto'
   const [selectedPosition, setSelectedPosition] = useState<ViolinPositionMode>(1);
@@ -58,20 +66,69 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   const [selectedPlacement, setSelectedPlacement] = useState<ViolinFingerPlacement | null>(null);
 
   // Custom Sequence Builder state (Max 2 octaves) - starts empty so user selects notes one by one
-  const [customSequence, setCustomSequence] = useState<ArabicPitch[]>([]);
+  const [customSequence, setCustomSequenceState] = useState<ArabicPitch[]>(() => {
+    const list = getWorkspaceState().drafts.violin.customSequence || [];
+    return list
+      .map(deserializePitch)
+      .filter((p): p is ArabicPitch => p !== null);
+  });
   const [sequenceWarning, setSequenceWarning] = useState<string | null>(null);
 
   // Sequence playback state
   const [isPlayingSeq, setIsPlayingSeq] = useState(false);
   const [seqActiveIndex, setSeqActiveIndex] = useState<number | null>(null);
-  const [seqBpm, setSeqBpm] = useState<number>(100);
+  const [seqBpm, setSeqBpmState] = useState<number>(
+    () => getWorkspaceState().drafts.violin.seqBpm
+  );
   const [isLooping, setIsLooping] = useState<boolean>(false);
   const isLoopingRef = useRef(false);
-  const [viewMode, setViewMode] = useState<'maqam' | 'sequence'>('maqam');
+  const [viewMode, setViewModeState] = useState<'maqam' | 'sequence'>(
+    () => getWorkspaceState().drafts.violin.viewMode
+  );
 
   // Touch & Tablet Optimizations
-  const [touchZoom, setTouchZoom] = useState<boolean>(false);
-  const [stringFilter, setStringFilter] = useState<'all' | ViolinStringName>('all');
+  const [touchZoom, setTouchZoomState] = useState<boolean>(
+    () => getWorkspaceState().drafts.violin.touchZoom
+  );
+  const [stringFilter, setStringFilterState] = useState<'all' | ViolinStringName>(
+    () => (getWorkspaceState().drafts.violin.stringFilter as 'all' | ViolinStringName) || 'all'
+  );
+
+  const setOrientation = (o: 'vertical' | 'horizontal') => {
+    setOrientationState(o);
+    updateWorkspaceDraft('violin', { orientation: o });
+  };
+
+  const setViewMode = (m: 'maqam' | 'sequence') => {
+    setViewModeState(m);
+    updateWorkspaceDraft('violin', { viewMode: m });
+  };
+
+  const setSeqBpm = (bpm: number) => {
+    setSeqBpmState(bpm);
+    updateWorkspaceDraft('violin', { seqBpm: bpm });
+  };
+
+  const setCustomSequence = (action: React.SetStateAction<ArabicPitch[]>) => {
+    setCustomSequenceState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      updateWorkspaceDraft('violin', { customSequence: next.map(serializePitch) });
+      return next;
+    });
+  };
+
+  const setTouchZoom = (action: React.SetStateAction<boolean>) => {
+    setTouchZoomState((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      updateWorkspaceDraft('violin', { touchZoom: next });
+      return next;
+    });
+  };
+
+  const setStringFilter = (sf: 'all' | ViolinStringName) => {
+    setStringFilterState(sf);
+    updateWorkspaceDraft('violin', { stringFilter: sf });
+  };
 
   const displayedStrings = useMemo(
     () => (stringFilter === 'all' ? STRINGS : [stringFilter]),

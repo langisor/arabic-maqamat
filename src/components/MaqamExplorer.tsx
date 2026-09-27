@@ -15,6 +15,7 @@ import {
   MicrotonalAudioEngine,
   type TimbreType,
 } from "../audio/microtonal-audio"
+import { getWorkspaceState, updateWorkspaceDraft } from "../state/workspace-state"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import {
@@ -66,13 +67,57 @@ export const MaqamExplorer: React.FC<Props> = ({
   onToggleDrone,
 }) => {
   // Transposition tab mode: 'classical' | 'spine' | 'custom'
-  const [transpositionTab, setTranspositionTab] = useState<string>("classical")
+  const [transpositionTab, setTranspositionTabState] = useState<string>(
+    () => getWorkspaceState().drafts.explorer.transpositionTab
+  )
 
   // Custom tonic note builder state
-  const [customDiatonic, setCustomDiatonic] = useState<DiatonicBase>("G")
-  const [customAccidental, setCustomAccidental] =
-    useState<MicrotonalAccidental>("♮")
-  const [customOctave, setCustomOctave] = useState<number>(4)
+  const [customDiatonic, setCustomDiatonicState] = useState<DiatonicBase>(
+    () => getWorkspaceState().drafts.explorer.customTonic.diatonic
+  )
+  const [customAccidental, setCustomAccidentalState] =
+    useState<MicrotonalAccidental>(
+      () => getWorkspaceState().drafts.explorer.customTonic.accidental
+    )
+  const [customOctave, setCustomOctaveState] = useState<number>(
+    () => getWorkspaceState().drafts.explorer.customTonic.octave
+  )
+
+  const setTranspositionTab = (tab: string) => {
+    const valid = tab === "spine" || tab === "custom" ? tab : "classical"
+    setTranspositionTabState(valid)
+    updateWorkspaceDraft("explorer", { transpositionTab: valid })
+  }
+
+  const setCustomDiatonic = (d: DiatonicBase) => {
+    setCustomDiatonicState(d)
+    updateWorkspaceDraft("explorer", {
+      customTonic: { diatonic: d, accidental: customAccidental, octave: customOctave },
+    })
+  }
+
+  const setCustomAccidental = (a: MicrotonalAccidental) => {
+    setCustomAccidentalState(a)
+    updateWorkspaceDraft("explorer", {
+      customTonic: { diatonic: customDiatonic, accidental: a, octave: customOctave },
+    })
+  }
+
+  const setCustomOctave = (oct: number) => {
+    setCustomOctaveState(oct)
+    updateWorkspaceDraft("explorer", {
+      customTonic: { diatonic: customDiatonic, accidental: customAccidental, octave: oct },
+    })
+  }
+
+  const setCustomTonicDirect = (qp: ArabicPitch) => {
+    setCustomDiatonicState(qp.diatonic)
+    setCustomAccidentalState(qp.accidental)
+    setCustomOctaveState(qp.octave)
+    updateWorkspaceDraft("explorer", {
+      customTonic: { diatonic: qp.diatonic, accidental: qp.accidental, octave: qp.octave },
+    })
+  }
 
   const allMaqamat = MaqamatCatalogue.getAllMaqamat()
   const families = Object.values(MaqamatCatalogue.FAMILIES)
@@ -973,9 +1018,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                       <button
                         key={i}
                         onClick={() => {
-                          setCustomDiatonic(qp.diatonic)
-                          setCustomAccidental(qp.accidental)
-                          setCustomOctave(qp.octave)
+                          setCustomTonicDirect(qp)
                           handleTransposeToPitch(qp)
                         }}
                         className={`cursor-pointer rounded-lg border px-2.5 py-1 font-mono text-[11px] font-bold transition ${

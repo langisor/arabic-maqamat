@@ -19,6 +19,7 @@ import {
   GeneratedMelody,
   MelodyDifficulty
 } from '../theory/melody-generator';
+import { getWorkspaceState, updateWorkspaceDraft } from '../state/workspace-state';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -168,8 +169,17 @@ export const TrainingLab: React.FC<Props> = ({
   timbre
 }) => {
   // Main Navigation Mode
-  const [activeMode, setActiveMode] = useState<TrainingMode>('memorization');
+  const [activeMode, setActiveModeState] = useState<TrainingMode>(() => {
+    const saved = getWorkspaceState().drafts.training.activeMode;
+    return saved === 'sight' ? 'sightreading' : saved === 'record' ? 'recording' : 'memorization';
+  });
   const [memSubMode, setMemSubMode] = useState<MemorizationSubMode>('builder');
+
+  const setActiveMode = (mode: TrainingMode) => {
+    setActiveModeState(mode);
+    const mapped = mode === 'sightreading' ? 'sight' : mode === 'recording' ? 'record' : 'memorize';
+    updateWorkspaceDraft('training', { activeMode: mapped });
+  };
 
   // User Stats & Gamification
   const [stats, setStats] = useState<TrainingStats>(() => TrainingStorage.getStats());
@@ -210,13 +220,42 @@ export const TrainingLab: React.FC<Props> = ({
   const [earAnswered, setEarAnswered] = useState<boolean>(false);
 
   // Sight-Reading state
-  const [difficulty, setDifficulty] = useState<MelodyDifficulty>('level1');
-  const [melodyLength, setMelodyLength] = useState<number>(8);
-  const [melodyMeter, setMelodyMeter] = useState<'4/4' | '3/4' | '2/4'>('4/4');
-  const [melodyTempo, setMelodyTempo] = useState<number>(90);
-  const [generatedMelody, setGeneratedMelody] = useState<GeneratedMelody | null>(() =>
-    MelodyGenerator.generateMelody(currentMaqam, 'level1', 8, '4/4', 90)
+  const [difficulty, setDifficultyState] = useState<MelodyDifficulty>(
+    () => getWorkspaceState().drafts.training.sightReadingDifficulty || 'level1'
   );
+  const [melodyLength, setMelodyLength] = useState<number>(8);
+  const [melodyMeter, setMelodyMeterState] = useState<'4/4' | '3/4' | '2/4'>(
+    () => getWorkspaceState().drafts.training.melodyMeter || '4/4'
+  );
+  const [melodyTempo, setMelodyTempoState] = useState<number>(
+    () => getWorkspaceState().drafts.training.melodyTempo || 90
+  );
+
+  const setDifficulty = (diff: MelodyDifficulty) => {
+    setDifficultyState(diff);
+    updateWorkspaceDraft('training', { sightReadingDifficulty: diff });
+  };
+
+  const setMelodyMeter = (meter: '4/4' | '3/4' | '2/4') => {
+    setMelodyMeterState(meter);
+    updateWorkspaceDraft('training', { melodyMeter: meter });
+  };
+
+  const setMelodyTempo = (tempo: number) => {
+    setMelodyTempoState(tempo);
+    updateWorkspaceDraft('training', { melodyTempo: tempo });
+  };
+
+  const [generatedMelody, setGeneratedMelody] = useState<GeneratedMelody | null>(() => {
+    const draft = getWorkspaceState().drafts.training;
+    return MelodyGenerator.generateMelody(
+      currentMaqam,
+      draft.sightReadingDifficulty || 'level1',
+      8,
+      draft.melodyMeter || '4/4',
+      draft.melodyTempo || 90
+    );
+  });
   const [activeMelodyStep, setActiveMelodyStep] = useState<number>(-1);
   const [isMelodyPlaying, setIsMelodyPlaying] = useState<boolean>(false);
   const [melodyCountIn, setMelodyCountIn] = useState<number | null>(null);

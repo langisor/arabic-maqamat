@@ -4,6 +4,12 @@ import { Maqam, MaqamatCatalogue } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
 import { ArabicNoteSpine } from '../core/note-spine';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
+import {
+  getWorkspaceState,
+  updateWorkspaceDraft,
+  deserializePitch,
+  serializePitch
+} from '../state/workspace-state';
 import { ViolinErgonomicsEngine } from '../violin/ergonomics';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -88,7 +94,19 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
 
   // Target tonic pitch state
   const originalTonic = selectedBaseMaqam.getTonic();
-  const [targetTonic, setTargetTonic] = useState<ArabicPitch>(currentMaqam.getTonic());
+  const [targetTonic, setTargetTonicState] = useState<ArabicPitch>(() => {
+    const saved = getWorkspaceState().drafts.transposition.targetTonic;
+    const deserialized = deserializePitch(saved);
+    if (deserialized) return deserialized;
+    return currentMaqam.getTonic();
+  });
+
+  const setTargetTonic = (pitch: ArabicPitch) => {
+    setTargetTonicState(pitch);
+    updateWorkspaceDraft('transposition', {
+      targetTonic: serializePitch(pitch)
+    });
+  };
 
   // Playback state
   const [isPlayingScale, setIsPlayingScale] = useState(false);
@@ -219,7 +237,8 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
   };
 
   const handleResetToNatural = () => {
-    setTargetTonic(originalTonic);
+    setTargetTonicState(originalTonic);
+    updateWorkspaceDraft('transposition', { targetTonic: null });
     stopPlayback();
     MicrotonalAudioEngine.playPitch(originalTonic, 0.6, timbre);
   };

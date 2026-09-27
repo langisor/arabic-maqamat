@@ -4,6 +4,7 @@ import { Maqam, MaqamatCatalogue } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
 import { SayrEngine, SayrStep } from '../theory/sayr';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
+import { getWorkspaceState, updateWorkspaceDraft } from '../state/workspace-state';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -27,8 +28,22 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
   const [isPlayingSayr, setIsPlayingSayr] = useState(false);
 
   // Modulation analysis state
-  const [targetMaqamId, setTargetMaqamId] = useState<string>('nahawand');
-  const [measureDuration, setMeasureDuration] = useState<number>(2);
+  const [targetMaqamId, setTargetMaqamIdState] = useState<string>(
+    () => getWorkspaceState().drafts.sayr.targetMaqamId
+  );
+  const [measureDuration, setMeasureDurationState] = useState<number>(
+    () => getWorkspaceState().drafts.sayr.measureDuration
+  );
+
+  const setTargetMaqamId = (id: string) => {
+    setTargetMaqamIdState(id);
+    updateWorkspaceDraft('sayr', { targetMaqamId: id });
+  };
+
+  const setMeasureDuration = (dur: number) => {
+    setMeasureDurationState(dur);
+    updateWorkspaceDraft('sayr', { measureDuration: dur });
+  };
 
   // Qafla tester state
   const [qaflaPhrase, setQaflaPhrase] = useState<ArabicPitch[]>([

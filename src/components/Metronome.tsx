@@ -25,6 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from './ui/popover';
+import { getWorkspaceState, updateWorkspaceGlobal } from '../state/workspace-state';
 
 interface MetronomeProps {
   className?: string;
@@ -32,10 +33,14 @@ interface MetronomeProps {
 
 export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [bpm, setBpm] = useState<number>(96);
-  const [timeSignature, setTimeSignature] = useState<TimeSignatureOption>(TIME_SIGNATURE_PRESETS[0]);
-  const [soundType, setSoundType] = useState<MetronomeSoundType>('dum-tak');
-  const [volume, setVolume] = useState<number>(75);
+  const [bpm, setBpm] = useState<number>(() => getWorkspaceState().global.metronome.bpm);
+  const [timeSignature, setTimeSignature] = useState<TimeSignatureOption>(() => {
+    const savedId = getWorkspaceState().global.metronome.timeSignatureId;
+    const found = TIME_SIGNATURE_PRESETS.find((p) => p.id === savedId);
+    return found || TIME_SIGNATURE_PRESETS[0];
+  });
+  const [soundType, setSoundType] = useState<MetronomeSoundType>(() => getWorkspaceState().global.metronome.soundType);
+  const [volume, setVolume] = useState<number>(() => getWorkspaceState().global.metronome.volume);
   const [currentBeat, setCurrentBeat] = useState<number>(0);
   const [isDownbeat, setIsDownbeat] = useState<boolean>(false);
   const [isAccent, setIsAccent] = useState<boolean>(false);
@@ -50,9 +55,13 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
   const tapTimesRef = useRef<number[]>([]);
   const tapTimeoutRef = useRef<number | null>(null);
 
-  // Modal / popover wrapper ref
-  // const panelRef = useRef<HTMLDivElement>(null);
-  // const triggerRef = useRef<HTMLDivElement>(null);
+  // Sync initial settings into engine on mount
+  useEffect(() => {
+    MetronomeAudioEngine.setBpm(bpm);
+    MetronomeAudioEngine.setTimeSignature(timeSignature);
+    MetronomeAudioEngine.setSoundType(soundType);
+    MetronomeAudioEngine.setVolume(volume / 100);
+  }, []);
 
   // Subscribe to MetronomeAudioEngine events
   useEffect(() => {
@@ -86,21 +95,53 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
     const clamped = Math.max(30, Math.min(280, Math.round(newBpm)));
     setBpm(clamped);
     MetronomeAudioEngine.setBpm(clamped);
-  }, []);
+    updateWorkspaceGlobal({
+      metronome: {
+        bpm: clamped,
+        timeSignatureId: timeSignature.id,
+        soundType,
+        volume
+      }
+    });
+  }, [timeSignature.id, soundType, volume]);
 
   const handleTimeSignatureSelect = (preset: TimeSignatureOption) => {
     setTimeSignature(preset);
     MetronomeAudioEngine.setTimeSignature(preset);
+    updateWorkspaceGlobal({
+      metronome: {
+        bpm,
+        timeSignatureId: preset.id,
+        soundType,
+        volume
+      }
+    });
   };
 
   const handleSoundTypeChange = (sound: MetronomeSoundType) => {
     setSoundType(sound);
     MetronomeAudioEngine.setSoundType(sound);
+    updateWorkspaceGlobal({
+      metronome: {
+        bpm,
+        timeSignatureId: timeSignature.id,
+        soundType: sound,
+        volume
+      }
+    });
   };
 
   const handleVolumeChange = (volPercent: number) => {
     setVolume(volPercent);
     MetronomeAudioEngine.setVolume(volPercent / 100);
+    updateWorkspaceGlobal({
+      metronome: {
+        bpm,
+        timeSignatureId: timeSignature.id,
+        soundType,
+        volume: volPercent
+      }
+    });
   };
 
   const togglePlayback = useCallback(async (e?: React.MouseEvent) => {
