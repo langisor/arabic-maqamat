@@ -1,5 +1,5 @@
 // src/components/TranspositionLab.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Maqam, MaqamatCatalogue } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
 import { ArabicNoteSpine } from '../core/note-spine';
@@ -70,6 +70,11 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
   isDroneActive = false,
   onToggleDrone
 }) => {
+  useEffect(() => () => {
+    MicrotonalAudioEngine.stopSequence('transposition');
+    MicrotonalAudioEngine.stopSequence('transposition-compare');
+  }, []);
+
   const allMaqamat = useMemo(() => MaqamatCatalogue.getAllMaqamat(), []);
 
   // Determine base original Maqam if currentMaqam is already transposed
@@ -226,7 +231,8 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
   };
 
   const stopPlayback = () => {
-    MicrotonalAudioEngine.stopSequence();
+    MicrotonalAudioEngine.stopSequence('transposition');
+    MicrotonalAudioEngine.stopSequence('transposition-compare');
     setIsPlayingScale(false);
     setActiveStepIndex(null);
   };
@@ -243,7 +249,9 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
       () => {
         setIsPlayingScale(false);
         setActiveStepIndex(null);
-      }
+      },
+      undefined,
+      'transposition'
     );
   };
 
@@ -259,17 +267,23 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
       () => {
         setIsPlayingScale(false);
         setActiveStepIndex(null);
-      }
+      },
+      undefined,
+      'transposition'
     );
   };
 
   const compareTonicsAB = () => {
     stopPlayback();
-    // Play original tonic then transposed tonic
-    MicrotonalAudioEngine.playPitch(originalTonic, 0.7, timbre);
-    setTimeout(() => {
-      MicrotonalAudioEngine.playPitch(targetTonic, 0.9, timbre);
-    }, 750);
+    MicrotonalAudioEngine.playSequence(
+      [originalTonic, targetTonic],
+      750,
+      timbre,
+      undefined,
+      undefined,
+      undefined,
+      'transposition-compare'
+    );
   };
 
   return (

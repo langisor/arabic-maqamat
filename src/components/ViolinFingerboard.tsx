@@ -1,5 +1,5 @@
 // src/components/ViolinFingerboard.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
 import {
   ViolinErgonomicsEngine,
@@ -10,6 +10,7 @@ import {
   FingerMicroOffset
 } from '../violin/ergonomics';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
+import { AudioTransport } from '../audio/audio-transport';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -65,6 +66,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   const [seqActiveIndex, setSeqActiveIndex] = useState<number | null>(null);
   const [seqBpm, setSeqBpm] = useState<number>(100);
   const [isLooping, setIsLooping] = useState<boolean>(false);
+  const isLoopingRef = useRef(false);
   const [viewMode, setViewMode] = useState<'maqam' | 'sequence'>('maqam');
 
   // Touch & Tablet Optimizations
@@ -143,7 +145,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   // Clean up sequence audio on unmount
   useEffect(() => {
     return () => {
-      MicrotonalAudioEngine.stopSequence();
+      MicrotonalAudioEngine.stopSequence('violin-sequence');
+      AudioTransport.stopScope('violin-sequence-loop');
     };
   }, []);
 
@@ -279,7 +282,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
   const handleSwitchToCustomSequence = () => {
     setViewMode('sequence');
-    MicrotonalAudioEngine.stopSequence();
+    MicrotonalAudioEngine.stopSequence('violin-sequence');
+    AudioTransport.stopScope('violin-sequence-loop');
     setIsPlayingSeq(false);
     setSeqActiveIndex(null);
     setSelectedPlacement(null);
@@ -290,7 +294,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
   const handleSwitchToMaqamMode = () => {
     setViewMode('maqam');
-    MicrotonalAudioEngine.stopSequence();
+    MicrotonalAudioEngine.stopSequence('violin-sequence');
+    AudioTransport.stopScope('violin-sequence-loop');
     setIsPlayingSeq(false);
     setSeqActiveIndex(null);
     setSelectedPlacement(null);
@@ -335,7 +340,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
   };
 
   const handleClearSequence = () => {
-    MicrotonalAudioEngine.stopSequence();
+    MicrotonalAudioEngine.stopSequence('violin-sequence');
+    AudioTransport.stopScope('violin-sequence-loop');
     setIsPlayingSeq(false);
     setSeqActiveIndex(null);
     setSelectedPlacement(null);
@@ -347,7 +353,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     if (customSequence.length === 0) return;
 
     if (isPlayingSeq) {
-      MicrotonalAudioEngine.stopSequence();
+      MicrotonalAudioEngine.stopSequence('violin-sequence');
+      AudioTransport.stopScope('violin-sequence-loop');
       setIsPlayingSeq(false);
       setSeqActiveIndex(null);
       return;
@@ -355,8 +362,15 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
     setIsPlayingSeq(true);
     const intervalMs = Math.round((60 / seqBpm) * 1000);
+    const loopSession = AudioTransport.startSession('violin-sequence-loop', 'Custom sequence');
+    loopSession.onCancel(() => {
+      MicrotonalAudioEngine.stopSequence('violin-sequence');
+      setIsPlayingSeq(false);
+      setSeqActiveIndex(null);
+    });
 
     const playLoop = () => {
+      if (!loopSession.isActive()) return;
       MicrotonalAudioEngine.playSequence(
         customSequence,
         intervalMs,
@@ -365,9 +379,10 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
           setSeqActiveIndex(idx === -1 ? null : idx);
         },
         () => {
-          if (isLooping) {
-            setTimeout(playLoop, 200);
+          if (isLoopingRef.current) {
+            loopSession.setTimeout(playLoop, 200);
           } else {
+            loopSession.finish();
             setIsPlayingSeq(false);
             setSeqActiveIndex(null);
           }
@@ -1203,7 +1218,10 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
               <Button
                 variant={isLooping ? "emerald" : "dark"}
                 size="sm"
-                onClick={() => setIsLooping(!isLooping)}
+                onClick={() => {
+                  isLoopingRef.current = !isLoopingRef.current;
+                  setIsLooping(isLoopingRef.current);
+                }}
                 className="gap-1.5"
                 title="Continuous Loop"
               >
@@ -1283,7 +1301,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                   <button
                     key={preset.name}
                     onClick={() => {
-                      MicrotonalAudioEngine.stopSequence();
+                      MicrotonalAudioEngine.stopSequence('violin-sequence');
+                      AudioTransport.stopScope('violin-sequence-loop');
                       setIsPlayingSeq(false);
                       setSeqActiveIndex(null);
                       setCustomSequence(preset.pitches);

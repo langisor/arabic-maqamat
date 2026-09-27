@@ -1,5 +1,5 @@
 // src/components/SayrQaflaLab.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Maqam, MaqamatCatalogue } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
 import { SayrEngine, SayrStep } from '../theory/sayr';
@@ -16,6 +16,11 @@ interface Props {
 }
 
 export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
+  useEffect(() => () => {
+    MicrotonalAudioEngine.stopSequence('sayr');
+    MicrotonalAudioEngine.stopSequence('qafla');
+  }, []);
+
   // Sayr state
   const sayrData = SayrEngine.getSayrForMaqam(currentMaqam.id) || SayrEngine.getSayrForMaqam('rast')!;
   const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null);
@@ -39,7 +44,7 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
   // Play whole Sayr sequence
   const handlePlaySayr = () => {
     if (isPlayingSayr) {
-      MicrotonalAudioEngine.stopSequence();
+      MicrotonalAudioEngine.stopSequence('sayr');
       setIsPlayingSayr(false);
       setActiveStepIndex(null);
       return;
@@ -58,7 +63,9 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
       () => {
         setIsPlayingSayr(false);
         setActiveStepIndex(null);
-      }
+      },
+      undefined,
+      'sayr'
     );
   };
 
@@ -73,7 +80,9 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, timbre }) => {
       500,
       timbre,
       undefined,
-      undefined
+      undefined,
+      undefined,
+      'qafla'
     );
   };
 

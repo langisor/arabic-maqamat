@@ -1,5 +1,5 @@
 // src/components/TuningWheel24EDO.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArabicPitch } from '../core/pitch';
 import { ArabicNoteSpine } from '../core/note-spine';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
@@ -13,6 +13,8 @@ interface Props {
 }
 
 export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
+  useEffect(() => () => MicrotonalAudioEngine.stopSequence('tuning-wheel'), []);
+
   const [selectedQtIndex, setSelectedQtIndex] = useState<number>(0); // 0 = C4
   const [intervalBase] = useState<ArabicPitch>(new ArabicPitch('C', '♮', 4));
 
@@ -56,11 +58,15 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
       target = base.transpose(8);
     }
 
-    // Play base then target
-    MicrotonalAudioEngine.playPitch(base, 0.5, timbre);
-    setTimeout(() => {
-      MicrotonalAudioEngine.playPitch(target, 0.8, timbre);
-    }, 450);
+    MicrotonalAudioEngine.playSequence(
+      [base, target],
+      450,
+      timbre,
+      undefined,
+      undefined,
+      undefined,
+      'tuning-wheel'
+    );
   };
 
   return (

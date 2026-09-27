@@ -1,5 +1,5 @@
 // src/components/JinsDetectorLab.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ArabicPitch,type DiatonicBase,type MicrotonalAccidental } from '../core/pitch';
 import { identifyJins } from '../theory/jins-detector';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
@@ -30,6 +30,8 @@ interface PhrasePreset {
 }
 
 export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
+  useEffect(() => () => MicrotonalAudioEngine.stopSequence('jins-detector'), []);
+
   // Preset catalog of authentic melodic phrases
   const presets: PhrasePreset[] = useMemo(() => [
     {
@@ -195,7 +197,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
     if (phrase.length === 0) return;
 
     if (isPlaying) {
-      MicrotonalAudioEngine.stopSequence();
+      MicrotonalAudioEngine.stopSequence('jins-detector');
       setIsPlaying(false);
       setActiveNoteIdx(null);
       return;
@@ -212,7 +214,9 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
       () => {
         setIsPlaying(false);
         setActiveNoteIdx(null);
-      }
+      },
+      undefined,
+      'jins-detector'
     );
   };
 
@@ -227,7 +231,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
   };
 
   const handleClearPhrase = () => {
-    MicrotonalAudioEngine.stopSequence();
+    MicrotonalAudioEngine.stopSequence('jins-detector');
     setIsPlaying(false);
     setActiveNoteIdx(null);
     setPhrase([]);
@@ -290,7 +294,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                 <button
                   key={preset.name}
                   onClick={() => {
-                    MicrotonalAudioEngine.stopSequence();
+                    MicrotonalAudioEngine.stopSequence('jins-detector');
                     setIsPlaying(false);
                     setActiveNoteIdx(null);
                     setPhrase(preset.pitches);

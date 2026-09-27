@@ -1,5 +1,6 @@
 // src/audio/metronome-engine.ts
 import * as Tone from 'tone';
+import { AudioTransport, type TransportSession } from './audio-transport';
 
 export type MetronomeSoundType = 'dum-tak' | 'woodblock' | 'digital' | 'silent';
 
@@ -168,7 +169,8 @@ export class MetronomeAudioEngine {
   private static isPlaying = false;
 
   // Scheduler timing
-  private static timerId: number | null = null;
+  private static timerId: ReturnType<typeof setInterval> | null = null;
+  private static transportSession: TransportSession | null = null;
   private static nextBeatAudioTime = 0;
   private static currentBeatIndex = 0;
   private static readonly LOOKAHEAD_SEC = 0.08; // 80ms lookahead
@@ -243,38 +245,54 @@ export class MetronomeAudioEngine {
   /**
    * Unlocks Tone.js Web Audio context.
    */
-  public static async startAudioContext(): Promise<void> {
+  public static startAudioContext(): Promise<void> {
     if (!this.isInitialized) {
       this.initAudio();
     }
-    if (Tone.context.state !== 'running') {
-      await Tone.start();
-    }
+    return AudioTransport.ensureAudioContext(() =>
+      Tone.context.state === 'running' ? Promise.resolve() : Tone.start()
+    , () => Tone.context.state === 'running');
   }
 
   /**
    * Starts the metronome.
    */
   public static async start(audioTime?: number): Promise<void> {
-    await this.startAudioContext();
     if (this.isPlaying) {
       if (audioTime === undefined) return;
       this.stop();
     }
+
+    const session = AudioTransport.startSession('metronome', 'Metronome');
+    this.transportSession = session;
+    session.onCancel(() => this.stopInternal());
+
+    try {
+      await this.startAudioContext();
+    } catch (error) {
+      session.finish();
+      throw error;
+    }
+    if (!session.isActive()) return;
 
     this.isPlaying = true;
     this.currentBeatIndex = 0;
     this.nextBeatAudioTime = audioTime ?? Tone.now() + 0.05;
 
     this.notifyState(true);
-    this.runScheduler();
+    this.runScheduler(session);
   }
 
   /**
    * Stops the metronome.
    */
   public static stop(): void {
-    if (!this.isPlaying) return;
+    AudioTransport.stopScope('metronome');
+    this.stopInternal();
+  }
+
+  private static stopInternal(): void {
+    if (!this.isPlaying && this.timerId === null) return;
 
     this.isPlaying = false;
     if (this.timerId !== null) {
@@ -282,6 +300,7 @@ export class MetronomeAudioEngine {
       this.timerId = null;
     }
     this.currentBeatIndex = 0;
+    this.transportSession = null;
     this.notifyState(false);
   }
 
@@ -299,12 +318,12 @@ export class MetronomeAudioEngine {
   /**
    * Scheduler loop that schedules audio pulses in advance using Web Audio timeline.
    */
-  private static runScheduler(): void {
+  private static runScheduler(session: TransportSession): void {
     if (this.timerId !== null) {
       window.clearInterval(this.timerId);
     }
 
-    this.timerId = window.setInterval(() => {
+    this.timerId = session.setInterval(() => {
       if (!this.isPlaying) return;
 
       const currentTime = Tone.now();
@@ -480,3 +499,5 @@ export class MetronomeAudioEngine {
     this.stateListeners.forEach(fn => fn(isPlaying));
   }
 }
+
+AudioTransport.registerGlobalStopHandler(() => MetronomeAudioEngine.stop());

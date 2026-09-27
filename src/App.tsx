@@ -1,10 +1,11 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import {
   MicrotonalAudioEngine,
   type TimbreType,
 } from "./audio/microtonal-audio"
+import { AudioTransport, type AudioTransportStatus } from "./audio/audio-transport"
 import { MaqamExplorer } from "./components/MaqamExplorer"
 import { ViolinFingerboard } from "./components/ViolinFingerboard"
 import { ScoreViewer } from "./components/ScoreViewer"
@@ -33,6 +34,7 @@ import {
   X,
   CheckCircle2,
   GraduationCap,
+  Square,
 } from "lucide-react"
 
 export default function App() {
@@ -54,6 +56,9 @@ export default function App() {
   const [isDroneActive, setIsDroneActive] = useState(false)
   const [isPlayingScale, setIsPlayingScale] = useState(false)
   const [activePitchIndex, setActivePitchIndex] = useState<number | null>(null)
+  const [transportStatus, setTransportStatus] = useState<AudioTransportStatus>(
+    () => AudioTransport.getStatus()
+  )
 
   // Tone.js Audio DSP Studio Controls
   const [masterVolume, setMasterVolume] = useState<number>(85)
@@ -63,6 +68,23 @@ export default function App() {
 
   const scalePitches = currentMaqam.getScale()
   const tonic = currentMaqam.getTonic()
+
+  useEffect(() => {
+    const unsubscribe = AudioTransport.subscribe(setTransportStatus)
+    return () => {
+      unsubscribe()
+      AudioTransport.stopAll()
+    }
+  }, [])
+
+  const handleSelectTab = (tab: typeof activeTab) => {
+    if (tab === activeTab) return
+    AudioTransport.stopAll()
+    setIsDroneActive(false)
+    setIsPlayingScale(false)
+    setActivePitchIndex(null)
+    setActiveTab(tab)
+  }
 
   const handleVolumeChange = (val: number) => {
     setMasterVolume(val)
@@ -80,15 +102,10 @@ export default function App() {
   }
 
   const handleSelectMaqam = (m: Maqam) => {
-    // If drone is active, adjust drone to new tonic
-    if (isDroneActive) {
-      MicrotonalAudioEngine.toggleDrone(m.getTonic(), true)
-    }
-    if (isPlayingScale) {
-      MicrotonalAudioEngine.stopSequence()
-      setIsPlayingScale(false)
-      setActivePitchIndex(null)
-    }
+    AudioTransport.stopAll()
+    setIsDroneActive(false)
+    setIsPlayingScale(false)
+    setActivePitchIndex(null)
     setCurrentMaqam(m)
   }
 
@@ -110,12 +127,14 @@ export default function App() {
       () => {
         setIsPlayingScale(false)
         setActivePitchIndex(null)
-      }
+      },
+      undefined,
+      "app-scale"
     )
   }
 
   const handleStopScale = () => {
-    MicrotonalAudioEngine.stopSequence()
+    MicrotonalAudioEngine.stopSequence("app-scale")
     setIsPlayingScale(false)
     setActivePitchIndex(null)
   }
@@ -284,12 +303,44 @@ export default function App() {
 
           {/* Synchronized Visual Metronome */}
           <Metronome />
+          <Badge
+            variant={transportStatus.activeSessions.length > 0 ? "default" : "secondary"}
+            role="status"
+            aria-live="polite"
+            title={transportStatus.activeSessions.map(({ activity }) => activity).join(", ") || "No active audio sessions"}
+            className="hidden sm:inline-flex"
+          >
+            {transportStatus.activeSessions.length > 0
+              ? `Audio active: ${transportStatus.activeSessions.length}`
+              : transportStatus.audioContextReady
+                ? "Audio ready"
+                : "Audio idle"}
+          </Badge>
+          {transportStatus.activeSessions.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                AudioTransport.stopAll()
+                setIsDroneActive(false)
+                setIsPlayingScale(false)
+                setActivePitchIndex(null)
+              }}
+              className="gap-1.5 px-2.5 sm:px-3"
+              title="Stop all audio playback"
+            >
+              <Square className="h-3.5 w-3.5 fill-current" />
+              <span className="hidden md:inline">
+                Stop audio ({transportStatus.activeSessions.length})
+              </span>
+            </Button>
+          )}
         </div>
         {/* Studio Navigation Tabs (Mobile: Icons Only, Tablet/Desktop: Wrapped with Labels) */}
         <div className="mx-auto max-w-7xl border-t border-border/60 px-2 sm:px-6 lg:px-8">
           <nav className="flex flex-wrap items-center justify-around gap-1 py-2 text-xs font-semibold sm:justify-start sm:gap-2">
             <button
-              onClick={() => setActiveTab("explorer")}
+              onClick={() => handleSelectTab("explorer")}
               aria-label="Maqam & 8 Families"
               title="Maqam & 8 Families"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -303,7 +354,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab("transposition")}
+              onClick={() => handleSelectTab("transposition")}
               aria-label="Transposition Lab (Taswir)"
               title="Transposition Lab (Taswir)"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -317,7 +368,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab("violin")}
+              onClick={() => handleSelectTab("violin")}
               aria-label="Violin Fingerboard"
               title="Violin Fingerboard"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -331,7 +382,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab("sayr")}
+              onClick={() => handleSelectTab("sayr")}
               aria-label="Sayr, Modulation & Qafla"
               title="Sayr, Modulation & Qafla"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -345,7 +396,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab("score")}
+              onClick={() => handleSelectTab("score")}
               aria-label="Score & MusicXML 4.0"
               title="Score & MusicXML 4.0"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -359,7 +410,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab("tuning")}
+              onClick={() => handleSelectTab("tuning")}
               aria-label="24-EDO Tuning & Spine"
               title="24-EDO Tuning & Spine"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -373,7 +424,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab("detector")}
+              onClick={() => handleSelectTab("detector")}
               aria-label="Jins Phrase Classifier"
               title="Jins Phrase Classifier"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -387,7 +438,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab("training")}
+              onClick={() => handleSelectTab("training")}
               aria-label="Practice & Training Mode"
               title="Practice & Training Mode: Scale memorization, sight-reading & recording"
               className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-xl p-2.5 whitespace-nowrap transition sm:gap-2 sm:px-3 sm:py-2 ${
@@ -705,15 +756,14 @@ export default function App() {
                   const d4 = new ArabicPitch("D", "♮", 4)
                   const eHalfFlat4 = new ArabicPitch("E", "𝄳", 4)
                   const a4 = new ArabicPitch("A", "♮", 4)
-                  MicrotonalAudioEngine.playPitch(d4, 0.4, timbre)
-                  setTimeout(
-                    () =>
-                      MicrotonalAudioEngine.playPitch(eHalfFlat4, 0.4, timbre),
-                    350
-                  )
-                  setTimeout(
-                    () => MicrotonalAudioEngine.playPitch(a4, 0.6, timbre),
-                    700
+                  MicrotonalAudioEngine.playSequence(
+                    [d4, eHalfFlat4, a4],
+                    350,
+                    timbre,
+                    undefined,
+                    undefined,
+                    undefined,
+                    "audio-settings-audition"
                   )
                 }}
                 className="gap-1.5"

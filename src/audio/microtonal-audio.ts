@@ -1,6 +1,7 @@
 // src/audio/microtonal-audio.ts
 import * as Tone from 'tone';
 import { ArabicPitch } from '../core/pitch';
+import { AudioTransport, type TransportSession } from './audio-transport';
 
 export type TimbreType = 'violin' | 'oud' | 'kanun';
 
@@ -34,8 +35,9 @@ export class MicrotonalAudioEngine {
   private static droneChorus: Tone.Chorus | null = null;
   private static isDroneRunning = false;
 
-  // Sequencer state
-  private static activePitchCancelToken = 0;
+  // Sequencer and drone transport ownership
+  private static sequenceVoices = new Map<string, { timbre: TimbreType; frequencies: number[] }>();
+  private static droneSession: TransportSession | null = null;
 
   /**
    * Initializes Tone.js audio graph with professional Arabic acoustic modeling.
@@ -153,13 +155,13 @@ export class MicrotonalAudioEngine {
   /**
    * Unlocks Tone.js Web Audio context on user gesture.
    */
-  public static async startAudioContext(): Promise<void> {
+  public static startAudioContext(): Promise<void> {
     if (!this.isInitialized) {
       this.initAudio();
     }
-    if (Tone.context.state !== 'running') {
-      await Tone.start();
-    }
+    return AudioTransport.ensureAudioContext(() =>
+      Tone.context.state === 'running' ? Promise.resolve() : Tone.start()
+    , () => Tone.context.state === 'running');
   }
 
   /**
@@ -266,9 +268,10 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = 'violin',
     onStepChange?: (index: number) => void,
     onComplete?: () => void,
-    audioTime?: number
+    audioTime?: number,
+    scope: string = 'microtonal-sequence'
   ): void {
-    this.stopSequence();
+    this.stopSequence(scope);
     this.startAudioContext();
 
     if (pitches.length === 0) {
@@ -276,40 +279,48 @@ export class MicrotonalAudioEngine {
       return;
     }
 
-    const currentToken = ++this.activePitchCancelToken;
+    const session = AudioTransport.startSession(scope, 'Sequence');
+    const voices = { timbre, frequencies: [] as number[] };
+    this.sequenceVoices.set(scope, voices);
+    session.onCancel(() => {
+      if (this.sequenceVoices.get(scope) === voices) {
+        this.releaseSequenceVoices(voices);
+        this.sequenceVoices.delete(scope);
+      }
+    });
     const startTime = audioTime ?? Tone.now();
     const intervalSeconds = intervalMs / 1000;
 
     pitches.forEach((pitch, index) => {
       const stepTime = startTime + index * intervalSeconds;
       Tone.getDraw().schedule(() => {
-        if (this.activePitchCancelToken !== currentToken) return;
+        if (!session.isActive()) return;
+        voices.frequencies.push(pitch.toFrequency(this.referenceA4));
         this.playPitch(pitch, intervalSeconds * 0.92, timbre, 0.75);
         if (onStepChange) onStepChange(index);
       }, stepTime);
     });
 
     Tone.getDraw().schedule(() => {
-      if (this.activePitchCancelToken !== currentToken) return;
+      if (!session.isActive()) return;
       if (onStepChange) onStepChange(-1);
       if (onComplete) onComplete();
+      if (this.sequenceVoices.get(scope) === voices) {
+        this.sequenceVoices.delete(scope);
+      }
+      session.finish();
     }, startTime + pitches.length * intervalSeconds);
   }
 
   /**
    * Stops any currently active playback sequence immediately.
    */
-  public static stopSequence(): void {
-    this.activePitchCancelToken++;
-
-    // Release any lingering active voices
-    try {
-      if (this.violinSynth) this.violinSynth.releaseAll();
-      if (this.oudSynth) this.oudSynth.releaseAll();
-      if (this.kanunSynth) this.kanunSynth.releaseAll();
-    } catch {
-      // safe
+  public static stopSequence(scope?: string): void {
+    if (scope) {
+      AudioTransport.stopScope(scope);
+      return;
     }
+    AudioTransport.stopWhere(({ activity }) => activity === 'Sequence');
   }
 
   /**
@@ -319,31 +330,28 @@ export class MicrotonalAudioEngine {
     this.startAudioContext();
 
     if (!enable) {
-      if (this.isDroneRunning && this.droneGain) {
-        this.droneGain.gain.rampTo(0, 0.4);
-        setTimeout(() => {
-          this.droneOsc1?.stop().dispose();
-          this.droneOsc2?.stop().dispose();
-          this.droneSubOsc?.stop().dispose();
-          this.droneFifthOsc?.stop().dispose();
-          this.droneOsc1 = null;
-          this.droneOsc2 = null;
-          this.droneSubOsc = null;
-          this.droneFifthOsc = null;
-          this.isDroneRunning = false;
-        }, 450);
-      }
+      const session = this.droneSession;
+      if (!session?.isActive()) return;
+      this.droneGain?.gain.rampTo(0, 0.4);
+      session.setTimeout(() => {
+        this.disposeDrone();
+        this.droneSession = null;
+        session.finish();
+      }, 450);
       return;
     }
 
-    // Stop existing drone if already running
-    if (this.isDroneRunning) {
-      this.toggleDrone(pitch, false);
-      setTimeout(() => {
-        this.toggleDrone(pitch, true);
-      }, 500);
-      return;
-    }
+    if (this.droneSession?.isActive()) AudioTransport.stopScope('drone');
+    const session = AudioTransport.startSession('drone', 'Drone');
+    this.droneSession = session;
+    session.onCancel(() => {
+      this.disposeDrone();
+      if (this.droneSession === session) this.droneSession = null;
+    });
+    this.startDrone(pitch);
+  }
+
+  private static startDrone(pitch: ArabicPitch): void {
 
     if (!this.droneFilter || !this.droneGain) return;
 
@@ -374,10 +382,49 @@ export class MicrotonalAudioEngine {
     this.isDroneRunning = true;
   }
 
+  private static disposeDrone(): void {
+    this.droneOsc1?.stop().dispose();
+    this.droneOsc2?.stop().dispose();
+    this.droneSubOsc?.stop().dispose();
+    this.droneFifthOsc?.stop().dispose();
+    this.droneOsc1 = null;
+    this.droneOsc2 = null;
+    this.droneSubOsc = null;
+    this.droneFifthOsc = null;
+    this.droneGain?.gain.setValueAtTime(0, Tone.now());
+    this.isDroneRunning = false;
+  }
+
+  private static releaseSequenceVoices(voices: { timbre: TimbreType; frequencies: number[] }): void {
+    if (voices.frequencies.length === 0) return;
+    const synth = voices.timbre === 'oud'
+      ? this.oudSynth
+      : voices.timbre === 'kanun'
+        ? this.kanunSynth
+        : this.violinSynth;
+    try {
+      synth?.triggerRelease(voices.frequencies, Tone.now());
+    } catch {
+      // The audio context may have been interrupted.
+    }
+  }
+
   /**
    * Helper to check if drone is active.
    */
   public static isDroneActive(): boolean {
     return this.isDroneRunning;
   }
+
+  public static stopAllPlayback(): void {
+    try {
+      this.violinSynth?.releaseAll();
+      this.oudSynth?.releaseAll();
+      this.kanunSynth?.releaseAll();
+    } catch {
+      // The audio context may have been interrupted.
+    }
+  }
 }
+
+AudioTransport.registerGlobalStopHandler(() => MicrotonalAudioEngine.stopAllPlayback());

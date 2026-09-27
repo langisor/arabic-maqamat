@@ -5,6 +5,7 @@ import { Maqam } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
 import { MetronomeAudioEngine, TIME_SIGNATURE_PRESETS } from '../audio/metronome-engine';
+import { AudioTransport } from '../audio/audio-transport';
 import { MusicXMLExporter } from '../score/musicxml-exporter';
 import { ViolinErgonomicsEngine } from '../violin/ergonomics';
 import {
@@ -219,7 +220,7 @@ export const TrainingLab: React.FC<Props> = ({
   const [activeMelodyStep, setActiveMelodyStep] = useState<number>(-1);
   const [isMelodyPlaying, setIsMelodyPlaying] = useState<boolean>(false);
   const [melodyCountIn, setMelodyCountIn] = useState<number | null>(null);
-  const countInTimeoutRef = useRef<number | null>(null);
+  const countInTimeoutRef = useRef<number | ReturnType<typeof setInterval> | null>(null);
   const countInRunRef = useRef<number>(0);
 
   // Synchronize state when selected Maqam changes (React 19 pattern avoiding cascading renders)
@@ -277,7 +278,7 @@ export const TrainingLab: React.FC<Props> = ({
     if (allCorrect) {
       triggerXpGain(30);
       setStats(prev => TrainingStorage.updateStreak(true, prev));
-      MicrotonalAudioEngine.playSequence(scale, 250, timbre);
+      MicrotonalAudioEngine.playSequence(scale, 250, timbre, undefined, undefined, undefined, 'training-reference');
     } else {
       setStats(prev => TrainingStorage.updateStreak(false, prev));
     }
@@ -364,13 +365,11 @@ export const TrainingLab: React.FC<Props> = ({
       setActiveMelodyStep(-1);
       setIsMelodyPlaying(false);
       countInRunRef.current += 1;
-      if (countInTimeoutRef.current !== null) {
-        window.clearInterval(countInTimeoutRef.current);
-        countInTimeoutRef.current = null;
-      }
+      AudioTransport.stopScope('training-melody-session');
       setMelodyCountIn(null);
       MetronomeAudioEngine.stop();
-      MicrotonalAudioEngine.stopSequence();
+      MicrotonalAudioEngine.stopSequence('training-melody');
+      MicrotonalAudioEngine.stopSequence('training-reference');
     } catch {
       // safe
     }
@@ -426,12 +425,9 @@ export const TrainingLab: React.FC<Props> = ({
 
     if (isMelodyPlaying) {
       countInRunRef.current += 1;
-      if (countInTimeoutRef.current !== null) {
-        window.clearInterval(countInTimeoutRef.current);
-        countInTimeoutRef.current = null;
-      }
+      AudioTransport.stopScope('training-melody-session');
       setMelodyCountIn(null);
-      MicrotonalAudioEngine.stopSequence();
+      MicrotonalAudioEngine.stopSequence('training-melody');
       MetronomeAudioEngine.stop();
       setIsMelodyPlaying(false);
       setActiveMelodyStep(-1);
@@ -439,20 +435,39 @@ export const TrainingLab: React.FC<Props> = ({
     }
 
     const countInRun = ++countInRunRef.current;
+    const melodySession = AudioTransport.startSession('training-melody-session', 'Sight-reading');
+    melodySession.onCancel(() => {
+      if (countInTimeoutRef.current !== null) {
+        globalThis.clearInterval(countInTimeoutRef.current);
+        countInTimeoutRef.current = null;
+      }
+      MicrotonalAudioEngine.stopSequence('training-melody');
+      MetronomeAudioEngine.stop();
+      setMelodyCountIn(null);
+      setIsMelodyPlaying(false);
+      setActiveMelodyStep(-1);
+    });
     setIsMelodyPlaying(true);
     setMelodyCountIn(4);
-    MicrotonalAudioEngine.stopSequence();
+    MicrotonalAudioEngine.stopSequence('training-melody');
     MetronomeAudioEngine.stop();
     MetronomeAudioEngine.setBpm(melodyTempo);
     MetronomeAudioEngine.setTimeSignature(
       TIME_SIGNATURE_PRESETS.find((preset) => preset.name === melodyMeter) ?? TIME_SIGNATURE_PRESETS[0]
     );
-    await MetronomeAudioEngine.startAudioContext();
-    if (countInRunRef.current !== countInRun) return;
+    try {
+      await MetronomeAudioEngine.startAudioContext();
+    } catch {
+      melodySession.finish();
+      setIsMelodyPlaying(false);
+      setMelodyCountIn(null);
+      return;
+    }
+    if (!melodySession.isActive() || countInRunRef.current !== countInRun) return;
 
     let remainingCount = 4;
-    countInTimeoutRef.current = window.setInterval(() => {
-      if (countInRunRef.current !== countInRun) return;
+    countInTimeoutRef.current = melodySession.setInterval(() => {
+      if (!melodySession.isActive() || countInRunRef.current !== countInRun) return;
       remainingCount -= 1;
       if (remainingCount > 0) {
         setMelodyCountIn(remainingCount);
@@ -460,7 +475,7 @@ export const TrainingLab: React.FC<Props> = ({
       }
 
       if (countInTimeoutRef.current !== null) {
-        window.clearInterval(countInTimeoutRef.current);
+        globalThis.clearInterval(countInTimeoutRef.current);
         countInTimeoutRef.current = null;
       }
       setMelodyCountIn(null);
@@ -477,12 +492,14 @@ export const TrainingLab: React.FC<Props> = ({
           setActiveMelodyStep(idx);
         },
         () => {
+          melodySession.finish();
           MetronomeAudioEngine.stop();
           setIsMelodyPlaying(false);
           setActiveMelodyStep(-1);
           triggerXpGain(15);
         },
-        startTime
+        startTime,
+        'training-melody'
       );
     }, 1000);
   };
@@ -520,8 +537,36 @@ export const TrainingLab: React.FC<Props> = ({
   const animFrameRef = useRef<number | null>(null);
 
   const takeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const isMountedRef = useRef(true);
+  const takeObjectUrlsRef = useRef<Set<string>>(new Set());
   const [isPlayingTake, setIsPlayingTake] = useState<boolean>(false);
   const [isComparingSimultaneously, setIsComparingSimultaneously] = useState<boolean>(false);
+
+  useEffect(() => {
+    const takeObjectUrls = takeObjectUrlsRef.current;
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.ondataavailable = null;
+        mediaRecorderRef.current.onstop = null;
+        if (mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      }
+      AudioTransport.stopWhere(({ scope }) => scope.startsWith('training-'));
+      audioStreamRef.current?.getTracks().forEach((track) => track.stop());
+      audioStreamRef.current = null;
+      if (recordTimerRef.current !== null) window.clearInterval(recordTimerRef.current);
+      if (countInTimeoutRef.current !== null) globalThis.clearInterval(countInTimeoutRef.current);
+      if (animFrameRef.current !== null) cancelAnimationFrame(animFrameRef.current);
+      takeAudioRef.current?.pause();
+      takeAudioRef.current = null;
+      takeObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      takeObjectUrls.clear();
+      MetronomeAudioEngine.stop();
+    };
+  }, []);
 
   // Waveform loop using stable ref
   const drawWaveformRef = useRef<() => void>(() => {});
@@ -570,6 +615,10 @@ export const TrainingLab: React.FC<Props> = ({
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       audioStreamRef.current = stream;
 
       const audioCtx = MicrotonalAudioEngine.getAudioContext();
@@ -593,6 +642,7 @@ export const TrainingLab: React.FC<Props> = ({
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const audioUrl = URL.createObjectURL(audioBlob);
+        takeObjectUrlsRef.current.add(audioUrl);
 
         const newTake: RecordedTake = {
           id: `take-${Date.now()}`,
@@ -612,6 +662,21 @@ export const TrainingLab: React.FC<Props> = ({
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingSeconds(0);
+      const recordingSession = AudioTransport.startSession('training-recording', 'Recording');
+      recordingSession.onCancel(() => {
+        if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop();
+        audioStreamRef.current?.getTracks().forEach((track) => track.stop());
+        audioStreamRef.current = null;
+        if (recordTimerRef.current !== null) {
+          window.clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+        }
+        if (animFrameRef.current !== null) {
+          cancelAnimationFrame(animFrameRef.current);
+          animFrameRef.current = null;
+        }
+        setIsRecording(false);
+      });
 
       recordTimerRef.current = window.setInterval(() => {
         setRecordingSeconds(prev => prev + 1);
@@ -637,6 +702,7 @@ export const TrainingLab: React.FC<Props> = ({
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
     }
+    AudioTransport.stopScope('training-recording');
     setIsRecording(false);
   };
 
@@ -663,21 +729,30 @@ export const TrainingLab: React.FC<Props> = ({
 
   const handlePlayReferenceScale = () => {
     const scale = currentMaqam.getScale();
-    MicrotonalAudioEngine.playSequence(scale, 400, timbre);
+    MicrotonalAudioEngine.playSequence(scale, 400, timbre, undefined, undefined, undefined, 'training-reference');
   };
 
   const handleToggleDuet = () => {
     if (isComparingSimultaneously) {
       if (takeAudioRef.current) takeAudioRef.current.pause();
-      MicrotonalAudioEngine.stopSequence();
+      AudioTransport.stopScope('training-duet');
+      MicrotonalAudioEngine.stopSequence('training-reference');
       setIsComparingSimultaneously(false);
       setIsPlayingTake(false);
     } else {
+      const duetSession = AudioTransport.startSession('training-duet', 'Duet comparison');
+      duetSession.onCancel(() => {
+        takeAudioRef.current?.pause();
+        MicrotonalAudioEngine.stopSequence('training-reference');
+        setIsComparingSimultaneously(false);
+        setIsPlayingTake(false);
+      });
       setIsComparingSimultaneously(true);
       handleTogglePlayTake();
       handlePlayReferenceScale();
-      setTimeout(() => {
+      duetSession.setTimeout(() => {
         setIsComparingSimultaneously(false);
+        duetSession.finish();
       }, 5000);
     }
   };
@@ -984,7 +1059,7 @@ export const TrainingLab: React.FC<Props> = ({
                 <div className="flex items-center justify-between pt-2">
                   <Button
                     variant="outline"
-                    onClick={() => MicrotonalAudioEngine.playSequence(scalePitches, 300, timbre)}
+                    onClick={() => MicrotonalAudioEngine.playSequence(scalePitches, 300, timbre, undefined, undefined, undefined, 'training-reference')}
                     className="gap-2"
                   >
                     <Volume2 className="w-4 h-4 text-amber-400" />
