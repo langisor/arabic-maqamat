@@ -155,31 +155,34 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
     switch (selectedBaseMaqam.id) {
       case 'rast':
         return [
-          { pitch: new ArabicPitch('G', '♮', 3), title: 'Yakah', note: 'G3 (-500¢)', desc: 'Rast on Yakah' },
-          { pitch: new ArabicPitch('C', '♮', 4), title: 'Rast', note: 'C4 (0¢)', desc: 'Original tonic' },
-          { pitch: new ArabicPitch('D', '♮', 4), title: 'Nirz', note: 'D4 (+200¢)', desc: 'Rast on Dukah' },
-          { pitch: new ArabicPitch('G', '♮', 4), title: 'Mahur', note: 'G4 (+700¢)', desc: 'Rast on Nawa' },
-          { pitch: new ArabicPitch('C', '♮', 5), title: 'Kirdan', note: 'C5 (+1200¢)', desc: 'Rast 8ve up' },
+          { pitch: new ArabicPitch('G', '♮', 3), title: 'Yakah', note: 'G3 (-500¢)', desc: 'Rast on Yakah (G3)' },
+          { pitch: new ArabicPitch('C', '♮', 4), title: 'Rast', note: 'C4 (0¢)', desc: 'Original tonic (C4)' },
+          { pitch: new ArabicPitch('D', '♮', 4), title: 'Nirz', note: 'D4 (+200¢)', desc: 'Rast on Dukah (D4)' },
+          { pitch: new ArabicPitch('G', '♮', 4), title: 'Mahur', note: 'G4 (+700¢)', desc: 'Rast on Nawa (G4)' },
+          { pitch: new ArabicPitch('C', '♮', 5), title: 'Kirdan', note: 'C5 (+1200¢)', desc: 'Rast on Kirdan (C5)' },
         ];
       case 'bayati':
+      case 'muhayyar':
         return [
-          { pitch: new ArabicPitch('C', '♮', 4), title: 'Bayati Rast', note: 'C4 (-200¢)', desc: 'Bayati on C4' },
-          { pitch: new ArabicPitch('D', '♮', 4), title: 'Bayati', note: 'D4 (0¢)', desc: 'Original Dukah' },
-          { pitch: new ArabicPitch('G', '♮', 4), title: 'Shuri / Nawa', note: 'G4 (+500¢)', desc: 'Bayati on Nawa' },
-          { pitch: new ArabicPitch('A', '♮', 4), title: 'Husayni', note: 'A4 (+700¢)', desc: 'Bayati on Husayni' },
+          { pitch: new ArabicPitch('C', '♮', 4), title: 'Bayati Rast', note: 'C4 (-200¢)', desc: 'Bayati on Rast (C4)' },
+          { pitch: new ArabicPitch('D', '♮', 4), title: 'Bayati', note: 'D4 (0¢)', desc: 'Original tonic (D4)' },
+          { pitch: new ArabicPitch('G', '♮', 4), title: 'Shuri / Nawa', note: 'G4 (+500¢)', desc: 'Bayati on Nawa (G4)' },
+          { pitch: new ArabicPitch('A', '♮', 4), title: 'Husayni', note: 'A4 (+700¢)', desc: 'Bayati on Husayni (A4)' },
+          { pitch: new ArabicPitch('D', '♮', 5), title: 'Muhayyar', note: 'D5 (+1200¢)', desc: 'Bayati 8ve up (D5)' },
         ];
       case 'hijaz':
         return [
-          { pitch: new ArabicPitch('C', '♮', 4), title: 'Hijaz Kar', note: 'C4 (-200¢)', desc: 'Hijaz on Rast C4' },
-          { pitch: new ArabicPitch('D', '♮', 4), title: 'Hijaz', note: 'D4 (0¢)', desc: 'Original Dukah' },
-          { pitch: new ArabicPitch('G', '♮', 4), title: 'Shahnaz', note: 'G4 (+500¢)', desc: 'Hijaz on Nawa' },
-          { pitch: new ArabicPitch('A', '♮', 4), title: 'Suzidil', note: 'A4 (+700¢)', desc: 'Hijaz on Husayni' },
+          { pitch: new ArabicPitch('C', '♮', 4), title: 'Hijaz Kar', note: 'C4 (-200¢)', desc: 'Hijaz on Rast (C4)' },
+          { pitch: new ArabicPitch('D', '♮', 4), title: 'Hijaz', note: 'D4 (0¢)', desc: 'Original tonic (D4)' },
+          { pitch: new ArabicPitch('G', '♮', 4), title: 'Shahnaz', note: 'G4 (+500¢)', desc: 'Hijaz on Nawa (G4)' },
+          { pitch: new ArabicPitch('A', '♮', 4), title: 'Suzidil', note: 'A4 (+700¢)', desc: 'Hijaz on Husayni (A4)' },
         ];
       case 'nahawand':
+      case 'farahfaza':
         return [
-          { pitch: new ArabicPitch('C', '♮', 4), title: 'Nahawand', note: 'C4 (0¢)', desc: 'Original C4' },
-          { pitch: new ArabicPitch('D', '♮', 4), title: 'Murassah', note: 'D4 (+200¢)', desc: 'Nahawand on D4' },
-          { pitch: new ArabicPitch('G', '♮', 4), title: 'Farahfaza', note: 'G4 (+700¢)', desc: 'Nahawand on Nawa' },
+          { pitch: new ArabicPitch('C', '♮', 4), title: 'Nahawand', note: 'C4 (0¢)', desc: 'Original tonic (C4)' },
+          { pitch: new ArabicPitch('D', '♮', 4), title: 'Murassah', note: 'D4 (+200¢)', desc: 'Nahawand on Dukah (D4)' },
+          { pitch: new ArabicPitch('G', '♮', 4), title: 'Farahfaza', note: 'G4 (+700¢)', desc: 'Nahawand on Nawa (G4)' },
         ];
       case 'sikah':
         return [

@@ -5,16 +5,18 @@ import { Jins, AjnasLibrary, type JinsDefinition } from './jins';
 export type MaqamConnection = 'Ittisal' | 'Infisal' | 'Tadakhul';
 
 export type MaqamFamilyMnemonic = 
-  | 'Ṣabā' 
+  |   'Ṣabā' 
   | 'Nahāwand' 
   | 'ʿAjam' 
   | 'Bayātī' 
   | 'Sīkāh' 
   | 'Ḥijāz' 
   | 'Rāst' 
-  | 'Kurd';
+  | 'Kurd'
+
 
 export interface AlternateJinsBranch {
+
   readonly jins: Jins;
   readonly role: 'upper_alternate' | 'upper_secondary' | 'modulation' | 'descent_only';
   readonly description: string;
