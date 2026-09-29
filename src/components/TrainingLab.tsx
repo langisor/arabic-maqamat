@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Maqam } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
+import { getPitchThemeClasses } from '../core/pitch-styling';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
 import { MetronomeAudioEngine, TIME_SIGNATURE_PRESETS } from '../audio/metronome-engine';
 import { AudioTransport } from '../audio/audio-transport';
@@ -1183,6 +1184,7 @@ export const TrainingLab: React.FC<Props> = ({
                       const correctTarget = scalePitches[idx];
                       const isCorrect = builderValidated && slotPitch && correctTarget && slotPitch.equals(correctTarget);
                       const isWrong = builderValidated && (!slotPitch || (correctTarget && !slotPitch.equals(correctTarget)));
+                      const pitchTheme = slotPitch ? getPitchThemeClasses(slotPitch, 'card') : null;
 
                       return (
                         <button
@@ -1196,8 +1198,8 @@ export const TrainingLab: React.FC<Props> = ({
                               ? 'bg-emerald-500/15 border-emerald-500/70 text-emerald-400 shadow-sm'
                               : isWrong
                               ? 'bg-red-500/15 border-red-500/70 text-red-400'
-                              : slotPitch
-                              ? 'bg-amber-500/10 border-amber-500/50 text-foreground'
+                              : pitchTheme
+                              ? pitchTheme.combined
                               : 'bg-muted/50 border-dashed border-border text-muted-foreground hover:border-amber-500/40'
                           }`}
                         >
@@ -1276,22 +1278,25 @@ export const TrainingLab: React.FC<Props> = ({
                   </div>
 
                   <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                    {notePool.map((p, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        aria-label={`Add ${p.toString()} to the scale ladder`}
-                        onClick={() => handleSelectPoolNote(p)}
-                        className="p-2.5 rounded-xl bg-card border border-border hover:border-amber-500 hover:bg-amber-500/10 text-foreground transition flex flex-col items-center justify-center cursor-pointer shadow-xs active:scale-95"
-                      >
-                        <span className="font-mono text-base font-black text-amber-500">
-                          {p.toDisplayString()}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          Octave {p.octave}
-                        </span>
-                      </button>
-                    ))}
+                    {notePool.map((p, idx) => {
+                      const theme = getPitchThemeClasses(p, 'card');
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          aria-label={`Add ${p.toString()} to the scale ladder`}
+                          onClick={() => handleSelectPoolNote(p)}
+                          className={`p-2.5 rounded-xl border transition flex flex-col items-center justify-center cursor-pointer shadow-xs active:scale-95 ${theme.combined}`}
+                        >
+                          <span className="font-mono text-base font-black">
+                            {p.toDisplayString()}
+                          </span>
+                          <span className="text-[10px] opacity-75 font-mono">
+                            Octave {p.octave}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1453,7 +1458,8 @@ export const TrainingLab: React.FC<Props> = ({
                     {earOptions.map((opt, idx) => {
                       const isSelected = selectedEarIdx === idx;
                       const isCorrect = mysteryPitch && opt.equals(mysteryPitch);
-                      let style = 'bg-card border-border hover:border-amber-500 text-foreground';
+                      const theme = getPitchThemeClasses(opt, 'card');
+                      let style = theme.combined;
 
                       if (earAnswered) {
                         if (isCorrect) {
@@ -1473,10 +1479,10 @@ export const TrainingLab: React.FC<Props> = ({
                           disabled={earAnswered}
                           className={`p-4 rounded-xl border flex flex-col items-center justify-center transition cursor-pointer ${style}`}
                         >
-                          <span className="font-mono text-xl font-black text-amber-500">
+                          <span className="font-mono text-xl font-black">
                             {opt.toDisplayString()}
                           </span>
-                          <span className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                          <span className="text-[11px] opacity-75 mt-0.5 font-mono">
                             {opt.toOctaveCents()}¢
                           </span>
                         </button>

@@ -10,6 +10,7 @@ import {
   type DiatonicBase,
   type MicrotonalAccidental,
 } from "../core/pitch"
+import { getPitchThemeClasses } from "../core/pitch-styling"
 import { ArabicNoteSpine } from "../core/note-spine"
 import {
   MicrotonalAudioEngine,
@@ -686,8 +687,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               {scalePitches.map((pitch, idx) => {
                 const isTonic = pitch.equals(tonic)
                 const isGhammaz = pitch.equals(ghammaz)
-                const isQuarter =
-                  pitch.accidental === "𝄳" || pitch.accidental === "𝄵"
+                const pitchTheme = getPitchThemeClasses(pitch, "card")
 
                 return (
                   <button
@@ -700,9 +700,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                         ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-md ring-1 ring-emerald-500/30"
                         : isGhammaz
                           ? "border-sky-500/50 bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/30"
-                          : isQuarter
-                            ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                            : "border-slate-800 bg-slate-950/70 text-slate-200 hover:border-slate-700"
+                          : pitchTheme.combined
                     }`}
                   >
                     <div className="flex items-center gap-1">

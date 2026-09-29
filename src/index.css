@@ -85,6 +85,27 @@
     --sidebar-accent-foreground: oklch(0.212 0.019 322.12);
     --sidebar-border: oklch(0.922 0.005 325.62);
     --sidebar-ring: oklch(0.711 0.019 323.02);
+
+    /* Unified Pitch & Note Accidental Tokens (Light Theme) */
+    --pitch-natural-bg: #f8fafc;
+    --pitch-natural-text: #0f172a;
+    --pitch-natural-border: #cbd5e1;
+
+    --pitch-half-flat-bg: #fef3c7;
+    --pitch-half-flat-text: #92400e;
+    --pitch-half-flat-border: #f59e0b;
+
+    --pitch-half-sharp-bg: #ffedd5;
+    --pitch-half-sharp-text: #9a3412;
+    --pitch-half-sharp-border: #f97316;
+
+    --pitch-flat-bg: #e0f2fe;
+    --pitch-flat-text: #0369a1;
+    --pitch-flat-border: #38bdf8;
+
+    --pitch-sharp-bg: #ffe4e6;
+    --pitch-sharp-text: #be123c;
+    --pitch-sharp-border: #fb7185;
 }
 
 .dark {
@@ -119,6 +140,27 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.542 0.034 322.5);
+
+    /* Unified Pitch & Note Accidental Tokens (Dark Theme) */
+    --pitch-natural-bg: rgba(15, 23, 42, 0.8);
+    --pitch-natural-text: #e2e8f0;
+    --pitch-natural-border: #334155;
+
+    --pitch-half-flat-bg: rgba(245, 158, 11, 0.18);
+    --pitch-half-flat-text: #fcd34d;
+    --pitch-half-flat-border: rgba(245, 158, 11, 0.45);
+
+    --pitch-half-sharp-bg: rgba(249, 115, 22, 0.18);
+    --pitch-half-sharp-text: #fdba74;
+    --pitch-half-sharp-border: rgba(249, 115, 22, 0.45);
+
+    --pitch-flat-bg: rgba(14, 165, 233, 0.15);
+    --pitch-flat-text: #7dd3fc;
+    --pitch-flat-border: rgba(14, 165, 233, 0.35);
+
+    --pitch-sharp-bg: rgba(244, 63, 94, 0.15);
+    --pitch-sharp-text: #fda4af;
+    --pitch-sharp-border: rgba(244, 63, 94, 0.35);
 }
 
 @layer base {

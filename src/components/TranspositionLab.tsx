@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Maqam, MaqamatCatalogue } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
+import { getPitchThemeClasses } from '../core/pitch-styling';
 import { ArabicNoteSpine } from '../core/note-spine';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
 import {
@@ -683,6 +684,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
               const isGhammaz = pitch.equals(transposedMaqam.getGhammaz());
               const spine = ArabicNoteSpine.findByPitch(pitch);
               const isActivePlaying = isPlayingScale && !playingOriginal && activeStepIndex === idx;
+              const pitchTheme = getPitchThemeClasses(pitch, 'card', { isSounding: isActivePlaying });
 
               return (
                 <button
@@ -692,10 +694,10 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                     isActivePlaying
                       ? 'border-amber-400 bg-amber-500/30 scale-105 shadow-lg shadow-amber-500/30 ring-2 ring-amber-400'
                       : isTonic
-                      ? 'border-amber-500/50 bg-amber-500/10 hover:border-amber-400'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 hover:border-emerald-400'
                       : isGhammaz
-                      ? 'border-purple-500/50 bg-purple-500/10 hover:border-purple-400'
-                      : 'border-slate-800 bg-slate-950/80 hover:border-slate-700'
+                      ? 'border-sky-500/50 bg-sky-500/10 hover:border-sky-400'
+                      : pitchTheme.combined
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -759,6 +761,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
               const isGhammaz = pitch.equals(selectedBaseMaqam.getGhammaz());
               const spine = ArabicNoteSpine.findByPitch(pitch);
               const isActivePlaying = isPlayingScale && playingOriginal && activeStepIndex === idx;
+              const origPitchTheme = getPitchThemeClasses(pitch, 'card', { isSounding: isActivePlaying });
 
               return (
                 <button
@@ -768,8 +771,8 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
                     isActivePlaying
                       ? 'border-sky-400 bg-sky-500/30 scale-105 shadow-lg shadow-sky-500/30 ring-2 ring-sky-400'
                       : isTonic
-                      ? 'border-slate-700 bg-slate-800/60'
-                      : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                      ? 'border-emerald-500/40 bg-emerald-500/10'
+                      : origPitchTheme.combined
                   }`}
                 >
                   <div className="flex justify-between items-start">

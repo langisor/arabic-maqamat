@@ -1,6 +1,7 @@
 // src/components/JinsDetectorLab.tsx
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArabicPitch, getAccidentalLabel, type DiatonicBase, type MicrotonalAccidental } from '../core/pitch';
+import { getPitchThemeClasses } from '../core/pitch-styling';
 import { identifyJins } from '../theory/jins-detector';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
 import { ArabicNoteSpine } from '../core/note-spine';
@@ -392,7 +393,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                 const isActive = activeNoteIdx === idx;
                 const isFirst = idx === 0;
                 const isLast = idx === phrase.length - 1;
-                const isQuarter = p.accidental === '𝄳' || p.accidental === '𝄵';
+                const pitchTheme = getPitchThemeClasses(p, 'subtle', { isSounding: isActive });
 
                 return (
                   <div key={idx} className="relative group">
@@ -407,9 +408,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                         : isFirst
                         ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
-                        : isQuarter
-                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                        : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
+                        : pitchTheme.combined
                       }`}
                       onClick={() => MicrotonalAudioEngine.playPitch(p, 0.6, timbre)}
                     >
@@ -480,20 +479,19 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
                 new ArabicPitch('B', '♭', 4), // Ajam
                 new ArabicPitch('C', '♮', 5), // Kardan
                 new ArabicPitch('D', '♮', 5)  // Muhayyar
-              ].map((p, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleQuickAdd(p)}
-                  aria-label={`${t('addPitch')} ${p.toString()} ${t('toPhrase')}`}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer hover:scale-105 ${
-                    p.accidental === '𝄳' || p.accidental === '𝄵'
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
-                      : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white'
-                  }`}
-                >
-                  {p.toScientificString()}{p.octave}
-                </button>
-              ))}
+              ].map((p, idx) => {
+                const theme = getPitchThemeClasses(p, 'subtle');
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleQuickAdd(p)}
+                    aria-label={`${t('addPitch')} ${p.toString()} ${t('toPhrase')}`}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition cursor-pointer hover:scale-105 ${theme.combined}`}
+                  >
+                    {p.toScientificString()}{p.octave}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

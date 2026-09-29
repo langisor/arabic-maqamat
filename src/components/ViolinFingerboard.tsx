@@ -1,6 +1,7 @@
 // src/components/ViolinFingerboard.tsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
+import { getViolinNoteColorClass, getPitchThemeClasses } from '../core/pitch-styling';
 import {
   ViolinErgonomicsEngine,
   ViolinFingerPlacement,
@@ -325,16 +326,8 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
     }
   };
 
-  const getFingerColor = (finger: number, isQuarterTone: boolean) => {
-    if (finger === 0) return 'bg-emerald-500 text-slate-950 border-emerald-300 ring-2 ring-emerald-400/40';
-    if (isQuarterTone) return 'bg-amber-500 text-slate-950 border-amber-200 ring-4 ring-amber-400/60 font-black shadow-lg';
-    switch (finger) {
-      case 1: return 'bg-sky-500 text-slate-950 border-sky-300 ring-2 ring-sky-400/30';
-      case 2: return 'bg-indigo-500 text-slate-100 border-indigo-300 ring-2 ring-indigo-400/30';
-      case 3: return 'bg-fuchsia-500 text-slate-100 border-fuchsia-300 ring-2 ring-fuchsia-400/30';
-      case 4: return 'bg-purple-500 text-slate-100 border-purple-300 ring-2 ring-purple-400/30';
-      default: return 'bg-slate-600 text-slate-100';
-    }
+  const getFingerColor = (finger: number, accidental: MicrotonalAccidental) => {
+    return getViolinNoteColorClass(finger, accidental);
   };
 
   const handleSwitchToCustomSequence = () => {
@@ -647,7 +640,11 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block ring-2 ring-amber-300 shadow"></span>
-                  <span className="text-amber-300 font-bold text-[11px]">Neutral (𝄳/𝄵)</span>
+                  <span className="text-amber-300 font-bold text-[11px]">Half-Flat (𝄳)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-orange-500 inline-block ring-2 ring-orange-300 shadow"></span>
+                  <span className="text-orange-300 font-bold text-[11px]">Half-Sharp (𝄵)</span>
                 </div>
               </div>
 
@@ -861,7 +858,6 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                             {stringPlacements.map((p, idx) => {
                               const isSounding = currentActiveSoundPitch && currentActiveSoundPitch.equals(p.pitch);
                               const isSelected = selectedPlacement && selectedPlacement.pitch.equals(p.pitch);
-                              const isQuarter = p.pitch.accidental === '𝄳' || p.pitch.accidental === '𝄵';
 
                               // In sequence mode, track sequence step numbers
                               const seqStepIndices = viewMode === 'sequence'
@@ -887,7 +883,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                                 ? isInSequence
                                   ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-200 ring-2 ring-amber-400/60 shadow-amber-500/40 font-black'
                                   : 'bg-slate-900/95 text-slate-300 border-slate-700/80 hover:border-amber-400 hover:text-white hover:bg-slate-800'
-                                : getFingerColor(p.finger, isQuarter);
+                                : getFingerColor(p.finger, p.pitch.accidental);
 
                               const circleLabel = viewMode === 'sequence'
                                 ? isInSequence
@@ -1041,7 +1037,6 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                             {stringPlacements.map((p, idx) => {
                               const isSounding = currentActiveSoundPitch && currentActiveSoundPitch.equals(p.pitch);
                               const isSelected = selectedPlacement && selectedPlacement.pitch.equals(p.pitch);
-                              const isQuarter = p.pitch.accidental === '𝄳' || p.pitch.accidental === '𝄵';
 
                               // In sequence mode, track sequence step numbers
                               const seqStepIndices = viewMode === 'sequence'
@@ -1066,7 +1061,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                                 ? isInSequence
                                   ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-200 ring-2 ring-amber-400/60 shadow-lg font-black'
                                   : 'bg-slate-900/95 text-slate-300 border-slate-700/80 hover:border-amber-400 hover:text-white hover:bg-slate-800'
-                                : `${getFingerColor(p.finger, isQuarter)} ${isSounding ? 'ring-4 ring-amber-300 animate-pulse' : ''} ${isSelected ? 'ring-2 ring-white' : ''}`;
+                                : `${getFingerColor(p.finger, p.pitch.accidental)} ${isSounding ? 'ring-4 ring-amber-300 animate-pulse' : ''} ${isSelected ? 'ring-2 ring-white' : ''}`;
 
                               const circleLabel = viewMode === 'sequence'
                                 ? isInSequence
@@ -1405,18 +1400,12 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
               <div className="flex flex-wrap gap-2 items-center p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 min-h-[76px]">
                 {customSequence.map((pitch, idx) => {
                   const isActive = seqActiveIndex === idx;
-                  const isQuarter = pitch.accidental === '𝄳' || pitch.accidental === '𝄵';
+                  const theme = getPitchThemeClasses(pitch, 'subtle', { isSounding: isActive });
 
                   return (
                     <div
                       key={idx}
-                      className={`relative group flex flex-col items-center p-2 rounded-xl border transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-amber-400 text-slate-950 border-amber-300 ring-4 ring-amber-400/50 scale-110 shadow-xl z-20'
-                          : isQuarter
-                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:border-amber-400'
-                          : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
-                      }`}
+                      className={`relative group flex flex-col items-center p-2 rounded-xl border transition-all cursor-pointer ${theme.combined}`}
                       onClick={() => MicrotonalAudioEngine.playPitch(pitch, 0.5, timbre)}
                     >
                       <div className="flex items-center gap-1">
@@ -1504,16 +1493,12 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                   </span>
                   <div className="flex flex-wrap gap-1">
                     {grp.pitches.map((p, pIdx) => {
-                      const isQuarter = p.accidental === '𝄳' || p.accidental === '𝄵';
+                      const theme = getPitchThemeClasses(p, 'subtle');
                       return (
                         <button
                           key={pIdx}
                           onClick={() => handleAddToSequence(p)}
-                          className={`px-2 py-0.5 rounded text-xs font-mono font-bold border transition cursor-pointer hover:scale-105 ${
-                            isQuarter
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
-                              : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white'
-                          }`}
+                          className={`px-2 py-0.5 rounded text-xs font-mono font-bold border transition cursor-pointer hover:scale-105 ${theme.combined}`}
                         >
                           {p.toScientificString()}{p.octave}
                         </button>

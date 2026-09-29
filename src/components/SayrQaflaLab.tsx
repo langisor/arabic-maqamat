@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Maqam, MaqamatCatalogue } from '../theory/maqam';
 import { ArabicPitch } from '../core/pitch';
+import { getPitchThemeClasses } from '../core/pitch-styling';
 import { SayrEngine, SayrStep } from '../theory/sayr';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
 import { getWorkspaceState, updateWorkspaceDraft } from '../state/workspace-state';
@@ -196,24 +197,21 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
             <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
               {sayrData.steps.map((step, idx) => {
                 const isActive = activeStepIndex === idx;
+                const pitchTheme = getPitchThemeClasses(step.pitch, 'card', { isSounding: isActive });
 
                 return (
                   <button
                     key={idx}
                     onClick={() => handlePlayStep(step, idx)}
-                    className={`px-3 py-2 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-300 scale-110 shadow-lg z-10'
-                        : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700'
-                    }`}
+                    className={`px-3 py-2 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer ${pitchTheme.combined}`}
                   >
-                    <span className={`text-[10px] font-mono ${isActive ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>
+                    <span className="text-[10px] font-mono opacity-75">
                       #{idx + 1}
                     </span>
                     <span className="text-sm font-bold font-mono my-0.5">
                       {step.pitch.toScientificString()}
                     </span>
-                    <span className={`text-[10px] font-serif ${isActive ? 'text-slate-900 font-semibold' : 'text-amber-400'}`}>
+                    <span className="text-[10px] font-serif opacity-90">
                       {step.noteName}
                     </span>
                   </button>
@@ -288,12 +286,15 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">Current Cadence Sequence:</span>
-                <div className="flex items-center gap-1.5 font-mono text-base font-bold text-amber-300">
-                  {qaflaPhrase.map((p, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-                      {p.toScientificString()}
-                    </span>
-                  ))}
+                <div className="flex items-center gap-1.5 font-mono text-base font-bold">
+                  {qaflaPhrase.map((p, i) => {
+                    const theme = getPitchThemeClasses(p, 'badge');
+                    return (
+                      <span key={i} className={`px-2 py-0.5 rounded border ${theme.combined}`}>
+                        {p.toScientificString()}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
 
