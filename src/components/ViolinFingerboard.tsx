@@ -1488,7 +1488,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 ]}
               ].map((grp, grpIdx) => (
                 <div key={grpIdx} className="flex flex-wrap items-center gap-1.5 bg-slate-950/40 p-2 rounded-xl border border-slate-800/60">
-                  <span className="text-[11px] font-bold text-amber-300 min-w-[120px]">
+                  <span className="text-[11px] font-bold text-amber-300 min-w-30">
                     {grp.name}:
                   </span>
                   <div className="flex flex-wrap gap-1">
