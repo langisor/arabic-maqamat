@@ -696,19 +696,19 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
             /* ========================================================================= */
             /* VERTICAL VIEW: NATURAL VIOLINIST PERSPECTIVE (NUT AT TOP, BRIDGE AT BOTTOM) */
             /* ========================================================================= */
-            <div className="flex justify-center p-2 sm:p-4 bg-gradient-to-b from-stone-950 via-slate-950 to-stone-950 rounded-2xl border border-amber-900/30 overflow-hidden shadow-2xl relative">
+            <div className="flex justify-center p-2 sm:p-4 bg-linear-to-b from-stone-950 via-slate-950 to-stone-950 rounded-2xl border border-amber-900/30 overflow-hidden shadow-2xl relative">
               {/* Violin Silhouette Container */}
-              <div className="relative w-full max-w-[460px] min-h-[640px] flex flex-col items-center">
+              <div className="relative w-full max-w-115 min-h-160 flex flex-col items-center">
                 
                 {/* 1. SCROLL & PEGBOX HINT (TOP) */}
-                <div className="w-24 h-12 bg-gradient-to-b from-amber-950 via-amber-900 to-stone-900 rounded-t-2xl border-t-2 border-x-2 border-amber-800/60 shadow-lg flex items-center justify-around px-2 relative">
+                <div className="w-24 h-12 bg-linear-to-b from-amber-950 via-amber-900 to-stone-900 rounded-t-2xl border-t-2 border-x-2 border-amber-800/60 shadow-lg flex items-center justify-around px-2 relative">
                   <div className="w-3 h-8 bg-amber-900 rounded-full border border-amber-700/80 shadow-inner" />
                   <span className="text-[9px] font-serif font-bold text-amber-400 tracking-wider">الـرأس</span>
                   <div className="w-3 h-8 bg-amber-900 rounded-full border border-amber-700/80 shadow-inner" />
                 </div>
 
                 {/* 2. BONE/IVORY NUT */}
-                <div className="w-[180px] sm:w-[200px] h-4 bg-gradient-to-r from-amber-100 via-stone-200 to-amber-100 rounded-sm shadow-md border-y border-amber-900/60 flex items-center justify-between px-6 z-20">
+                <div className="w-45 sm:w-50 h-4 bg-linear-to-r from-amber-100 via-stone-200 to-amber-100 rounded-sm shadow-md border-y border-amber-900/60 flex items-center justify-between px-6 z-20">
                   <span className="text-[8px] font-mono font-bold text-stone-800 tracking-wider">NUT (الأنف)</span>
                   <div className="flex gap-8 sm:gap-10">
                     <div className="w-1 h-2 bg-stone-500 rounded" />
@@ -723,7 +723,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                   
                   {/* Flamed Maple Violin Body Silhouette Background (Behind Fingerboard) */}
                   <div className="absolute inset-0 flex justify-center pointer-events-none">
-                    <svg viewBox="0 0 400 560" className="w-full h-full max-h-[560px] opacity-90 drop-shadow-2xl">
+                    <svg viewBox="0 0 400 560" className="w-full h-full max-h-140 opacity-90 drop-shadow-2xl">
                       <defs>
                         {/* Rich warm violin varnish gradient */}
                         <linearGradient id="violinVarnish" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -797,7 +797,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
 
                   {/* Tapered Ebony Fingerboard Itself */}
                   <div
-                    className="relative bg-gradient-to-b from-stone-900 via-neutral-950 to-stone-950 rounded-b-xl border-x-2 border-b-2 border-stone-800 shadow-2xl z-10 flex justify-between px-3 sm:px-6 py-4"
+                    className="relative bg-linear-to-b from-stone-900 via-neutral-950 to-stone-950 rounded-b-xl border-x-2 border-b-2 border-stone-800 shadow-2xl z-10 flex justify-between px-3 sm:px-6 py-4"
                     style={{
                       width: touchZoom ? 'min(300px, 85vw)' : 'min(240px, 85vw)',
                       minHeight: touchZoom ? '600px' : '480px',
@@ -840,17 +840,17 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                           </div>
 
                           {/* The physical vertical string line */}
-                          <div className={`relative w-full ${touchZoom ? 'h-[500px]' : 'h-[400px]'} flex justify-center`}>
+                          <div className={`relative w-full ${touchZoom ? 'h-125' : 'h-100'} flex justify-center`}>
                             {/* Realistic metallic string wire */}
                             <div
                               className={`h-full shadow-md rounded-full ${
                                 strName === 'G'
-                                  ? 'w-[3.5px] bg-gradient-to-b from-amber-700 via-amber-500 to-amber-600'
+                                  ? 'w-[3.5px] bg-linear-to-b from-amber-700 via-amber-500 to-amber-600'
                                   : strName === 'D'
-                                  ? 'w-[2.8px] bg-gradient-to-b from-slate-400 via-slate-200 to-slate-400'
+                                  ? 'w-[2.8px] bg-linear-to-b from-slate-400 via-slate-200 to-slate-400'
                                   : strName === 'A'
-                                  ? 'w-[2.0px] bg-gradient-to-b from-slate-300 via-slate-100 to-slate-300'
-                                  : 'w-[1.2px] bg-gradient-to-b from-yellow-200 via-yellow-100 to-yellow-300'
+                                  ? 'w-0.5 bg-linear-to-b from-slate-300 via-slate-100 to-slate-300'
+                                  : 'w-[1.2px] bg-linear-to-b from-yellow-200 via-yellow-100 to-yellow-300'
                               }`}
                             />
 
@@ -957,7 +957,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 </div>
 
                 {/* 4. REALISTIC MAPLE VIOLIN BRIDGE (BOTTOM) */}
-                <div className="w-[190px] sm:w-[220px] h-14 bg-gradient-to-b from-amber-200 via-amber-300 to-amber-400 rounded-t-xl border-t-2 border-x-2 border-amber-600/80 shadow-2xl flex flex-col items-center justify-between px-4 py-1 z-20">
+                <div className="w-47.5 sm:w-55 h-14 bg-linear-to-b from-amber-200 via-amber-300 to-amber-400 rounded-t-xl border-t-2 border-x-2 border-amber-600/80 shadow-2xl flex flex-col items-center justify-between px-4 py-1 z-20">
                   {/* Arched top string grooves */}
                   <div className="w-full flex justify-between px-3 text-[10px] font-black text-amber-950">
                     <span>G</span>

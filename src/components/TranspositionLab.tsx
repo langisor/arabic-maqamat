@@ -328,7 +328,7 @@ export const TranspositionLab: React.FC<TranspositionLabProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <Card className="bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 border-slate-800 p-6 shadow-xl relative overflow-hidden">
+      <Card className="bg-linear-to-br from-slate-900 via-slate-900 to-amber-950/20 border-slate-800 p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">

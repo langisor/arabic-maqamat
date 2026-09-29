@@ -2,7 +2,6 @@
 
 This roadmap reflects the current implementation. Shared workspace persistence, the audio transport controller, accessible shell tabs, bilingual font styling, and MusicXML viewing/download are already present. The work below focuses on completing and hardening those foundations.
 
-
 ## Content & Educational Enhancements
 
 Add a dedicated "Maqam Facts" educational section
