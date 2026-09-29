@@ -29,6 +29,21 @@ const maqamTerms: Record<string, MaqamTerm> = {
     definition: "The melodic course or path that characterizes each maqam, determining which notes are emphasized and how modulations occur.",
     arabic: "سير"
   },
+  "ascending": {
+    term: "Ascending Sayr",
+    definition: "Melodic movement primarily upward from tonic through ghammaz to upper register. The tonic serves as the starting point with gradual ascent.",
+    arabic: "سير تصاعدي"
+  },
+  "descending_octave_first": {
+    term: "Descending from Octave",
+    definition: "Begins at the upper octave then descends through the maqam's ajnas. Common in maqamat that emphasize the upper register.",
+    arabic: "سير تنازلي من الأوكتاف"
+  },
+  "undulating": {
+    term: "Undulating Sayr",
+    definition: "Melodic movement that rises and falls throughout the range, emphasizing both tonic and ghammaz as pivot points.",
+    arabic: "سير متماوج"
+  },
   "jins": {
     term: "Jins",
     definition: "A melodic framework of 3-5 notes that forms the building block of maqamat. Multiple ajnas combine to create a full maqam.",

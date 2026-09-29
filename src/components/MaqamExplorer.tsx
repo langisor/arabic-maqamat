@@ -47,6 +47,7 @@ import {
 } from "lucide-react"
 import { MaqamFacts } from "./MaqamFacts"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
+import { SayrVisualization } from "./SayrVisualization"
 
 interface Props {
   currentMaqam: Maqam
@@ -688,6 +689,12 @@ export const MaqamExplorer: React.FC<Props> = ({
               </div>
             </div>
           </div>
+
+          {/* Sayr Visualization */}
+          <SayrVisualization 
+            sayrDirection={currentMaqam.sayrDirection}
+            maqamName={currentMaqam.name}
+          />
 
           {/* Quick Scale Degree Buttons */}
           <div>
