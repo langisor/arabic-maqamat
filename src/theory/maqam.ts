@@ -275,7 +275,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5)],
-      description: 'The foundational "mother scale" of Arabic music. Root Jins Rast on C4, continuing through upper Rast or Nahawand at the ghammaz (G4).'
+      description: "The principal maqam in the Rast family and one of the most common and central maqamat in the Arabic repertory. Its scale begins with the root jins Rast on the tonic, with the upper section often continuing through either upper Rast or Nahawand at the ghammaz."
     });
   }
 
@@ -305,7 +305,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
-      description: 'Principal maqam of the Bayati family and cornerstone of Arabic modal practice. Starts with Jins Bayati on tonic D4 and continues with Nahawand or Rast at the upper pivot.'
+      description: "The principal maqam in the Bayati family and a cornerstone of Arabic modal practice. It starts with jins Bayati on the tonic and commonly continues with Nahawand or Rast at the upper pivot."
     });
   }
 
@@ -340,7 +340,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'descending_octave_first',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
-      description: 'Bayati-derived maqam whose sayr emphasizes the octave or upper register (Muhayyar D5); often uses Rast in the ascent before returning through Bayati-family ajnas in descent.'
+      description: "A Bayati-derived maqam whose sayr emphasizes the octave or upper register; it often uses Rast in the ascent before returning through the Bayati-family ajnas that shape the descent."
     });
   }
 
@@ -370,7 +370,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
-      description: 'Principal maqam in the Hijaz family. Begins with root Jins Hijaz on tonic D4 and commonly continues with Nahawand or Rast at the upper ghammaz.'
+      description: "The principal maqam in the Hijaz family. Its scale begins with root jins Hijaz on the tonic and commonly continues with Nahawand or Rast at the upper ghammaz."
     });
   }
 
@@ -400,7 +400,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5)],
-      description: 'Principal maqam in the Nahawand family. Starts with root Jins Nahawand on tonic C4 and continues with Kurd or Hijaz as the upper branch.'
+      description: "The principal maqam in the Nahawand family. It starts with the root jins Nahawand on the tonic and often continues with Hijaz or Kurd as the upper branch."
     });
   }
 
@@ -429,7 +429,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('G', '♮', 5)],
-      description: 'Effectively a transposition of Nahawand to a tonic of G, preserving the same internal ajnas and family identity with a distinct tonal center.'
+      description: "Effectively a transposition of Nahawand to a tonic of G, preserving the same internal ajnas and family identity but with a different tonal center."
     });
   }
 
@@ -458,7 +458,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
-      description: 'Principal maqam in the Kurd family. Begins with root Jins Kurd on tonic D4 and continues with Nahawand on upper pivot G4 (D - E♭ - F - G - A - B♭ - C - D).'
+      description: "The principal maqam in the Kurd family. It begins with root jins Kurd on the tonic and continues with Nahawand on the upper pivot."
     });
   }
 
@@ -487,7 +487,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('B', '♭', 4)],
-      description: 'Principal maqam in the ‘Ajam family (Egyptian ‘Ajam). Begins with root Jins ‘Ajam on the tonic (B♭3) and continues with upper ‘Ajam or Nahawand.'
+      description: "The principal maqam in the 'Ajam family (also called Egyptian 'Ajam). It begins with root jins 'Ajam on the tonic and often continues with upper 'Ajam or Nahawand."
     });
   }
 
@@ -516,7 +516,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5), new ArabicPitch('D', '♮', 5), new ArabicPitch('E', '𝄳', 5)],
-      description: 'Distinctive member of the Sikah family rooted on quarter-tone E𝄳4; shaped by upper Rast and secondary Rast material around the ghammaz.'
+      description: "A distinctive member of the Sikah family. Its scale begins with root jins Sikah on the tonic and is shaped by upper Rast and secondary Rast material around the ghammaz."
     });
   }
 
@@ -576,7 +576,7 @@ export class MaqamatCatalogue {
         new ArabicPitch('C', '♮', 5),
         new ArabicPitch('D', '♭', 5) // Characteristic flat octave
       ],
-      description: 'Expressive maqam in the Arabic repertory. Begins with Jins Saba on tonic D4, overlaps with Hijaz on F4, and introduces ‘Ajam or Nikriz in the upper area with characteristic flat octave (D♭5).'
+      description: "A popular and highly expressive maqam in the Arabic repertory. It begins with jins Saba on the tonic, then overlaps with Hijaz and often introduces 'Ajam or Nikriz material at the upper area."
     });
   }
 

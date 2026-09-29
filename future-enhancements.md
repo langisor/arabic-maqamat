@@ -3,26 +3,37 @@
 This roadmap reflects the current implementation. Shared workspace persistence, the audio transport controller, accessible shell tabs, bilingual font styling, and MusicXML viewing/download are already present. The work below focuses on completing and hardening those foundations.
 
 
-## Accessibility, recovery, and localization
+## Content & Educational Enhancements
 
-Complete actionable feedback for async failures, keyboard and screen-reader support across labs, and an English/Arabic language foundation. The shell already uses tab semantics and existing Tabs/Dialog primitives are available.
+Add a dedicated "Maqam Facts" educational section
+The facts.md contains excellent educational content about maqam theory that could be integrated as a learning module
+Consider adding a tooltip or modal system that shows the core concepts (root jins, ghammaz, sayr) when users interact with maqam elements
 
-1. Establish shared loading, error, retry, and status patterns for score rendering, sight-reading, audio startup, recording, and asynchronous playback.
-2. Improve [ScoreViewer.tsx](src/components/ScoreViewer.tsx) with render retry, clipboard feedback, compatibility guidance, and accessible live states.
-3. Surface OSMD, melody generation, audio, microphone, and playback failures in [TrainingLab.tsx](src/components/TrainingLab.tsx) with a useful recovery action.
-4. Expose audio readiness and recovery from [audio-transport.ts](src/audio/audio-transport.ts) consistently across the shell and labs.
-5. Audit navigation and lab controls for keyboard operation, visible focus, accessible names, selected state, and screen-reader announcements. Reuse existing UI primitives and correct any gaps in the current shell tabs.
-6. Replace remaining custom DSP/install dialogs with the shared Dialog primitive and verify focus handling. Label DSP controls, note tiles, delete actions, popovers, and score controls.
-7. Add English/Arabic language state, update document `lang` and `dir`, and make layout styles direction-safe. Arabic font styling exists; ensure the intended Latin and Arabic fonts are explicitly loaded and applied.
-8. Translate the shell and high-traffic controls first, then expand coverage by lab. Keep Arabic musical terms available and explain quarter-tone notation and terms such as qarar, ghammaz, sayr, qafla, jins, tanjees, and intiqal.
-9. Normalize notation labels across [pitch.ts](src/core/pitch.ts), [ScoreViewer.tsx](src/components/ScoreViewer.tsx), and [JinsDetectorLab.tsx](src/components/JinsDetectorLab.tsx).
-10. Add a reusable `SessionBar` beneath the header with maqam, tonic, ghammaz, scale, drone, transport state, and quick links. Derive it from shared workspace and transport state, with responsive mobile behavior.
-11. Validate typecheck, lint, build, forced rendering/audio failures, denied permissions, keyboard and screen-reader navigation, dialog focus handling, bilingual RTL layouts, and cross-lab session consistency.
+Enhanced Sayr visualization
+The facts.md emphasizes sayr (melodic course) as crucial to maqam identity
+Current UI shows sayr direction but could visually represent the melodic trajectory (ascending, descending_octave_first, undulating)
+Could add animated path indicators or interactive sayr diagrams
 
-**Decisions**
+Family taxonomy improvements
+The "صُنِعَ بِسِحْرِك" mnemonic is already in the UI, but could be more prominently featured
+Consider adding color-coding or visual grouping by family across all views
+Could add a "Family Explorer" that shows all maqamat within each family with their relationships
 
-- Translate infrastructure, shell, and high-traffic controls before translating every lab string.
-- Reuse shared Tabs, Dialog, Alert, Spinner, and Popover components.
-- Keep failures visible and actionable; keep the SessionBar a view over shared state rather than a new state owner.
-- Keep durable recordings and workspace persistence as separate feature areas.
+UI/UX Enhancements
+Interactive ajnas visualization
+The facts.md emphasizes that maqam identity comes from the relationship between root jins, upper jins, ghammaz, and sayr
+Could add an interactive diagram showing how ajnas connect and overlap for each maqam
+Visual representation of Ittisal vs Infisal vs Tadakhul connections
+Ghammaz emphasis
+The ghammaz is described as "the most important secondary emphasis"
+Currently shown but could be more visually prominent in the scale display
+Could add audio emphasis when playing the ghammaz note
 
+Technical Enhancements
+Description localization
+The facts.md content is in English, but the app supports Arabic
+Could add Arabic translations of the updated descriptions for better bilingual support
+Transposition context
+The facts.md mentions specific transpositions (like Farahfaza as transposition of Nahawand)
+Could enhance the transposition UI to show these relationships more clearly
+Add visual indicators when a maqam is a transposition of another

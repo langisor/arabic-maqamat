@@ -45,6 +45,8 @@ import {
   // Layers,
   // Volume2
 } from "lucide-react"
+import { MaqamFacts } from "./MaqamFacts"
+import { MaqamTermTooltip } from "./MaqamTermTooltip"
 
 interface Props {
   currentMaqam: Maqam
@@ -400,6 +402,9 @@ export const MaqamExplorer: React.FC<Props> = ({
 
   return (
     <div className="space-y-6">
+      {/* Maqam Facts Educational Section */}
+      <MaqamFacts />
+
       {/* 8 Families Mnemonic Banner (صُنِعَ بِسِحْرِك) */}
       <Accordion className="border-amber-800/30 bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40">
         <AccordionItem
@@ -471,15 +476,19 @@ export const MaqamExplorer: React.FC<Props> = ({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <CardTitle className="text-2xl font-black sm:text-3xl">
-                  {currentMaqam.name}
-                </CardTitle>
+                <MaqamTermTooltip term="maqam" showIcon={false}>
+                  <CardTitle className="text-2xl font-black sm:text-3xl">
+                    {currentMaqam.name}
+                  </CardTitle>
+                </MaqamTermTooltip>
                 {currentMaqam.arabicName && (
                   <span className="hidden font-serif text-xl font-bold text-amber-400/90 sm:inline">
                     {currentMaqam.arabicName}
                   </span>
                 )}
-                <Badge variant="secondary">Family: {currentMaqam.family}</Badge>
+                <MaqamTermTooltip term="family" showIcon={false}>
+                  <Badge variant="secondary">Family: {currentMaqam.family}</Badge>
+                </MaqamTermTooltip>
 
                 {isTransposed && (
                   <Badge
@@ -547,9 +556,11 @@ export const MaqamExplorer: React.FC<Props> = ({
             <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">
-                    Jins al-Asl (جنس الأصل)
-                  </span>
+                  <MaqamTermTooltip term="root jins" showIcon={false}>
+                    <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">
+                      Jins al-Asl (جنس الأصل)
+                    </span>
+                  </MaqamTermTooltip>
                   <Badge variant="default" className="text-[10px]">
                     {currentMaqam.lowerJins.definition.type}
                   </Badge>
@@ -606,7 +617,10 @@ export const MaqamExplorer: React.FC<Props> = ({
                   </Badge>
                 </div>
                 <h4 className="mt-1 text-lg font-bold text-white">
-                  Ghammaz (غمّاز): {ghammaz.toScientificString()}
+                  <MaqamTermTooltip term="ghammaz" showIcon={false}>
+                    Ghammaz (غمّاز)
+                  </MaqamTermTooltip>
+                  : {ghammaz.toScientificString()}
                   {ghammaz.octave}
                 </h4>
                 <p className="mt-1 text-xs text-slate-400">
@@ -629,9 +643,11 @@ export const MaqamExplorer: React.FC<Props> = ({
             <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold tracking-wider text-purple-400 uppercase">
-                    Jins al-Far' (جنس الفرع)
-                  </span>
+                  <MaqamTermTooltip term="jins" showIcon={false}>
+                    <span className="text-[11px] font-bold tracking-wider text-purple-400 uppercase">
+                      Jins al-Far' (جنس الفرع)
+                    </span>
+                  </MaqamTermTooltip>
                   <Badge variant="default" className="text-[10px]">
                     {currentMaqam.upperJins.definition.type}
                   </Badge>
