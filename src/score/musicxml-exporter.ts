@@ -55,6 +55,7 @@ export interface ScaleExportOptions {
   partName?: string;
   divisions?: number;
   direction?: 'both' | 'ascending' | 'descending';
+  measuresPerSystem?: number;
 }
 
 export type MusicXMLValidationIssueCode =
@@ -453,12 +454,16 @@ export class MusicXMLExporter {
     const escapedMaqamName = escapeXmlText(maqam.name);
     const titleText = `${escapedMaqamName} - ${direction === 'both' ? 'Ascending &amp; Descending' : direction === 'ascending' ? 'Ascending Scale' : 'Descending Scale'}`;
 
+    const measuresPerSystem = options?.measuresPerSystem;
+
     for (let i = 0; i < allPitches.length; i += notesPerMeasure) {
       const slice = allPitches.slice(i, i + notesPerMeasure);
       const isFirst = measureIndex === 1;
+      const shouldBreakSystem = !isFirst && measuresPerSystem === 1;
+      const printBreakTag = shouldBreakSystem ? '\n      <print new-system="yes"/>' : '';
 
       measuresXml += `
-    <measure number="${escapeXmlAttribute(String(measureIndex))}">
+    <measure number="${escapeXmlAttribute(String(measureIndex))}">${printBreakTag}
       ${
         isFirst
           ? `

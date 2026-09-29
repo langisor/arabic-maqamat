@@ -13,6 +13,7 @@ import { Button } from './ui/button';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { AsyncFeedback } from './AsyncFeedback';
 import { useLanguage } from '../state/language';
+import { useIsMobile } from '../hooks/use-mobile';
 import {
   Copy,
   Download,
@@ -47,7 +48,37 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
   const [auditReport, setAuditReport] = useState<RoundTripReport | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
 
-  const xmlString = useMemo(() => MusicXMLExporter.generateScaleMusicXML(maqam), [maqam]);
+  // Responsive mobile screen and container width tracking
+  const isMobileScreen = useIsMobile();
+  const [containerNarrow, setContainerNarrow] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 640;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const checkWidth = () => {
+      if (containerRef.current) {
+        setContainerNarrow(containerRef.current.clientWidth < 640);
+      }
+    };
+    checkWidth();
+    const observer = new ResizeObserver(checkWidth);
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [viewMode]);
+
+  const isMobile = isMobileScreen || containerNarrow;
+
+  const xmlString = useMemo(
+    () =>
+      MusicXMLExporter.generateScaleMusicXML(maqam, {
+        measuresPerSystem: isMobile ? 1 : undefined,
+      }),
+    [maqam, isMobile]
+  );
   const scalePitches = useMemo(() => maqam.getScale(), [maqam]);
   const validation = useMemo(() => MusicXMLExporter.validatePhrase(scalePitches), [scalePitches]);
 
@@ -72,8 +103,6 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
     // Clean container before re-instantiating
     containerRef.current.innerHTML = '';
 
-    const isMobile = (containerRef.current?.clientWidth ?? window.innerWidth) < 540 || window.innerWidth < 640;
-
     try {
       const osmd = new OpenSheetMusicDisplay(containerRef.current, {
         autoResize: true,
@@ -88,12 +117,13 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
       });
 
       if (isMobile) {
+        // Enforce 1 bar (measure) per line on mobile/small screens
         osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 1;
         osmd.EngravingRules.NewSystemAtXMLNewSystemAttribute = true;
         osmd.EngravingRules.VoiceSpacingMultiplierVexflow = 1.05;
         osmd.EngravingRules.VoiceSpacingAddendVexflow = 3.0;
-        osmd.EngravingRules.MinSkyBottomDistBetweenSystems = 2.0;
-        osmd.EngravingRules.MinimumDistanceBetweenSystems = 2.0;
+        osmd.EngravingRules.MinSkyBottomDistBetweenSystems = 3.0;
+        osmd.EngravingRules.MinimumDistanceBetweenSystems = 3.0;
         osmd.EngravingRules.FixedMeasureWidth = false;
       }
 
@@ -128,7 +158,7 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
       isMounted = false;
       osmdRef.current = null;
     };
-  }, [maqam.id, xmlString, viewMode, renderAttempt]);
+  }, [maqam.id, xmlString, viewMode, renderAttempt, isMobile]);
 
   const handleCopyXml = async () => {
     setClipboardError(null);
@@ -306,7 +336,7 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
               <div
                 id={`osmd-${maqam.id}`}
                 ref={containerRef}
-                className="w-full flex justify-center py-2"
+                className="osmd-responsive-lyrics w-full flex justify-center py-2"
               />
 
               {renderError && (

@@ -14,6 +14,14 @@ export type MaqamFamilyMnemonic =
   | 'Rāst' 
   | 'Kurd';
 
+export interface AlternateJinsBranch {
+  readonly jins: Jins;
+  readonly role: 'upper_alternate' | 'upper_secondary' | 'modulation' | 'descent_only';
+  readonly description: string;
+}
+
+export type SayrTrajectory = 'ascending' | 'descending_octave_first' | 'undulating';
+
 export interface MaqamFamily {
   readonly mnemonic: MaqamFamilyMnemonic;
   readonly arabicLetter: string;
@@ -31,6 +39,9 @@ export interface MaqamScaleStructure {
   readonly connection: MaqamConnection;
   readonly upperJins: Jins;
   readonly ghammaz: ArabicPitch;
+  /** Secondary or alternative upper ajnas active during melodic movement (sayr) */
+  readonly alternateUpperAjnas?: AlternateJinsBranch[];
+  readonly sayrDirection?: SayrTrajectory;
   /**
    * Upper register extensions or octave alterations (e.g. Saba's flat octave D♭).
    */
@@ -47,6 +58,8 @@ export class Maqam {
   public readonly connection: MaqamConnection;
   public readonly upperJins: Jins;
   public readonly ghammaz: ArabicPitch;
+  public readonly alternateUpperAjnas: readonly AlternateJinsBranch[];
+  public readonly sayrDirection: SayrTrajectory;
   public readonly extraPitches: readonly ArabicPitch[];
   public readonly description: string;
 
@@ -59,6 +72,8 @@ export class Maqam {
     this.connection = structure.connection;
     this.upperJins = structure.upperJins;
     this.ghammaz = structure.ghammaz;
+    this.alternateUpperAjnas = structure.alternateUpperAjnas ?? [];
+    this.sayrDirection = structure.sayrDirection ?? 'ascending';
     this.extraPitches = structure.extraPitches ?? [];
     this.description = structure.description;
     this.validateConnection();
@@ -143,6 +158,10 @@ export class Maqam {
 
     const newGhammaz = this.ghammaz.transpose(deltaQt);
     const newExtras = this.extraPitches.map(p => p.transpose(deltaQt));
+    const newAlternates = this.alternateUpperAjnas.map(b => ({
+      ...b,
+      jins: b.jins.transpose(b.jins.root.transpose(deltaQt))
+    }));
 
     const transInfo = MaqamatCatalogue.getTranspositionInfo(this, newTonic);
     const sign = deltaQt > 0 ? '+' : '';
@@ -157,6 +176,8 @@ export class Maqam {
       connection: this.connection,
       upperJins: transposedUpper,
       ghammaz: newGhammaz,
+      alternateUpperAjnas: newAlternates,
+      sayrDirection: this.sayrDirection,
       extraPitches: newExtras,
       description: transInfo?.description ?? `Transposed variant of ${this.name} starting on ${newTonic.toScientificString()}${newTonic.octave} (${centsText} shift)`
     });
@@ -229,6 +250,7 @@ export class MaqamatCatalogue {
   /**
    * Constructs Maqam Rast (Module 3.4)
    * Lower: Jins Rast on C4 | Infisal | Upper: Jins Rast on G4 | Ghammaz = G4
+   * Alternate Upper: Jins Nahawand on G4
    */
   public static buildRast(): Maqam {
     const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch('C', '♮', 4));
@@ -242,14 +264,23 @@ export class MaqamatCatalogue {
       connection: 'Infisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch('G', '♮', 4)),
+          role: 'upper_alternate',
+          description: 'Upper Nahawand on G4 (frequent modulation and melodic branch in Rast sayr)'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5)],
-      description: 'Symmetrical mother scale with neutral 3rd (E𝄳) and neutral 7th (B𝄳/Awj)'
+      description: 'The foundational "mother scale" of Arabic music. Root Jins Rast on C4, continuing through upper Rast or Nahawand at the ghammaz (G4).'
     });
   }
 
   /**
    * Constructs Maqam Bayati (Module 8.1)
    * Lower: Jins Bayati on D4 | Ittisal | Upper: Jins Nahawand on G4 | Ghammaz = G4
+   * Alternate Upper: Jins Rast on G4
    */
   public static buildBayati(): Maqam {
     const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch('D', '♮', 4));
@@ -263,14 +294,58 @@ export class MaqamatCatalogue {
       connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.RAST, new ArabicPitch('G', '♮', 4)),
+          role: 'upper_alternate',
+          description: 'Upper Rast on G4 (melodic ascent featuring Awj B𝄳4)'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
-      description: 'Emotional centerpiece of Arabic music: D - E𝄳 - F - G - A - B♭ - C - D'
+      description: 'Principal maqam of the Bayati family and cornerstone of Arabic modal practice. Starts with Jins Bayati on tonic D4 and continues with Nahawand or Rast at the upper pivot.'
+    });
+  }
+
+  /**
+   * Constructs Maqam Muhayyar (Bayati family, octave-emphasized)
+   * Lower: Jins Bayati on D4 | Ittisal | Upper: Jins Rast on G4 | Ghammaz = G4
+   * Characteristic: Sayr opens at octave D5, uses Rast in ascent before returning through Bayati ajnas in descent.
+   */
+  public static buildMuhayyar(): Maqam {
+    const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch('D', '♮', 4));
+    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch('G', '♮', 4));
+    return new Maqam({
+      id: 'muhayyar',
+      name: 'Maqam Muhayyar',
+      arabicName: 'مقام محيّر',
+      family: 'Bayātī',
+      lowerJins: lower,
+      connection: 'Ittisal',
+      upperJins: upper,
+      ghammaz: new ArabicPitch('G', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch('G', '♮', 4)),
+          role: 'upper_alternate',
+          description: 'Upper Nahawand on G4 (secondary pathway in descent)'
+        },
+        {
+          jins: new Jins(AjnasLibrary.BAYATI, new ArabicPitch('D', '♮', 5)),
+          role: 'upper_secondary',
+          description: 'Upper Bayati octave register (Muhayyar D5)'
+        }
+      ],
+      sayrDirection: 'descending_octave_first',
+      extraPitches: [new ArabicPitch('D', '♮', 5)],
+      description: 'Bayati-derived maqam whose sayr emphasizes the octave or upper register (Muhayyar D5); often uses Rast in the ascent before returning through Bayati-family ajnas in descent.'
     });
   }
 
   /**
    * Constructs Maqam Hijaz (Module 3.5)
-   * Lower: Jins Hijaz on D4 | Ittisal | Upper: Jins Nahawand-type on G4 | Ghammaz = G4
+   * Lower: Jins Hijaz on D4 | Ittisal | Upper: Jins Nahawand on G4 | Ghammaz = G4
+   * Alternate Upper: Jins Rast on G4
    */
   public static buildHijaz(): Maqam {
     const lower = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch('D', '♮', 4));
@@ -284,14 +359,23 @@ export class MaqamatCatalogue {
       connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.RAST, new ArabicPitch('G', '♮', 4)),
+          role: 'upper_alternate',
+          description: 'Upper Rast on G4 (Hijaz with upper Rast / Suznak color)'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
-      description: 'Dramatic augmented-2nd lower tetrachord combined conjunctly with Nahawand'
+      description: 'Principal maqam in the Hijaz family. Begins with root Jins Hijaz on tonic D4 and commonly continues with Nahawand or Rast at the upper ghammaz.'
     });
   }
 
   /**
    * Constructs Maqam Nahawand (Module 8.2)
    * Lower: Jins Nahawand on C4 | Infisal | Upper: Jins Kurd on G4 | Ghammaz = G4
+   * Alternate Upper: Jins Hijaz on G4
    */
   public static buildNahawand(): Maqam {
     const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch('C', '♮', 4));
@@ -305,18 +389,55 @@ export class MaqamatCatalogue {
       connection: 'Infisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.HIJAZ, new ArabicPitch('G', '♮', 4)),
+          role: 'upper_alternate',
+          description: 'Upper Hijaz on G4 (Nahawand Murassah / harmonic minor inflection)'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5)],
-      description: 'The Arabic Natural Minor: C - D - E♭ - F - G - A♭ - B♭ - C'
+      description: 'Principal maqam in the Nahawand family. Starts with root Jins Nahawand on tonic C4 and continues with Kurd or Hijaz as the upper branch.'
+    });
+  }
+
+  /**
+   * Constructs Maqam Farahfaza (Nahawand family on G)
+   * Lower: Jins Nahawand on G4 (or G3) | Infisal | Upper: Jins Kurd on D5 | Ghammaz = D5
+   */
+  public static buildFarahfaza(): Maqam {
+    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch('G', '♮', 4));
+    const upper = new Jins(AjnasLibrary.KURD, new ArabicPitch('D', '♮', 5));
+    return new Maqam({
+      id: 'farahfaza',
+      name: 'Maqam Farahfaza',
+      arabicName: 'مقام فرحفزا',
+      family: 'Nahāwand',
+      lowerJins: lower,
+      connection: 'Infisal',
+      upperJins: upper,
+      ghammaz: new ArabicPitch('D', '♮', 5),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.HIJAZ, new ArabicPitch('D', '♮', 5)),
+          role: 'upper_alternate',
+          description: 'Upper Hijaz on D5 (Farahfaza Murassah / harmonic minor color)'
+        }
+      ],
+      sayrDirection: 'ascending',
+      extraPitches: [new ArabicPitch('G', '♮', 5)],
+      description: 'Effectively a transposition of Nahawand to a tonic of G, preserving the same internal ajnas and family identity with a distinct tonal center.'
     });
   }
 
   /**
    * Constructs Maqam Kurd (Module 8.3)
-   * Lower: Jins Kurd on D4 | Ittisal | Upper: Jins Kurd on G4 | Ghammaz = G4
+   * Lower: Jins Kurd on D4 | Ittisal | Upper: Jins Nahawand on G4 | Ghammaz = G4
    */
   public static buildKurd(): Maqam {
     const lower = new Jins(AjnasLibrary.KURD, new ArabicPitch('D', '♮', 4));
-    const upper = new Jins(AjnasLibrary.KURD, new ArabicPitch('G', '♮', 4));
+    const upper = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch('G', '♮', 4));
     return new Maqam({
       id: 'kurd',
       name: 'Maqam Kurd',
@@ -326,8 +447,16 @@ export class MaqamatCatalogue {
       connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.KURD, new ArabicPitch('G', '♮', 4)),
+          role: 'upper_alternate',
+          description: 'Upper Kurd on G4 (double-Kurd variant)'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
-      description: 'Symmetrical double-Kurd construction: D - E♭ - F - G - A♭ - B♭ - C - D'
+      description: 'Principal maqam in the Kurd family. Begins with root Jins Kurd on tonic D4 and continues with Nahawand on upper pivot G4 (D - E♭ - F - G - A - B♭ - C - D).'
     });
   }
 
@@ -337,7 +466,6 @@ export class MaqamatCatalogue {
    */
   public static buildAjam(): Maqam {
     const lower = new Jins(AjnasLibrary.AJAM, new ArabicPitch('B', '♭', 3));
-    // Upper tetrachord starting on F4 (Ajam on F or upper register)
     const upper = new Jins(AjnasLibrary.AJAM, new ArabicPitch('F', '♮', 4));
     return new Maqam({
       id: 'ajam',
@@ -348,8 +476,16 @@ export class MaqamatCatalogue {
       connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('F', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch('C', '♮', 5)),
+          role: 'upper_alternate',
+          description: 'Upper Nahawand on C5 (frequently visited in Egyptian Ajam sayr)'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('B', '♭', 4)],
-      description: 'Identical to Western B♭ Major: B♭ - C - D - E♭ - F - G - A - B♭'
+      description: 'Principal maqam in the ‘Ajam family (Egyptian ‘Ajam). Begins with root Jins ‘Ajam on the tonic (B♭3) and continues with upper ‘Ajam or Nahawand.'
     });
   }
 
@@ -369,8 +505,16 @@ export class MaqamatCatalogue {
       connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.RAST, new ArabicPitch('C', '♮', 5)),
+          role: 'upper_secondary',
+          description: 'Secondary Jins Rast material around the upper octave'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5), new ArabicPitch('D', '♮', 5), new ArabicPitch('E', '𝄳', 5)],
-      description: 'Tonic on quarter-tone E𝄳: E𝄳 - F - G - A - B𝄳 - C - D - E𝄳'
+      description: 'Distinctive member of the Sikah family rooted on quarter-tone E𝄳4; shaped by upper Rast and secondary Rast material around the ghammaz.'
     });
   }
 
@@ -390,6 +534,7 @@ export class MaqamatCatalogue {
       connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
+      sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5)],
       description: 'Ornate pentachord with augmented 2nd: C - D - E♭ - F♯ - G - A♭ - B - C'
     });
@@ -401,7 +546,6 @@ export class MaqamatCatalogue {
    */
   public static buildSaba(): Maqam {
     const lower = new Jins(AjnasLibrary.SABA, new ArabicPitch('D', '♮', 4));
-    // Upper continuing jins starting on F or G♭
     const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch('F', '♮', 4));
     return new Maqam({
       id: 'saba',
@@ -412,12 +556,25 @@ export class MaqamatCatalogue {
       connection: 'Tadakhul',
       upperJins: upper,
       ghammaz: new ArabicPitch('F', '♮', 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.AJAM, new ArabicPitch('B', '♭', 4)),
+          role: 'upper_secondary',
+          description: 'Upper Jins ‘Ajam on B♭4 (frequent melodic destination in Saba sayr)'
+        },
+        {
+          jins: new Jins(AjnasLibrary.NAWA_ATHAR_NIKRIZ, new ArabicPitch('C', '♮', 5)),
+          role: 'upper_secondary',
+          description: 'Upper Jins Nikriz on C5 (expressive ornamentation at upper register)'
+        }
+      ],
+      sayrDirection: 'ascending',
       extraPitches: [
         new ArabicPitch('B', '♭', 4),
         new ArabicPitch('C', '♮', 5),
         new ArabicPitch('D', '♭', 5) // Characteristic flat octave
       ],
-      description: 'Intense grief: D - E𝄳 - F - G♭ - A♭ - B♭ - C - D♭ (flat octave)'
+      description: 'Expressive maqam in the Arabic repertory. Begins with Jins Saba on tonic D4, overlaps with Hijaz on F4, and introduces ‘Ajam or Nikriz in the upper area with characteristic flat octave (D♭5).'
     });
   }
 
@@ -425,8 +582,10 @@ export class MaqamatCatalogue {
     return [
       this.buildRast(),
       this.buildBayati(),
+      this.buildMuhayyar(),
       this.buildHijaz(),
       this.buildNahawand(),
+      this.buildFarahfaza(),
       this.buildKurd(),
       this.buildAjam(),
       this.buildSikah(),

@@ -447,7 +447,7 @@ export const TrainingLab: React.FC<Props> = ({
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
       const width = entry.contentRect.width;
-      const mobile = width < 540;
+      const mobile = width < 640;
       setIsMobileScreen((prev) => (prev !== mobile ? mobile : prev));
       setLyricFontSize(mobile ? 9 : Math.max(9, Math.min(13, Math.round(width * 0.005 + 7.5))));
     });
@@ -502,7 +502,7 @@ export const TrainingLab: React.FC<Props> = ({
       return;
     }
 
-    const isMobile = isMobileScreen || container.clientWidth < 540;
+    const isMobile = isMobileScreen || container.clientWidth < 640;
 
     const xml = MusicXMLExporter.generatePhraseMusicXML(
       generatedMelody.title,

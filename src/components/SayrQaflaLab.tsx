@@ -10,7 +10,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Slider } from './ui/slider';
-import { Play, Square, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Zap } from 'lucide-react';
+import { Play, Square, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Zap, BookOpen } from 'lucide-react';
+import { useLanguage } from '../state/language';
 
 interface Props {
   currentMaqam: Maqam;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0, timbre }) => {
+  const { t } = useLanguage();
   useEffect(() => () => {
     MicrotonalAudioEngine.stopSequence('sayr');
     MicrotonalAudioEngine.stopSequence('qafla');
@@ -140,17 +142,17 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
-                  Melodic Progression Science
+                  {t('melodicProgressionScience')}
                 </span>
                 <Badge variant="purple" className="text-[10px]">
-                  5 Canonical Sayr Phases
+                  {t('canonicalSayrPhases')}
                 </Badge>
               </div>
               <CardTitle className="text-xl sm:text-2xl mt-1">
-                Sayr (السير) Melodic Trajectory: {currentMaqam.name}
+                {t('sayrTitle')}: {currentMaqam.name}
               </CardTitle>
               <CardDescription className="text-xs text-slate-300 mt-1 max-w-2xl">
-                Unlike a static Western scale, a Maqam is defined by its <em>Sayr</em> — the directional path, order of pitch exploration, pivot arrivals, and resolution formula.
+                {t('sayrDescription')}
               </CardDescription>
             </div>
 
@@ -160,7 +162,7 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
               className="gap-2"
             >
               {isPlayingSayr ? <Square className="fill-current" /> : <Play className="fill-current" />}
-              {isPlayingSayr ? 'Stop Sayr' : 'Play Full Sayr Path'}
+              {isPlayingSayr ? t('stopSayr') : t('playFullSayr')}
             </Button>
           </div>
         </CardHeader>
@@ -169,11 +171,11 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
           {/* 5 Phase Progress Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
             {[
-              { phase: '1_EstablishTonic', num: '1', title: 'Establish Tonic', arabic: 'تثبيت القرار', badgeVariant: 'emerald' as const },
-              { phase: '2_AscendToGhammaz', num: '2', title: 'Ascent to Pivot', arabic: 'الصعود للغمّاز', badgeVariant: 'sky' as const },
-              { phase: '3_UpperExploration_Or_Modulation', num: '3', title: 'Upper Apex / Mod.', arabic: 'الذروة والتحويل', badgeVariant: 'purple' as const },
-              { phase: '4_DescentReturn', num: '4', title: 'Descent Return', arabic: 'الهبوط والعودة', badgeVariant: 'amber' as const },
-              { phase: '5_Qafla', num: '5', title: 'Cadential Qafla', arabic: 'القَفْلَة الختامية', badgeVariant: 'rose' as const }
+              { phase: '1_EstablishTonic', num: '1', title: t('phase1Tonic'), arabic: 'تثبيت القرار', badgeVariant: 'emerald' as const },
+              { phase: '2_AscendToGhammaz', num: '2', title: t('phase2Ghammaz'), arabic: 'الصعود للغمّاز', badgeVariant: 'sky' as const },
+              { phase: '3_UpperExploration_Or_Modulation', num: '3', title: t('phase3Apex'), arabic: 'الذروة والتحويل', badgeVariant: 'purple' as const },
+              { phase: '4_DescentReturn', num: '4', title: t('phase4Descent'), arabic: 'الهبوط والعودة', badgeVariant: 'amber' as const },
+              { phase: '5_Qafla', num: '5', title: t('phase5Qafla'), arabic: 'القَفْلَة الختامية', badgeVariant: 'rose' as const }
             ].map((item) => (
               <div key={item.phase} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
@@ -190,8 +192,8 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
           {/* Step-by-Step Melodic Sequence */}
           <div>
             <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
-              <span>Melodic Trajectory (Click any node to play &amp; inspect note annotation)</span>
-              <span>Total Steps: {sayrData.steps.length}</span>
+              <span>{t('clickNodeToPlay')}</span>
+              <span>{t('totalSteps')}: {sayrData.steps.length}</span>
             </div>
 
             <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
@@ -246,38 +248,38 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-amber-400" />
             <CardTitle className="text-lg">
-              Qafla (القَفْلَة) Cadence Validation Engine
+              {t('qaflaEngine')}
             </CardTitle>
           </div>
           <CardDescription className="mt-1">
-            In Arabic music, a <strong className="text-amber-300">Qafla</strong> is the distinctive cadential phrase that punctuates musical sentences. Authentic Qaflas require an idiomatic stepwise descent landing securely on the tonic (قرار) for a full cadence or the Ghammaz (غمّاز) for a half cadence.
+            {t('qaflaDescription')}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="pt-4 space-y-4">
           {/* Preset Selectors */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium">Try Presets:</span>
+            <span className="text-xs text-muted-foreground font-medium">{t('tryPresets')}:</span>
             <Button
               variant="emeraldOutline"
               size="sm"
               onClick={() => setPresetPhrase('stepwise_tonic')}
             >
-              ✓ Authentic Full Cadence (Tonic)
+              ✓ {t('presetFullCadence')}
             </Button>
             <Button
               variant="skyOutline"
               size="sm"
               onClick={() => setPresetPhrase('stepwise_ghammaz')}
             >
-              ✓ Authentic Half Cadence (Ghammaz)
+              ✓ {t('presetHalfCadence')}
             </Button>
             <Button
               variant="destructive"
               size="sm"
               onClick={() => setPresetPhrase('leap_invalid')}
             >
-              ✕ Invalid Leap Cadence
+              ✕ {t('presetInvalidLeap')}
             </Button>
           </div>
 
@@ -285,7 +287,7 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
           <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-muted-foreground">Current Cadence Sequence:</span>
+                <span className="text-xs font-semibold text-muted-foreground">{t('currentCadenceSequence')}:</span>
                 <div className="flex items-center gap-1.5 font-mono text-base font-bold">
                   {qaflaPhrase.map((p, i) => {
                     const theme = getPitchThemeClasses(p, 'badge');
@@ -317,7 +319,7 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
               className="gap-2"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              Audition Qafla Cadence
+              {t('auditionQafla')}
             </Button>
           </div>
         </CardContent>
@@ -329,11 +331,11 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
           <div className="flex items-center gap-2">
             <RefreshCw className="w-5 h-5 text-amber-400" />
             <CardTitle className="text-lg">
-              Modulation Engine: Tanjees (تنجيس) vs. Intiqal (انتقال)
+              {t('modulationEngine')}
             </CardTitle>
           </div>
           <CardDescription className="mt-1">
-            Evaluate transitions between the current active Maqam (<strong className="text-amber-300">{currentMaqam.name}</strong>) and any target destination. Short borrowings (&le; 2 measures) are analyzed as <strong className="text-cyan-300">Tanjees</strong> (flavor infusion), while longer shifts are structural <strong className="text-purple-300">Intiqal</strong>.
+            {t('modulationDescription')}
           </CardDescription>
         </CardHeader>
 
@@ -343,7 +345,7 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
             <div className="space-y-4 bg-slate-950/70 p-4 rounded-xl border border-slate-800">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                  Target Modulation Maqam:
+                  {t('targetModulationMaqam')}:
                 </label>
                 <select
                   value={targetMaqamId}
@@ -360,9 +362,9 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
 
               <div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                  <span>Passage Duration:</span>
+                  <span>{t('passageDuration')}:</span>
                   <Badge variant="secondary" className="font-mono text-xs">
-                    {measureDuration} Measures
+                    {measureDuration} {t('measures')}
                   </Badge>
                 </div>
                 <Slider
@@ -374,8 +376,8 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
                   className="my-3"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                  <span>1-2 Meas. (Transient / Tanjees)</span>
-                  <span>3+ Meas. (Structural / Intiqal)</span>
+                  <span>{t('transientTanjees')}</span>
+                  <span>{t('structuralIntiqal')}</span>
                 </div>
               </div>
             </div>
@@ -418,6 +420,43 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
                 </span>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modal Terminology Guide Card */}
+      <Card className="bg-slate-900/90 border-slate-800">
+        <CardHeader className="pb-3 border-b border-border/60">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-amber-400" />
+            <CardTitle className="text-lg">
+              {t('termsGlossary')}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { term: t('qararTerm'), explanation: t('qararExplanation'), tag: 'Tonic' },
+              { term: t('ghammazTerm'), explanation: t('ghammazExplanation'), tag: 'Dominant Pivot' },
+              { term: t('sayrTerm'), explanation: t('sayrExplanation'), tag: 'Trajectory' },
+              { term: t('qaflaTerm'), explanation: t('qaflaExplanation'), tag: 'Cadence' },
+              { term: t('jinsTerm'), explanation: t('jinsExplanation'), tag: 'Trichord/Tetrachord' },
+              { term: t('tanjeesTerm'), explanation: t('tanjeesExplanation'), tag: 'Transient Modulation' },
+              { term: t('intiqalTerm'), explanation: t('intiqalExplanation'), tag: 'Structural Modulation' }
+            ].map((item, idx) => (
+              <div key={idx} className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-amber-400">{item.term}</h4>
+                  <Badge variant="outline" className="text-[10px] font-mono border-slate-700 text-slate-400">
+                    {item.tag}
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  {item.explanation}
+                </p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

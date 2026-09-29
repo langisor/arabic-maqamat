@@ -133,6 +133,29 @@ export function runMusicXMLTests() {
     console.log(`  ✓ ${m.name} (${scale.length} degrees): 100% roundtrip fidelity verified.`);
   }
 
+  // 7. Test Mobile 1-bar-per-line (<print new-system="yes"/>) in Scale MusicXML
+  console.log('7. Testing Scale Export with 1 bar per line for small screens...');
+  const bayati = MaqamatCatalogue.findById('bayati')!;
+  const mobileScaleXml = MusicXMLExporter.generateScaleMusicXML(bayati, {
+    measuresPerSystem: 1,
+  });
+  assert(
+    mobileScaleXml.includes('<print new-system="yes"/>'),
+    'Mobile scale export should contain system break tags for 1 bar per line'
+  );
+  // Ensure measures 2, 3, and 4 each have <print new-system="yes"/>
+  const breakCount = (mobileScaleXml.match(/<print new-system="yes"\/>/g) || []).length;
+  assert(
+    breakCount >= 3,
+    `Expected at least 3 system breaks for 4 measures on mobile, got ${breakCount}`
+  );
+  // Verify roundtrip fidelity is still 100% with print tags
+  const bayatiScale = bayati.getScale();
+  const expectedBayatiPitches = [...bayatiScale, ...[...bayatiScale].reverse().slice(1)];
+  const mobileReport = MusicXMLExporter.verifyRoundTrip(expectedBayatiPitches, mobileScaleXml);
+  assert(mobileReport.success, `Mobile scale roundtrip failed: ${mobileReport.failures.join('; ')}`);
+  console.log(`✓ 1 bar per line mobile layout verified: ${breakCount} system breaks generated and 100% roundtrip fidelity preserved.`);
+
   console.log('--- All MusicXML Base Unit Tests Passed ---');
   return true;
 }
