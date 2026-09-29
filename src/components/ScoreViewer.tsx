@@ -72,6 +72,8 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
     // Clean container before re-instantiating
     containerRef.current.innerHTML = '';
 
+    const isMobile = (containerRef.current?.clientWidth ?? window.innerWidth) < 540 || window.innerWidth < 640;
+
     try {
       const osmd = new OpenSheetMusicDisplay(containerRef.current, {
         autoResize: true,
@@ -81,8 +83,19 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
         drawPartNames: false,
         drawComposer: false,
         drawCredits: false,
-        drawingParameters: 'compacttight',
+        drawingParameters: isMobile ? 'compact' : 'compacttight',
+        newSystemFromXML: true,
       });
+
+      if (isMobile) {
+        osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 1;
+        osmd.EngravingRules.NewSystemAtXMLNewSystemAttribute = true;
+        osmd.EngravingRules.VoiceSpacingMultiplierVexflow = 1.05;
+        osmd.EngravingRules.VoiceSpacingAddendVexflow = 3.0;
+        osmd.EngravingRules.MinSkyBottomDistBetweenSystems = 2.0;
+        osmd.EngravingRules.MinimumDistanceBetweenSystems = 2.0;
+        osmd.EngravingRules.FixedMeasureWidth = false;
+      }
 
       osmdRef.current = osmd;
 

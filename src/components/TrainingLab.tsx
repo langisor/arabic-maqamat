@@ -437,6 +437,7 @@ export const TrainingLab: React.FC<Props> = ({
   const osmdContainerRef = useRef<HTMLDivElement>(null);
   const osmdInstanceRef = useRef<OpenSheetMusicDisplay | null>(null);
   const [lyricFontSize, setLyricFontSize] = useState(10);
+  const [isMobileScreen, setIsMobileScreen] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
   useEffect(() => {
     if (activeMode !== 'sightreading') return;
@@ -445,7 +446,10 @@ export const TrainingLab: React.FC<Props> = ({
 
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
-      setLyricFontSize(Math.max(9, Math.min(13, Math.round(entry.contentRect.width * 0.005 + 7.5))));
+      const width = entry.contentRect.width;
+      const mobile = width < 540;
+      setIsMobileScreen((prev) => (prev !== mobile ? mobile : prev));
+      setLyricFontSize(mobile ? 9 : Math.max(9, Math.min(13, Math.round(width * 0.005 + 7.5))));
     });
     observer.observe(container);
     return () => observer.disconnect();
@@ -498,6 +502,8 @@ export const TrainingLab: React.FC<Props> = ({
       return;
     }
 
+    const isMobile = isMobileScreen || container.clientWidth < 540;
+
     const xml = MusicXMLExporter.generatePhraseMusicXML(
       generatedMelody.title,
       generatedMelody.notes,
@@ -505,21 +511,34 @@ export const TrainingLab: React.FC<Props> = ({
         timeSignature: generatedMelody.timeSignature,
         tempoBpm: generatedMelody.tempoBpm,
         maqamName: currentMaqam.name,
+        measuresPerSystem: isMobile ? 1 : undefined,
+        conciseLyrics: isMobile,
       }
     );
 
     try {
       const osmd = new OpenSheetMusicDisplay(container, {
         autoResize: true,
-
         backend: 'svg',
         drawTitle: true,
         drawSubtitle: false,
         drawPartNames: false,
         drawComposer: false,
         drawCredits: false,
-        drawingParameters: 'compacttight'
+        drawingParameters: isMobile ? 'compact' : 'compacttight',
+        newSystemFromXML: true,
       });
+
+      if (isMobile) {
+        // Enforce 1 bar (measure) per line on mobile/small screens
+        osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem = 1;
+        osmd.EngravingRules.NewSystemAtXMLNewSystemAttribute = true;
+        osmd.EngravingRules.VoiceSpacingMultiplierVexflow = 1.05;
+        osmd.EngravingRules.VoiceSpacingAddendVexflow = 3.0;
+        osmd.EngravingRules.MinSkyBottomDistBetweenSystems = 2.0;
+        osmd.EngravingRules.MinimumDistanceBetweenSystems = 2.0;
+        osmd.EngravingRules.FixedMeasureWidth = false;
+      }
 
       osmdInstanceRef.current = osmd;
 
@@ -546,7 +565,7 @@ export const TrainingLab: React.FC<Props> = ({
       isMounted = false;
       osmdInstanceRef.current = null;
     };
-  }, [activeMode, currentMaqam.name, generatedMelody, lyricFontSize, renderRevision]);
+  }, [activeMode, currentMaqam.name, generatedMelody, isMobileScreen, lyricFontSize, renderRevision]);
 
   // Count in before starting the metronome and melody on the same audio timestamp.
   const handlePlayMelody = async () => {

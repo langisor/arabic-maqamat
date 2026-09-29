@@ -46,6 +46,8 @@ export interface PhraseExportOptions {
   maqamName?: string;
   includeLyrics?: boolean;
   divisions?: number;
+  measuresPerSystem?: number;
+  conciseLyrics?: boolean;
 }
 
 export interface ScaleExportOptions {
@@ -595,12 +597,17 @@ export class MusicXMLExporter {
       });
     }
 
+    const measuresPerSystem = options?.measuresPerSystem;
+    const conciseLyrics = Boolean(options?.conciseLyrics);
+
     let measuresXml = '';
     for (const measure of measures) {
       const isFirst = measure.measureIndex === 1;
+      const shouldBreakSystem = !isFirst && measuresPerSystem === 1;
+      const printBreakTag = shouldBreakSystem ? '\n      <print new-system="yes"/>' : '';
 
       measuresXml += `
-    <measure number="${escapeXmlAttribute(String(measure.measureIndex))}">
+    <measure number="${escapeXmlAttribute(String(measure.measureIndex))}">${printBreakTag}
       ${
         isFirst
           ? `
@@ -622,14 +629,16 @@ export class MusicXMLExporter {
           : ''
       }
       ${measure.notes
-        .map((n) =>
-          this.pitchToNoteXml(
+        .map((n) => {
+          const rawLyric = options?.includeLyrics !== false ? n.lyric || n.arabicName : undefined;
+          const lyric = conciseLyrics && rawLyric ? MusicXMLExporter.formatConciseLyric(rawLyric) : rawLyric;
+          return this.pitchToNoteXml(
             n.pitch,
             n.durationQuarter ?? 1.0,
             divisions,
-            options?.includeLyrics !== false ? n.lyric || n.arabicName : undefined
-          )
-        )
+            lyric
+          );
+        })
         .join('\n')}
     </measure>`;
     }
@@ -686,6 +695,26 @@ export class MusicXMLExporter {
         ${accidentalTag}
         ${lyricTag}
       </note>`;
+  }
+
+  /**
+   * Compacts long degree or phrase text into concise note labels for small screen notation.
+   * e.g., 'القرار / Rast (Deg. 1)' -> 'Rast 1'
+   */
+  public static formatConciseLyric(lyric: string): string {
+    if (!lyric || typeof lyric !== 'string') return '';
+    const trimmed = lyric.trim();
+    const degMatch = trimmed.match(/\b([A-Za-z]+)\s*\((?:Deg\.?|Oct\.?)\s*(\d+)\)/i);
+    if (degMatch) {
+      return `${degMatch[1]} ${degMatch[2]}`;
+    }
+    const slashParts = trimmed.split('/');
+    if (slashParts.length >= 2) {
+      const en = slashParts[1].replace(/\(.*?\)/g, '').trim();
+      if (en) return en;
+    }
+    const clean = trimmed.replace(/\(.*?\)/g, '').trim();
+    return clean.length > 10 ? clean.slice(0, 10).trim() : clean;
   }
 
   /**
