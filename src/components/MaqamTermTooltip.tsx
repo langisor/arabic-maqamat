@@ -102,7 +102,7 @@ export const MaqamTermTooltip: React.FC<MaqamTermTooltipProps> = ({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <span className="cursor-help border-b border-dotted border-amber-500/50 hover:border-amber-400 hover:text-amber-300 transition-colors">
             {children}
             {showIcon && (
