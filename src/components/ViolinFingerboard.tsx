@@ -986,12 +986,12 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
             /* HORIZONTAL VIEW: STUDIO / PEDAGOGICAL LAYOUT                              */
             /* ========================================================================= */
             <div className="overflow-x-auto pb-4">
-              <div className="min-w-[720px] relative bg-gradient-to-r from-amber-950/60 via-stone-950 to-amber-950/40 rounded-2xl p-6 border-2 border-amber-900/40 shadow-2xl">
+              <div className="min-w-180 relative bg-linear-to-r from-amber-950/60 via-stone-950 to-amber-950/40 rounded-2xl p-6 border-2 border-amber-900/40 shadow-2xl">
                 {/* Wood grain pattern */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none rounded-2xl" />
+                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#d97706_1px,transparent_1px)] bg-size-[16px_16px] pointer-events-none rounded-2xl" />
 
                 {/* Nut (Left border) */}
-                <div className="absolute left-16 top-6 bottom-6 w-4 bg-gradient-to-b from-amber-100 via-stone-200 to-amber-200 rounded-sm shadow-md border-r-2 border-amber-900/60 flex flex-col justify-center items-center z-20">
+                <div className="absolute left-16 top-6 bottom-6 w-4 bg-linear-to-b from-amber-100 via-stone-200 to-amber-200 rounded-sm shadow-md border-r-2 border-amber-900/60 flex flex-col justify-center items-center z-20">
                   <span className="text-[9px] font-bold text-stone-900 -rotate-90 tracking-widest uppercase font-mono">
                     NUT
                   </span>
@@ -1025,10 +1025,10 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                           {/* Metal string render with realistic thickness */}
                           <div
                             className={`w-full absolute left-0 right-0 shadow-sm ${
-                              strName === 'G' ? 'h-[3.5px] bg-gradient-to-r from-amber-700 via-amber-500 to-amber-600' :
-                              strName === 'D' ? 'h-[2.8px] bg-gradient-to-r from-slate-400 via-slate-200 to-slate-400' :
-                              strName === 'A' ? 'h-[2.0px] bg-gradient-to-r from-slate-300 via-slate-100 to-slate-300' :
-                              'h-[1.2px] bg-gradient-to-r from-yellow-200 via-yellow-100 to-yellow-300'
+                              strName === 'G' ? 'h-[3.5px] bg-linear-to-r from-amber-700 via-amber-500 to-amber-600' :
+                              strName === 'D' ? 'h-[2.8px] bg-linear-to-r from-slate-400 via-slate-200 to-slate-400' :
+                              strName === 'A' ? 'h-0.5 bg-linear-to-r from-slate-300 via-slate-100 to-slate-300' :
+                              'h-[1.2px] bg-linear-to-r from-yellow-200 via-yellow-100 to-yellow-300'
                             }`}
                           />
 

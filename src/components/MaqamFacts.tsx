@@ -75,7 +75,7 @@ interface MaqamFactsProps {
 }
 
 export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null)
+  const [expandedSection, setExpandedSection] = useState<string[]>([])
 
   return (
     <Card className={`border-amber-800/30 bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40 ${className}`}>
@@ -99,7 +99,7 @@ export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
       </CardHeader>
 
       <CardContent className="pt-4">
-        <Accordion type="single" collapsible value={expandedSection || ""} onValueChange={(val) => setExpandedSection(val)}>
+        <Accordion value={expandedSection} onValueChange={(val) => setExpandedSection(val)}>
           {maqamFacts.map((section) => {
             const Icon = section.icon
             return (
