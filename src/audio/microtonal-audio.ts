@@ -317,6 +317,65 @@ export class MicrotonalAudioEngine {
   }
 
   /**
+   * Plays a rhythmically varied sequence where each note specifies duration in quarter beats.
+   * Enables precise rhythmic synchronization for scales, sequences of 3/4, and position shift drills.
+   */
+  public static playRhythmicSequence(
+    notes: { pitch: ArabicPitch; durationQuarter: number }[],
+    tempoBpm: number = 80,
+    timbre: TimbreType = 'violin',
+    onStepChange?: (index: number) => void,
+    onComplete?: () => void,
+    audioTime?: number,
+    scope: string = 'microtonal-sequence'
+  ): void {
+    this.stopSequence(scope);
+    this.requestAudioContext();
+
+    if (notes.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    const session = AudioTransport.startSession(scope, 'Sequence');
+    const voices = { timbre, frequencies: [] as number[] };
+    this.sequenceVoices.set(scope, voices);
+    session.onCancel(() => {
+      if (this.sequenceVoices.get(scope) === voices) {
+        this.releaseSequenceVoices(voices);
+        this.sequenceVoices.delete(scope);
+      }
+    });
+
+    const startTime = audioTime ?? Tone.now();
+    const secondsPerQuarter = 60 / tempoBpm;
+    let accumulatedSeconds = 0;
+
+    notes.forEach((note, index) => {
+      const stepTime = startTime + accumulatedSeconds;
+      const noteDurationSec = Math.max(0.08, note.durationQuarter * secondsPerQuarter);
+      Tone.getDraw().schedule(() => {
+        if (!session.isActive()) return;
+        voices.frequencies.push(note.pitch.toFrequency(this.referenceA4));
+        this.playPitch(note.pitch, noteDurationSec * 0.92, timbre, 0.75);
+        if (onStepChange) onStepChange(index);
+      }, stepTime);
+
+      accumulatedSeconds += noteDurationSec;
+    });
+
+    Tone.getDraw().schedule(() => {
+      if (!session.isActive()) return;
+      if (onStepChange) onStepChange(-1);
+      if (onComplete) onComplete();
+      if (this.sequenceVoices.get(scope) === voices) {
+        this.releaseSequenceVoices(voices);
+      }
+      session.finish();
+    }, startTime + accumulatedSeconds);
+  }
+
+  /**
    * Stops any currently active playback sequence immediately.
    */
   public static stopSequence(scope?: string): void {

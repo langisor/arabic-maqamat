@@ -1,6 +1,21 @@
 # Arabic Maqamat roadmap
 
-This roadmap reflects the current implementation. Shared workspace persistence, the audio transport controller, accessible shell tabs, bilingual font styling, and MusicXML viewing/download are already present. The work below focuses on completing and hardening those foundations.
+This roadmap reflects the current implementation. Shared workspace persistence, the audio transport controller, accessible shell tabs, bilingual font styling, unified pitch theme coloring, mobile 1-bar-per-line system breaks, and MusicXML viewing/download are already present and hardened.
+
+## Completed Enhancements
+
+- **Architectural Pitch & Note Color Unification**:
+  - Unified `getPitchThemeClasses` across the entire application (ScoreViewer, TrainingLab, ViolinFingerboard, JinsDetectorLab, SayrQaflaLab, TranspositionLab, MaqamExplorer).
+  - Mobile responsive single-bar-per-line notation breaks (`measuresPerSystem: 1`) in OSMD across `ScoreViewer` and `TrainingLab`.
+  - `playRhythmicSequence` integrated into `MicrotonalAudioEngine` for notation-synchronized audio playback.
+
+- **Practices & Training Lab Drills**:
+  - **Scale / Maqam Drills**: Ascending & Descending scalar runs, Ascending only, Descending only, with quarter/eighth note values and metronome sync.
+  - **Sequences of 3 (ثلاثيات النغم)**: Three-note step agility patterns (1-2-3, 2-3-4...) in 3/4 and 4/4 meters.
+  - **Sequences of 4 (رباعيات الأجناس)**: Four-note patterns mirroring the Arabic Jins (tetrachord) structure and reinforcing the Ghammaz pivot.
+  - **Violin Position Shift Drills (تحويل المراكز للكمان)**: 1st to 3rd position shifts on the Ghammaz pivot, Octave leaps (Qarar ↔ Jawab), and Expressive Slide (Zahlaka) with guide finger recommendations and position badges (`[Pos I]`, `[Pos III]`).
+  - **Algorithmic Melodic Sight-Reading**: Level 1, 2, 3 randomized Sayr phrases with classical Qafla cadences.
+  - **Gamification Badges**: Added `scale_runner`, `sequences_master`, and `position_shifter` badges to progress tracking.
 
 ## Content & Educational Enhancements
 

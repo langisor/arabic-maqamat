@@ -1,6 +1,7 @@
 // src/theory/melody-generator.ts
 import { ArabicPitch } from '../core/pitch';
 import { Maqam } from './maqam';
+import type { ViolinFingerPlacement } from '../violin/ergonomics';
 
 export type MelodyDifficulty = 'level1' | 'level2' | 'level3';
 
@@ -8,6 +9,11 @@ export interface GeneratedNote {
   pitch: ArabicPitch;
   durationQuarter: number; // e.g. 0.25 (sixteenth), 0.5 (eighth), 0.75 (dotted eighth), 1.0 (quarter), 2.0 (half)
   arabicName: string;
+  violinPlacement?: ViolinFingerPlacement;
+  positionNumber?: 1 | 2 | 3 | 4;
+  isShiftPoint?: boolean;
+  shiftInstruction?: string;
+  pedagogicalNote?: string;
 }
 
 export interface GeneratedMelody {
@@ -21,6 +27,8 @@ export interface GeneratedMelody {
   pitches: ArabicPitch[];
   totalBeats: number;
   description: string;
+  drillType?: string;
+  drillConfig?: unknown;
 }
 
 export class MelodyGenerator {

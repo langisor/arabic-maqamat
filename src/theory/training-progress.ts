@@ -77,6 +77,27 @@ export const INITIAL_BADGES: TrainingBadge[] = [
     description: 'Master the scale degrees of Maqam Bayati',
     icon: '🌙',
     unlocked: false
+  },
+  {
+    id: 'scale_runner',
+    title: 'Scale Virtuoso (عدّاء السلالم)',
+    description: 'Complete ascending & descending scale run drills',
+    icon: '⚡',
+    unlocked: false
+  },
+  {
+    id: 'sequences_master',
+    title: 'Sequencer (سيّد التعاقب)',
+    description: 'Master Sequences of 3 and Sequences of 4 ajnas drills',
+    icon: '🧬',
+    unlocked: false
+  },
+  {
+    id: 'position_shifter',
+    title: 'Position Shifter (فنّان التحويل)',
+    description: 'Master violin shifts from 1st to 3rd position on the Ghammaz',
+    icon: '🎻',
+    unlocked: false
   }
 ];
 

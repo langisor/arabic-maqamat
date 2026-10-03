@@ -20,6 +20,13 @@ import {
   GeneratedMelody,
   MelodyDifficulty
 } from '../theory/melody-generator';
+import {
+  PracticeDrillEngine,
+  type PracticeDrillType,
+  type DrillDirection,
+  type PositionShiftVariation,
+  DRILL_TYPES_CATALOGUE,
+} from '../theory/practice-drills';
 import { getWorkspaceState, updateWorkspaceDraft } from '../state/workspace-state';
 import { RecordingStorage } from '../state/recording-storage';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
@@ -47,7 +54,10 @@ import {
   BookOpen,
   Award,
   Ear,
-  X
+  X,
+  Activity,
+  Layers,
+  RefreshCw
 } from 'lucide-react';
 
 interface Props {
@@ -233,7 +243,12 @@ export const TrainingLab: React.FC<Props> = ({
   const [selectedEarIdx, setSelectedEarIdx] = useState<number | null>(null);
   const [earAnswered, setEarAnswered] = useState<boolean>(false);
 
-  // Sight-Reading state
+  // Practice Drills & Sight-Reading state
+  const [activeDrillType, setActiveDrillType] = useState<PracticeDrillType>('scale-run');
+  const [drillDirection, setDrillDirection] = useState<DrillDirection>('both');
+  const [drillNoteValue, setDrillNoteValue] = useState<'quarter' | 'eighth'>('quarter');
+  const [positionShiftVariation, setPositionShiftVariation] = useState<PositionShiftVariation>('ghammaz-pivot');
+
   const [difficulty, setDifficultyState] = useState<MelodyDifficulty>(
     () => getWorkspaceState().drafts.training.sightReadingDifficulty || 'level1'
   );
@@ -242,7 +257,7 @@ export const TrainingLab: React.FC<Props> = ({
     () => getWorkspaceState().drafts.training.melodyMeter || '4/4'
   );
   const [melodyTempo, setMelodyTempoState] = useState<number>(
-    () => getWorkspaceState().drafts.training.melodyTempo || 90
+    () => getWorkspaceState().drafts.training.melodyTempo || 85
   );
 
   const setDifficulty = (diff: MelodyDifficulty) => {
@@ -264,19 +279,21 @@ export const TrainingLab: React.FC<Props> = ({
     const draft = getWorkspaceState().drafts.training;
     try {
       return {
-        melody: MelodyGenerator.generateMelody(
-          currentMaqam,
-          draft.sightReadingDifficulty || 'level1',
-          8,
-          draft.melodyMeter || '4/4',
-          draft.melodyTempo || 90
-        ),
+        melody: PracticeDrillEngine.generateDrill(currentMaqam, {
+          type: 'scale-run',
+          direction: 'both',
+          runNoteValue: 'quarter',
+          timeSignature: draft.melodyMeter || '4/4',
+          tempoBpm: draft.melodyTempo || 85,
+          sightReadingDifficulty: draft.sightReadingDifficulty || 'level1',
+          sightReadingLength: 8,
+        }),
         error: null as string | null,
       };
     } catch (error: unknown) {
       return {
         melody: null,
-        error: getErrorMessage(error, 'Could not generate a practice phrase.'),
+        error: getErrorMessage(error, 'Could not generate a practice drill.'),
       };
     }
   });
@@ -315,7 +332,18 @@ export const TrainingLab: React.FC<Props> = ({
     setMysteryPitch(newEar.target);
     setEarOptions(newEar.options);
     try {
-      setGeneratedMelody(MelodyGenerator.generateMelody(currentMaqam, difficulty, melodyLength, melodyMeter, melodyTempo));
+      setGeneratedMelody(
+        PracticeDrillEngine.generateDrill(currentMaqam, {
+          type: activeDrillType,
+          direction: drillDirection,
+          runNoteValue: drillNoteValue,
+          positionShiftVariation,
+          timeSignature: activeDrillType === 'sequence-3' ? '3/4' : melodyMeter,
+          tempoBpm: melodyTempo,
+          sightReadingDifficulty: difficulty,
+          sightReadingLength: melodyLength,
+        })
+      );
       setMelodyGenerationError(null);
     } catch (error: unknown) {
       setGeneratedMelody(null);
@@ -455,29 +483,52 @@ export const TrainingLab: React.FC<Props> = ({
     return () => observer.disconnect();
   }, [activeMode]);
 
-  const handleGenerateMelody = useCallback(() => {
-    try {
-      const melody = MelodyGenerator.generateMelody(
-        currentMaqam,
-        difficulty,
-        melodyLength,
-        melodyMeter,
-        melodyTempo
-      );
-      setGeneratedMelody(melody);
-      setMelodyGenerationError(null);
-      setActiveMelodyStep(-1);
-      setIsMelodyPlaying(false);
-      countInRunRef.current += 1;
-      AudioTransport.stopScope('training-melody-session');
-      setMelodyCountIn(null);
-      MetronomeAudioEngine.stop();
-      MicrotonalAudioEngine.stopSequence('training-melody');
-      MicrotonalAudioEngine.stopSequence('training-reference');
-    } catch (error: unknown) {
-      setMelodyGenerationError(getErrorMessage(error, 'Could not generate a practice phrase. Adjust the phrase settings and retry.'));
-    }
-  }, [currentMaqam, difficulty, melodyLength, melodyMeter, melodyTempo]);
+  const handleGenerateDrill = useCallback(
+    (
+      overrideType?: PracticeDrillType,
+      overrideDirection?: DrillDirection,
+      overrideVariation?: PositionShiftVariation
+    ) => {
+      const typeToUse = overrideType ?? activeDrillType;
+      const dirToUse = overrideDirection ?? drillDirection;
+      const varToUse = overrideVariation ?? positionShiftVariation;
+      try {
+        const drill = PracticeDrillEngine.generateDrill(currentMaqam, {
+          type: typeToUse,
+          direction: dirToUse,
+          runNoteValue: drillNoteValue,
+          positionShiftVariation: varToUse,
+          timeSignature: typeToUse === 'sequence-3' ? '3/4' : melodyMeter,
+          tempoBpm: melodyTempo,
+          sightReadingDifficulty: difficulty,
+          sightReadingLength: melodyLength,
+        });
+        setGeneratedMelody(drill);
+        setMelodyGenerationError(null);
+        setActiveMelodyStep(-1);
+        setIsMelodyPlaying(false);
+        countInRunRef.current += 1;
+        AudioTransport.stopScope('training-melody-session');
+        setMelodyCountIn(null);
+        MetronomeAudioEngine.stop();
+        MicrotonalAudioEngine.stopSequence('training-melody');
+        MicrotonalAudioEngine.stopSequence('training-reference');
+      } catch (error: unknown) {
+        setMelodyGenerationError(getErrorMessage(error, 'Could not generate this practice exercise. Adjust the settings and retry.'));
+      }
+    },
+    [
+      currentMaqam,
+      activeDrillType,
+      drillDirection,
+      drillNoteValue,
+      positionShiftVariation,
+      melodyMeter,
+      melodyTempo,
+      difficulty,
+      melodyLength,
+    ]
+  );
 
   // Render OSMD MusicXML for Sight-Reading
   useEffect(() => {
@@ -638,11 +689,10 @@ export const TrainingLab: React.FC<Props> = ({
         melodySession.finish();
         setPlaybackError(getErrorMessage(error, 'The metronome could not start. Retry playback after checking browser audio access.'));
       });
-      const intervalMs = (60 / melodyTempo) * 1000;
 
-      MicrotonalAudioEngine.playSequence(
-        generatedMelody.pitches,
-        intervalMs,
+      MicrotonalAudioEngine.playRhythmicSequence(
+        generatedMelody.notes,
+        melodyTempo,
         timbre,
         (idx) => {
           setActiveMelodyStep(idx);
@@ -652,7 +702,32 @@ export const TrainingLab: React.FC<Props> = ({
           MetronomeAudioEngine.stop();
           setIsMelodyPlaying(false);
           setActiveMelodyStep(-1);
-          triggerXpGain(15);
+          triggerXpGain(25);
+
+          // Update stats and check drill badges
+          setStats((prev) => {
+            const nextBadges = [...prev.unlockedBadgeIds];
+            if (activeDrillType === 'scale-run' && !nextBadges.includes('scale_runner')) {
+              nextBadges.push('scale_runner');
+            } else if (
+              (activeDrillType === 'sequence-3' || activeDrillType === 'sequence-4') &&
+              !nextBadges.includes('sequences_master')
+            ) {
+              nextBadges.push('sequences_master');
+            } else if (
+              activeDrillType === 'position-shift' &&
+              !nextBadges.includes('position_shifter')
+            ) {
+              nextBadges.push('position_shifter');
+            }
+            const updated = {
+              ...prev,
+              melodiesPracticed: prev.melodiesPracticed + 1,
+              unlockedBadgeIds: nextBadges,
+            };
+            TrainingStorage.saveStats(updated);
+            return updated;
+          });
         },
         startTime,
         'training-melody'
@@ -1105,8 +1180,11 @@ export const TrainingLab: React.FC<Props> = ({
                 : 'bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Music className="w-4 h-4" />
-            <span>2. Sight-Reading Studio</span>
+            <Activity className="w-4 h-4" />
+            <span>2. Practices &amp; Training Drills (التمارين والتطبيقات)</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+              5 Drills
+            </span>
           </button>
 
           <button
@@ -1541,93 +1619,385 @@ export const TrainingLab: React.FC<Props> = ({
       {/* ============================================================= */}
       {activeMode === 'sightreading' && (
         <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-border">
+            <CardHeader className="pb-3 border-b border-border/50">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="secondary" className="text-xs font-bold text-amber-500">
-                      Algorithmic Sight-Reading Engine
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <Badge variant="secondary" className="text-xs font-bold text-amber-500 bg-amber-500/10 border-amber-500/30">
+                      Practices &amp; Training Drills Studio
                     </Badge>
+                    <span className="text-xs text-muted-foreground font-arabic">
+                      استوديو التمارين والتدريب العملي
+                    </span>
                   </div>
-                  <CardTitle className="text-lg font-bold">
-                    Random Maqam Melodic Generator
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <span>{currentMaqam.name} Practice &amp; Drill Lab</span>
                   </CardTitle>
-                  <CardDescription className="text-xs">
-                    Generate authentic practice phrases with microtonal accidentals, staff notation, and violin fingerings.
+                  <CardDescription className="text-xs mt-1">
+                    Master scales, ascending &amp; descending runs, sequences of 3 and 4, and violin position shifts with real-time score notation.
                   </CardDescription>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button
-                    onClick={handleGenerateMelody}
+                    onClick={() => handleGenerateDrill()}
                     className="bg-amber-500 text-slate-950 hover:bg-amber-400 font-bold gap-2 cursor-pointer shadow-xs"
                   >
-                    <Dices className="w-4 h-4" />
-                    <span>Generate New Melody</span>
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Generate Drill</span>
                   </Button>
                 </div>
               </div>
+
+              {/* 5 Primary Drill Type Selector Tabs */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-4">
+                {DRILL_TYPES_CATALOGUE.map((drill) => {
+                  const isSelected = activeDrillType === drill.id;
+                  return (
+                    <button
+                      type="button"
+                      key={drill.id}
+                      onClick={() => {
+                        setActiveDrillType(drill.id);
+                        handleGenerateDrill(drill.id);
+                      }}
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-amber-500/15 border-amber-500 text-foreground ring-1 ring-amber-500/50 shadow-xs'
+                          : 'bg-muted/30 hover:bg-muted/60 border-border/80 text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1 w-full">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                          {drill.badge}
+                        </span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-amber-500" />}
+                      </div>
+                      <div className="font-bold text-xs mt-1 text-foreground">
+                        {drill.titleEn}
+                      </div>
+                      <div className="text-[10px] font-arabic text-muted-foreground mt-0.5 line-clamp-1">
+                        {drill.titleAr}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Generator Controls Toolbar */}
+
+            <CardContent className="space-y-6 pt-5">
+              {/* Contextual Generator Controls Toolbar */}
               <div className="p-3.5 rounded-xl bg-muted/30 dark:bg-slate-900 border border-border grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                {/* Difficulty */}
-                <div className="space-y-1">
-                  <label className="text-muted-foreground font-semibold">Difficulty Level</label>
-                  <select
-                    value={difficulty}
-                    onChange={(e) => setDifficulty(e.target.value as MelodyDifficulty)}
-                    className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
-                  >
-                    <option value="level1">Level 1: Stepwise (Grade 1)</option>
-                    <option value="level2">Level 2: Steps &amp; 3rds</option>
-                    <option value="level3">Level 3: Ornaments &amp; Leaps</option>
-                  </select>
-                </div>
+                {/* 1. Scale Run Drill Controls */}
+                {activeDrillType === 'scale-run' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Run Direction</label>
+                      <select
+                        value={drillDirection}
+                        onChange={(e) => {
+                          const dir = e.target.value as DrillDirection;
+                          setDrillDirection(dir);
+                          handleGenerateDrill('scale-run', dir);
+                        }}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="both">Ascending &amp; Descending (صعود وهبوط)</option>
+                        <option value="ascending">Ascending Only (صعود فقط)</option>
+                        <option value="descending">Descending Only (هبوط فقط)</option>
+                      </select>
+                    </div>
 
-                {/* Length */}
-                <div className="space-y-1">
-                  <label className="text-muted-foreground font-semibold">Phrase Length</label>
-                  <select
-                    value={melodyLength}
-                    onChange={(e) => setMelodyLength(Number(e.target.value))}
-                    className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
-                  >
-                    <option value={8}>8 Notes (2 Bars)</option>
-                    <option value={12}>12 Notes (3 Bars)</option>
-                    <option value={16}>16 Notes (4 Bars)</option>
-                  </select>
-                </div>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Note Duration</label>
+                      <select
+                        value={drillNoteValue}
+                        onChange={(e) => {
+                          const val = e.target.value as 'quarter' | 'eighth';
+                          setDrillNoteValue(val);
+                        }}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="quarter">Quarter Notes (♩ 1 beat)</option>
+                        <option value="eighth">Eighth Notes (♪ 0.5 beat)</option>
+                      </select>
+                    </div>
 
-                {/* Meter */}
-                <div className="space-y-1">
-                  <label className="text-muted-foreground font-semibold">Meter / Iqa’</label>
-                  <select
-                    value={melodyMeter}
-                    onChange={(e) => setMelodyMeter(e.target.value as '4/4' | '3/4' | '2/4')}
-                    className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
-                  >
-                    <option value="4/4">4/4 (Maqsum / Wahda)</option>
-                    <option value="3/4">3/4 (Darj)</option>
-                    <option value="2/4">2/4 (Malfuf)</option>
-                  </select>
-                </div>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Time Signature</label>
+                      <select
+                        value={melodyMeter}
+                        onChange={(e) => setMelodyMeter(e.target.value as '4/4' | '3/4' | '2/4')}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="4/4">4/4 (Standard / Wahda)</option>
+                        <option value="2/4">2/4 (Malfuf)</option>
+                      </select>
+                    </div>
 
-                {/* Tempo */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-muted-foreground font-semibold">
-                    <span>Tempo</span>
-                    <span className="font-mono text-amber-500 font-bold">{melodyTempo} BPM</span>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-muted-foreground font-semibold">
+                        <span>Tempo</span>
+                        <span className="font-mono text-amber-500 font-bold">{melodyTempo} BPM</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="50"
+                        max="160"
+                        value={melodyTempo}
+                        onChange={(e) => setMelodyTempo(Number(e.target.value))}
+                        className="w-full accent-amber-500 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer mt-2"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* 2. Sequences of 3 Controls */}
+                {activeDrillType === 'sequence-3' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Pattern Direction</label>
+                      <select
+                        value={drillDirection}
+                        onChange={(e) => {
+                          const dir = e.target.value as DrillDirection;
+                          setDrillDirection(dir);
+                          handleGenerateDrill('sequence-3', dir);
+                        }}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="both">Ascending &amp; Descending (صعود وهبوط)</option>
+                        <option value="ascending">Ascending (1-2-3, 2-3-4...)</option>
+                        <option value="descending">Descending (8-7-6, 7-6-5...)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Meter</label>
+                      <select
+                        value={melodyMeter}
+                        onChange={(e) => setMelodyMeter(e.target.value as '4/4' | '3/4' | '2/4')}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="3/4">3/4 (Darj / 3-note pulse)</option>
+                        <option value="4/4">4/4 (Wahda / Syncopated)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-muted-foreground font-semibold">
+                        <span>Tempo</span>
+                        <span className="font-mono text-amber-500 font-bold">{melodyTempo} BPM</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="50"
+                        max="140"
+                        value={melodyTempo}
+                        onChange={(e) => setMelodyTempo(Number(e.target.value))}
+                        className="w-full accent-amber-500 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer mt-2"
+                      />
+                    </div>
+
+                    <div className="space-y-1 flex flex-col justify-end">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleGenerateDrill('sequence-3')}
+                        className="w-full text-xs font-semibold cursor-pointer"
+                      >
+                        Regenerate Pattern
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {/* 3. Sequences of 4 Controls */}
+                {activeDrillType === 'sequence-4' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Pattern Direction</label>
+                      <select
+                        value={drillDirection}
+                        onChange={(e) => {
+                          const dir = e.target.value as DrillDirection;
+                          setDrillDirection(dir);
+                          handleGenerateDrill('sequence-4', dir);
+                        }}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="both">Ascending &amp; Descending (صعود وهبوط)</option>
+                        <option value="ascending">Ascending (1-2-3-4, 2-3-4-5...)</option>
+                        <option value="descending">Descending (8-7-6-5, 7-6-5-4...)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Jins Alignment Meter</label>
+                      <select
+                        value={melodyMeter}
+                        onChange={(e) => setMelodyMeter(e.target.value as '4/4' | '3/4' | '2/4')}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="4/4">4/4 (2 Quartets / Bar)</option>
+                        <option value="2/4">2/4 (1 Quartet / Bar)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-muted-foreground font-semibold">
+                        <span>Tempo</span>
+                        <span className="font-mono text-amber-500 font-bold">{melodyTempo} BPM</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="50"
+                        max="140"
+                        value={melodyTempo}
+                        onChange={(e) => setMelodyTempo(Number(e.target.value))}
+                        className="w-full accent-amber-500 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer mt-2"
+                      />
+                    </div>
+
+                    <div className="space-y-1 flex flex-col justify-end">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleGenerateDrill('sequence-4')}
+                        className="w-full text-xs font-semibold cursor-pointer"
+                      >
+                        Regenerate Pattern
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {/* 4. Position Shift Controls */}
+                {activeDrillType === 'position-shift' && (
+                  <>
+                    <div className="space-y-1 sm:col-span-2">
+                      <label className="text-muted-foreground font-semibold">Shift Technique &amp; Pivot</label>
+                      <select
+                        value={positionShiftVariation}
+                        onChange={(e) => {
+                          const variation = e.target.value as PositionShiftVariation;
+                          setPositionShiftVariation(variation);
+                          handleGenerateDrill('position-shift', undefined, variation);
+                        }}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="ghammaz-pivot">1st to 3rd Position on Ghammaz Pivot (التحويل عند الغماز)</option>
+                        <option value="octave-leap">Octave Leap Shift (قفزة الديوان - القرار والجواب)</option>
+                        <option value="expressive-slide">Expressive Slide / Zahlaka into Pos III (زحلقة تعبيرية)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-muted-foreground font-semibold">
+                        <span>Tempo (BPM)</span>
+                        <span className="font-mono text-amber-500 font-bold">{melodyTempo} BPM</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="45"
+                        max="105"
+                        value={melodyTempo}
+                        onChange={(e) => setMelodyTempo(Number(e.target.value))}
+                        className="w-full accent-amber-500 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer mt-2"
+                      />
+                    </div>
+
+                    <div className="space-y-1 flex flex-col justify-end">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleGenerateDrill('position-shift')}
+                        className="w-full text-xs font-semibold cursor-pointer"
+                      >
+                        Regenerate Shift Drill
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                {/* 5. Algorithmic Sight-Reading Controls */}
+                {activeDrillType === 'sightreading' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Difficulty Level</label>
+                      <select
+                        value={difficulty}
+                        onChange={(e) => setDifficulty(e.target.value as MelodyDifficulty)}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="level1">Level 1: Stepwise (Grade 1)</option>
+                        <option value="level2">Level 2: Steps &amp; 3rds</option>
+                        <option value="level3">Level 3: Ornaments &amp; Leaps</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Phrase Length</label>
+                      <select
+                        value={melodyLength}
+                        onChange={(e) => setMelodyLength(Number(e.target.value))}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value={8}>8 Notes (2 Bars)</option>
+                        <option value={12}>12 Notes (3 Bars)</option>
+                        <option value={16}>16 Notes (4 Bars)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground font-semibold">Meter / Iqa’</label>
+                      <select
+                        value={melodyMeter}
+                        onChange={(e) => setMelodyMeter(e.target.value as '4/4' | '3/4' | '2/4')}
+                        className="w-full bg-card border border-border rounded-lg p-1.5 font-medium cursor-pointer"
+                      >
+                        <option value="4/4">4/4 (Maqsum / Wahda)</option>
+                        <option value="3/4">3/4 (Darj)</option>
+                        <option value="2/4">2/4 (Malfuf)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-muted-foreground font-semibold">
+                        <span>Tempo</span>
+                        <span className="font-mono text-amber-500 font-bold">{melodyTempo} BPM</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="50"
+                        max="140"
+                        value={melodyTempo}
+                        onChange={(e) => setMelodyTempo(Number(e.target.value))}
+                        className="w-full accent-amber-500 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer mt-2"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Pedagogical Guidance Banner */}
+              <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3.5 flex items-start gap-3">
+                <Sparkles className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                <div className="text-xs space-y-1 text-foreground">
+                  <div className="font-semibold text-amber-400 flex items-center gap-2">
+                    <span>
+                      {activeDrillType === 'scale-run' && 'Scale & Maqam Intonation Focus'}
+                      {activeDrillType === 'sequence-3' && 'Sequences of 3: Microtonal Agility & Finger Independence'}
+                      {activeDrillType === 'sequence-4' && 'Sequences of 4: Ajnas (Tetrachord) Structure & Ghammaz Pivoting'}
+                      {activeDrillType === 'position-shift' && 'Violin Position Shift: 1st ↔ 3rd Position Technique'}
+                      {activeDrillType === 'sightreading' && 'Melodic Sayr & Qafla Cadence Sight-Reading'}
+                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min="50"
-                    max="140"
-                    value={melodyTempo}
-                    onChange={(e) => setMelodyTempo(Number(e.target.value))}
-                    className="w-full accent-amber-500 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer mt-2"
-                  />
+                  <p className="text-muted-foreground leading-relaxed">
+                    {generatedMelody?.description ||
+                      'Practice with the synchronized metronome and note-by-note fingerings to develop authentic Arabic violin and microtonal modal dexterity.'}
+                  </p>
                 </div>
               </div>
 
@@ -1636,34 +2006,48 @@ export const TrainingLab: React.FC<Props> = ({
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="font-semibold text-foreground flex items-center gap-1.5">
                     <Music className="w-3.5 h-3.5 text-amber-500" />
-                    Sight-Reading Score
+                    Interactive Sheet Music Notation
                   </span>
                   <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                     <Check className="w-3 h-3" /> MusicXML 4.0 Standard Timing
                   </span>
                 </div>
-                <div className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-40 flex items-center justify-center overflow-x-auto" aria-busy={isRenderingMelody}>
-                  {isRenderingMelody && <AsyncFeedback kind="loading" title="Rendering sight-reading notation" className="absolute inset-x-3 top-3 z-10 flex items-center justify-center gap-2 rounded-lg bg-white/95 p-2 text-xs text-slate-700" />}
+                <div
+                  className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-40 flex items-center justify-center overflow-x-auto"
+                  aria-busy={isRenderingMelody}
+                >
+                  {isRenderingMelody && (
+                    <AsyncFeedback
+                      kind="loading"
+                      title="Rendering practice drill notation"
+                      className="absolute inset-x-3 top-3 z-10 flex items-center justify-center gap-2 rounded-lg bg-white/95 p-2 text-xs text-slate-700"
+                    />
+                  )}
                   <div
                     ref={osmdContainerRef}
                     className="osmd-responsive-lyrics w-full flex justify-center"
-                    style={{ "--osmd-lyric-font-size": `${lyricFontSize}px` } as React.CSSProperties}
+                    style={{ '--osmd-lyric-font-size': `${lyricFontSize}px` } as React.CSSProperties}
                   />
                   {osmdRenderError && (
                     <AsyncFeedback
                       kind="error"
                       title="Notation unavailable"
                       description={<>You can still practice from the note guide below. {osmdRenderError}</>}
-                      action={{ label: "Retry notation", onClick: () => setRenderRevision((revision) => revision + 1) }}
+                      action={{ label: 'Retry notation', onClick: () => setRenderRevision((revision) => revision + 1) }}
                       className="absolute inset-x-3 bottom-3 z-10"
                     />
                   )}
                 </div>
               </div>
 
-                      {melodyGenerationError && (
-                        <AsyncFeedback kind="error" title="Melody generation failed" description={melodyGenerationError} action={{ label: "Retry generation", onClick: handleGenerateMelody }} />
-                      )}
+              {melodyGenerationError && (
+                <AsyncFeedback
+                  kind="error"
+                  title="Drill generation failed"
+                  description={melodyGenerationError}
+                  action={{ label: 'Retry generation', onClick: () => handleGenerateDrill() }}
+                />
+              )}
 
               {/* Note-by-Note Interactive Guided Practice Strip */}
               {generatedMelody && (
@@ -1671,17 +2055,20 @@ export const TrainingLab: React.FC<Props> = ({
                   <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Sliders className="w-3.5 h-3.5 text-amber-400" />
-                      Interactive Note-by-Note Fingering Guide
+                      Interactive Note-by-Note Fingering &amp; Position Guide
                     </span>
                     <span className="text-[11px] font-mono">
-                      Target: {currentMaqam.name} • Tonic: {currentMaqam.getScale()[0]?.toString()}
+                      Maqam: {currentMaqam.name} • Total Notes: {generatedMelody.notes.length}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-8 gap-2">
                     {generatedMelody.notes.map((n, idx) => {
                       const isActive = activeMelodyStep === idx;
-                      const violinHint = ViolinErgonomicsEngine.mapPitchToPosition(n.pitch, 1);
+                      const violinHint =
+                        n.violinPlacement ||
+                        ViolinErgonomicsEngine.mapPitchToPosition(n.pitch, n.positionNumber || 1);
+                      const theme = getPitchThemeClasses(n.pitch, 'card', { isSounding: isActive });
 
                       return (
                         <button
@@ -1690,18 +2077,44 @@ export const TrainingLab: React.FC<Props> = ({
                           aria-label={`Play ${n.pitch.toString()}, violin string ${violinHint.string}, finger ${violinHint.finger}`}
                           aria-pressed={isActive}
                           onClick={() => MicrotonalAudioEngine.playPitch(n.pitch, 0.6, timbre)}
-                          className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer select-none ${
+                          className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer select-none relative flex flex-col justify-between ${
                             isActive
-                              ? 'bg-amber-500 text-slate-950 font-bold ring-2 ring-amber-400 scale-105 shadow-md'
-                              : 'bg-muted/40 hover:bg-muted border-border text-foreground hover:border-amber-500/50'
+                              ? 'ring-2 ring-amber-400 scale-105 shadow-md ' + theme.combined
+                              : theme.combined + ' hover:border-amber-500/50'
                           }`}
                         >
-                          <div className="text-[10px] text-muted-foreground font-mono">#{idx + 1}</div>
-                          <div className="font-mono text-base font-black text-amber-500 dark:text-amber-400">
-                            {n.pitch.toDisplayString()}
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono w-full">
+                            <span>#{idx + 1}</span>
+                            {n.positionNumber && (
+                              <span
+                                className={`px-1 py-0.2 rounded font-bold text-[9px] ${
+                                  n.positionNumber === 3
+                                    ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                                    : 'bg-slate-500/20 text-slate-300'
+                                }`}
+                              >
+                                Pos {n.positionNumber === 1 ? 'I' : n.positionNumber === 2 ? 'II' : 'III'}
+                              </span>
+                            )}
                           </div>
-                          <div className="text-[10px] font-semibold text-muted-foreground mt-0.5">
-                            {violinHint.string}-Str, F{violinHint.finger}
+
+                          <div className="my-1">
+                            <div className="font-mono text-base font-black text-amber-500 dark:text-amber-400">
+                              {n.pitch.toDisplayString()}
+                            </div>
+                            <div className="text-[10px] font-arabic font-semibold text-muted-foreground line-clamp-1">
+                              {n.arabicName.split('(')[0].trim()}
+                            </div>
+                          </div>
+
+                          {n.isShiftPoint && (
+                            <div className="text-[9px] font-bold text-amber-300 bg-amber-500/20 rounded px-1 py-0.5 mb-1 animate-pulse border border-amber-500/30">
+                              ↗ Shift
+                            </div>
+                          )}
+
+                          <div className="text-[10px] font-semibold text-muted-foreground border-t border-border/40 pt-1 w-full">
+                            {violinHint.string}-Str • F{violinHint.finger}
                           </div>
                         </button>
                       );
@@ -1725,7 +2138,7 @@ export const TrainingLab: React.FC<Props> = ({
                     {isMelodyPlaying ? (
                       <>
                         <Square className="w-4 h-4 fill-current" />
-                        <span>{melodyCountIn !== null ? 'Cancel Count-in' : 'Stop Melody'}</span>
+                        <span>{melodyCountIn !== null ? 'Cancel Count-in' : 'Stop Drill'}</span>
                       </>
                     ) : (
                       <>
@@ -1740,7 +2153,12 @@ export const TrainingLab: React.FC<Props> = ({
                     onClick={() => {
                       MetronomeAudioEngine.setBpm(melodyTempo);
                       void MetronomeAudioEngine.start().catch((error: unknown) => {
-                        setPlaybackError(getErrorMessage(error, 'The metronome could not start. Check browser audio access, then retry.'));
+                        setPlaybackError(
+                          getErrorMessage(
+                            error,
+                            'The metronome could not start. Check browser audio access, then retry.'
+                          )
+                        );
                       });
                     }}
                     disabled={isMelodyPlaying}
@@ -1758,7 +2176,7 @@ export const TrainingLab: React.FC<Props> = ({
                     className="flex items-center gap-3 rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-foreground"
                   >
                     <span className="font-mono text-2xl font-black text-amber-500">{melodyCountIn}</span>
-                    <span>Melody starts in {melodyCountIn}...</span>
+                    <span>Drill starts in {melodyCountIn}...</span>
                   </div>
                 )}
 
@@ -1771,8 +2189,14 @@ export const TrainingLab: React.FC<Props> = ({
                   <span>Download MusicXML 4.0</span>
                 </Button>
               </div>
+
               {playbackError && (
-                <AsyncFeedback kind="error" title="Playback failed" description={playbackError} action={{ label: "Retry playback", onClick: () => void handlePlayMelody() }} />
+                <AsyncFeedback
+                  kind="error"
+                  title="Playback failed"
+                  description={playbackError}
+                  action={{ label: 'Retry playback', onClick: () => void handlePlayMelody() }}
+                />
               )}
             </CardContent>
           </Card>

@@ -7,6 +7,7 @@ import {
   type RoundTripReport,
 } from '../score/musicxml-exporter';
 import { getAccidentalLabel } from '../core/pitch';
+import { getPitchThemeClasses } from '../core/pitch-styling';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -353,20 +354,21 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
                   />
                   {/* Visual note fallback pills */}
                   <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-                    {scalePitches.map((p, idx) => (
-                      <div
-                        key={idx}
-                        role="img"
-                        aria-label={`${t('scaleDegree')} ${idx + 1}: ${p.toScientificString()}${activePitchIndex === idx ? `, ${t('playing')}` : ''}`}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-mono font-bold ${
-                          activePitchIndex === idx
-                            ? 'bg-amber-400 border-amber-600 text-stone-900 shadow-md ring-2 ring-amber-500'
-                            : 'bg-white border-stone-300 text-stone-800'
-                        }`}
-                      >
-                        {p.toScientificString()}
-                      </div>
-                    ))}
+                    {scalePitches.map((p, idx) => {
+                      const theme = getPitchThemeClasses(p, 'card', {
+                        isSounding: activePitchIndex === idx,
+                      });
+                      return (
+                        <div
+                          key={idx}
+                          role="img"
+                          aria-label={`${t('scaleDegree')} ${idx + 1}: ${p.toScientificString()}${activePitchIndex === idx ? `, ${t('playing')}` : ''}`}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all ${theme.combined}`}
+                        >
+                          {p.toScientificString()}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
