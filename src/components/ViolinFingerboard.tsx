@@ -1318,7 +1318,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
             </div>
 
             {/* Tempo Slider */}
-            <div className="flex items-center gap-3 min-w-[200px]">
+            <div className="flex items-center gap-3 min-w-50">
               <span className="text-xs text-muted-foreground font-semibold">Tempo:</span>
               <Slider
                 value={[seqBpm]}
@@ -1328,7 +1328,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 onValueChange={(val) => setSeqBpm(Array.isArray(val) ? val[0] : (typeof val === 'number' ? val : seqBpm))}
                 className="w-28"
               />
-              <span className="text-xs font-mono font-bold text-amber-300 min-w-[55px]">
+              <span className="text-xs font-mono font-bold text-amber-300 min-w-13.75">
                 {seqBpm} BPM
               </span>
             </div>
@@ -1397,7 +1397,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 Sequence is currently empty. Click any note on the violin fingerboard above or choose a preset above.
               </div>
             ) : (
-              <div className="flex flex-wrap gap-2 items-center p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 min-h-[76px]">
+              <div className="flex flex-wrap gap-2 items-center p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 min-h-19">
                 {customSequence.map((pitch, idx) => {
                   const isActive = seqActiveIndex === idx;
                   const theme = getPitchThemeClasses(pitch, 'subtle', { isSounding: isActive });
@@ -1488,7 +1488,7 @@ export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIn
                 ]}
               ].map((grp, grpIdx) => (
                 <div key={grpIdx} className="flex flex-wrap items-center gap-1.5 bg-slate-950/40 p-2 rounded-xl border border-slate-800/60">
-                  <span className="text-[11px] font-bold text-amber-300 min-w-[120px]">
+                  <span className="text-[11px] font-bold text-amber-300 min-w-30">
                     {grp.name}:
                   </span>
                   <div className="flex flex-wrap gap-1">
