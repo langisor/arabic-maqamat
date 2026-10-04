@@ -17,6 +17,12 @@ This roadmap reflects the current implementation. Shared workspace persistence, 
   - **Algorithmic Melodic Sight-Reading**: Level 1, 2, 3 randomized Sayr phrases with classical Qafla cadences.
   - **Gamification Badges**: Added `scale_runner`, `sequences_master`, and `position_shifter` badges to progress tracking.
 
+- **Real-Time Microphone Pitch & Intonation Tracker (الموجّه الصوتي الحي لدوزان أرباع التون)**:
+  - **Acoustic Sensor with 2048-point FFT**: High-precision autocorrelation pitch detector with parabolic peak interpolation tuned for Arabic quarter-tones (24-EDO, ±25 cents range).
+  - **Visual 24-EDO Needle Gauge & Waveform**: Real-time cents deviation meter with ±7 cent in-tune tolerance zone, audio waveform visualizer, and bilingual intonation guidance (Flat/Sharp finger adjustment tips in Arabic and English).
+  - **Scale Degree Tracker & Continuous Drone**: Active maqam degree matrix highlighting sounding notes, target pitch lock ("Target Hold" vs "Free Tracking"), and continuous acoustic reference drone.
+  - **Gamification & Badges**: Integrated into `TrainingLab` as Mode 3 and accessible directly in `TuningWheel24EDO`, with in-tune streak counter and `intonation_master` achievement badge.
+
 ## Content & Educational Enhancements
 
 Add a dedicated "Maqam Facts" educational section

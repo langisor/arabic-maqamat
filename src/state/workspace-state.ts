@@ -93,7 +93,7 @@ export interface WorkspaceDrafts {
     customPhrase: SerializedPitch[] | null;
   };
   training: {
-    activeMode: 'memorize' | 'sight' | 'record';
+    activeMode: 'memorize' | 'sight' | 'tracker' | 'record';
     sightReadingDifficulty: 'level1' | 'level2' | 'level3';
     melodyTempo: number;
     melodyMeter: '4/4' | '3/4' | '2/4';
@@ -297,7 +297,7 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
 
     // Training
     if (d.training) {
-      if (['memorize', 'sight', 'record'].includes(d.training.activeMode)) {
+      if (['memorize', 'sight', 'tracker', 'record'].includes(d.training.activeMode)) {
         result.drafts.training.activeMode = d.training.activeMode;
       }
       if (['level1', 'level2', 'level3'].includes(d.training.sightReadingDifficulty)) {

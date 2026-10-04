@@ -28,6 +28,7 @@ import {
 } from '../theory/practice-drills';
 import { getWorkspaceState, updateWorkspaceDraft } from '../state/workspace-state';
 import { RecordingStorage } from '../state/recording-storage';
+import { MicrotonalPitchTracker } from './MicrotonalPitchTracker';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -54,7 +55,9 @@ import {
   Ear,
   X,
   Activity,
-  RefreshCw
+  RefreshCw,
+  Compass,
+  Target
 } from 'lucide-react';
 
 interface Props {
@@ -65,7 +68,7 @@ interface Props {
   maqamRevision?: number;
 }
 
-type TrainingMode = 'memorization' | 'sightreading' | 'recording';
+type TrainingMode = 'memorization' | 'sightreading' | 'tracker' | 'recording';
 type MemorizationSubMode = 'builder' | 'quiz' | 'ear';
 
 interface RecordedTake {
@@ -192,13 +195,26 @@ export const TrainingLab: React.FC<Props> = ({
   // Main Navigation Mode
   const [activeMode, setActiveModeState] = useState<TrainingMode>(() => {
     const saved = getWorkspaceState().drafts.training.activeMode;
-    return saved === 'sight' ? 'sightreading' : saved === 'record' ? 'recording' : 'memorization';
+    return saved === 'sight'
+      ? 'sightreading'
+      : saved === 'tracker'
+      ? 'tracker'
+      : saved === 'record'
+      ? 'recording'
+      : 'memorization';
   });
   const [memSubMode, setMemSubMode] = useState<MemorizationSubMode>('builder');
 
   const setActiveMode = (mode: TrainingMode) => {
     setActiveModeState(mode);
-    const mapped = mode === 'sightreading' ? 'sight' : mode === 'recording' ? 'record' : 'memorize';
+    const mapped =
+      mode === 'sightreading'
+        ? 'sight'
+        : mode === 'tracker'
+        ? 'tracker'
+        : mode === 'recording'
+        ? 'record'
+        : 'memorize';
     updateWorkspaceDraft('training', { activeMode: mapped });
   };
 
@@ -1169,7 +1185,7 @@ export const TrainingLab: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* 3 Main Mode Selectors */}
+        {/* 4 Main Mode Selectors */}
         <div className="flex flex-wrap items-center gap-2 mt-5 pt-4 border-t border-border/60">
           <button
             type="button"
@@ -1204,6 +1220,23 @@ export const TrainingLab: React.FC<Props> = ({
 
           <button
             type="button"
+            onClick={() => setActiveMode('tracker')}
+            aria-pressed={activeMode === 'tracker'}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+              activeMode === 'tracker'
+                ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                : 'bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Compass className="w-4 h-4 text-emerald-400" />
+            <span>3. Real-Time Pitch &amp; Intonation Tracker</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 animate-pulse">
+              Live Mic
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveMode('recording')}
             aria-pressed={activeMode === 'recording'}
             className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
@@ -1213,7 +1246,7 @@ export const TrainingLab: React.FC<Props> = ({
             }`}
           >
             <Mic className="w-4 h-4" />
-            <span>3. Performance Recording &amp; Compare</span>
+            <span>4. Performance Recording &amp; Compare</span>
           </button>
         </div>
       </div>
@@ -2242,7 +2275,20 @@ export const TrainingLab: React.FC<Props> = ({
       )}
 
       {/* ============================================================= */}
-      {/* MODE 3: PERFORMANCE RECORDING & COMPARE                       */}
+      {/* MODE 3: REAL-TIME PITCH & INTONATION TRACKER                  */}
+      {/* ============================================================= */}
+      {activeMode === 'tracker' && (
+        <div className="space-y-6">
+          <MicrotonalPitchTracker
+            currentMaqam={currentMaqam}
+            timbre={timbre}
+            onXpGain={triggerXpGain}
+          />
+        </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* MODE 4: PERFORMANCE RECORDING & COMPARE                       */}
       {/* ============================================================= */}
       {activeMode === 'recording' && (
         <div className="space-y-6">

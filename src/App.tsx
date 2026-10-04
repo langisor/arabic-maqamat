@@ -638,7 +638,9 @@ export default function App() {
           />
         )}
 
-        {activeTab === "tuning" && <TuningWheel24EDO timbre={timbre} />}
+        {activeTab === "tuning" && (
+          <TuningWheel24EDO timbre={timbre} currentMaqam={currentMaqam} />
+        )}
 
         {activeTab === "detector" && <JinsDetectorLab timbre={timbre} />}
       </main>

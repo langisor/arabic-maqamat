@@ -98,6 +98,13 @@ export const INITIAL_BADGES: TrainingBadge[] = [
     description: 'Master violin shifts from 1st to 3rd position on the Ghammaz',
     icon: '🎻',
     unlocked: false
+  },
+  {
+    id: 'intonation_master',
+    title: 'Intonation Master (ضابط الدوزان)',
+    description: 'Hold an in-tune note (±7¢) for 3+ seconds with the Real-time Microphone Pitch Tracker',
+    icon: '🎯',
+    unlocked: false
   }
 ];
 
@@ -168,6 +175,16 @@ export class TrainingStorage {
     }
     updated.unlockedBadgeIds = newBadges;
 
+    this.saveStats(updated);
+    return updated;
+  }
+
+  public static unlockBadge(badgeId: string, stats: TrainingStats): TrainingStats {
+    if (stats.unlockedBadgeIds.includes(badgeId)) return stats;
+    const updated = {
+      ...stats,
+      unlockedBadgeIds: [...stats.unlockedBadgeIds, badgeId]
+    };
     this.saveStats(updated);
     return updated;
   }

@@ -3,20 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { ArabicPitch } from '../core/pitch';
 import { ArabicNoteSpine } from '../core/note-spine';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
+import { Maqam, MaqamatCatalogue } from '../theory/maqam';
+import { MicrotonalPitchTracker } from './MicrotonalPitchTracker';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Volume2, Play, GitCompare } from 'lucide-react';
+import { Volume2, Play, GitCompare, Compass, Mic } from 'lucide-react';
 
 interface Props {
   timbre: TimbreType;
+  currentMaqam?: Maqam;
 }
 
-export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
+export const TuningWheel24EDO: React.FC<Props> = ({ timbre, currentMaqam }) => {
   useEffect(() => () => MicrotonalAudioEngine.stopSequence('tuning-wheel'), []);
 
   const [selectedQtIndex, setSelectedQtIndex] = useState<number>(0); // 0 = C4
   const [intervalBase] = useState<ArabicPitch>(new ArabicPitch('C', '♮', 4));
+  const [showLiveTracker, setShowLiveTracker] = useState<boolean>(false);
+  const activeMaqam = currentMaqam ?? MaqamatCatalogue.buildRast();
 
   // Generate 24 quarter-tone pitches for octave 4
   const quarterToneSteps = Array.from({ length: 24 }, (_, i) => {
@@ -71,6 +76,14 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
 
   return (
     <div className="space-y-6">
+      {/* Live Microphone Pitch Tracker when activated */}
+      {showLiveTracker && (
+        <MicrotonalPitchTracker
+          currentMaqam={activeMaqam}
+          timbre={timbre}
+        />
+      )}
+
       {/* Overview & Circular / Grid Matrix */}
       <Card className="bg-slate-900/90 border-slate-800">
         <CardHeader className="pb-5 border-b border-border/60">
@@ -92,7 +105,20 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre }) => {
               </CardDescription>
             </div>
 
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <Button
+                variant={showLiveTracker ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowLiveTracker((prev) => !prev)}
+                className={`gap-1.5 cursor-pointer font-bold ${
+                  showLiveTracker
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-md'
+                    : 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10'
+                }`}
+              >
+                <Mic className="w-3.5 h-3.5" />
+                <span>{showLiveTracker ? 'Hide Microphone Tracker' : 'Live Mic Intonation Tracker'}</span>
+              </Button>
               <Badge variant="secondary" className="text-xs">
                 Quarter-Tones (50¢, 150¢, 350¢...)
               </Badge>
