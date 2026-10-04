@@ -48,6 +48,7 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
   // Roundtrip audit state
   const [auditReport, setAuditReport] = useState<RoundTripReport | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
+  const [autoBeam, setAutoBeam] = useState<boolean>(true);
 
   // Responsive mobile screen and container width tracking
   const isMobileScreen = useIsMobile();
@@ -115,7 +116,16 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
         drawCredits: false,
         drawingParameters: isMobile ? 'compact' : 'compacttight',
         newSystemFromXML: true,
+        autoBeam: autoBeam,
       });
+
+      osmd.EngravingRules.AutoBeamNotes = autoBeam;
+      if (autoBeam) {
+        osmd.EngravingRules.AutoBeamOptions = {
+          beam_rests: false,
+          maintain_stem_directions: false,
+        };
+      }
 
       if (isMobile) {
         // Enforce 1 bar (measure) per line on mobile/small screens
@@ -159,7 +169,7 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
       isMounted = false;
       osmdRef.current = null;
     };
-  }, [maqam.id, xmlString, viewMode, renderAttempt, isMobile]);
+  }, [maqam.id, xmlString, viewMode, renderAttempt, isMobile, autoBeam]);
 
   const handleCopyXml = async () => {
     setClipboardError(null);
@@ -264,6 +274,28 @@ export const ScoreViewer: React.FC<Props> = ({ maqam, activePitchIndex }) => {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+
+            {/* Auto Beaming toggle for sheet view */}
+            {viewMode === 'sheet' && (
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoBeam}
+                onClick={() => setAutoBeam(!autoBeam)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer select-none ${
+                  autoBeam
+                    ? 'bg-amber-500/15 border-amber-500 text-amber-400 ring-1 ring-amber-500/30 shadow-xs'
+                    : 'bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+                title={autoBeam ? 'Auto Beaming is ON (automatically connects notes under rhythmic beams)' : 'Auto Beaming is OFF (renders notes with separate flags)'}
+              >
+                <span className={`w-2 h-2 rounded-full transition-colors ${autoBeam ? 'bg-amber-400 animate-pulse' : 'bg-muted-foreground/40'}`} />
+                <span>Auto Beaming</span>
+                <span className={`text-[10px] px-1 py-0.2 rounded font-mono uppercase font-bold ${autoBeam ? 'bg-amber-500/30 text-amber-300' : 'bg-muted text-muted-foreground'}`}>
+                  {autoBeam ? 'ON' : 'OFF'}
+                </span>
+              </button>
+            )}
 
             {/* Action buttons */}
             <Button

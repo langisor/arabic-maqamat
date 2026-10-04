@@ -16,7 +16,6 @@ import {
   TrainingBadge
 } from '../theory/training-progress';
 import {
-  MelodyGenerator,
   GeneratedMelody,
   MelodyDifficulty
 } from '../theory/melody-generator';
@@ -50,13 +49,11 @@ import {
   Check,
   Music,
   Sliders,
-  Dices,
   BookOpen,
   Award,
   Ear,
   X,
   Activity,
-  Layers,
   RefreshCw
 } from 'lucide-react';
 
@@ -259,6 +256,15 @@ export const TrainingLab: React.FC<Props> = ({
   const [melodyTempo, setMelodyTempoState] = useState<number>(
     () => getWorkspaceState().drafts.training.melodyTempo || 85
   );
+
+  const [autoBeam, setAutoBeamState] = useState<boolean>(
+    () => getWorkspaceState().drafts.training?.autoBeam ?? true
+  );
+
+  const setAutoBeam = (enabled: boolean) => {
+    setAutoBeamState(enabled);
+    updateWorkspaceDraft('training', { autoBeam: enabled });
+  };
 
   const setDifficulty = (diff: MelodyDifficulty) => {
     setDifficultyState(diff);
@@ -578,7 +584,16 @@ export const TrainingLab: React.FC<Props> = ({
         drawCredits: false,
         drawingParameters: isMobile ? 'compact' : 'compacttight',
         newSystemFromXML: true,
+        autoBeam: autoBeam,
       });
+
+      osmd.EngravingRules.AutoBeamNotes = autoBeam;
+      if (autoBeam) {
+        osmd.EngravingRules.AutoBeamOptions = {
+          beam_rests: false,
+          maintain_stem_directions: false,
+        };
+      }
 
       if (isMobile) {
         // Enforce 1 bar (measure) per line on mobile/small screens
@@ -616,7 +631,7 @@ export const TrainingLab: React.FC<Props> = ({
       isMounted = false;
       osmdInstanceRef.current = null;
     };
-  }, [activeMode, currentMaqam.name, generatedMelody, isMobileScreen, lyricFontSize, renderRevision]);
+  }, [activeMode, currentMaqam.name, generatedMelody, isMobileScreen, lyricFontSize, renderRevision, autoBeam]);
 
   // Count in before starting the metronome and melody on the same audio timestamp.
   const handlePlayMelody = async () => {
@@ -2003,14 +2018,37 @@ export const TrainingLab: React.FC<Props> = ({
 
               {/* Sheet Music Notation Display (OpenSheetMusicDisplay) */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span className="font-semibold text-foreground flex items-center gap-1.5">
                     <Music className="w-3.5 h-3.5 text-amber-500" />
                     Interactive Sheet Music Notation
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    <Check className="w-3 h-3" /> MusicXML 4.0 Standard Timing
-                  </span>
+                  
+                  <div className="flex items-center gap-2">
+                    {/* Auto Beaming Toggle Button */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={autoBeam}
+                      onClick={() => setAutoBeam(!autoBeam)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer select-none ${
+                        autoBeam
+                          ? 'bg-amber-500/15 border-amber-500 text-amber-400 ring-1 ring-amber-500/30 shadow-xs'
+                          : 'bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                      }`}
+                      title={autoBeam ? 'Auto Beaming is ON (automatically connects notes under rhythmic beams)' : 'Auto Beaming is OFF (renders notes with separate flags)'}
+                    >
+                      <span className={`w-2 h-2 rounded-full transition-colors ${autoBeam ? 'bg-amber-400 animate-pulse' : 'bg-muted-foreground/40'}`} />
+                      <span>Auto Beaming</span>
+                      <span className={`text-[10px] px-1 py-0.2 rounded font-mono uppercase font-bold ${autoBeam ? 'bg-amber-500/30 text-amber-300' : 'bg-muted text-muted-foreground'}`}>
+                        {autoBeam ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      <Check className="w-3 h-3" /> MusicXML 4.0 Standard Timing
+                    </span>
+                  </div>
                 </div>
                 <div
                   className="p-4 sm:p-6 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-sm relative min-h-40 flex items-center justify-center overflow-x-auto"

@@ -97,6 +97,7 @@ export interface WorkspaceDrafts {
     sightReadingDifficulty: 'level1' | 'level2' | 'level3';
     melodyTempo: number;
     melodyMeter: '4/4' | '3/4' | '2/4';
+    autoBeam?: boolean;
   };
 }
 
@@ -151,7 +152,8 @@ export const DEFAULT_WORKSPACE_STATE: WorkspaceState = {
       activeMode: 'memorize',
       sightReadingDifficulty: 'level1',
       melodyTempo: 90,
-      melodyMeter: '4/4'
+      melodyMeter: '4/4',
+      autoBeam: true
     }
   }
 };
