@@ -595,6 +595,7 @@ export default function App() {
               scalePitches={scalePitches}
               activePitchIndex={activePitchIndex}
               timbre={timbre}
+              currentMaqam={currentMaqam}
             />
 
             {/* Quick Context Summary */}

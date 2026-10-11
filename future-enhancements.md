@@ -23,6 +23,11 @@ This roadmap reflects the current implementation. Shared workspace persistence, 
   - **Scale Degree Tracker & Continuous Drone**: Active maqam degree matrix highlighting sounding notes, target pitch lock ("Target Hold" vs "Free Tracking"), and continuous acoustic reference drone.
   - **Gamification & Badges**: Integrated into `TrainingLab` as Mode 3 and accessible directly in `TuningWheel24EDO`, with in-tune streak counter and `intonation_master` achievement badge.
 
+- **Violin Fingerboard Upgrade & Individual Position Note Deduplication**:
+  - **Acoustic Tapered Ebony Neck**: High-fidelity SVG ebony fingerboard with realistic camber gradient, flamed maple strip, metallic wound strings (wound silver IV, aluminum III, chrome II, golden steel I), ivory nut, fretless intonation lines, finger tape guides ('1', '2', '3', '4'), and mother-of-pearl position inlays.
+  - **Strict Individual Position Deduplication**: In every individual position (`1st`, `2nd`, `3rd`, `4th`), each highlighted maqam scale pitch appears **once and only once**. Eliminates redundant duplicate unisons across adjacent strings (e.g. 4th finger vs open string collisions) according to pedagogical violin fingering rules.
+  - **Interactive Dynamics**: Accidental naming (Sharps/Flats/Arabic Names), Bow vs Pizzicato audio modes, 24-EDO quarter-tone nodes (Sikah, Awj, Iraq, Buzurk), Arabic vs Western tuning presets, reverse strings toggle (⇄), and open string tuning console.
+
 ## Content & Educational Enhancements
 
 Add a dedicated "Maqam Facts" educational section

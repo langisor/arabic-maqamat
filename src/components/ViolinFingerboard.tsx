@@ -1,1516 +1,1494 @@
 // src/components/ViolinFingerboard.tsx
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
-import { getViolinNoteColorClass, getPitchThemeClasses } from '../core/pitch-styling';
-import {
-  ViolinErgonomicsEngine,
-  ViolinFingerPlacement,
-  ViolinStringName,
-  ViolinPositionNumber,
-  ViolinPositionMode,
-  FingerMicroOffset
-} from '../violin/ergonomics';
+import { Maqam, MaqamatCatalogue } from '../theory/maqam';
+import { ArabicNoteSpine } from '../core/note-spine';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
-import { AudioTransport } from '../audio/audio-transport';
-import {
-  getWorkspaceState,
-  updateWorkspaceDraft,
-  deserializePitch,
-  serializePitch
-} from '../state/workspace-state';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Slider } from './ui/slider';
 import {
   Volume2,
-  Play,
-  Square,
-  RotateCcw,
   Sparkles,
-  Plus,
-  Trash2,
+  RotateCcw,
   Info,
-  ChevronRight,
-  ListMusic,
-  ArrowUpDown,
+  CheckCircle2,
   MoveHorizontal,
-  ZoomIn,
-  ZoomOut
+  Compass,
+  Music,
+  Check
 } from 'lucide-react';
 
-interface Props {
-  scalePitches: ArabicPitch[];
-  activePitchIndex: number | null;
-  timbre: TimbreType;
-}
+export type AccidentalNaming = 'sharps' | 'flats' | 'arabic';
+export type PlayMode = 'bow' | 'pizzicato';
+export type HandPosition = '1st' | '2nd' | '3rd' | '4th' | 'all';
+export type ScaleFilterMode = 'all-notes' | 'maqam-only';
+export type ViolinTuningPreset = 'arabic' | 'western';
 
-interface MelodicPreset {
-  name: string;
+export interface BoardNote {
+  id: string;
+  stringIndex: number; // 0 to 3 (IV to I)
+  stringName: string;  // 'IV', 'III', 'II', 'I'
+  letter: string;      // 'G', 'D', 'A', 'E'
+  openNote: string;
+  noteKey: string;     // e.g. "D4", "E𝄳4"
+  pitch: ArabicPitch;
+  sharpName: string;
+  flatName: string;
+  halfFlatName: string;
   arabicName: string;
-  description: string;
-  pitches: ArabicPitch[];
+  arabicShort: string;
+  semitoneIndex: number; // 0 to 12
+  isQuarterTone: boolean;
+  baseMidi: number;
+  qtIndex: number;
+  x: number;
+  y: number;
+  fingerTape?: 'open' | '1st' | '2nd-neutral' | '2nd' | '3rd' | '4th' | 'other';
+  inPositionRange: boolean;
+  isDuplicateInPosition: boolean;
+  fingerNumber: number; // 0 (open), 1, 2, 3, 4
 }
 
-const STRINGS: ViolinStringName[] = ['G', 'D', 'A', 'E'];
+interface Props {
+  scalePitches?: ArabicPitch[];
+  activePitchIndex?: number | null;
+  timbre?: TimbreType;
+  currentMaqam?: Maqam;
+}
 
-export const ViolinFingerboard: React.FC<Props> = ({ scalePitches, activePitchIndex, timbre }) => {
-  // Orientation: 'vertical' (natural violin player POV) vs 'horizontal' (studio/pedagogical layout)
-  const [orientation, setOrientationState] = useState<'vertical' | 'horizontal'>(
-    () => getWorkspaceState().drafts.violin.orientation
-  );
+// Enharmonic lookup dictionary for spelling equivalences
+const ENHARMONIC_MAP: Record<string, string> = {
+  'c#': 'db',
+  'db': 'c#',
+  'd#': 'eb',
+  'eb': 'd#',
+  'f#': 'gb',
+  'gb': 'f#',
+  'g#': 'ab',
+  'ab': 'g#',
+  'a#': 'bb',
+  'bb': 'a#',
+};
 
-  // Position control: 1, 2, 3, 4, or 'auto'
-  const [selectedPosition, setSelectedPosition] = useState<ViolinPositionMode>(1);
+// Check if two note representations are equivalent
+export const areNotesEquivalent = (n1?: string | null, n2?: string | null): boolean => {
+  if (!n1 || !n2) return false;
+  const s1 = n1.trim().toLowerCase();
+  const s2 = n2.trim().toLowerCase();
+  if (s1 === s2) return true;
+  const m1 = s1.match(/^([a-g][#bd𝄳𝄵]?)([0-9])$/);
+  const m2 = s2.match(/^([a-g][#bd𝄳𝄵]?)([0-9])$/);
+  if (m1 && m2 && m1[2] === m2[2]) {
+    if (ENHARMONIC_MAP[m1[1]] === m2[1]) return true;
+  }
+  return false;
+};
 
-  // Inspector state: selected placement for deep dive
-  const [selectedPlacement, setSelectedPlacement] = useState<ViolinFingerPlacement | null>(null);
+// Arabic note dictionary for rich bilingual terminology
+const ARABIC_NOTE_DICTIONARY: Record<string, { arabic: string; translit: string }> = {
+  'G3': { arabic: 'يكاه', translit: 'Yakah' },
+  'G#3': { arabic: 'يكاه دييز', translit: 'Yakah Sharp' },
+  'Ab3': { arabic: 'يكاه بيمول', translit: 'Yakah Flat' },
+  'A3': { arabic: 'عشيران', translit: 'Ushayran' },
+  'A#3': { arabic: 'عجم عشيران', translit: '‘Ajam Ushayran' },
+  'Bb3': { arabic: 'عجم عشيران', translit: '‘Ajam Ushayran' },
+  'Bd3': { arabic: 'عراق', translit: '‘Iraq' },
+  'B3': { arabic: 'كواشت', translit: 'Kawasht' },
+  'C4': { arabic: 'راست', translit: 'Rast' },
+  'C#4': { arabic: 'زنكولاه', translit: 'Zangulah' },
+  'Db4': { arabic: 'زنكولاه', translit: 'Zangulah' },
+  'D4': { arabic: 'دوكاه', translit: 'Dukah' },
+  'D#4': { arabic: 'كردي', translit: 'Kurdi' },
+  'Eb4': { arabic: 'كردي', translit: 'Kurdi' },
+  'Ed4': { arabic: 'سيكاه', translit: 'Sikah' },
+  'E4': { arabic: 'بوسليك', translit: 'Busalik' },
+  'F4': { arabic: 'جهاركاه', translit: 'Jiharkah' },
+  'F#4': { arabic: 'حجاز', translit: 'Hijaz' },
+  'Gb4': { arabic: 'حجاز', translit: 'Hijaz' },
+  'G4': { arabic: 'نوى', translit: 'Nawa' },
+  'G#4': { arabic: 'حصار', translit: 'Hisar' },
+  'Ab4': { arabic: 'حصار', translit: 'Hisar' },
+  'Ad4': { arabic: 'صبا', translit: 'Saba' },
+  'A4': { arabic: 'حسيني', translit: 'Husayni' },
+  'A#4': { arabic: 'عجم', translit: '‘Ajam' },
+  'Bb4': { arabic: 'عجم', translit: '‘Ajam' },
+  'Bd4': { arabic: 'أوج', translit: 'Awj' },
+  'B4': { arabic: 'ماهور', translit: 'Mahur' },
+  'C5': { arabic: 'كردان', translit: 'Kirdan' },
+  'C#5': { arabic: 'شاهناز', translit: 'Shahnaz' },
+  'Db5': { arabic: 'شاهناز', translit: 'Shahnaz' },
+  'D5': { arabic: 'محير', translit: 'Muhayyar' },
+  'D#5': { arabic: 'سنبلة', translit: 'Sunbulah' },
+  'Eb5': { arabic: 'سنبلة', translit: 'Sunbulah' },
+  'Ed5': { arabic: 'بزرك', translit: 'Buzurk' },
+  'E5': { arabic: 'جواب بوسليك', translit: 'Jawab Busalik' },
+  'F5': { arabic: 'جواب جهاركاه', translit: 'Jawab Jiharkah' },
+  'F#5': { arabic: 'جواب حجاز', translit: 'Jawab Hijaz' },
+  'Gb5': { arabic: 'جواب حجاز', translit: 'Jawab Hijaz' },
+  'G5': { arabic: 'جواب نوى', translit: 'Jawab Nawa' },
+  'G#5': { arabic: 'جواب حصار', translit: 'Jawab Hisar' },
+  'Ab5': { arabic: 'جواب حصار', translit: 'Jawab Hisar' },
+  'A5': { arabic: 'جواب حسيني', translit: 'Jawab Husayni' },
+  'A#5': { arabic: 'جواب عجم', translit: 'Jawab ‘Ajam' },
+  'Bb5': { arabic: 'جواب عجم', translit: 'Jawab ‘Ajam' },
+  'Bd5': { arabic: 'جواب أوج', translit: 'Jawab Awj' },
+  'B5': { arabic: 'جواب ماهور', translit: 'Jawab Mahur' },
+  'C6': { arabic: 'رَمَل', translit: 'Ramal' },
+};
 
-  // Custom Sequence Builder state (Max 2 octaves) - starts empty so user selects notes one by one
-  const [customSequence, setCustomSequenceState] = useState<ArabicPitch[]>(() => {
-    const list = getWorkspaceState().drafts.violin.customSequence || [];
-    return list
-      .map(deserializePitch)
-      .filter((p): p is ArabicPitch => p !== null);
-  });
-  const [sequenceWarning, setSequenceWarning] = useState<string | null>(null);
+export const ViolinFingerboard: React.FC<Props> = ({
+  scalePitches = [],
+  activePitchIndex = null,
+  timbre = 'violin',
+  currentMaqam
+}) => {
+  // Resolve active maqam (fallback to Rast if none passed)
+  const activeMaqam = useMemo(() => {
+    return currentMaqam ?? MaqamatCatalogue.buildRast();
+  }, [currentMaqam]);
 
-  // Sequence playback state
-  const [isPlayingSeq, setIsPlayingSeq] = useState(false);
-  const [seqActiveIndex, setSeqActiveIndex] = useState<number | null>(null);
-  const [seqBpm, setSeqBpmState] = useState<number>(
-    () => getWorkspaceState().drafts.violin.seqBpm
-  );
-  const [isLooping, setIsLooping] = useState<boolean>(false);
-  const isLoopingRef = useRef(false);
-  const [viewMode, setViewModeState] = useState<'maqam' | 'sequence'>(
-    () => getWorkspaceState().drafts.violin.viewMode
-  );
-
-  // Touch & Tablet Optimizations
-  const [touchZoom, setTouchZoomState] = useState<boolean>(
-    () => getWorkspaceState().drafts.violin.touchZoom
-  );
-  const [stringFilter, setStringFilterState] = useState<'all' | ViolinStringName>(
-    () => (getWorkspaceState().drafts.violin.stringFilter as 'all' | ViolinStringName) || 'all'
-  );
-
-  const setOrientation = (o: 'vertical' | 'horizontal') => {
-    setOrientationState(o);
-    updateWorkspaceDraft('violin', { orientation: o });
-  };
-
-  const setViewMode = (m: 'maqam' | 'sequence') => {
-    setViewModeState(m);
-    updateWorkspaceDraft('violin', { viewMode: m });
-  };
-
-  const setSeqBpm = (bpm: number) => {
-    setSeqBpmState(bpm);
-    updateWorkspaceDraft('violin', { seqBpm: bpm });
-  };
-
-  const setCustomSequence = (action: React.SetStateAction<ArabicPitch[]>) => {
-    setCustomSequenceState((prev) => {
-      const next = typeof action === 'function' ? action(prev) : action;
-      updateWorkspaceDraft('violin', { customSequence: next.map(serializePitch) });
-      return next;
-    });
-  };
-
-  const setTouchZoom = (action: React.SetStateAction<boolean>) => {
-    setTouchZoomState((prev) => {
-      const next = typeof action === 'function' ? action(prev) : action;
-      updateWorkspaceDraft('violin', { touchZoom: next });
-      return next;
-    });
-  };
-
-  const setStringFilter = (sf: 'all' | ViolinStringName) => {
-    setStringFilterState(sf);
-    updateWorkspaceDraft('violin', { stringFilter: sf });
-  };
-
-  const displayedStrings = useMemo(
-    () => (stringFilter === 'all' ? STRINGS : [stringFilter]),
-    [stringFilter]
-  );
-  const stringOpenNotes: Record<ViolinStringName, string> = {
-    G: 'G3 (196 Hz)',
-    D: 'D4 (293.7 Hz)',
-    A: 'A4 (440 Hz)',
-    E: 'E5 (659.3 Hz)'
-  };
-
-  // Expand active maqam scale pitches across full violin range (G3 to A5)
-  // so all 4 strings have realistic finger positions to click and select in sequence mode
-  const fullViolinScalePitches = useMemo(() => {
-    const pcs: { diatonic: DiatonicBase; accidental: MicrotonalAccidental }[] = [];
-    for (const sp of scalePitches) {
-      if (!pcs.some(pc => pc.diatonic === sp.diatonic && pc.accidental === sp.accidental)) {
-        pcs.push({ diatonic: sp.diatonic, accidental: sp.accidental });
-      }
+  // Derive active scale pitches
+  const effectiveScalePitches = useMemo(() => {
+    if (scalePitches && scalePitches.length > 0) {
+      return scalePitches;
     }
+    return activeMaqam.getScale();
+  }, [scalePitches, activeMaqam]);
 
-    const expanded: ArabicPitch[] = [];
-    // Ensure open strings (G3, D4, A4, E5) are available
-    const openStrings: ArabicPitch[] = [
-      new ArabicPitch('G', '♮', 3),
-      new ArabicPitch('D', '♮', 4),
-      new ArabicPitch('A', '♮', 4),
-      new ArabicPitch('E', '♮', 5)
-    ];
-    for (const op of openStrings) {
-      expanded.push(op);
+  // Component UI state
+  const [namingMode, setNamingMode] = useState<AccidentalNaming>('sharps');
+  const [playMode, setPlayMode] = useState<PlayMode>('bow');
+  const [handPosition, setHandPosition] = useState<HandPosition>('1st');
+  const [scaleFilter, setScaleFilter] = useState<ScaleFilterMode>('all-notes');
+  const [showQuarterTones, setShowQuarterTones] = useState<boolean>(true);
+  const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>('arabic');
+  const [isStringsReversed, setIsStringsReversed] = useState<boolean>(false);
+  const [hoveredNote, setHoveredNote] = useState<BoardNote | null>(null);
+  const [activeNoteKey, setActiveNoteKey] = useState<string | null>(null);
+  const [deduplicateInPosition, setDeduplicateInPosition] = useState<boolean>(true);
+
+  // Define string setup: IV (lowest pitch) down to I (highest pitch), or reversed (I to IV)
+  const baseStrings = useMemo(() => {
+    if (violinTuning === 'arabic') {
+      return [
+        { id: 'string-4', name: 'IV', letter: 'G', openNote: 'G3', openMidi: 55, openQt: 86, arabic: 'يكاه (Yakah)', pitch: new ArabicPitch('G', '♮', 3) },
+        { id: 'string-3', name: 'III', letter: 'D', openNote: 'D4', openMidi: 62, openQt: 100, arabic: 'دوكاه (Dukah)', pitch: new ArabicPitch('D', '♮', 4) },
+        { id: 'string-2', name: 'II', letter: 'G', openNote: 'G4', openMidi: 67, openQt: 110, arabic: 'نوى (Nawa)', pitch: new ArabicPitch('G', '♮', 4) },
+        { id: 'string-1', name: 'I', letter: 'D', openNote: 'D5', openMidi: 74, openQt: 124, arabic: 'محير (Muhayyar)', pitch: new ArabicPitch('D', '♮', 5) }
+      ];
+    } else {
+      return [
+        { id: 'string-4', name: 'IV', letter: 'G', openNote: 'G3', openMidi: 55, openQt: 86, arabic: 'يكاه (Yakah)', pitch: new ArabicPitch('G', '♮', 3) },
+        { id: 'string-3', name: 'III', letter: 'D', openNote: 'D4', openMidi: 62, openQt: 100, arabic: 'دوكاه (Dukah)', pitch: new ArabicPitch('D', '♮', 4) },
+        { id: 'string-2', name: 'II', letter: 'A', openNote: 'A4', openMidi: 69, openQt: 114, arabic: 'حسيني (Husayni)', pitch: new ArabicPitch('A', '♮', 4) },
+        { id: 'string-1', name: 'I', letter: 'E', openNote: 'E5', openMidi: 76, openQt: 128, arabic: 'بوسليك (Busalik)', pitch: new ArabicPitch('E', '♮', 5) }
+      ];
     }
+  }, [violinTuning]);
 
-    for (const oct of [3, 4, 5]) {
-      for (const pc of pcs) {
-        const p = new ArabicPitch(pc.diatonic, pc.accidental, oct);
-        const qt = p.toQuarterToneIndex();
-        if (qt >= 86 && qt <= 138) { // Range: G3 to A5
-          if (!expanded.some(ep => ep.equals(p))) {
-            expanded.push(p);
+  const stringSetup = useMemo(() => {
+    return isStringsReversed ? [...baseStrings].reverse() : baseStrings;
+  }, [baseStrings, isStringsReversed]);
+
+  // Geometric coordinates for tapered fingerboard SVG
+  const SVG_WIDTH = 1140;
+  const SVG_HEIGHT = 310;
+  const NUT_X = 142;
+  const NUT_WIDTH = 9;
+  const BOARD_START_X = 150;
+  const BOARD_END_X = 1110;
+
+  // Board height narrows at Nut (left) and tapers wider towards Bridge (right)
+  const NUT_TOP_Y = 56;
+  const NUT_BOTTOM_Y = 246;
+  const END_TOP_Y = 32;
+  const END_BOTTOM_Y = 270;
+
+  // String Y coordinates at Nut and at End
+  const STRING_Y_NUT = [80, 126, 174, 222]; // IV, III, II, I
+  const STRING_Y_END = [62, 118, 184, 240];
+
+  const getStringY = (stringIndex: number, x: number): number => {
+    const t = Math.max(0, Math.min(1, (x - NUT_X) / (BOARD_END_X - NUT_X)));
+    const yNut = STRING_Y_NUT[stringIndex];
+    const yEnd = STRING_Y_END[stringIndex];
+    return yNut + t * (yEnd - yNut);
+  };
+
+  // Semitone column positions (0 = open string at X=88, 1..12 across the neck)
+  const SEMITONE_X_COORDS: Record<number, number> = {
+    0: 88, // open string pegbox
+    1: 215,
+    2: 290, // 1st finger
+    3: 365,
+    4: 440, // 2nd finger
+    5: 515, // 3rd finger
+    6: 590,
+    7: 665, // 4th finger
+    8: 740,
+    9: 815,
+    10: 890,
+    11: 965,
+    12: 1040,
+  };
+
+  // Standard chromatic pitch dictionary
+  const PITCH_NAMES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const PITCH_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+  // Check whether a semitone falls within the hand position reach
+  const isSemitoneInPosition = (semitone: number, pos: HandPosition): boolean => {
+    if (pos === 'all') return true;
+    if (pos === '1st') {
+      // 1st position: open string (0) through 4th finger (7)
+      return semitone >= 0 && semitone <= 7;
+    }
+    if (pos === '2nd') {
+      // 2nd position: semitones 2 to 9, plus open string 0
+      return (semitone >= 2 && semitone <= 9) || semitone === 0;
+    }
+    if (pos === '3rd') {
+      // 3rd position: semitones 4 to 11, plus open string 0
+      return (semitone >= 4 && semitone <= 11) || semitone === 0;
+    }
+    if (pos === '4th') {
+      // 4th position: semitones 6 to 12, plus open string 0
+      return (semitone >= 6 && semitone <= 12) || semitone === 0;
+    }
+    return true;
+  };
+
+  // Calculate finger number for a note in a given hand position
+  const getFingerNumber = (semitone: number, pos: HandPosition): number => {
+    if (semitone === 0) return 0;
+    if (pos === '1st' || pos === 'all') {
+      if (semitone <= 2) return 1;
+      if (semitone <= 4) return 2;
+      if (semitone <= 6) return 3;
+      return 4;
+    }
+    if (pos === '2nd') {
+      const rel = semitone - 2;
+      if (rel <= 1) return 1;
+      if (rel <= 3) return 2;
+      if (rel <= 5) return 3;
+      return 4;
+    }
+    if (pos === '3rd') {
+      const rel = semitone - 4;
+      if (rel <= 1) return 1;
+      if (rel <= 3) return 2;
+      if (rel <= 5) return 3;
+      return 4;
+    }
+    if (pos === '4th') {
+      const rel = semitone - 6;
+      if (rel <= 1) return 1;
+      if (rel <= 3) return 2;
+      if (rel <= 5) return 3;
+      return 4;
+    }
+    return 1;
+  };
+
+  // Generate board notes
+  const rawBoardNotes: BoardNote[] = useMemo(() => {
+    const list: BoardNote[] = [];
+
+    stringSetup.forEach((str, sIdx) => {
+      // Semitones 0 to 12
+      for (let semitone = 0; semitone <= 12; semitone++) {
+        const midi = str.openMidi + semitone;
+        const octave = Math.floor(midi / 12) - 1;
+        const pitchIdx = midi % 12;
+        const qtIndex = str.openQt + semitone * 2;
+
+        const sharpLetter = PITCH_NAMES_SHARP[pitchIdx];
+        const flatLetter = PITCH_NAMES_FLAT[pitchIdx];
+        const sharpName = `${sharpLetter}${octave}`;
+        const flatName = `${flatLetter}${octave}`;
+        const noteKey = sharpName;
+
+        const dictEntry = ARABIC_NOTE_DICTIONARY[noteKey] || ARABIC_NOTE_DICTIONARY[flatName];
+        const arabicName = dictEntry?.arabic || '';
+        const arabicShort = arabicName.split(' ')[0] || sharpName;
+
+        const x = SEMITONE_X_COORDS[semitone] ?? (BOARD_START_X + semitone * 75);
+        const y = semitone === 0 ? STRING_Y_NUT[sIdx] : getStringY(sIdx, x);
+
+        let fingerTape: BoardNote['fingerTape'] = 'other';
+        if (semitone === 0) fingerTape = 'open';
+        else if (semitone === 2) fingerTape = '1st';
+        else if (semitone === 4) fingerTape = '2nd';
+        else if (semitone === 5) fingerTape = '3rd';
+        else if (semitone === 7) fingerTape = '4th';
+
+        // Parse diatonic base and accidental for ArabicPitch representation
+        const diatonicBase = (sharpLetter.charAt(0) as DiatonicBase) || 'C';
+        const accidentalChar: MicrotonalAccidental = sharpLetter.includes('#') ? '♯' : '♮';
+        const pitchObj = new ArabicPitch(diatonicBase, accidentalChar, octave);
+
+        const inReach = isSemitoneInPosition(semitone, handPosition);
+        const fingerNum = getFingerNumber(semitone, handPosition);
+
+        list.push({
+          id: `${str.id}-semi-${semitone}`,
+          stringIndex: sIdx,
+          stringName: str.name,
+          letter: str.letter,
+          openNote: str.openNote,
+          noteKey,
+          pitch: pitchObj,
+          sharpName,
+          flatName,
+          halfFlatName: sharpName,
+          arabicName,
+          arabicShort,
+          semitoneIndex: semitone,
+          isQuarterTone: false,
+          baseMidi: midi,
+          qtIndex,
+          x,
+          y,
+          fingerTape,
+          inPositionRange: inReach,
+          isDuplicateInPosition: false,
+          fingerNumber: fingerNum,
+        });
+
+        // Special authentic Arabic Quarter-tones (half-flats): Sikah (Ed4), Awj (Bd4), Iraq (Bd3), etc.
+        // Insert intermediate microtonal nodes between steps (e.g. at semitone + 0.5)
+        if (showQuarterTones && semitone < 12) {
+          let isAuthenticQuarter = false;
+          let qName = '';
+          let qDiatonic = 'E';
+          let qOctave = 4;
+
+          // Check if this step corresponds to quintessential Arabic quarter tones
+          if (str.openNote === 'D4' && semitone === 1) {
+            // Ed4 (Sikah) is 1.5 semitones above D4 (between Eb4 and E4)
+            isAuthenticQuarter = true;
+            qName = 'Ed4';
+            qDiatonic = 'E';
+            qOctave = 4;
+          } else if ((str.openNote === 'G4' || str.openNote === 'G3') && semitone === 3) {
+            // Bd4 (Awj) or Bd3 (Iraq) is 3.5 semitones above G (between Bb and B)
+            isAuthenticQuarter = true;
+            qName = str.openNote === 'G4' ? 'Bd4' : 'Bd3';
+            qDiatonic = 'B';
+            qOctave = str.openNote === 'G4' ? 4 : 3;
+          } else if (str.openNote === 'A4' && semitone === 1) {
+            // Bd4 (Awj) on Western A string
+            isAuthenticQuarter = true;
+            qName = 'Bd4';
+            qDiatonic = 'B';
+            qOctave = 4;
+          } else if (str.openNote === 'D5' && semitone === 1) {
+            // Ed5 (Buzurk)
+            isAuthenticQuarter = true;
+            qName = 'Ed5';
+            qDiatonic = 'E';
+            qOctave = 5;
+          } else if (str.openNote === 'G4' && semitone === 1) {
+            // Ad4 (nim Ajam / Saba)
+            isAuthenticQuarter = true;
+            qName = 'Ad4';
+            qDiatonic = 'A';
+            qOctave = 4;
+          }
+
+          if (isAuthenticQuarter) {
+            const nextX = SEMITONE_X_COORDS[semitone + 1] || x + 75;
+            const qX = (x + nextX) / 2;
+            const qY = getStringY(sIdx, qX);
+            const dictQ = ARABIC_NOTE_DICTIONARY[qName];
+            const arabicQ = dictQ?.arabic || '';
+            const arabicShortQ = arabicQ.split(' ')[0] || qName;
+            const qQtIndex = qtIndex + 1;
+
+            const qPitchObj = new ArabicPitch(qDiatonic as DiatonicBase, '𝄳', qOctave);
+            const qInReach = isSemitoneInPosition(semitone, handPosition);
+            const qFingerNum = getFingerNumber(semitone, handPosition);
+
+            list.push({
+              id: `${str.id}-quarter-${semitone}`,
+              stringIndex: sIdx,
+              stringName: str.name,
+              letter: str.letter,
+              openNote: str.openNote,
+              noteKey: qName,
+              pitch: qPitchObj,
+              sharpName: qName.replace('d', '𝄳'),
+              flatName: qName.replace('d', '𝄳'),
+              halfFlatName: qName.replace('d', '𝄳'),
+              arabicName: arabicQ,
+              arabicShort: arabicShortQ,
+              semitoneIndex: semitone,
+              isQuarterTone: true,
+              baseMidi: midi,
+              qtIndex: qQtIndex,
+              x: qX,
+              y: qY,
+              fingerTape: '2nd-neutral',
+              inPositionRange: qInReach,
+              isDuplicateInPosition: false,
+              fingerNumber: qFingerNum,
+            });
           }
         }
       }
-    }
-
-    return expanded.sort((a, b) => a.toQuarterToneIndex() - b.toQuarterToneIndex());
-  }, [scalePitches]);
-
-  // In maqam mode, display the active scale notes.
-  // In sequence mode, display candidate violin positions across all 4 strings
-  // so the user can select notes one by one, where unselected notes are cleared/unhighlighted.
-  const currentPitches = viewMode === 'maqam' ? scalePitches : fullViolinScalePitches;
-  const placements = useMemo(() => {
-    return ViolinErgonomicsEngine.generateFingeringChart(currentPitches, selectedPosition);
-  }, [currentPitches, selectedPosition]);
-
-  // Range validation for custom sequence (Max 2 octaves)
-  const rangeValidation = useMemo(() => {
-    return ViolinErgonomicsEngine.validateSequenceRange(customSequence);
-  }, [customSequence]);
-
-  // Alternative placements for currently selected note
-  const alternativePlacements = useMemo(() => {
-    if (!selectedPlacement) return [];
-    return ViolinErgonomicsEngine.findAlternativePlacements(selectedPlacement.pitch).filter(
-      alt => !(alt.string === selectedPlacement.string && alt.position === selectedPlacement.position && alt.finger === selectedPlacement.finger)
-    );
-  }, [selectedPlacement]);
-
-  // Clean up sequence audio on unmount
-  useEffect(() => {
-    return () => {
-      MicrotonalAudioEngine.stopSequence('violin-sequence');
-      AudioTransport.stopScope('violin-sequence-loop');
-    };
-  }, []);
-
-  // Handle window resize orientation
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setOrientation('vertical');
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Classical violin phrase presets (all ≤ 2 octaves)
-  const classicalPresets: MelodicPreset[] = [
-    {
-      name: 'Rast Opening Dulab',
-      arabicName: 'دولاب راست',
-      description: 'The foundation of Arabic violin: G3 pickup rising through Sikah E𝄳4 to Kardan C5',
-      pitches: [
-        new ArabicPitch('G', '♮', 3),
-        new ArabicPitch('C', '♮', 4),
-        new ArabicPitch('D', '♮', 4),
-        new ArabicPitch('E', '𝄳', 4),
-        new ArabicPitch('F', '♮', 4),
-        new ArabicPitch('G', '♮', 4),
-        new ArabicPitch('A', '♮', 4),
-        new ArabicPitch('B', '𝄳', 4),
-        new ArabicPitch('C', '♮', 5)
-      ]
-    },
-    {
-      name: 'Bayati Tahmila Theme',
-      arabicName: 'تحميلة بياتي',
-      description: 'Lyrical folk theme: D4 Dukah to neutral 2nd E𝄳4, arching to Husayni and back',
-      pitches: [
-        new ArabicPitch('D', '♮', 4),
-        new ArabicPitch('E', '𝄳', 4),
-        new ArabicPitch('F', '♮', 4),
-        new ArabicPitch('G', '♮', 4),
-        new ArabicPitch('A', '♮', 4),
-        new ArabicPitch('B', '♭', 4),
-        new ArabicPitch('A', '♮', 4),
-        new ArabicPitch('G', '♮', 4),
-        new ArabicPitch('F', '♮', 4),
-        new ArabicPitch('E', '𝄳', 4),
-        new ArabicPitch('D', '♮', 4)
-      ]
-    },
-    {
-      name: 'Hijaz Passionate Taqsim',
-      arabicName: 'تقسيم حجاز',
-      description: 'Augmented 2nd stretch between E♭4 and F♯4 with soaring climax on Muhayyar D5',
-      pitches: [
-        new ArabicPitch('D', '♮', 4),
-        new ArabicPitch('E', '♭', 4),
-        new ArabicPitch('F', '♯', 4),
-        new ArabicPitch('G', '♮', 4),
-        new ArabicPitch('A', '♮', 4),
-        new ArabicPitch('B', '♭', 4),
-        new ArabicPitch('C', '♮', 5),
-        new ArabicPitch('D', '♮', 5)
-      ]
-    },
-    {
-      name: 'Sikah Ascending Qafla',
-      arabicName: 'قفلة سيكاه',
-      description: 'Starts on Iraq B𝄳3 on G string, stepping up to Sikah E𝄳4 and Awj B𝄳4',
-      pitches: [
-        new ArabicPitch('B', '𝄳', 3),
-        new ArabicPitch('C', '♮', 4),
-        new ArabicPitch('D', '♮', 4),
-        new ArabicPitch('E', '𝄳', 4),
-        new ArabicPitch('F', '♮', 4),
-        new ArabicPitch('G', '♮', 4),
-        new ArabicPitch('E', '𝄳', 4)
-      ]
-    },
-    {
-      name: 'Full 2-Octave Master Scale (G3 to G5)',
-      arabicName: 'ديوانان كاملان',
-      description: 'Complete 2-octave span utilizing all 4 strings from open G3 to high G5 on E string',
-      pitches: [
-        new ArabicPitch('G', '♮', 3),
-        new ArabicPitch('A', '♮', 3),
-        new ArabicPitch('B', '𝄳', 3),
-        new ArabicPitch('C', '♮', 4),
-        new ArabicPitch('D', '♮', 4),
-        new ArabicPitch('E', '𝄳', 4),
-        new ArabicPitch('F', '♮', 4),
-        new ArabicPitch('G', '♮', 4),
-        new ArabicPitch('A', '♮', 4),
-        new ArabicPitch('B', '𝄳', 4),
-        new ArabicPitch('C', '♮', 5),
-        new ArabicPitch('D', '♮', 5),
-        new ArabicPitch('E', '𝄳', 5),
-        new ArabicPitch('F', '♮', 5),
-        new ArabicPitch('G', '♮', 5)
-      ]
-    }
-  ];
-
-  // Helper color mapping for micro-offsets
-  const getMicroOffsetBadge = (offset: FingerMicroOffset) => {
-    switch (offset) {
-      case 'open':
-        return { label: 'Open String', variant: 'emerald' as const };
-      case 'quarter_low':
-        return { label: 'Quarter-Low (-50¢)', variant: 'sky' as const };
-      case 'half_low':
-        return { label: 'Low Finger (♭)', variant: 'secondary' as const };
-      case 'standard':
-        return { label: 'Standard Position', variant: 'muted' as const };
-      case 'quarter_high':
-        return { label: 'Quarter-High (+50¢ Neutral)', variant: 'amber' as const };
-      case 'stretched_high':
-        return { label: 'Augmented Stretch (+100¢)', variant: 'rose' as const };
-    }
-  };
-
-  const getFingerColor = (finger: number, accidental: MicrotonalAccidental) => {
-    return getViolinNoteColorClass(finger, accidental);
-  };
-
-  const handleSwitchToCustomSequence = () => {
-    setViewMode('sequence');
-    MicrotonalAudioEngine.stopSequence('violin-sequence');
-    AudioTransport.stopScope('violin-sequence-loop');
-    setIsPlayingSeq(false);
-    setSeqActiveIndex(null);
-    setSelectedPlacement(null);
-    setSequenceWarning(null);
-    // When user clicks Custom Sequence, all current highlighted notes are cleared
-    setCustomSequence([]);
-  };
-
-  const handleSwitchToMaqamMode = () => {
-    setViewMode('maqam');
-    MicrotonalAudioEngine.stopSequence('violin-sequence');
-    AudioTransport.stopScope('violin-sequence-loop');
-    setIsPlayingSeq(false);
-    setSeqActiveIndex(null);
-    setSelectedPlacement(null);
-    setSequenceWarning(null);
-  };
-
-  const handleNoteClick = (placement: ViolinFingerPlacement) => {
-    if ('vibrate' in navigator) {
-      try {
-        navigator.vibrate(10);
-      } catch {
-        // safe
-      }
-    }
-    setSelectedPlacement(placement);
-    MicrotonalAudioEngine.playPitch(placement.pitch, 0.8, timbre);
-
-    // In sequence mode, clicking any note on the fingerboard directly selects and appends it!
-    if (viewMode === 'sequence') {
-      handleAddToSequence(placement.pitch, false);
-    }
-  };
-
-  const handleAddToSequence = (pitch: ArabicPitch, playSound: boolean = true) => {
-    // Check if adding this pitch would exceed 2 octaves
-    const candidateSequence = [...customSequence, pitch];
-    const validation = ViolinErgonomicsEngine.validateSequenceRange(candidateSequence);
-    if (!validation.valid) {
-      setSequenceWarning(`Cannot add note: ${validation.message || 'Exceeds pedagogical 2-octave range limit'}`);
-      setTimeout(() => setSequenceWarning(null), 4000);
-      return;
-    }
-    setSequenceWarning(null);
-    setCustomSequence(candidateSequence);
-    if (playSound) {
-      MicrotonalAudioEngine.playPitch(pitch, 0.5, timbre);
-    }
-  };
-
-  const handleRemoveFromSequence = (index: number) => {
-    setCustomSequence(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleClearSequence = () => {
-    MicrotonalAudioEngine.stopSequence('violin-sequence');
-    AudioTransport.stopScope('violin-sequence-loop');
-    setIsPlayingSeq(false);
-    setSeqActiveIndex(null);
-    setSelectedPlacement(null);
-    setSequenceWarning(null);
-    setCustomSequence([]);
-  };
-
-  const handlePlayCustomSequence = () => {
-    if (customSequence.length === 0) return;
-
-    if (isPlayingSeq) {
-      MicrotonalAudioEngine.stopSequence('violin-sequence');
-      AudioTransport.stopScope('violin-sequence-loop');
-      setIsPlayingSeq(false);
-      setSeqActiveIndex(null);
-      return;
-    }
-
-    setIsPlayingSeq(true);
-    const intervalMs = Math.round((60 / seqBpm) * 1000);
-    const loopSession = AudioTransport.startSession('violin-sequence-loop', 'Custom sequence');
-    loopSession.onCancel(() => {
-      MicrotonalAudioEngine.stopSequence('violin-sequence');
-      setIsPlayingSeq(false);
-      setSeqActiveIndex(null);
     });
 
-    const playLoop = () => {
-      if (!loopSession.isActive()) return;
-      MicrotonalAudioEngine.playSequence(
-        customSequence,
-        intervalMs,
-        timbre,
-        (idx) => {
-          setSeqActiveIndex(idx === -1 ? null : idx);
-        },
-        () => {
-          if (isLoopingRef.current) {
-            loopSession.setTimeout(playLoop, 200);
+    return list;
+  }, [stringSetup, handPosition, showQuarterTones]);
+
+  // Check if a note is in the active Maqam scale
+  const isPitchInMaqam = (pitch: ArabicPitch, noteKey: string): boolean => {
+    // 1. Direct match with scale pitches
+    if (effectiveScalePitches.some(sp => sp.equals(pitch))) {
+      return true;
+    }
+    // 2. Quarter-tone index match
+    const qt = pitch.toQuarterToneIndex();
+    if (effectiveScalePitches.some(sp => sp.toQuarterToneIndex() === qt)) {
+      return true;
+    }
+    // 3. Normalized string equivalence (e.g. D4, Ed4)
+    return effectiveScalePitches.some(sp => areNotesEquivalent(sp.toScientificString(), noteKey));
+  };
+
+  /**
+   * CRITICAL PEDAGOGICAL DEDUPLICATION:
+   * "In every individual position, highlighted notes should appear once."
+   *
+   * For every individual position (1st, 2nd, 3rd, 4th):
+   * When multiple candidates on adjacent strings represent the same pitch (e.g. D4 open vs 4th finger G,
+   * G4 open vs 3rd finger D, A4 open vs 4th finger D, D5 open vs 4th finger G/A),
+   * we score and select the single optimal string placement for that position.
+   * All redundant duplicate candidate notes are marked as `isDuplicateInPosition = true`.
+   */
+  const boardNotes: BoardNote[] = useMemo(() => {
+    if (!deduplicateInPosition || handPosition === 'all') {
+      return rawBoardNotes;
+    }
+
+    // Map candidate notes in the active position reach that are highlighted in the Maqam
+    const candidatesByQt: Map<number, BoardNote[]> = new Map();
+
+    rawBoardNotes.forEach(n => {
+      if (n.inPositionRange && isPitchInMaqam(n.pitch, n.noteKey)) {
+        const list = candidatesByQt.get(n.qtIndex) || [];
+        list.push(n);
+        candidatesByQt.set(n.qtIndex, list);
+      }
+    });
+
+    // Score and select the single winning placement for each pitch
+    const winningNoteIds = new Set<string>();
+
+    candidatesByQt.forEach((candidates) => {
+      if (candidates.length === 1) {
+        winningNoteIds.add(candidates[0].id);
+        return;
+      }
+
+      // Priority scoring function according to violin position pedagogy
+      let bestCandidate = candidates[0];
+      let bestScore = -Infinity;
+
+      candidates.forEach(cand => {
+        let score = 0;
+
+        if (handPosition === '1st') {
+          // In 1st position:
+          // Open string (semitone 0) on the higher string is the natural bridge to continue upward,
+          // avoiding awkward 4th finger stretch on lower string (e.g. Open D3 on string III > 4th finger on string IV).
+          if (cand.semitoneIndex === 0) {
+            score = 100; // Open string preference for 1st position scale playing
+          } else if (cand.semitoneIndex <= 6) {
+            score = 90 - cand.semitoneIndex; // Fingers 1, 2, 3 have high priority
           } else {
-            loopSession.finish();
-            setIsPlayingSeq(false);
-            setSeqActiveIndex(null);
+            score = 40; // 4th finger (semitone 7) is secondary when open string exists
+          }
+        } else if (handPosition === '2nd') {
+          // In 2nd position:
+          // Stopped fingers (fingers 1 to 4, semitones 2 to 9) in hand position take precedence over open strings!
+          if (cand.semitoneIndex >= 2 && cand.semitoneIndex <= 9) {
+            score = 100 - Math.abs(cand.semitoneIndex - 4);
+          } else if (cand.semitoneIndex === 0) {
+            score = 25; // Open string fallback
+          } else {
+            score = 10;
+          }
+        } else if (handPosition === '3rd') {
+          // In 3rd position:
+          // Stopped fingers (semitones 4 to 11) in 3rd position take precedence over open strings!
+          // (e.g. G4 on D string with finger 1 > open G string).
+          if (cand.semitoneIndex >= 4 && cand.semitoneIndex <= 11) {
+            score = 100 - Math.abs(cand.semitoneIndex - 6);
+          } else if (cand.semitoneIndex === 0) {
+            score = 25; // Open string fallback
+          } else {
+            score = 10;
+          }
+        } else if (handPosition === '4th') {
+          // In 4th position:
+          // Stopped fingers (semitones 6 to 12) take precedence over open strings.
+          if (cand.semitoneIndex >= 6 && cand.semitoneIndex <= 12) {
+            score = 100 - Math.abs(cand.semitoneIndex - 8);
+          } else if (cand.semitoneIndex === 0) {
+            score = 25;
+          } else {
+            score = 10;
           }
         }
-      );
-    };
 
-    playLoop();
+        if (score > bestScore) {
+          bestScore = score;
+          bestCandidate = cand;
+        }
+      });
+
+      winningNoteIds.add(bestCandidate.id);
+    });
+
+    // Mark non-winning duplicates
+    return rawBoardNotes.map(n => {
+      const inMaqam = isPitchInMaqam(n.pitch, n.noteKey);
+      if (n.inPositionRange && inMaqam && !winningNoteIds.has(n.id)) {
+        return { ...n, isDuplicateInPosition: true };
+      }
+      return n;
+    });
+  }, [rawBoardNotes, handPosition, deduplicateInPosition, effectiveScalePitches]);
+
+  // Play sound handler (Bow vs Pizzicato)
+  const handlePlay = (note: BoardNote) => {
+    setActiveNoteKey(note.noteKey);
+    setTimeout(() => setActiveNoteKey(null), 1200);
+
+    const duration = playMode === 'bow' ? 1.4 : 0.6;
+    const activeTimbre: TimbreType = playMode === 'bow' ? 'violin' : 'oud'; // bow vs pluck
+
+    MicrotonalAudioEngine.playPitch(note.pitch, duration, activeTimbre, 0.85);
   };
 
-  // Determine which pitch is actively sounding right now
-  const currentActiveSoundPitch = useMemo(() => {
-    if (isPlayingSeq && seqActiveIndex !== null && customSequence[seqActiveIndex]) {
-      return customSequence[seqActiveIndex];
+  // Quick tune open string trigger
+  const handleTuneString = (sIdx: number) => {
+    const str = stringSetup[sIdx];
+    const openNote = boardNotes.find(n => n.stringIndex === sIdx && n.semitoneIndex === 0);
+    if (openNote) {
+      handlePlay(openNote);
+    } else {
+      MicrotonalAudioEngine.playPitch(str.pitch, 1.4, 'violin', 0.85);
+      setActiveNoteKey(str.openNote);
+      setTimeout(() => setActiveNoteKey(null), 1200);
     }
-    if (activePitchIndex !== null && scalePitches[activePitchIndex]) {
-      return scalePitches[activePitchIndex];
+  };
+
+  // Determine note visibility on the fingerboard
+  const isNoteVisible = (n: BoardNote): boolean => {
+    // 1. If currently sounding, keep visible
+    if (activeNoteKey && areNotesEquivalent(activeNoteKey, n.noteKey)) {
+      return true;
     }
-    return null;
-  }, [isPlayingSeq, seqActiveIndex, customSequence, activePitchIndex, scalePitches]);
+    if (activePitchIndex !== null && effectiveScalePitches[activePitchIndex]?.equals(n.pitch)) {
+      return true;
+    }
+
+    // 2. Position filter
+    if (!n.inPositionRange) {
+      return false;
+    }
+
+    // 3. Deduplication rule: In every individual position, highlighted notes appear once!
+    // In maqam-only mode, completely hide the duplicate instance
+    if (deduplicateInPosition && handPosition !== 'all' && n.isDuplicateInPosition && scaleFilter === 'maqam-only') {
+      return false;
+    }
+
+    // 4. Note filter (either All (0-12) notes within that position, or Maqam Scale Only)
+    if (scaleFilter === 'maqam-only') {
+      return isPitchInMaqam(n.pitch, n.noteKey) && !n.isDuplicateInPosition;
+    }
+
+    return true;
+  };
+
+  // Format label based on accidental naming preference
+  const getNoteDisplayLabel = (n: BoardNote): string => {
+    if (n.isQuarterTone) {
+      return n.noteKey.replace('d', '𝄳');
+    }
+    if (namingMode === 'flats') {
+      return n.flatName;
+    }
+    if (namingMode === 'arabic') {
+      return n.arabicShort;
+    }
+    return n.sharpName;
+  };
+
+  // Active playing pitch for ripple animation
+  const isNoteActiveNow = (n: BoardNote): boolean => {
+    if (activeNoteKey && areNotesEquivalent(activeNoteKey, n.noteKey)) return true;
+    if (activePitchIndex !== null && effectiveScalePitches[activePitchIndex]?.equals(n.pitch)) return true;
+    return false;
+  };
+
+  const tonicPitch = activeMaqam.getTonic();
+  const ghammazPitch = activeMaqam.getGhammaz();
 
   return (
-    <div className="space-y-6">
-      {/* Main Card with Studio Controls */}
-      <Card className="bg-slate-900/90 border-slate-800">
-        <CardHeader className="pb-4 border-b border-border/60">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
-                  Acoustic Violin Simulator
-                </span>
-                <Badge variant="default" className="text-[10px]">
-                  24-EDO Micro-Positions
-                </Badge>
-                <Badge variant="default" className="text-[10px] hidden sm:inline-flex">
-                  G3 - D4 - A4 - E5
-                </Badge>
-              </div>
-              <CardTitle className="text-xl sm:text-2xl mt-1">
-                Violin Fingerboard &amp; Left-Hand Ergonomics
-              </CardTitle>
-              <CardDescription className="mt-0.5">
-                Authentic violin model with tapered ebony fingerboard, hand-carved maple bridge, G-D-A-E gauges, and position shifting.
-              </CardDescription>
-            </div>
-
-            {/* Top Toolbar Controls */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Orientation Switcher */}
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-                <button
-                  onClick={() => setOrientation('vertical')}
-                  className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer font-medium ${
-                    orientation === 'vertical'
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Vertical View: Natural Violinist Perspective (Nut at top, Bridge at bottom)"
-                >
-                  <ArrowUpDown className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Vertical (POV)</span>
-                </button>
-                <button
-                  onClick={() => setOrientation('horizontal')}
-                  className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer font-medium ${
-                    orientation === 'horizontal'
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Horizontal View: Studio / Score Alignment"
-                >
-                  <MoveHorizontal className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Horizontal</span>
-                </button>
-              </div>
-
-              {/* View Mode Switcher: Maqam Scale vs Custom Sequence */}
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-                <button
-                  type="button"
-                  onClick={handleSwitchToMaqamMode}
-                  className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer font-medium ${
-                    viewMode === 'maqam'
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Maqam Scale
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSwitchToCustomSequence}
-                  className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition cursor-pointer font-medium ${
-                    viewMode === 'sequence'
-                      ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Click Custom Sequence: clears all highlighted notes to select one by one"
-                >
-                  <ListMusic className="w-3.5 h-3.5" />
-                  <span>Custom Sequence</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Position Selector Bar */}
-          <div className="mt-4 pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-semibold text-xs">Left-Hand Position:</span>
-              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                {([1, 2, 3, 4] as ViolinPositionNumber[]).map((pos) => (
-                  <button
-                    key={pos}
-                    onClick={() => setSelectedPosition(pos)}
-                    className={`px-2.5 py-1 rounded-lg font-mono font-bold transition cursor-pointer ${
-                      selectedPosition === pos
-                        ? 'bg-amber-500 text-slate-950 shadow'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {pos}{pos === 1 ? 'st' : pos === 2 ? 'nd' : pos === 3 ? 'rd' : 'th'} Pos
-                  </button>
-                ))}
-                <button
-                  onClick={() => setSelectedPosition('auto')}
-                  className={`px-2.5 py-1 rounded-lg font-mono font-bold transition cursor-pointer ${
-                    selectedPosition === 'auto'
-                      ? 'bg-amber-500 text-slate-950 shadow'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Smart Auto Shifting based on register"
-                >
-                  Auto
-                </button>
-              </div>
-            </div>
-
-            {/* Position pedagogical descriptor */}
-            <div className="text-[11px] text-slate-400 max-w-md hidden md:block text-right">
-              {selectedPosition === 'auto'
-                ? 'Smart Auto: shifts automatically between 1st and 3rd position according to register.'
-                : ViolinErgonomicsEngine.POSITION_INFO[selectedPosition as ViolinPositionNumber]?.arabicTraditionRole}
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-6">
-          {/* Finger legend / Custom Sequence Mode Banner */}
-          {viewMode === 'sequence' ? (
-            <div className="space-y-2 mb-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs px-3.5 py-2.5 bg-amber-500/10 rounded-xl border border-amber-500/30">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                  <span className="font-bold text-amber-300">Custom Sequence Active:</span>
-                  <span className="text-slate-300 text-[11px] sm:text-xs">
-                    All highlights cleared. Click notes one by one on the fingerboard below to compose your melody (max 2 octaves).
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={customSequence.length > 0 ? 'default' : 'secondary'} className="text-[11px] font-mono">
-                    {customSequence.length} Notes Selected
-                  </Badge>
-                  {customSequence.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleClearSequence}
-                      className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[11px] border border-rose-500/40 transition cursor-pointer"
-                    >
-                      Clear All Notes
-                    </button>
-                  )}
-                </div>
-              </div>
-              {sequenceWarning && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium animate-in fade-in slide-in-from-top-1">
-                  <Info className="w-4 h-4 text-rose-400 shrink-0" />
-                  <span>{sequenceWarning}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs mb-4 px-3 py-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow"></span>
-                  <span className="text-slate-300 text-[11px]">0 Open</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-sky-500 inline-block shadow"></span>
-                  <span className="text-slate-300 text-[11px]">1 Index</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-indigo-500 inline-block shadow"></span>
-                  <span className="text-slate-300 text-[11px]">2 Middle</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-fuchsia-500 inline-block shadow"></span>
-                  <span className="text-slate-300 text-[11px]">3 Ring</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-purple-500 inline-block shadow"></span>
-                  <span className="text-slate-300 text-[11px]">4 Little</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-amber-500 inline-block ring-2 ring-amber-300 shadow"></span>
-                  <span className="text-amber-300 font-bold text-[11px]">Half-Flat (𝄳)</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-orange-500 inline-block ring-2 ring-orange-300 shadow"></span>
-                  <span className="text-orange-300 font-bold text-[11px]">Half-Sharp (𝄵)</span>
-                </div>
-              </div>
-
-              <span className="text-[11px] text-muted-foreground">
-                Click any note to audition &bull; Click &quot;Custom Sequence&quot; to build melodies
+    <Card className="w-full bg-slate-900/90 border-slate-800 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+      {/* Top Controls Header */}
+      <CardHeader className="pb-4 border-b border-border/60">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
+                Violin Fingerboard
               </span>
+              <span className="text-xs font-serif text-amber-300 font-bold">لوحة أصابع الكمان</span>
+              <Badge variant="secondary" className="text-[11px] font-mono border-amber-500/30 text-amber-300">
+                Maqam {activeMaqam.name}
+              </Badge>
+              <Badge variant="outline" className="text-[10px] font-mono border-cyan-800/60 text-cyan-400">
+                {violinTuning === 'arabic'
+                  ? (isStringsReversed ? 'Arabic (Reversed): D5-G4-D4-G3' : 'Arabic: G3-D4-G4-D5')
+                  : (isStringsReversed ? 'Western (Reversed): E5-A4-D4-G3' : 'Western: G3-D4-A4-E5')}
+              </Badge>
             </div>
-          )}
+            <CardTitle className="text-lg sm:text-xl mt-1 flex items-center gap-2">
+              <Music className="w-5 h-5 text-amber-400" />
+              <span>Tapered Ebony Neck &amp; Fretless Microtonal Intonation</span>
+            </CardTitle>
+            <CardDescription className="text-xs mt-0.5 text-slate-400">
+              Interactive 24-EDO violin neck with authentic string acoustics, quarter-tone stops (𝄳), and deduplicated position fingering.
+            </CardDescription>
+          </div>
 
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-slate-300">Strings:</span>
-              <div className="flex flex-wrap gap-1" role="group" aria-label="Filter fingerboard strings">
-                {(['all', ...STRINGS] as const).map((stringName) => (
-                  <button
-                    key={stringName}
-                    type="button"
-                    onClick={() => setStringFilter(stringName)}
-                    aria-pressed={stringFilter === stringName}
-                    className={`min-h-10 min-w-10 rounded-lg px-3 text-xs font-bold transition touch-manipulation ${
-                      stringFilter === stringName
-                        ? 'bg-amber-500 text-slate-950 shadow'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                    }`}
-                  >
-                    {stringName === 'all' ? 'All' : stringName}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* Top Right Action Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Global Accidental Naming */}
             <button
               type="button"
-              onClick={() => setTouchZoom((enabled) => !enabled)}
-              aria-pressed={touchZoom}
-              title={touchZoom ? 'Use compact fingerboard targets' : 'Enlarge fingerboard for touch'}
-              className={`min-h-10 rounded-lg border px-3 text-xs font-semibold transition touch-manipulation flex items-center gap-2 ${
-                touchZoom
-                  ? 'border-amber-400/60 bg-amber-500/15 text-amber-300'
-                  : 'border-slate-700 text-slate-300 hover:border-slate-500'
+              onClick={() => {
+                const modes: AccidentalNaming[] = ['sharps', 'flats', 'arabic'];
+                const next = modes[(modes.indexOf(namingMode) + 1) % modes.length];
+                setNamingMode(next);
+              }}
+              className="px-3 py-1.5 rounded-full text-xs font-mono tracking-wider border border-cyan-600/40 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/60 hover:border-cyan-400 transition-all cursor-pointer active:scale-95 shadow-sm"
+              title="Toggle accidental note notation"
+            >
+              Naming: <span className="font-bold text-white">{namingMode === 'sharps' ? 'Sharps (#)' : namingMode === 'flats' ? 'Flats (♭)' : 'Arabic Names'}</span>
+            </button>
+
+            {/* Bow vs Pizzicato */}
+            <button
+              type="button"
+              onClick={() => setPlayMode(prev => prev === 'bow' ? 'pizzicato' : 'bow')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                playMode === 'bow'
+                  ? 'border-amber-500/60 bg-amber-950/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                  : 'border-cyan-500/60 bg-cyan-950/50 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
               }`}
             >
-              {touchZoom ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
-              Touch targets {touchZoom ? 'on' : 'off'}
+              <span>{playMode === 'bow' ? '🎻 Bow Mode (قوس)' : '🪕 Pizzicato (نقر)'}</span>
+            </button>
+
+            {/* Microtone Grid Toggle */}
+            <button
+              type="button"
+              onClick={() => setShowQuarterTones(prev => !prev)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                showQuarterTones
+                  ? 'border-emerald-600/60 bg-emerald-950/40 text-emerald-300'
+                  : 'border-slate-800 bg-slate-950 text-slate-400'
+              }`}
+            >
+              <span>{showQuarterTones ? 'Quarter-Tones: On 𝄳' : '12-TET Only'}</span>
+            </button>
+
+            {/* Violin Tuning Preset Toggle: Arabic vs Western */}
+            <button
+              type="button"
+              onClick={() => setViolinTuning(prev => prev === 'arabic' ? 'western' : 'arabic')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                violinTuning === 'arabic'
+                  ? 'border-amber-500/60 bg-amber-950/40 text-amber-300'
+                  : 'border-indigo-500/60 bg-indigo-950/40 text-indigo-300'
+              }`}
+              title="Switch violin tuning between Classical Arabic (G-D-G-D) and Western Standard (G-D-A-E)"
+            >
+              <span>Tuning: <strong className="font-bold">{violinTuning === 'arabic' ? 'Arabic (G-D-G-D)' : 'Western (G-D-A-E)'}</strong></span>
+            </button>
+
+            {/* Reverse Strings Order Button */}
+            <button
+              type="button"
+              onClick={() => setIsStringsReversed(prev => !prev)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                isStringsReversed
+                  ? 'border-cyan-500/70 bg-cyan-950/70 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                  : 'border-slate-800 bg-slate-950 text-slate-300 hover:text-white'
+              }`}
+              title="Reverse strings order (IV-III-II-I <-> I-II-III-IV)"
+            >
+              <span>⇄ Reverse:</span>
+              <span className="font-mono font-bold text-amber-300">
+                {isStringsReversed
+                  ? (violinTuning === 'arabic' ? 'D5 G4 D4 G3' : 'E5 A4 D4 G3')
+                  : (violinTuning === 'arabic' ? 'G3 D4 G4 D5' : 'G3 D4 A4 E5')}
+              </span>
             </button>
           </div>
+        </div>
 
-          {/* REALISTIC VIOLIN RENDERING */}
-          {orientation === 'vertical' ? (
-            /* ========================================================================= */
-            /* VERTICAL VIEW: NATURAL VIOLINIST PERSPECTIVE (NUT AT TOP, BRIDGE AT BOTTOM) */
-            /* ========================================================================= */
-            <div className="flex justify-center p-2 sm:p-4 bg-linear-to-b from-stone-950 via-slate-950 to-stone-950 rounded-2xl border border-amber-900/30 overflow-hidden shadow-2xl relative">
-              {/* Violin Silhouette Container */}
-              <div className="relative w-full max-w-115 min-h-160 flex flex-col items-center">
-                
-                {/* 1. SCROLL & PEGBOX HINT (TOP) */}
-                <div className="w-24 h-12 bg-linear-to-b from-amber-950 via-amber-900 to-stone-900 rounded-t-2xl border-t-2 border-x-2 border-amber-800/60 shadow-lg flex items-center justify-around px-2 relative">
-                  <div className="w-3 h-8 bg-amber-900 rounded-full border border-amber-700/80 shadow-inner" />
-                  <span className="text-[9px] font-serif font-bold text-amber-400 tracking-wider">الـرأس</span>
-                  <div className="w-3 h-8 bg-amber-900 rounded-full border border-amber-700/80 shadow-inner" />
-                </div>
-
-                {/* 2. BONE/IVORY NUT */}
-                <div className="w-45 sm:w-50 h-4 bg-linear-to-r from-amber-100 via-stone-200 to-amber-100 rounded-sm shadow-md border-y border-amber-900/60 flex items-center justify-between px-6 z-20">
-                  <span className="text-[8px] font-mono font-bold text-stone-800 tracking-wider">NUT (الأنف)</span>
-                  <div className="flex gap-8 sm:gap-10">
-                    <div className="w-1 h-2 bg-stone-500 rounded" />
-                    <div className="w-1 h-2 bg-stone-500 rounded" />
-                    <div className="w-1 h-2 bg-stone-500 rounded" />
-                    <div className="w-1 h-2 bg-stone-500 rounded" />
-                  </div>
-                </div>
-
-                {/* 3. TAPERED EBONY FINGERBOARD & VIOLIN BOUTS (MAIN BODY) */}
-                <div className="relative w-full flex justify-center py-2">
-                  
-                  {/* Flamed Maple Violin Body Silhouette Background (Behind Fingerboard) */}
-                  <div className="absolute inset-0 flex justify-center pointer-events-none">
-                    <svg viewBox="0 0 400 560" className="w-full h-full max-h-140 opacity-90 drop-shadow-2xl">
-                      <defs>
-                        {/* Rich warm violin varnish gradient */}
-                        <linearGradient id="violinVarnish" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#451a03" />
-                          <stop offset="30%" stopColor="#78350f" />
-                          <stop offset="50%" stopColor="#92400e" />
-                          <stop offset="70%" stopColor="#78350f" />
-                          <stop offset="100%" stopColor="#351403" />
-                        </linearGradient>
-                        <radialGradient id="highlight" cx="50%" cy="50%" r="50%">
-                          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.25" />
-                          <stop offset="100%" stopColor="#78350f" stopOpacity="0" />
-                        </radialGradient>
-                      </defs>
-
-                      {/* Violin Body Silhouette (Upper Bout, C-Bouts, Lower Bout) */}
-                      <path
-                        d="M 120 40 
-                           C 70 60, 40 130, 70 200 
-                           C 90 240, 110 250, 100 270 
-                           C 80 290, 30 340, 40 440 
-                           C 50 510, 130 550, 200 550 
-                           C 270 550, 350 510, 360 440 
-                           C 370 340, 320 290, 300 270 
-                           C 290 250, 310 240, 330 200 
-                           C 360 130, 330 60, 280 40 
-                           Z"
-                        fill="url(#violinVarnish)"
-                        stroke="#b45309"
-                        strokeWidth="3"
-                      />
-
-                      {/* Purfling Inlay Line */}
-                      <path
-                        d="M 124 46 
-                           C 78 65, 48 132, 76 198 
-                           C 95 238, 112 248, 104 268 
-                           C 84 288, 38 338, 48 434 
-                           C 58 502, 134 542, 200 542 
-                           C 266 542, 342 502, 352 434 
-                           C 362 338, 316 288, 296 268 
-                           C 288 248, 305 238, 324 198 
-                           C 352 132, 322 65, 276 46 
-                           Z"
-                        fill="none"
-                        stroke="#1c1917"
-                        strokeWidth="1.5"
-                        strokeDasharray="4 2"
-                      />
-
-                      {/* Violin Center Glow */}
-                      <ellipse cx="200" cy="340" rx="140" ry="170" fill="url(#highlight)" />
-
-                      {/* F-Holes (Stylized authentic Arabic/Italian sound holes) */}
-                      {/* Left F-Hole */}
-                      <path
-                        d="M 105 280 C 95 320, 115 370, 95 410 C 92 416, 85 410, 90 400 C 105 370, 85 330, 98 290 C 101 282, 108 274, 105 280 Z"
-                        fill="#0c0a09"
-                        stroke="#78350f"
-                        strokeWidth="1"
-                      />
-                      {/* Right F-Hole */}
-                      <path
-                        d="M 295 280 C 305 320, 285 370, 305 410 C 308 416, 315 410, 310 400 C 295 370, 315 330, 302 290 C 299 282, 292 274, 295 280 Z"
-                        fill="#0c0a09"
-                        stroke="#78350f"
-                        strokeWidth="1"
-                      />
-                    </svg>
-                  </div>
-
-                  {/* Tapered Ebony Fingerboard Itself */}
-                  <div
-                    className="relative bg-linear-to-b from-stone-900 via-neutral-950 to-stone-950 rounded-b-xl border-x-2 border-b-2 border-stone-800 shadow-2xl z-10 flex justify-between px-3 sm:px-6 py-4"
-                    style={{
-                      width: touchZoom ? 'min(300px, 85vw)' : 'min(240px, 85vw)',
-                      minHeight: touchZoom ? '600px' : '480px',
-                      clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)'
-                    }}
-                  >
-                    {/* Position Markers (Mother-of-pearl dots along the center) */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-between py-16 pointer-events-none opacity-40">
-                      <div className="w-2.5 h-2.5 rounded-full bg-stone-300 shadow" title="3rd Position marker" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-stone-300 shadow" title="5th Position marker" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-stone-300 shadow" title="7th Position marker" />
-                    </div>
-
-                    {/* Left-Hand Active Position Bracket / Guide */}
-                    {selectedPosition !== 'auto' && (
-                      <div
-                        className="absolute left-1 right-1 border-2 border-dashed border-amber-400/40 rounded-lg pointer-events-none transition-all duration-300"
-                        style={{
-                          top: selectedPosition === 1 ? '10%' : selectedPosition === 2 ? '24%' : selectedPosition === 3 ? '40%' : '55%',
-                          height: '24%'
-                        }}
-                      >
-                        <span className="absolute right-2 top-1 text-[8px] font-mono text-amber-300 font-bold bg-slate-950/80 px-1 rounded">
-                          {selectedPosition}{selectedPosition === 1 ? 'st' : selectedPosition === 2 ? 'nd' : selectedPosition === 3 ? 'rd' : 'th'} Pos Reach
-                        </span>
-                      </div>
-                    )}
-
-                    {/* 4 STRINGS (G - D - A - E running vertically) */}
-                    {displayedStrings.map((strName) => {
-                      const stringPlacements = placements.filter(p => p.string === strName);
-
-                      return (
-                        <div key={strName} className="relative flex-1 flex flex-col items-center h-full">
-                          {/* Top String Header */}
-                          <div className="text-center mb-2 z-20">
-                            <span className="text-xs sm:text-sm font-black text-amber-300 font-mono">
-                              {strName}
-                            </span>
-                          </div>
-
-                          {/* The physical vertical string line */}
-                          <div className={`relative w-full ${touchZoom ? 'h-125' : 'h-100'} flex justify-center`}>
-                            {/* Realistic metallic string wire */}
-                            <div
-                              className={`h-full shadow-md rounded-full ${
-                                strName === 'G'
-                                  ? 'w-[3.5px] bg-linear-to-b from-amber-700 via-amber-500 to-amber-600'
-                                  : strName === 'D'
-                                  ? 'w-[2.8px] bg-linear-to-b from-slate-400 via-slate-200 to-slate-400'
-                                  : strName === 'A'
-                                  ? 'w-0.5 bg-linear-to-b from-slate-300 via-slate-100 to-slate-300'
-                                  : 'w-[1.2px] bg-linear-to-b from-yellow-200 via-yellow-100 to-yellow-300'
-                              }`}
-                            />
-
-                            {/* Placed notes on this string */}
-                            {stringPlacements.map((p, idx) => {
-                              const isSounding = currentActiveSoundPitch && currentActiveSoundPitch.equals(p.pitch);
-                              const isSelected = selectedPlacement && selectedPlacement.pitch.equals(p.pitch);
-
-                              // In sequence mode, track sequence step numbers
-                              const seqStepIndices = viewMode === 'sequence'
-                                ? customSequence
-                                    .map((cp, sIdx) => (cp.equals(p.pitch) ? sIdx + 1 : null))
-                                    .filter((x): x is number => x !== null)
-                                : [];
-                              const isInSequence = seqStepIndices.length > 0;
-
-                              // Vertical physical placement: from nut (0%) down the neck (~85%)
-                              const topPercent = p.finger === 0 ? 0 : Math.min(Math.max((p.distanceRatioFromNut / 0.32) * 82 + 8, 8), 92);
-
-                              // Visual styling: In sequence mode, unselected notes are cleared/unhighlighted!
-                              const noteScaleClass = isSounding
-                                ? 'scale-135 ring-4 ring-amber-300 z-35 shadow-2xl animate-pulse'
-                                : isInSequence
-                                ? 'scale-115 ring-2 ring-amber-400 z-30 shadow-xl'
-                                : isSelected
-                                ? 'scale-120 ring-2 ring-white z-25'
-                                : 'hover:scale-115 z-20';
-
-                              const circleColorClass = viewMode === 'sequence'
-                                ? isInSequence
-                                  ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-200 ring-2 ring-amber-400/60 shadow-amber-500/40 font-black'
-                                  : 'bg-slate-900/95 text-slate-300 border-slate-700/80 hover:border-amber-400 hover:text-white hover:bg-slate-800'
-                                : getFingerColor(p.finger, p.pitch.accidental);
-
-                              const circleLabel = viewMode === 'sequence'
-                                ? isInSequence
-                                  ? `#${seqStepIndices.join(',')}`
-                                  : p.pitch.toScientificString()
-                                : p.finger === 0 ? '0' : p.finger;
-
-                              return (
-                                <div
-                                  key={`${p.string}-${p.pitch.toString()}-${p.position}-${idx}`}
-                                  style={{ top: `${topPercent}%` }}
-                                  className="absolute transform -translate-y-1/2 flex items-center z-20 group"
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => handleNoteClick(p)}
-                                    className={`relative flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer touch-manipulation ${touchZoom ? 'h-14 w-14' : 'h-11 w-11 sm:h-8 sm:w-8'} ${noteScaleClass}`}
-                                    title={viewMode === 'sequence' ? `Click to select ${p.pitch.toScientificString()} into sequence` : `Play ${p.pitch.toScientificString()}`}
-                                  >
-                                    <div
-                                      className={`h-full w-full rounded-full flex flex-col items-center justify-center font-bold text-[11px] sm:text-xs shadow-xl border-2 transition-all ${circleColorClass}`}
-                                    >
-                                      <span>{circleLabel}</span>
-                                    </div>
-                                  </button>
-
-                                  {/* Quick + Add to Sequence hover button in Maqam mode */}
-                                  {viewMode === 'maqam' && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAddToSequence(p.pitch);
-                                      }}
-                                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow z-30 cursor-pointer hover:bg-amber-300 hover:scale-110"
-                                      title={`Append ${p.pitch.toScientificString()} to sequence`}
-                                    >
-                                      +
-                                    </button>
-                                  )}
-
-                                  {/* Note label overlay */}
-                                  <div className="absolute left-full ml-1.5 hidden group-hover:flex flex-col bg-slate-950/95 border border-slate-700 px-2 py-1 rounded shadow-xl pointer-events-none z-30 whitespace-nowrap">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-xs font-bold text-white font-mono">
-                                        {p.pitch.toScientificString()} ({p.pitch.octave})
-                                      </span>
-                                      {viewMode === 'sequence' && (
-                                        <span className={`text-[9px] px-1 py-0.2 rounded font-mono font-bold ${
-                                          isInSequence ? 'bg-amber-500/30 text-amber-300' : 'bg-slate-800 text-slate-300'
-                                        }`}>
-                                          {isInSequence ? `Step #${seqStepIndices.join(', #')}` : `Click to select (#${customSequence.length + 1})`}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="text-[10px] text-amber-300 font-mono">
-                                      {p.centsAboveOpenString}¢ above {p.string}
-                                    </span>
-                                    <span className="text-[9px] text-slate-400">
-                                      {p.pitch.toFrequency().toFixed(1)} Hz &bull; Pos {p.position}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 4. REALISTIC MAPLE VIOLIN BRIDGE (BOTTOM) */}
-                <div className="w-47.5 sm:w-55 h-14 bg-linear-to-b from-amber-200 via-amber-300 to-amber-400 rounded-t-xl border-t-2 border-x-2 border-amber-600/80 shadow-2xl flex flex-col items-center justify-between px-4 py-1 z-20">
-                  {/* Arched top string grooves */}
-                  <div className="w-full flex justify-between px-3 text-[10px] font-black text-amber-950">
-                    <span>G</span>
-                    <span className="-translate-y-0.5">D</span>
-                    <span className="-translate-y-0.5">A</span>
-                    <span>E</span>
-                  </div>
-                  {/* Traditional bridge heart cutout */}
-                  <div className="w-4 h-3 bg-stone-900 rounded-full shadow-inner opacity-80" />
-                  <span className="text-[8px] font-serif font-black text-amber-950 tracking-widest uppercase">
-                    VIOLIN BRIDGE (الفرس)
-                  </span>
-                </div>
-
-                {/* 5. TAILPIECE HINT */}
-                <div className="w-20 h-8 bg-neutral-950 rounded-b-xl border-b border-x border-neutral-800 flex items-center justify-around px-2 shadow-inner">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Fine Tuner G" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Fine Tuner D" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Fine Tuner A" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Fine Tuner E" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* ========================================================================= */
-            /* HORIZONTAL VIEW: STUDIO / PEDAGOGICAL LAYOUT                              */
-            /* ========================================================================= */
-            <div className="overflow-x-auto pb-4">
-              <div className="min-w-180 relative bg-linear-to-r from-amber-950/60 via-stone-950 to-amber-950/40 rounded-2xl p-6 border-2 border-amber-900/40 shadow-2xl">
-                {/* Wood grain pattern */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#d97706_1px,transparent_1px)] bg-size-[16px_16px] pointer-events-none rounded-2xl" />
-
-                {/* Nut (Left border) */}
-                <div className="absolute left-16 top-6 bottom-6 w-4 bg-linear-to-b from-amber-100 via-stone-200 to-amber-200 rounded-sm shadow-md border-r-2 border-amber-900/60 flex flex-col justify-center items-center z-20">
-                  <span className="text-[9px] font-bold text-stone-900 -rotate-90 tracking-widest uppercase font-mono">
-                    NUT
-                  </span>
-                </div>
-
-                {/* Position Guide Markers (Top of fingerboard) */}
-                <div className="relative pl-22 pr-8 flex justify-between text-[11px] font-mono text-slate-400 mb-2 border-b border-slate-800/80 pb-1">
-                  <span>Open String (0¢)</span>
-                  <span>1st Finger (~200¢)</span>
-                  <span>2nd Finger (~350¢ Sikah)</span>
-                  <span>3rd Finger (~500¢)</span>
-                  <span>4th Finger (~700¢)</span>
-                  <span className="text-amber-400 font-bold">Bridge End</span>
-                </div>
-
-                {/* Strings List */}
-                <div className="space-y-6 pt-2 pb-2 pl-4">
-                  {displayedStrings.map((strName) => {
-                    const stringPlacements = placements.filter(p => p.string === strName);
-
-                    return (
-                      <div key={strName} className="relative flex items-center h-12">
-                        {/* String Peg/Label */}
-                        <div className="w-12 text-left z-10 flex flex-col">
-                          <span className="text-base font-black text-amber-300 font-mono">{strName}</span>
-                          <span className="text-[10px] text-slate-400">{stringOpenNotes[strName].split(' ')[0]}</span>
-                        </div>
-
-                        {/* Physical string line */}
-                        <div className="relative flex-1 h-12 flex items-center ml-2">
-                          {/* Metal string render with realistic thickness */}
-                          <div
-                            className={`w-full absolute left-0 right-0 shadow-sm ${
-                              strName === 'G' ? 'h-[3.5px] bg-linear-to-r from-amber-700 via-amber-500 to-amber-600' :
-                              strName === 'D' ? 'h-[2.8px] bg-linear-to-r from-slate-400 via-slate-200 to-slate-400' :
-                              strName === 'A' ? 'h-0.5 bg-linear-to-r from-slate-300 via-slate-100 to-slate-300' :
-                              'h-[1.2px] bg-linear-to-r from-yellow-200 via-yellow-100 to-yellow-300'
-                            }`}
-                          />
-
-                          {/* Placed notes on this string */}
-                          <div className="absolute inset-0 flex items-center">
-                            {stringPlacements.map((p, idx) => {
-                              const isSounding = currentActiveSoundPitch && currentActiveSoundPitch.equals(p.pitch);
-                              const isSelected = selectedPlacement && selectedPlacement.pitch.equals(p.pitch);
-
-                              // In sequence mode, track sequence step numbers
-                              const seqStepIndices = viewMode === 'sequence'
-                                ? customSequence
-                                    .map((cp, sIdx) => (cp.equals(p.pitch) ? sIdx + 1 : null))
-                                    .filter((x): x is number => x !== null)
-                                : [];
-                              const isInSequence = seqStepIndices.length > 0;
-
-                              // Calculate physical position percentage
-                              const leftPercent = p.finger === 0 ? 0 : Math.min(Math.max((p.distanceRatioFromNut / 0.28) * 85 + 6, 8), 94);
-
-                              const noteScaleClass = isSounding
-                                ? 'scale-125 z-30'
-                                : isInSequence
-                                ? 'scale-115 z-25'
-                                : isSelected
-                                ? 'scale-115 z-20'
-                                : 'hover:scale-110 z-10';
-
-                              const circleColorClass = viewMode === 'sequence'
-                                ? isInSequence
-                                  ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 border-amber-200 ring-2 ring-amber-400/60 shadow-lg font-black'
-                                  : 'bg-slate-900/95 text-slate-300 border-slate-700/80 hover:border-amber-400 hover:text-white hover:bg-slate-800'
-                                : `${getFingerColor(p.finger, p.pitch.accidental)} ${isSounding ? 'ring-4 ring-amber-300 animate-pulse' : ''} ${isSelected ? 'ring-2 ring-white' : ''}`;
-
-                              const circleLabel = viewMode === 'sequence'
-                                ? isInSequence
-                                  ? `#${seqStepIndices.join(',')}`
-                                  : p.pitch.toScientificString()
-                                : p.finger === 0 ? '0' : p.finger;
-
-                              return (
-                                <div
-                                  key={`${p.string}-${p.pitch.toString()}-${p.position}-${idx}`}
-                                  style={{ left: `${leftPercent}%` }}
-                                  className="absolute transform -translate-x-1/2 flex flex-col items-center group z-20"
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => handleNoteClick(p)}
-                                    className={`relative flex flex-col items-center transition-all duration-200 cursor-pointer ${noteScaleClass}`}
-                                    title={viewMode === 'sequence' ? `Click to select ${p.pitch.toScientificString()} into sequence` : `Play ${p.pitch.toScientificString()}`}
-                                  >
-                                    <div
-                                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-lg border-2 transition-all ${circleColorClass}`}
-                                    >
-                                      {circleLabel}
-                                    </div>
-
-                                    <div className="mt-1 flex flex-col items-center">
-                                      <span className="text-[11px] font-bold text-white bg-slate-950/80 px-1.5 py-0.5 rounded shadow">
-                                        {p.pitch.toScientificString()}
-                                      </span>
-                                      <span className="text-[9px] text-amber-300/80 font-mono">
-                                        {viewMode === 'sequence' && isInSequence
-                                          ? `Step #${seqStepIndices.join(',')}`
-                                          : `+${p.centsAboveOpenString}¢`}
-                                      </span>
-                                    </div>
-                                  </button>
-
-                                  {/* Quick + Add to Sequence hover button in Maqam mode */}
-                                  {viewMode === 'maqam' && (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAddToSequence(p.pitch);
-                                      }}
-                                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-bold text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow z-30 cursor-pointer hover:bg-amber-300 hover:scale-110"
-                                      title={`Append ${p.pitch.toScientificString()} to sequence`}
-                                    >
-                                      +
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Selected Note Ergonomics & Alternative Fingerings Inspector */}
-          {selectedPlacement ? (
-            <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 flex flex-col items-center justify-center text-amber-300">
-                    <span className="text-xl font-black font-mono">{selectedPlacement.pitch.toScientificString()}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">Oct {selectedPlacement.pitch.octave}</span>
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-base font-bold text-white">
-                        {selectedPlacement.string} String &bull; Finger {selectedPlacement.finger === 0 ? 'Open (0)' : selectedPlacement.finger}
-                      </span>
-                      <Badge variant="secondary" className="text-xs">
-                        {selectedPlacement.position}{selectedPlacement.position === 1 ? 'st' : selectedPlacement.position === 2 ? 'nd' : selectedPlacement.position === 3 ? 'rd' : 'th'} Position
-                      </Badge>
-                      {(() => {
-                        const badge = getMicroOffsetBadge(selectedPlacement.microOffset);
-                        return (
-                          <Badge variant={badge.variant} className="text-xs">
-                            {badge.label}
-                          </Badge>
-                        );
-                      })()}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Acoustic Frequency: <strong className="text-amber-300 font-mono">{selectedPlacement.pitch.toFrequency().toFixed(2)} Hz</strong> &bull; +{selectedPlacement.centsAboveOpenString} cents from open {selectedPlacement.string} string
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="amber"
-                    size="sm"
-                    onClick={() => MicrotonalAudioEngine.playPitch(selectedPlacement.pitch, 0.8, timbre)}
-                    className="gap-1.5"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    Audition
-                  </Button>
-                  <Button
-                    variant="emerald"
-                    size="sm"
-                    onClick={() => handleAddToSequence(selectedPlacement.pitch)}
-                    className="gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add to Sequence
-                  </Button>
-                </div>
-              </div>
-
-              {/* Pedagogical insight tip */}
-              {selectedPlacement.pedagogicalTip && (
-                <div className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-xl text-xs text-amber-200/90 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="text-amber-300">Arabic Violin Tradition Insight: </strong>
-                    {selectedPlacement.pedagogicalTip}
-                  </div>
-                </div>
-              )}
-
-              {/* Alternative Fingerings Suggestion Row */}
-              {alternativePlacements.length > 0 && (
-                <div className="pt-2 border-t border-slate-800">
-                  <span className="text-xs font-semibold text-slate-300 block mb-2">
-                    Alternative Fingering &amp; Shifting Options:
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    {alternativePlacements.map((alt, altIdx) => (
-                      <button
-                        key={altIdx}
-                        onClick={() => {
-                          setSelectedPlacement(alt);
-                          MicrotonalAudioEngine.playPitch(alt.pitch, 0.7, timbre);
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-400 hover:bg-slate-850 text-xs text-left transition cursor-pointer flex items-center gap-2 group"
-                      >
-                        <span className="w-2 h-2 rounded-full bg-amber-400" />
-                        <span className="font-semibold text-white group-hover:text-amber-300">
-                          {alt.string} String, Finger {alt.finger} ({alt.position}{alt.position === 1 ? 'st' : alt.position === 2 ? 'nd' : alt.position === 3 ? 'rd' : 'th'} Pos)
-                        </span>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="mt-6 p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 text-xs text-muted-foreground flex items-center gap-2">
-              <Info className="w-4 h-4 text-amber-400 shrink-0" />
+        {/* Pedagogical Positioning Notice */}
+        <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="text-emerald-400 border-emerald-500/40 bg-emerald-500/10 font-mono text-[11px] flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
               <span>
-                Click any note marker on the violin neck to inspect its left-hand stop position, microtonal tuning cents, and alternative positions.
+                {handPosition === 'all'
+                  ? 'Full Neck Overview (All Positions 1–4)'
+                  : `Individual Position ${handPosition}: Highlighted notes appear once`}
               </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </Badge>
 
-      {/* ========================================================================= */}
-      {/* CUSTOM MELODIC SEQUENCE BUILDER & PLAYER (UP TO 2 OCTAVES MAXIMUM)         */}
-      {/* ========================================================================= */}
-      <Card className="bg-slate-900/90 border-slate-800">
-        <CardHeader className="pb-4 border-b border-border/60">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
-                  Custom Sequence Engine
-                </span>
-                <Badge variant={rangeValidation.valid ? 'emerald' : 'rose'} className="text-[10px]">
-                  {rangeValidation.valid ? 'Max 2 Octaves Valid' : 'Range Exceeded'}
-                </Badge>
-                <Badge variant="secondary" className="text-[10px] font-mono">
-                  {customSequence.length} Notes
-                </Badge>
-              </div>
-              <CardTitle className="text-xl sm:text-2xl mt-1">
-                Custom Melodic Sequence Studio
-              </CardTitle>
-              <CardDescription className="mt-0.5">
-                Construct and audition any series of consecutive notes spanning up to 2 octaves. Watch notes trace in real-time across the violin neck.
-              </CardDescription>
-            </div>
-
-            {/* Playback Controls */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={isPlayingSeq ? "destructive" : "amber"}
-                onClick={handlePlayCustomSequence}
-                disabled={customSequence.length === 0}
-                className="gap-2 shadow-lg"
+            {handPosition !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setDeduplicateInPosition(prev => !prev)}
+                className={`text-[11px] px-2.5 py-0.5 rounded-md border font-mono transition cursor-pointer ${
+                  deduplicateInPosition
+                    ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-300 font-bold'
+                    : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200'
+                }`}
+                title="Toggle individual position note deduplication"
               >
-                {isPlayingSeq ? <Square className="fill-current w-4 h-4" /> : <Play className="fill-current w-4 h-4" />}
-                {isPlayingSeq ? 'Stop Playing' : 'Play Sequence'}
-              </Button>
-
-              <Button
-                variant={isLooping ? "emerald" : "dark"}
-                size="sm"
-                onClick={() => {
-                  isLoopingRef.current = !isLoopingRef.current;
-                  setIsLooping(isLoopingRef.current);
-                }}
-                className="gap-1.5"
-                title="Continuous Loop"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Loop</span>
-              </Button>
-
-              <Button
-                variant="dark"
-                size="sm"
-                onClick={handleClearSequence}
-                disabled={customSequence.length === 0}
-                className="gap-1.5 hover:text-rose-400"
-                title="Clear Sequence"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Sequence Range & Tempo Controller Bar */}
-          <div className="mt-4 pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-4">
-            {/* 2-Octave Range Span Indicator */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground font-semibold">Sequence Span:</span>
-              <div className="w-36 bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    rangeValidation.valid ? 'bg-amber-400' : 'bg-rose-500'
-                  }`}
-                  style={{ width: `${Math.min((rangeValidation.spanOctaves / 2) * 100, 100)}%` }}
-                />
-              </div>
-              <span className={`text-xs font-mono font-bold ${rangeValidation.valid ? 'text-amber-300' : 'text-rose-400'}`}>
-                {rangeValidation.spanOctaves} / 2.0 Octaves
-              </span>
-              {rangeValidation.lowestPitch && rangeValidation.highestPitch && (
-                <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
-                  ({rangeValidation.lowestPitch.toScientificString()}{rangeValidation.lowestPitch.octave} &rarr; {rangeValidation.highestPitch.toScientificString()}{rangeValidation.highestPitch.octave})
-                </span>
-              )}
-            </div>
-
-            {/* Tempo Slider */}
-            <div className="flex items-center gap-3 min-w-50">
-              <span className="text-xs text-muted-foreground font-semibold">Tempo:</span>
-              <Slider
-                value={[seqBpm]}
-                min={40}
-                max={180}
-                step={5}
-                onValueChange={(val) => setSeqBpm(Array.isArray(val) ? val[0] : (typeof val === 'number' ? val : seqBpm))}
-                className="w-28"
-              />
-              <span className="text-xs font-mono font-bold text-amber-300 min-w-13.75">
-                {seqBpm} BPM
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-6 space-y-6">
-          {/* Classical Violin Phrase Presets Grid */}
-          <div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-              <span className="font-semibold text-slate-300">Load Classical Arabic Violin Presets:</span>
-              <span>{classicalPresets.length} Canonical Phrases</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              {classicalPresets.map((preset) => {
-                const isSelected =
-                  customSequence.length === preset.pitches.length &&
-                  customSequence.every((p, i) => p.equals(preset.pitches[i]));
-
-                return (
-                  <button
-                    key={preset.name}
-                    onClick={() => {
-                      MicrotonalAudioEngine.stopSequence('violin-sequence');
-                      AudioTransport.stopScope('violin-sequence-loop');
-                      setIsPlayingSeq(false);
-                      setSeqActiveIndex(null);
-                      setCustomSequence(preset.pitches);
-                    }}
-                    className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between group ${
-                      isSelected
-                        ? 'bg-amber-500/20 border-amber-400 text-white shadow-md ring-1 ring-amber-400/40'
-                        : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:bg-slate-800/80 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-bold text-white group-hover:text-amber-300 transition">
-                        {preset.name}
-                      </span>
-                      <span className="text-xs font-serif font-bold text-amber-400">
-                        {preset.arabicName}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
-                      {preset.description}
-                    </p>
-                    <div className="mt-2 text-[10px] font-mono text-slate-500 truncate">
-                      {preset.pitches.map(p => p.toScientificString()).join(' ')}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Sequence Timeline Note Stream */}
-          <div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-              <span className="font-semibold text-slate-300">Active Sequence Notes:</span>
-              <span>Click a note to audition &bull; Click &times; to delete</span>
-            </div>
-
-            {customSequence.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-slate-800 rounded-xl text-muted-foreground text-xs">
-                Sequence is currently empty. Click any note on the violin fingerboard above or choose a preset above.
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2 items-center p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 min-h-19">
-                {customSequence.map((pitch, idx) => {
-                  const isActive = seqActiveIndex === idx;
-                  const theme = getPitchThemeClasses(pitch, 'subtle', { isSounding: isActive });
-
-                  return (
-                    <div
-                      key={idx}
-                      className={`relative group flex flex-col items-center p-2 rounded-xl border transition-all cursor-pointer ${theme.combined}`}
-                      onClick={() => MicrotonalAudioEngine.playPitch(pitch, 0.5, timbre)}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-mono text-slate-500 font-bold">#{idx + 1}</span>
-                        <span className="text-sm font-bold font-mono">
-                          {pitch.toScientificString()}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {pitch.octave}
-                        </span>
-                      </div>
-
-                      <span className="text-[9px] text-muted-foreground font-mono mt-0.5">
-                        {pitch.toFrequency().toFixed(1)}Hz
-                      </span>
-
-                      {/* Remove note button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveFromSequence(idx);
-                        }}
-                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"
-                        title="Remove note"
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                {deduplicateInPosition ? 'Deduplication: On (Appear Once)' : 'Allow Unisons'}
+              </button>
             )}
           </div>
 
-          {/* Quick-Append 2-Octave Violin Palette */}
-          <div className="pt-3 border-t border-border/60">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-              <span className="font-semibold text-slate-300">Quick-Append from Full 2-Octave Violin Palette (G3 to G5):</span>
-              <span className="text-amber-400 text-[11px]">Click to append</span>
-            </div>
+          <div className="text-[11px] text-slate-400 font-arabic">
+            في كل وضعية منفردة، تظهر النغمات المظللة مرة واحدة لمنع تكرار مواضع الأصابع.
+          </div>
+        </div>
+      </CardHeader>
 
-            <div className="space-y-2">
-              {/* Grouped by Violin Strings */}
+      <CardContent className="pt-4 space-y-5">
+        {/* Tapered Fingerboard SVG Stage */}
+        <div className="w-full overflow-x-auto pb-2 scrollbar-thin select-none">
+          <div className="min-w-[980px] relative">
+            <svg
+              viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+              className="w-full h-auto drop-shadow-2xl"
+              style={{ minHeight: '270px' }}
+            >
+              <defs>
+                {/* Authentic African Ebony Camber Gradient (arched cylindrical crown across neck) */}
+                <linearGradient id="ebonyCamber" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#2c2621" />
+                  <stop offset="3%" stopColor="#1c1815" />
+                  <stop offset="15%" stopColor="#13100e" />
+                  <stop offset="46%" stopColor="#1e1915" />
+                  <stop offset="52%" stopColor="#251f1a" />
+                  <stop offset="60%" stopColor="#1c1814" />
+                  <stop offset="85%" stopColor="#13100e" />
+                  <stop offset="97%" stopColor="#0b0908" />
+                  <stop offset="100%" stopColor="#040303" />
+                </linearGradient>
+
+                {/* Ebony Wood Grain Fiber Pattern */}
+                <pattern id="ebonyGrain" width="240" height="40" patternUnits="userSpaceOnUse">
+                  <line x1="0" y1="7" x2="240" y2="8" stroke="#ffffff" strokeWidth="0.45" strokeOpacity="0.02" />
+                  <line x1="0" y1="15" x2="240" y2="14" stroke="#000000" strokeWidth="0.8" strokeOpacity="0.5" />
+                  <line x1="0" y1="24" x2="240" y2="25" stroke="#ffffff" strokeWidth="0.35" strokeOpacity="0.018" />
+                  <line x1="0" y1="33" x2="240" y2="32" stroke="#000000" strokeWidth="0.65" strokeOpacity="0.45" />
+                </pattern>
+
+                {/* Carved Flamed Maple Neck Wood Strip (peeking below the ebony board) */}
+                <linearGradient id="mapleNeck" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3d2314" />
+                  <stop offset="20%" stopColor="#55321a" />
+                  <stop offset="40%" stopColor="#3c2212" />
+                  <stop offset="65%" stopColor="#522f18" />
+                  <stop offset="85%" stopColor="#381f10" />
+                  <stop offset="100%" stopColor="#27150a" />
+                </linearGradient>
+
+                {/* Pegbox Aged Maple Wood */}
+                <linearGradient id="pegboxWood" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#1e120a" />
+                  <stop offset="45%" stopColor="#140b06" />
+                  <stop offset="100%" stopColor="#070402" />
+                </linearGradient>
+
+                {/* Aged Ivory / Bone Nut Gradient */}
+                <linearGradient id="ivoryNut" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#faf6ee" />
+                  <stop offset="30%" stopColor="#f1e7d4" />
+                  <stop offset="70%" stopColor="#e2d4bd" />
+                  <stop offset="100%" stopColor="#baaa8d" />
+                </linearGradient>
+
+                {/* Nut Contact Shadow (fading onto ebony fingerboard) */}
+                <linearGradient id="nutShadow" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="rgba(0, 0, 0, 0.85)" />
+                  <stop offset="40%" stopColor="rgba(0, 0, 0, 0.4)" />
+                  <stop offset="100%" stopColor="rgba(0, 0, 0, 0)" />
+                </linearGradient>
+
+                {/* Mother-of-Pearl Inlay Dots */}
+                <radialGradient id="pearlInlay" cx="35%" cy="35%" r="65%">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="55%" stopColor="#e2e8f0" />
+                  <stop offset="85%" stopColor="#cbd5e1" />
+                  <stop offset="100%" stopColor="#94a3b8" />
+                </radialGradient>
+
+                {/* String Metallic Shaders */}
+                <linearGradient id="stringG" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#f1f5f9" />
+                  <stop offset="35%" stopColor="#cbd5e1" />
+                  <stop offset="70%" stopColor="#94a3b8" />
+                  <stop offset="100%" stopColor="#64748b" />
+                </linearGradient>
+
+                <linearGradient id="stringD" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#f8fafc" />
+                  <stop offset="35%" stopColor="#e2e8f0" />
+                  <stop offset="70%" stopColor="#cbd5e1" />
+                  <stop offset="100%" stopColor="#71717a" />
+                </linearGradient>
+
+                <linearGradient id="stringA" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="30%" stopColor="#f1f5f9" />
+                  <stop offset="70%" stopColor="#cbd5e1" />
+                  <stop offset="100%" stopColor="#94a3b8" />
+                </linearGradient>
+
+                <linearGradient id="stringE" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#fef08a" />
+                  <stop offset="35%" stopColor="#fde047" />
+                  <stop offset="70%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#b45309" />
+                </linearGradient>
+
+                {/* Deep 3D Instrument Drop Shadows */}
+                <filter id="neck3DShadow" x="-5%" y="-15%" width="110%" height="145%">
+                  <feDropShadow dx="0" dy="12" stdDeviation="12" floodColor="#000000" floodOpacity="0.95" />
+                </filter>
+
+                <filter id="stringShadow" x="-5%" y="-20%" width="110%" height="180%">
+                  <feDropShadow dx="0" dy="2.8" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.8" />
+                </filter>
+              </defs>
+
+              {/* Layer 1: Ambient Drop Shadow of the Fingerboard */}
+              <polygon
+                points={`${BOARD_START_X},${NUT_TOP_Y} ${BOARD_END_X},${END_TOP_Y} ${BOARD_END_X},${END_BOTTOM_Y + 14} ${BOARD_START_X},${NUT_BOTTOM_Y + 10}`}
+                fill="#000000"
+                filter="url(#neck3DShadow)"
+                opacity="0.95"
+              />
+
+              {/* Layer 2: Pegbox / Open String Area Background */}
+              <rect
+                x="20"
+                y="40"
+                width={NUT_X - 20}
+                height="230"
+                rx="10"
+                fill="url(#pegboxWood)"
+                stroke="#3a2214"
+                strokeWidth="1.8"
+              />
+              <rect
+                x="26"
+                y="46"
+                width={NUT_X - 32}
+                height="218"
+                rx="7"
+                fill="#080402"
+                stroke="#211208"
+                strokeWidth="1.2"
+              />
+
+              {/* Layer 3: Flamed Maple Neck Wood Strip */}
+              <polygon
+                points={`${BOARD_START_X},${NUT_BOTTOM_Y - 1} ${BOARD_END_X},${END_BOTTOM_Y - 1} ${BOARD_END_X},${END_BOTTOM_Y + 8} ${BOARD_START_X},${NUT_BOTTOM_Y + 6}`}
+                fill="url(#mapleNeck)"
+                stroke="#261409"
+                strokeWidth="0.8"
+              />
+
+              {/* Layer 4: Solid Ebony Fingerboard with Camber Curve */}
+              <polygon
+                points={`${BOARD_START_X},${NUT_TOP_Y} ${BOARD_END_X},${END_TOP_Y} ${BOARD_END_X},${END_BOTTOM_Y} ${BOARD_START_X},${NUT_BOTTOM_Y}`}
+                fill="url(#ebonyCamber)"
+                stroke="#3d332a"
+                strokeWidth="1.6"
+              />
+
+              {/* Layer 5: Wood Grain Texture Overlay */}
+              <polygon
+                points={`${BOARD_START_X},${NUT_TOP_Y} ${BOARD_END_X},${END_TOP_Y} ${BOARD_END_X},${END_BOTTOM_Y} ${BOARD_START_X},${NUT_BOTTOM_Y}`}
+                fill="url(#ebonyGrain)"
+                opacity="0.9"
+              />
+
+              {/* Layer 6: Top and Bottom Edge Chamfer Highlight Lines */}
+              <line
+                x1={BOARD_START_X}
+                y1={NUT_TOP_Y}
+                x2={BOARD_END_X}
+                y2={END_TOP_Y}
+                stroke="rgba(245, 230, 211, 0.28)"
+                strokeWidth="1.6"
+              />
+              <line
+                x1={BOARD_START_X}
+                y1={NUT_BOTTOM_Y}
+                x2={BOARD_END_X}
+                y2={END_BOTTOM_Y}
+                stroke="rgba(0, 0, 0, 0.85)"
+                strokeWidth="2.4"
+              />
+
+              {/* Layer 7: Fretless Intonation Marker Lines across all 12 semitones */}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(s => {
+                const xPos = SEMITONE_X_COORDS[s];
+                if (!xPos) return null;
+                const t = (xPos - NUT_X) / (BOARD_END_X - NUT_X);
+                const topY = NUT_TOP_Y + t * (END_TOP_Y - NUT_TOP_Y);
+                const botY = NUT_BOTTOM_Y + t * (END_BOTTOM_Y - NUT_BOTTOM_Y);
+
+                const isPrimaryFinger = s === 2 || s === 4 || s === 5 || s === 7;
+                const isSikahQuarter = s === 3; // Neutral 2nd in Arabic tradition
+                const fingerLabel = s === 2 ? '1' : s === 4 ? '2' : s === 5 ? '3' : s === 7 ? '4' : null;
+
+                return (
+                  <g key={`fret-marker-${s}`}>
+                    {/* Translucent Finger Tape Guide Band */}
+                    {isPrimaryFinger && (
+                      <rect
+                        x={xPos - 8}
+                        y={topY}
+                        width="16"
+                        height={botY - topY}
+                        fill="rgba(56, 189, 248, 0.06)"
+                        rx="2"
+                      />
+                    )}
+
+                    {/* Fret Marker Line Inlay */}
+                    <line
+                      x1={xPos}
+                      y1={topY}
+                      x2={xPos}
+                      y2={botY}
+                      stroke={
+                        isPrimaryFinger
+                          ? 'rgba(255, 255, 255, 0.24)'
+                          : isSikahQuarter
+                          ? 'rgba(245, 158, 11, 0.32)'
+                          : 'rgba(255, 255, 255, 0.08)'
+                      }
+                      strokeWidth={isPrimaryFinger ? 1.2 : isSikahQuarter ? 1.1 : 0.75}
+                      strokeDasharray={isSikahQuarter ? '3 2' : 'none'}
+                    />
+
+                    {/* Finger Number above neck */}
+                    {fingerLabel && (
+                      <text
+                        x={xPos}
+                        y={topY - 11}
+                        textAnchor="middle"
+                        fill="#38bdf8"
+                        fontSize="13"
+                        fontWeight="bold"
+                        fontFamily="monospace"
+                        className="drop-shadow-[0_0_6px_rgba(56,189,248,0.5)]"
+                      >
+                        {fingerLabel}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* Layer 8: Inlaid Mother-of-Pearl Position Dots along the top neck rail */}
               {[
-                { name: 'G String (G3 - C4)', pitches: [
-                  new ArabicPitch('G', '♮', 3),
-                  new ArabicPitch('A', '♭', 3),
-                  new ArabicPitch('A', '𝄳', 3),
-                  new ArabicPitch('A', '♮', 3),
-                  new ArabicPitch('B', '♭', 3),
-                  new ArabicPitch('B', '𝄳', 3),
-                  new ArabicPitch('B', '♮', 3),
-                  new ArabicPitch('C', '♮', 4)
-                ]},
-                { name: 'D String (D4 - G4)', pitches: [
-                  new ArabicPitch('D', '♮', 4),
-                  new ArabicPitch('E', '♭', 4),
-                  new ArabicPitch('E', '𝄳', 4),
-                  new ArabicPitch('E', '♮', 4),
-                  new ArabicPitch('F', '♮', 4),
-                  new ArabicPitch('F', '♯', 4),
-                  new ArabicPitch('G', '♭', 4),
-                  new ArabicPitch('G', '♮', 4)
-                ]},
-                { name: 'A String (A4 - D5)', pitches: [
-                  new ArabicPitch('A', '♮', 4),
-                  new ArabicPitch('B', '♭', 4),
-                  new ArabicPitch('B', '𝄳', 4),
-                  new ArabicPitch('B', '♮', 4),
-                  new ArabicPitch('C', '♮', 5),
-                  new ArabicPitch('C', '♯', 5),
-                  new ArabicPitch('D', '♮', 5)
-                ]},
-                { name: 'E String (E5 - G5)', pitches: [
-                  new ArabicPitch('E', '♮', 5),
-                  new ArabicPitch('F', '♮', 5),
-                  new ArabicPitch('F', '♯', 5),
-                  new ArabicPitch('G', '♮', 5),
-                  new ArabicPitch('A', '♮', 5)
-                ]}
-              ].map((grp, grpIdx) => (
-                <div key={grpIdx} className="flex flex-wrap items-center gap-1.5 bg-slate-950/40 p-2 rounded-xl border border-slate-800/60">
-                  <span className="text-[11px] font-bold text-amber-300 min-w-30">
-                    {grp.name}:
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {grp.pitches.map((p, pIdx) => {
-                      const theme = getPitchThemeClasses(p, 'subtle');
-                      return (
-                        <button
-                          key={pIdx}
-                          onClick={() => handleAddToSequence(p)}
-                          className={`px-2 py-0.5 rounded text-xs font-mono font-bold border transition cursor-pointer hover:scale-105 ${theme.combined}`}
-                        >
-                          {p.toScientificString()}{p.octave}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                { s: 3, double: false },  // Minor 3rd
+                { s: 5, double: false },  // 3rd Finger (4th)
+                { s: 7, double: false },  // 4th Finger (5th)
+                { s: 9, double: false },  // Major 6th
+                { s: 12, double: true },  // Octave double-dot
+              ].map(dot => {
+                const xPos = SEMITONE_X_COORDS[dot.s];
+                if (!xPos) return null;
+                const t = (xPos - NUT_X) / (BOARD_END_X - NUT_X);
+                const topY = NUT_TOP_Y + t * (END_TOP_Y - NUT_TOP_Y);
+
+                return (
+                  <g key={`pearl-dot-${dot.s}`}>
+                    {dot.double ? (
+                      <>
+                        <circle cx={xPos - 4} cy={topY - 4.5} r="2.8" fill="url(#pearlInlay)" stroke="#1a1410" strokeWidth="0.8" />
+                        <circle cx={xPos + 4} cy={topY - 4.5} r="2.8" fill="url(#pearlInlay)" stroke="#1a1410" strokeWidth="0.8" />
+                      </>
+                    ) : (
+                      <circle cx={xPos} cy={topY - 4.5} r="3.2" fill="url(#pearlInlay)" stroke="#1a1410" strokeWidth="0.8" />
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* Layer 9: Nut Contact Drop Shadow onto the Ebony Board */}
+              <rect
+                x={NUT_X + NUT_WIDTH / 2}
+                y={NUT_TOP_Y}
+                width="14"
+                height={NUT_BOTTOM_Y - NUT_TOP_Y}
+                fill="url(#nutShadow)"
+              />
+
+              {/* Layer 10: Aged Bone / Ivory Nut */}
+              <rect
+                x={NUT_X - NUT_WIDTH / 2}
+                y={NUT_TOP_Y - 4}
+                width={NUT_WIDTH}
+                height={NUT_BOTTOM_Y - NUT_TOP_Y + 8}
+                rx="3"
+                fill="url(#ivoryNut)"
+                stroke="#8c775a"
+                strokeWidth="1.2"
+                className="drop-shadow-md"
+              />
+
+              {/* Nut String Notches */}
+              {stringSetup.map((str, sIdx) => {
+                const yStart = STRING_Y_NUT[sIdx];
+                return (
+                  <circle
+                    key={`nut-notch-${str.id}`}
+                    cx={NUT_X}
+                    cy={yStart}
+                    r="2"
+                    fill="#24170e"
+                    opacity="0.85"
+                  />
+                );
+              })}
+
+              {/* Layer 11: Real Metallic Strings with Floating 3D Shadows */}
+              {stringSetup.map((str, sIdx) => {
+                const yStart = STRING_Y_NUT[sIdx];
+                const yEnd = STRING_Y_END[sIdx];
+                const gaugeByRegister: Record<string, number> = {
+                  'IV': 3.8,
+                  'III': 3.0,
+                  'II': 2.2,
+                  'I': 1.5,
+                };
+                const strokeThickness = gaugeByRegister[str.name] ?? (3.8 - sIdx * 0.75);
+
+                const stringShader = str.name === 'IV'
+                  ? 'url(#stringG)'
+                  : str.name === 'III'
+                  ? 'url(#stringD)'
+                  : str.name === 'II'
+                  ? 'url(#stringA)'
+                  : 'url(#stringE)';
+
+                return (
+                  <g key={`string-line-${str.id}`}>
+                    {/* Open String Letter on the far left */}
+                    <text
+                      x="45"
+                      y={yStart + 5.5}
+                      textAnchor="middle"
+                      fill="#38bdf8"
+                      fontSize="18"
+                      fontWeight="bold"
+                      fontFamily="sans-serif"
+                      className="select-none drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]"
+                    >
+                      {str.letter}
+                    </text>
+
+                    {/* Open String Pegbox wire with shadow */}
+                    <line
+                      x1="65"
+                      y1={yStart + 2}
+                      x2={NUT_X}
+                      y2={yStart + 2}
+                      stroke="rgba(0,0,0,0.85)"
+                      strokeWidth={strokeThickness + 1}
+                    />
+                    <line
+                      x1="65"
+                      y1={yStart}
+                      x2={NUT_X}
+                      y2={yStart}
+                      stroke={stringShader}
+                      strokeWidth={strokeThickness}
+                    />
+
+                    {/* 3D Realistic String Drop Shadow */}
+                    <line
+                      x1={NUT_X + NUT_WIDTH / 2}
+                      y1={yStart + 3.2}
+                      x2={BOARD_END_X + 10}
+                      y2={yEnd + 3.6}
+                      stroke="rgba(0, 0, 0, 0.78)"
+                      strokeWidth={strokeThickness + 1.2}
+                      strokeLinecap="round"
+                      filter="url(#stringShadow)"
+                    />
+
+                    {/* Vibrating Metallic String Wire */}
+                    <line
+                      x1={NUT_X + NUT_WIDTH / 2}
+                      y1={yStart}
+                      x2={BOARD_END_X + 10}
+                      y2={yEnd}
+                      stroke={stringShader}
+                      strokeWidth={strokeThickness}
+                      strokeLinecap="round"
+                      className="drop-shadow-[0_0_3px_rgba(255,255,255,0.4)]"
+                    />
+
+                    {/* High Specular Wire Sheen */}
+                    <line
+                      x1={NUT_X + NUT_WIDTH / 2}
+                      y1={yStart - 0.5}
+                      x2={BOARD_END_X + 10}
+                      y2={yEnd - 0.5}
+                      stroke="#ffffff"
+                      strokeWidth={Math.max(0.6, strokeThickness * 0.35)}
+                      strokeOpacity="0.45"
+                      strokeLinecap="round"
+                    />
+                  </g>
+                );
+              })}
+
+              {/* Layer 12: Note Pins & Nodes */}
+              {boardNotes.filter(isNoteVisible).map((note) => {
+                const inMaqam = isPitchInMaqam(note.pitch, note.noteKey);
+                // When deduplicating in individual positions, duplicate unisons are NOT highlighted
+                const isHighlightedNote = inMaqam && (!deduplicateInPosition || handPosition === 'all' || !note.isDuplicateInPosition);
+
+                const isTonicNote = isHighlightedNote && (tonicPitch ? note.pitch.equals(tonicPitch) || areNotesEquivalent(tonicPitch.toScientificString(), note.noteKey) : false);
+                const isGhammazNote = isHighlightedNote && (ghammazPitch ? note.pitch.equals(ghammazPitch) || areNotesEquivalent(ghammazPitch.toScientificString(), note.noteKey) : false);
+                const isActive = isNoteActiveNow(note);
+
+                const displayLabel = getNoteDisplayLabel(note);
+                const isHovered = hoveredNote?.id === note.id;
+
+                // Node radius
+                const radius = note.semitoneIndex === 0 ? 15 : note.isQuarterTone ? 13 : 14.5;
+
+                return (
+                  <g
+                    key={note.id}
+                    transform={`translate(${note.x}, ${note.y})`}
+                    onClick={() => handlePlay(note)}
+                    onMouseEnter={() => setHoveredNote(note)}
+                    onMouseLeave={() => setHoveredNote(null)}
+                    className="cursor-pointer transition-transform"
+                  >
+                    {/* Animated Active Ripple Ring */}
+                    {isActive && (
+                      <circle
+                        r={radius + 8}
+                        fill="none"
+                        stroke="#fbbf24"
+                        strokeWidth="2.5"
+                        opacity="0.9"
+                        className="animate-ping"
+                      />
+                    )}
+
+                    {/* Pin Drop Shadow */}
+                    <circle
+                      r={radius}
+                      cx="0"
+                      cy="2.5"
+                      fill="rgba(0, 0, 0, 0.75)"
+                      filter="blur(1.5px)"
+                    />
+
+                    {/* Node Background Circle */}
+                    <circle
+                      r={radius}
+                      fill={
+                        isActive
+                          ? '#fbbf24'
+                          : isTonicNote
+                          ? '#f59e0b'
+                          : isGhammazNote
+                          ? '#06b6d4'
+                          : isHighlightedNote
+                          ? '#059669'
+                          : note.isQuarterTone
+                          ? '#1c1917'
+                          : 'rgba(15, 13, 12, 0.95)'
+                      }
+                      stroke={
+                        isActive
+                          ? '#ffffff'
+                          : isTonicNote
+                          ? '#fde68a'
+                          : isGhammazNote
+                          ? '#67e8f9'
+                          : isHighlightedNote
+                          ? '#a7f3d0'
+                          : isHovered
+                          ? '#38bdf8'
+                          : note.isQuarterTone
+                          ? '#f59e0b'
+                          : '#3e3832'
+                      }
+                      strokeWidth={isActive || isTonicNote || isGhammazNote ? 2.5 : isHighlightedNote ? 2 : 1.4}
+                      className="transition-all duration-150"
+                    />
+
+                    {/* Main Note Label */}
+                    <text
+                      x="0"
+                      y={note.semitoneIndex === 0 ? 4 : -1}
+                      textAnchor="middle"
+                      fill={
+                        isActive
+                          ? '#090d16'
+                          : isTonicNote
+                          ? '#18181b'
+                          : isGhammazNote
+                          ? '#082f49'
+                          : isHighlightedNote
+                          ? '#ffffff'
+                          : note.isQuarterTone
+                          ? '#fbbf24'
+                          : '#94a3b8'
+                      }
+                      fontSize={note.semitoneIndex === 0 ? '11.5' : '10'}
+                      fontWeight={isActive || isTonicNote || isHighlightedNote ? 'bold' : '600'}
+                      fontFamily="sans-serif"
+                      className="select-none pointer-events-none"
+                    >
+                      {displayLabel}
+                    </text>
+
+                    {/* Semitone Index Number Underneath */}
+                    {note.semitoneIndex > 0 && !note.isQuarterTone && (
+                      <text
+                        x="0"
+                        y="9.5"
+                        textAnchor="middle"
+                        fill={
+                          isActive || isTonicNote || isGhammazNote
+                            ? '#000000'
+                            : isHighlightedNote
+                            ? '#d1fae5'
+                            : '#64748b'
+                        }
+                        fontSize="8"
+                        fontWeight="600"
+                        fontFamily="monospace"
+                        className="select-none pointer-events-none"
+                      >
+                        {note.semitoneIndex}
+                      </text>
+                    )}
+
+                    {/* Quarter tone half-flat symbol underneath */}
+                    {note.isQuarterTone && (
+                      <text
+                        x="0"
+                        y="8.5"
+                        textAnchor="middle"
+                        fill="#f59e0b"
+                        fontSize="9"
+                        fontWeight="bold"
+                        className="select-none pointer-events-none"
+                      >
+                        𝄳
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        </div>
+
+        {/* Helper instruction line */}
+        <div className="text-center text-xs text-muted-foreground font-normal">
+          Tap notes above to audition with realistic violin bow dynamics. The small number indicates the semitone distance above the open string.
+        </div>
+
+        {/* Bottom Bar: Position Selector & Note Display Filter */}
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-border/80">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Position Tabs (1st, 2nd, 3rd, 4th, All) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Position:</span>
+              {[
+                { id: '1st', label: '1st (الأولى)' },
+                { id: '2nd', label: '2nd (الثانية)' },
+                { id: '3rd', label: '3rd (الثالثة)' },
+                { id: '4th', label: '4th (الرابعة)' },
+                { id: 'all', label: 'All (1-4 كامل)' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setHandPosition(tab.id as HandPosition)}
+                  className={`px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
+                    handPosition === tab.id
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(245,158,11,0.5)] ring-1 ring-amber-300'
+                      : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {tab.label}
+                </button>
               ))}
             </div>
+
+            <div className="h-5 w-px bg-slate-800 hidden sm:block" />
+
+            {/* Note Display Filter: All (0-12) vs Maqam Scale Only */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setScaleFilter('all-notes')}
+                className={`px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
+                  scaleFilter === 'all-notes'
+                    ? 'bg-slate-800 text-white font-bold shadow ring-1 ring-slate-600'
+                    : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                All (0-12)
+              </button>
+              <button
+                type="button"
+                onClick={() => setScaleFilter('maqam-only')}
+                className={`px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
+                  scaleFilter === 'maqam-only'
+                    ? 'bg-emerald-600 text-slate-950 font-bold shadow-[0_0_12px_rgba(16,185,129,0.5)] border border-emerald-400 ring-1 ring-emerald-300'
+                    : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                Maqam Scale Only
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-3 text-xs flex-wrap">
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <span className="w-3 h-3 rounded-full bg-amber-500 border border-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+              <span>Tonic (قرار)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <span className="w-3 h-3 rounded-full bg-cyan-500 border border-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
+              <span>Dominant (غمّاز)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <span className="w-3 h-3 rounded-full bg-emerald-600 border border-emerald-400" />
+              <span>Maqam Degree</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-amber-400">
+              <span className="w-3 h-3 rounded-full bg-slate-900 border border-amber-500" />
+              <span>𝄳 Half-Flat</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tune Open Strings Bar */}
+        <div className="mt-4 pt-3 border-t border-border/80">
+          <div className="text-xs text-amber-400 font-semibold mb-2 flex items-center justify-between">
+            <span>Tune open strings (دوزان الأوتار المطلقة)</span>
+            <span className="text-[11px] text-muted-foreground font-mono">
+              Click to audition open resonant frequency
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {stringSetup.map((str, sIdx) => {
+              const isPlayingThisString = activeNoteKey && areNotesEquivalent(activeNoteKey, str.openNote);
+
+              return (
+                <button
+                  key={`tune-${str.id}`}
+                  type="button"
+                  onClick={() => handleTuneString(sIdx)}
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+                    isPlayingThisString
+                      ? 'border-amber-400 bg-amber-950/60 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
+                      : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-amber-500/80 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-cyan-400 font-bold">{str.name}</span>
+                    <span className="text-sm font-bold text-white">{str.letter}</span>
+                    <span className="text-xs font-mono text-slate-400">{str.openNote}</span>
+                  </div>
+                  <span className="text-xs font-serif text-amber-300/90">{str.arabic}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Live Inspector Status Bar */}
+        <div className="mt-4 pt-3 border-t border-border/80 flex flex-wrap items-center justify-between text-xs text-muted-foreground gap-2">
+          <div>
+            {activeNoteKey ? (
+              <div className="flex items-center gap-2 bg-amber-950/50 border border-amber-800/60 px-3 py-1 rounded-full text-amber-300 animate-pulse">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping inline-block" />
+                <span className="font-semibold">Now Sounding: {activeNoteKey}</span>
+                {ARABIC_NOTE_DICTIONARY[activeNoteKey]?.arabic && (
+                  <span className="text-amber-200 font-serif">({ARABIC_NOTE_DICTIONARY[activeNoteKey]?.arabic})</span>
+                )}
+              </div>
+            ) : hoveredNote ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-slate-300 font-medium">Hovered Pitch:</span>
+                <span className="text-amber-400 font-bold text-sm">{hoveredNote.noteKey}</span>
+                <span className="text-emerald-400 font-serif">
+                  {hoveredNote.arabicName || ''}
+                </span>
+                <span className="text-slate-400 font-mono">
+                  ({hoveredNote.pitch.toFrequency().toFixed(1)} Hz)
+                </span>
+                <span className="text-[11px] text-cyan-300 font-mono">
+                  String {hoveredNote.stringName} • Finger {hoveredNote.fingerNumber}
+                </span>
+              </div>
+            ) : (
+              <span>Tap notes above to play with realistic violin dynamics. Open strings can be auditioned below.</span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
+            <span>Mode: {playMode.toUpperCase()}</span>
+            <span>•</span>
+            <span>Tuning: {violinTuning.toUpperCase()}</span>
+            <span>•</span>
+            <span>Position: {handPosition.toUpperCase()}</span>
+            <span>•</span>
+            <span>A4=440Hz</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
