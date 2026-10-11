@@ -40,12 +40,10 @@ import {
   RotateCcw,
   Sparkles,
   SlidersHorizontal,
-  // Music2,
-  // ArrowRight,
-  // Layers,
-  // Volume2
+  BookOpen,
+  Wand2,
 } from "lucide-react"
-import { MaqamFacts } from "./MaqamFacts"
+import { MaqamFactsDrawer } from "./MaqamFactsDrawer"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
 import { SayrVisualization } from "./SayrVisualization"
 
@@ -58,6 +56,8 @@ interface Props {
   onStopScale: () => void
   isDroneActive: boolean
   onToggleDrone: (pitch: ArabicPitch) => void
+  onOpenMaqamFacts?: () => void
+  onOpenMaqamBuilder?: () => void
 }
 
 export const MaqamExplorer: React.FC<Props> = ({
@@ -69,7 +69,18 @@ export const MaqamExplorer: React.FC<Props> = ({
   onStopScale,
   isDroneActive,
   onToggleDrone,
+  onOpenMaqamFacts,
+  onOpenMaqamBuilder,
 }) => {
+  const [showFactsDrawerLocal, setShowFactsDrawerLocal] = useState(false)
+  const handleOpenFacts = () => {
+    if (onOpenMaqamFacts) {
+      onOpenMaqamFacts()
+    } else {
+      setShowFactsDrawerLocal(true)
+    }
+  }
+
   // Transposition tab mode: 'classical' | 'spine' | 'custom'
   const [transpositionTab, setTranspositionTabState] = useState<string>(
     () => getWorkspaceState().drafts.explorer.transpositionTab
@@ -406,8 +417,57 @@ export const MaqamExplorer: React.FC<Props> = ({
 
   return (
     <div className="space-y-6">
-      {/* Maqam Facts Educational Section */}
-      <MaqamFacts />
+      {/* Maqam Theory & Facts Educational Modal Trigger Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-amber-800/40 bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
+            <BookOpen className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-white">Maqam Facts &amp; Modal Theory Reference</span>
+              <Badge variant="secondary" className="font-arabic text-[10px]">نظريات ومفاهيم المقام</Badge>
+            </div>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Explore classical rules of ajnas chaining, the 8 families (صُنِعَ بِسِحْرِك), ghammaz pivots, and violin pedagogy in a dedicated reference drawer.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleOpenFacts}
+            className="gap-2 bg-linear-to-r from-amber-600 to-amber-500 text-slate-950 font-bold hover:from-amber-500 hover:to-amber-400 cursor-pointer shadow-sm"
+          >
+            <BookOpen className="h-4 w-4" />
+            <span>Open Maqam Facts</span>
+          </Button>
+
+          {onOpenMaqamBuilder && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenMaqamBuilder}
+              className="gap-1.5 border-slate-700 bg-slate-900 text-slate-200 hover:text-white cursor-pointer"
+            >
+              <Wand2 className="h-3.5 w-3.5 text-amber-400" />
+              <span>Maqam Builder</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Standalone MaqamFactsDrawer when opened locally */}
+      {showFactsDrawerLocal && (
+        <MaqamFactsDrawer
+          open={showFactsDrawerLocal}
+          onOpenChange={setShowFactsDrawerLocal}
+          timbre={timbre}
+          onSelectMaqam={onSelectMaqam}
+        />
+      )}
 
       {/* 8 Families Mnemonic Banner (صُنِعَ بِسِحْرِك) */}
       <Accordion className="border-amber-800/30 bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40">

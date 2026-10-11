@@ -27,6 +27,10 @@ import { Metronome } from "./components/Metronome"
 import { TrainingLab } from "./components/TrainingLab"
 import { SessionBar } from "./components/SessionBar"
 import { AsyncFeedback } from "./components/AsyncFeedback"
+import { MainMenu } from "./components/MainMenu"
+import { MaqamBuilderDrawer } from "./components/MaqamBuilderDrawer"
+import { MaqamFactsDrawer } from "./components/MaqamFactsDrawer"
+import type { ViolinTuningPreset } from "./components/ViolinFingerboard"
 import { useLanguage } from "./state/language"
 import { Button } from "./components/ui/button"
 import { Badge } from "./components/ui/badge"
@@ -47,6 +51,8 @@ import {
   CheckCircle2,
   GraduationCap,
   Square,
+  Wand2,
+  BookOpen,
 } from "lucide-react"
 
 interface NavTabItem {
@@ -110,6 +116,12 @@ export default function App() {
   const [reverbWet, setReverbWet] = useState<number>(initialNav.stored.global.audioSettings.reverbWet)
   const [referenceA4, setReferenceA4State] = useState<number>(initialNav.stored.global.audioSettings.referenceA4)
   const [showAudioSettings, setShowAudioSettings] = useState<boolean>(false)
+
+  // Violin Tuning Preset & Modal Drawers
+  const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>("arabic")
+  const [showMaqamBuilder, setShowMaqamBuilder] = useState<boolean>(false)
+  const [showMaqamFacts, setShowMaqamFacts] = useState<boolean>(false)
+  const [systemTuningMode, setSystemTuningMode] = useState<"24edo" | "12tet">("24edo")
 
   const isPopNavigatingRef = useRef(false)
 
@@ -308,8 +320,64 @@ export default function App() {
             </div>
           </div>
 
-          {/* Quick Maqam Selector Dropdown, Sound Controls & Theme Toggler */}
+          {/* Main Menu Drawer Trigger */}
           <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+            <MainMenu
+              activeLab={activeTab}
+              onNavigateLab={handleSelectTab}
+              violinTuning={violinTuning}
+              onViolinTuningChange={setViolinTuning}
+              timbre={timbre}
+              onTimbreChange={handleTimbreChange}
+              isDroneActive={isDroneActive}
+              onToggleDrone={() => handleToggleDrone(tonic)}
+              onOpenMaqamBuilder={() => setShowMaqamBuilder(true)}
+              onOpenMaqamFacts={() => setShowMaqamFacts(true)}
+              onOpenAudioSettings={() => setShowAudioSettings(true)}
+              systemTuningMode={systemTuningMode}
+              onSystemTuningChange={setSystemTuningMode}
+            />
+
+            {/* Western vs Arabic Violin Tuning Header Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setViolinTuning((prev) => (prev === "arabic" ? "western" : "arabic"))}
+              className={`h-8 px-2 sm:px-2.5 text-[11px] font-mono font-medium gap-1 sm:gap-1.5 transition-all cursor-pointer ${
+                violinTuning === "western"
+                  ? "border-indigo-500/80 bg-indigo-950/50 text-indigo-300 shadow-xs"
+                  : "border-amber-500/60 bg-amber-950/40 text-amber-300"
+              }`}
+              title="Switch Violin Tuning Preset: Classical Arabic (G-D-G-D) vs Western Standard (G-D-A-E)"
+            >
+              <span className="hidden xl:inline text-[10px] text-muted-foreground uppercase">Tuning:</span>
+              <span className="font-bold">{violinTuning === "western" ? "Western (GDAE)" : "Arabic (GDGD)"}</span>
+            </Button>
+
+            {/* Quick Maqam Builder Header Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMaqamBuilder(true)}
+              className="hidden lg:inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 cursor-pointer"
+              title="Open Maqam Builder & Ajnas Architect"
+            >
+              <Wand2 className="h-3.5 w-3.5" />
+              <span className="hidden xl:inline">Builder</span>
+            </Button>
+
+            {/* Quick Maqam Facts Header Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMaqamFacts(true)}
+              className="hidden lg:inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
+              title="Open Maqam Facts Reference Drawer"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-indigo-400" />
+              <span className="hidden xl:inline">Facts</span>
+            </Button>
+
             <div className="relative">
               <select
                 value={currentMaqam.id}
@@ -576,6 +644,8 @@ export default function App() {
             onStopScale={handleStopScale}
             isDroneActive={isDroneActive}
             onToggleDrone={handleToggleDrone}
+            onOpenMaqamFacts={() => setShowMaqamFacts(true)}
+            onOpenMaqamBuilder={() => setShowMaqamBuilder(true)}
           />
         )}
 
@@ -596,6 +666,8 @@ export default function App() {
               activePitchIndex={activePitchIndex}
               timbre={timbre}
               currentMaqam={currentMaqam}
+              violinTuning={violinTuning}
+              onViolinTuningChange={setViolinTuning}
             />
 
             {/* Quick Context Summary */}
@@ -894,6 +966,22 @@ export default function App() {
             </div>
             </SheetContent>
           </Sheet>
+
+      {/* Maqam Builder & Ajnas Architect Drawer */}
+      <MaqamBuilderDrawer
+        open={showMaqamBuilder}
+        onOpenChange={setShowMaqamBuilder}
+        onSelectMaqam={handleSelectMaqam}
+        timbre={timbre}
+      />
+
+      {/* Maqam Facts & Theory Reference Drawer */}
+      <MaqamFactsDrawer
+        open={showMaqamFacts}
+        onOpenChange={setShowMaqamFacts}
+        timbre={timbre}
+        onSelectMaqam={handleSelectMaqam}
+      />
     </div>
   )
 }

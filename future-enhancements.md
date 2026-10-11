@@ -28,6 +28,12 @@ This roadmap reflects the current implementation. Shared workspace persistence, 
   - **Strict Individual Position Deduplication**: In every individual position (`1st`, `2nd`, `3rd`, `4th`), each highlighted maqam scale pitch appears **once and only once**. Eliminates redundant duplicate unisons across adjacent strings (e.g. 4th finger vs open string collisions) according to pedagogical violin fingering rules.
   - **Interactive Dynamics**: Accidental naming (Sharps/Flats/Arabic Names), Bow vs Pizzicato audio modes, 24-EDO quarter-tone nodes (Sikah, Awj, Iraq, Buzurk), Arabic vs Western tuning presets, reverse strings toggle (⇄), and open string tuning console.
 
+- **Main Menu, Western Tuning, & Modals Architecture**:
+  - **Global Studio Main Menu (`MainMenu.tsx`)**: Responsive navigation drawer & tools menu providing unified access to all 8 labs, Western tuning presets, audio DSP settings, drone shortcuts, and language controls.
+  - **Western Tuning Support**: Full support for Western Standard Violin Tuning (G3-D4-A4-E5 in 5ths) alongside Classical Arabic Violin Tuning (G3-D4-G4-D5), accessible directly via header button, main menu, and violin fingerboard.
+  - **Maqam Builder & Ajnas Architect Drawer (`MaqamBuilderDrawer.tsx`)**: Interactive custom maqam builder with lower jins selection, tonic choice, connection type (Ittisal, Infisal, Tadakhul), upper jins chaining, ghammaz pivot calculation, classical compound templates (Suznak, Bayati Shuri, Shawq Afza, Nairuz, Mahur, Hijazkar Kurd), live 24-EDO scale preview & audition, and "Apply to Studio" activation across all 8 labs.
+  - **Maqam Facts Drawer (`MaqamFactsDrawer.tsx`)**: Moved from inline page clutter to a dedicated reference drawer featuring core modal concepts, 8 families (صُنِعَ بِسِحْرِك), ajnas junction types, melodic sayr pathways, and violin pedagogy with audio auditioning.
+
 ## Content & Educational Enhancements
 
 Add a dedicated "Maqam Facts" educational section

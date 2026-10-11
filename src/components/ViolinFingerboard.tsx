@@ -55,6 +55,8 @@ interface Props {
   activePitchIndex?: number | null;
   timbre?: TimbreType;
   currentMaqam?: Maqam;
+  violinTuning?: ViolinTuningPreset;
+  onViolinTuningChange?: (tuning: ViolinTuningPreset) => void;
 }
 
 // Enharmonic lookup dictionary for spelling equivalences
@@ -77,8 +79,8 @@ export const areNotesEquivalent = (n1?: string | null, n2?: string | null): bool
   const s1 = n1.trim().toLowerCase();
   const s2 = n2.trim().toLowerCase();
   if (s1 === s2) return true;
-  const m1 = s1.match(/^([a-g][#bd𝄳𝄵]?)([0-9])$/);
-  const m2 = s2.match(/^([a-g][#bd𝄳𝄵]?)([0-9])$/);
+  const m1 = s1.match(/^([a-g][#bd𝄳𝄵]?)([0-9])$/u);
+  const m2 = s2.match(/^([a-g][#bd𝄳𝄵]?)([0-9])$/u);
   if (m1 && m2 && m1[2] === m2[2]) {
     if (ENHARMONIC_MAP[m1[1]] === m2[1]) return true;
   }
@@ -141,7 +143,9 @@ export const ViolinFingerboard: React.FC<Props> = ({
   scalePitches = [],
   activePitchIndex = null,
   timbre = 'violin',
-  currentMaqam
+  currentMaqam,
+  violinTuning: propViolinTuning,
+  onViolinTuningChange,
 }) => {
   // Resolve active maqam (fallback to Rast if none passed)
   const activeMaqam = useMemo(() => {
@@ -162,11 +166,19 @@ export const ViolinFingerboard: React.FC<Props> = ({
   const [handPosition, setHandPosition] = useState<HandPosition>('1st');
   const [scaleFilter, setScaleFilter] = useState<ScaleFilterMode>('all-notes');
   const [showQuarterTones, setShowQuarterTones] = useState<boolean>(true);
-  const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>('arabic');
+  const [internalViolinTuning, setInternalViolinTuning] = useState<ViolinTuningPreset>('arabic');
   const [isStringsReversed, setIsStringsReversed] = useState<boolean>(false);
   const [hoveredNote, setHoveredNote] = useState<BoardNote | null>(null);
   const [activeNoteKey, setActiveNoteKey] = useState<string | null>(null);
   const [deduplicateInPosition, setDeduplicateInPosition] = useState<boolean>(true);
+
+  // Active violin tuning is controlled by prop if provided, else internal state
+  const violinTuning = propViolinTuning ?? internalViolinTuning;
+  const setViolinTuning = (tuning: ViolinTuningPreset | ((prev: ViolinTuningPreset) => ViolinTuningPreset)) => {
+    const nextVal = typeof tuning === 'function' ? tuning(violinTuning) : tuning;
+    setInternalViolinTuning(nextVal);
+    if (onViolinTuningChange) onViolinTuningChange(nextVal);
+  };
 
   // Define string setup: IV (lowest pitch) down to I (highest pitch), or reversed (I to IV)
   const baseStrings = useMemo(() => {
@@ -478,9 +490,10 @@ export const ViolinFingerboard: React.FC<Props> = ({
 
     rawBoardNotes.forEach(n => {
       if (n.inPositionRange && isPitchInMaqam(n.pitch, n.noteKey)) {
-        const list = candidatesByQt.get(n.qtIndex) || [];
+        const canonicalQt = n.pitch.toQuarterToneIndex();
+        const list = candidatesByQt.get(canonicalQt) || [];
         list.push(n);
-        candidatesByQt.set(n.qtIndex, list);
+        candidatesByQt.set(canonicalQt, list);
       }
     });
 
@@ -569,7 +582,7 @@ export const ViolinFingerboard: React.FC<Props> = ({
     setTimeout(() => setActiveNoteKey(null), 1200);
 
     const duration = playMode === 'bow' ? 1.4 : 0.6;
-    const activeTimbre: TimbreType = playMode === 'bow' ? 'violin' : 'oud'; // bow vs pluck
+    const activeTimbre: TimbreType = playMode === 'bow' ? timbre : 'oud'; // bow vs pluck
 
     MicrotonalAudioEngine.playPitch(note.pitch, duration, activeTimbre, 0.85);
   };
