@@ -806,7 +806,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 Click note to audition
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 sm:grid-cols-4 lg:grid-cols-8">
               {scalePitches.map((pitch, idx) => {
                 const isTonic = pitch.equals(tonic)
                 const isGhammaz = pitch.equals(ghammaz)
@@ -818,7 +818,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                     onClick={() =>
                       MicrotonalAudioEngine.playPitch(pitch, 0.7, timbre)
                     }
-                    className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border p-2.5 transition hover:scale-105 ${isTonic
+                    className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border p-2 sm:p-2.5 transition hover:scale-105 ${isTonic
                       ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-md ring-1 ring-emerald-500/30"
                       : isGhammaz
                         ? "border-sky-500/50 bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/30"
@@ -826,7 +826,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                       }`}
                   >
                     <div className="flex items-center gap-1">
-                      <span className="font-mono text-base font-bold">
+                      <span className="font-mono text-sm sm:text-base font-bold">
                         {pitch.toScientificString()}
                       </span>
                       {isTonic && (

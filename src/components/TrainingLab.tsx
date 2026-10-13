@@ -1198,7 +1198,8 @@ export const TrainingLab: React.FC<Props> = ({
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>1. Scale Memorization Game</span>
+            <span className="hidden sm:inline">1. Scale Memorization Game</span>
+            <span className="sm:hidden">1. Memorization</span>
           </button>
 
           <button
@@ -1212,7 +1213,8 @@ export const TrainingLab: React.FC<Props> = ({
             }`}
           >
             <Activity className="w-4 h-4" />
-            <span>2. Practices &amp; Training Drills (التمارين والتطبيقات)</span>
+            <span className="hidden sm:inline">2. Practices &amp; Training Drills (التمارين والتطبيقات)</span>
+            <span className="sm:hidden">2. Drills (التمارين)</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
               5 Drills
             </span>
@@ -1229,7 +1231,8 @@ export const TrainingLab: React.FC<Props> = ({
             }`}
           >
             <Compass className="w-4 h-4 text-emerald-400" />
-            <span>3. Real-Time Pitch &amp; Intonation Tracker</span>
+            <span className="hidden sm:inline">3. Real-Time Pitch &amp; Intonation Tracker</span>
+            <span className="sm:hidden">3. Intonation Tracker</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 animate-pulse">
               Live Mic
             </span>
@@ -1246,7 +1249,8 @@ export const TrainingLab: React.FC<Props> = ({
             }`}
           >
             <Mic className="w-4 h-4" />
-            <span>4. Performance Recording &amp; Compare</span>
+            <span className="hidden sm:inline">4. Performance Recording &amp; Compare</span>
+            <span className="sm:hidden">4. Recording</span>
           </button>
         </div>
       </div>
@@ -1699,9 +1703,10 @@ export const TrainingLab: React.FC<Props> = ({
               </div>
 
               {/* 5 Primary Drill Type Selector Tabs */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-4">
                 {DRILL_TYPES_CATALOGUE.map((drill) => {
                   const isSelected = activeDrillType === drill.id;
+                  const isLastCard = drill.id === 'sightreading';
                   return (
                     <button
                       type="button"
@@ -1711,6 +1716,8 @@ export const TrainingLab: React.FC<Props> = ({
                         handleGenerateDrill(drill.id);
                       }}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        isLastCard ? 'col-span-2 sm:col-span-1' : ''
+                      } ${
                         isSelected
                           ? 'bg-amber-500/15 border-amber-500 text-foreground ring-1 ring-amber-500/50 shadow-xs'
                           : 'bg-muted/30 hover:bg-muted/60 border-border/80 text-muted-foreground hover:text-foreground'

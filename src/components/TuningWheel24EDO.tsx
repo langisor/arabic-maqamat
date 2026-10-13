@@ -130,8 +130,8 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre, currentMaqam }) => {
         </CardHeader>
 
         <CardContent className="pt-6 space-y-6">
-          {/* 24-EDO Interactive Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
+          {/* 24-EDO Interactive Grid (Responsive: 3 cols on mobile, 4 on xs, 6 on sm, 8 on md, 12 on lg) */}
+          <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5 sm:gap-2">
             {quarterToneSteps.map((step) => {
               const isSelected = selectedQtIndex === step.index;
               const isNeutral = !step.isWesternSemitone;
@@ -141,7 +141,7 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre, currentMaqam }) => {
                 <button
                   key={step.index}
                   onClick={() => handlePlayQuarterTone(step)}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center justify-between text-center transition-all cursor-pointer ${
+                  className={`p-2 sm:p-2.5 rounded-xl border flex flex-col items-center justify-between text-center transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-xl ring-2 ring-amber-400/50 scale-105 z-10'
                       : isNeutral
@@ -159,7 +159,7 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre, currentMaqam }) => {
                   </div>
 
                   <div className="my-1.5 flex flex-col items-center">
-                    <span className="text-base font-bold font-mono">
+                    <span className="text-sm sm:text-base font-bold font-mono">
                       {step.pitch.toScientificString()}
                     </span>
                     {hasSpine && (
@@ -180,15 +180,15 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre, currentMaqam }) => {
           </div>
 
           {/* Selected Pitch Acoustic Deep Dive */}
-          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col items-center justify-center text-amber-300">
-                <span className="text-xl font-bold font-mono">{selectedStep.pitch.toScientificString()}</span>
+          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-13 h-13 sm:w-14 sm:h-14 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-col items-center justify-center text-amber-300">
+                <span className="text-lg sm:text-xl font-bold font-mono">{selectedStep.pitch.toScientificString()}</span>
                 <span className="text-[10px] font-serif">{selectedStep.spineMatch?.arabicName || ''}</span>
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-base font-bold text-white">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm sm:text-base font-bold text-white">
                     Quarter-Tone #{selectedStep.index} • {selectedStep.cents} Cents
                   </span>
                   {selectedStep.spineMatch && (
@@ -211,7 +211,7 @@ export const TuningWheel24EDO: React.FC<Props> = ({ timbre, currentMaqam }) => {
             <Button
               variant="amber"
               onClick={() => handlePlayQuarterTone(selectedStep)}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto shrink-0 font-bold"
             >
               <Volume2 className="w-4 h-4" />
               Audition 24-EDO Frequency

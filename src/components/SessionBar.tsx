@@ -37,7 +37,7 @@ export function SessionBar({ maqam, isDroneActive, transportStatus, onNavigate }
           </div>
         </div>
 
-        <dl className="grid min-w-0 grid-cols-[auto_auto_1fr] gap-x-4 gap-y-1 text-xs">
+        <dl className="grid min-w-0 grid-cols-2 sm:grid-cols-[auto_auto_1fr] gap-x-4 gap-y-1.5 text-xs">
           <div>
             <dt className="text-[10px] text-muted-foreground">{t("tonic")}</dt>
             <dd className="font-mono font-semibold">{tonic.toString()}</dd>
@@ -46,7 +46,7 @@ export function SessionBar({ maqam, isDroneActive, transportStatus, onNavigate }
             <dt className="text-[10px] text-muted-foreground">{t("ghammaz")}</dt>
             <dd className="font-mono font-semibold">{ghammaz.toString()}</dd>
           </div>
-          <div className="min-w-0">
+          <div className="col-span-2 sm:col-span-1 min-w-0">
             <dt className="text-[10px] text-muted-foreground">{t("scale")}</dt>
             <dd className="truncate font-mono font-semibold" title={scale}>{scale}</dd>
           </div>

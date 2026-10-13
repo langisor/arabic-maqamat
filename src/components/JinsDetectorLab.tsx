@@ -566,7 +566,7 @@ export const JinsDetectorLab: React.FC<Props> = ({ timbre }) => {
               variant="default"
               size="sm"
               onClick={handleAddNote}
-              className="gap-1.5"
+              className="gap-1.5 w-full sm:w-auto font-bold"
             >
               <Plus className="w-4 h-4" />
               Append Note ({builderDiatonic}{builderAccidental}{builderOctave})

@@ -14,9 +14,7 @@ import {
   Info,
   CheckCircle2,
   MoveHorizontal,
-  Compass,
   Music,
-  Check
 } from 'lucide-react';
 
 export type AccidentalNaming = 'sharps' | 'flats' | 'arabic';
@@ -794,6 +792,15 @@ export const ViolinFingerboard: React.FC<Props> = ({
       </CardHeader>
 
       <CardContent className="pt-4 space-y-5">
+        {/* Mobile Horizontal Scroll Affordance */}
+        <div className="flex md:hidden items-center justify-between px-1 text-[11px] text-amber-400/90 mb-1 font-medium">
+          <span className="flex items-center gap-1.5">
+            <MoveHorizontal className="w-3.5 h-3.5 animate-pulse text-amber-400" />
+            <span>Swipe neck horizontally (اسحب أفقياً لتصفح الأوضاع 1–4)</span>
+          </span>
+          <span className="font-mono text-[10px] text-slate-400">Positions 1–4</span>
+        </div>
+
         {/* Tapered Fingerboard SVG Stage */}
         <div className="w-full overflow-x-auto pb-2 scrollbar-thin select-none">
           <div className="min-w-[980px] relative">
