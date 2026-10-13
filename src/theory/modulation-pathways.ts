@@ -200,6 +200,7 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'ghammaz-pivot',
         technique: 'Tanjees',
+        category: '2_Internal',
         pivotPoint: {
           pitch: sourceGhammaz,
           pitchName: sourceGhammaz.toScientificString(),
@@ -225,7 +226,8 @@ export class ModulationPathwayEngine {
         arabicRationale: `يلتقي المقامان عند نفس الغماز (${sourceGhammaz.toScientificString()}). يمكن للعازف الوقوف عليه ثم الهبوط إلى قرار ${target.name}.`,
         historicalContext: `Classic modulation technique in Wasla suites when pivoting across related families.`,
         commonInRepertoire: true,
-        affinityScore: 84
+        affinityScore: 84,
+        frequency: 'common'
       });
     }
 
@@ -246,6 +248,8 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'shared-jins',
         technique: 'Intiqal',
+        category: '2_Internal',
+        frequency: 'common',
         pivotPoint: {
           pitch: bridgeJins.root,
           pitchName: bridgeJins.root.toScientificString(),
@@ -286,6 +290,8 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'tonic-shift',
         technique: 'Tanjees',
+        category: '3_FullMaqam',
+        frequency: 'common',
         pivotPoint: {
           pitch: sourceTonic,
           pitchName: sourceTonic.toScientificString(),
@@ -324,6 +330,8 @@ export class ModulationPathwayEngine {
           targetMaqam: target,
           relation: 'relative-family',
           technique: 'Tanjees',
+          category: '2_Internal',
+          frequency: 'common',
           pivotPoint: {
             pitch: alt.jins.root,
             pitchName: alt.jins.root.toScientificString(),
@@ -366,6 +374,8 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'relative-family',
         technique: 'Tanjees',
+        category: '2_Internal',
+        frequency: 'common',
         pivotPoint: {
           pitch: sourceTonic,
           pitchName: sourceTonic.toScientificString(),
@@ -407,6 +417,8 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'relative-family',
         technique: 'Tanjees',
+        category: '2_Internal',
+        frequency: 'common',
         pivotPoint: {
           pitch: sourceTonic,
           pitchName: sourceTonic.toScientificString(),
@@ -448,6 +460,8 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'relative-family',
         technique: 'Tanjees',
+        category: '2_Internal',
+        frequency: 'common',
         pivotPoint: {
           pitch: sourceGhammaz,
           pitchName: sourceGhammaz.toScientificString(),
@@ -480,3 +494,4 @@ export class ModulationPathwayEngine {
     return pathways;
   }
 }
+

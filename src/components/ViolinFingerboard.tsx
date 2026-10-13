@@ -1,22 +1,15 @@
 // src/components/ViolinFingerboard.tsx
 import React, { useState, useMemo } from 'react';
-import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
+import { ArabicPitch } from '../core/pitch';
 import { Maqam, MaqamatCatalogue } from '../theory/maqam';
-import { ArabicNoteSpine } from '../core/note-spine';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
 import {
-  Volume2,
-  Sparkles,
-  RotateCcw,
-  Info,
   CheckCircle2,
   MoveHorizontal,
   Music,
 } from 'lucide-react';
-import { getAccidentalCategory } from '../core/pitch-styling';
 
 export type AccidentalNaming = 'sharps' | 'flats' | 'arabic';
 export type PlayMode = 'bow' | 'pizzicato';
@@ -645,7 +638,7 @@ export const ViolinFingerboard: React.FC<Props> = ({
     
     if (namingMode === 'flats') {
       // Remove natural marks and wrap accidental
-      const accidentalMatch = n.flatName.match(/([A-G])([♭𝄫]?)([0-9])/);
+      const accidentalMatch = n.flatName.match(/([A-G])([♭𝄫]?)([0-9])/u);
       if (accidentalMatch) {
         const [, base, accidental, octave] = accidentalMatch;
         if (accidental) {
@@ -667,7 +660,7 @@ export const ViolinFingerboard: React.FC<Props> = ({
     }
     
     // Sharps mode: remove natural marks and wrap accidental
-    const accidentalMatch = n.sharpName.match(/([A-G])([♯𝄪]?)([0-9])/);
+    const accidentalMatch = n.sharpName.match(/([A-G])([♯𝄪]?)([0-9])/u);
     if (accidentalMatch) {
       const [, base, accidental, octave] = accidentalMatch;
       if (accidental) {
