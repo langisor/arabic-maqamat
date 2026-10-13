@@ -803,7 +803,7 @@ export const ViolinFingerboard: React.FC<Props> = ({
 
         {/* Tapered Fingerboard SVG Stage */}
         <div className="w-full overflow-x-auto pb-2 scrollbar-thin select-none">
-          <div className="min-w-[980px] relative">
+          <div className="min-w-245 relative">
             <svg
               viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
               className="w-full h-auto drop-shadow-2xl"
