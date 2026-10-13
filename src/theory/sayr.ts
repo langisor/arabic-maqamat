@@ -1,21 +1,37 @@
 // src/theory/sayr.ts
 import { ArabicPitch } from '../core/pitch';
 import { Maqam } from './maqam';
+import { Jins } from './jins';
 
-export type SayrPhase = 
+export type SayrPhase =
   | '1_EstablishTonic'
   | '2_AscendToGhammaz'
   | '3_UpperExploration_Or_Modulation'
   | '4_DescentReturn'
   | '5_Qafla';
 
-export type ModulationType = 
+/**
+ * Three-tier modulation classification from Abu Shumays' "Maqam Analysis: A Primer"
+ * Category 1: Ornamental/passing accidentals within a jins (not true modulation)
+ * Category 2: Typical jins-to-jins moves within the maqam (internal, not maqam change)
+ * Category 3: Significant modulation destabilizing root jins (true maqam-to-maqam change)
+ */
+export type ModulationCategory =
+  | '1_Ornamental'  // Category 1: passing accidentals
+  | '2_Internal'    // Category 2: typical jins-to-jins within maqam
+  | '3_FullMaqam';  // Category 3: true maqam-to-maqam change
+
+/**
+ * Legacy modulation types (retained for backward compatibility)
+ */
+export type ModulationType =
   | 'None'
   | 'Tanjees' // Local, passing color shift
   | 'Intiqal'; // Structural change of tonal center
 
 export interface ModulationAnalysis {
   readonly type: ModulationType;
+  readonly category: ModulationCategory;
   readonly isSameFamily: boolean;
   readonly description: string;
 }
@@ -40,31 +56,108 @@ export interface SayrTemplate {
 export class SayrEngine {
   /**
    * Evaluates modulation between current active Maqam and target Maqam.
+   * Uses three-tier classification from Abu Shumays' "Maqam Analysis: A Primer".
    */
   public static analyzeModulation(current: Maqam, target: Maqam, durationMeasures: number): ModulationAnalysis {
     if (current.id === target.id) {
-      return { type: 'None', isSameFamily: true, description: 'No modulation detected — melody remains anchored in home maqam.' };
-    }
-
-    const isSameFamily = current.family !== 'None' && current.family === target.family;
-    // Transient borrowing (< 2 measures) is treated as Tanjees
-    const isTransient = durationMeasures <= 2;
-
-    if (isTransient) {
       return {
-        type: 'Tanjees',
-        isSameFamily,
-        description: `Tanjees (تنجيس): Temporary color borrowing of ${target.name} without altering foundational lower jins.`
+        type: 'None',
+        category: '1_Ornamental',
+        isSameFamily: true,
+        description: 'No modulation detected — melody remains anchored in home maqam.'
       };
     }
 
+    const isSameFamily = current.family !== 'None' && current.family === target.family;
+
+    // Category 1: Ornamental (passing accidentals, < 1 measure)
+    if (durationMeasures < 1) {
+      return {
+        type: 'Tanjees',
+        category: '1_Ornamental',
+        isSameFamily,
+        description: `Category 1 - Ornamental: Quick-passing accidental within jins, does not destabilize tonicization.`
+      };
+    }
+
+    // Category 2: Internal (typical jins-to-jins within maqam, 1-4 measures)
+    // Check if this is a typical pathway in the maqam's network
+    const isTypicalPathway = this.isTypicalPathway(current, target);
+
+    if (durationMeasures <= 4 && isTypicalPathway) {
+      return {
+        type: 'Tanjees',
+        category: '2_Internal',
+        isSameFamily,
+        description: `Category 2 - Internal: Typical jins-to-jins modulation within ${current.name}. Expected pathway in maqam's network.`
+      };
+    }
+
+    // Category 3: Full Maqam change (> 4 measures or outside network)
     return {
       type: 'Intiqal',
+      category: '3_FullMaqam',
       isSameFamily,
       description: isSameFamily
-        ? `Intiqal (انتقال ضمن الفصيلة): Smooth modulation within ${current.family} family, swapping upper jins while lower jins anchors home.`
-        : `Intiqal (انتقال بين الفصائل): Major structural shift changing foundational lower jins from ${current.family} to ${target.family}.`
+        ? `Category 3 - Full Maqam: Structural modulation within ${current.family} family, extended beyond typical pathways.`
+        : `Category 3 - Full Maqam: Major structural shift changing foundational lower jins from ${current.family} to ${target.family}.`
     };
+  }
+
+  /**
+   * Check if a modulation from current to target is a typical pathway in the maqam's network.
+   * This checks if the target's lower jins appears as a node in the current maqam's network.
+   */
+  public static isTypicalPathway(current: Maqam, target: Maqam): boolean {
+    if (!current.network) {
+      // Fallback to legacy behavior: same-family modulations are typical
+      return current.family !== 'None' && current.family === target.family;
+    }
+
+    // Check if target's lower jins is a node in current maqam's network
+    const targetJinsId = target.lowerJins.definition.id;
+    const hasMatchingNode = current.network.nodes.some(
+      node => node.jinsId === targetJinsId
+    );
+
+    return hasMatchingNode;
+  }
+
+  /**
+   * Check if a jins-to-jins transition is valid within a maqam's network.
+   */
+  public static isValidJinsTransition(maqam: Maqam, fromJins: Jins, toJins: Jins): boolean {
+    if (!maqam.network) {
+      return true; // Fallback: allow all transitions if no network defined
+    }
+
+    // Find scale degrees for both jins
+    const fromDegree = this.findJinsDegree(maqam, fromJins);
+    const toDegree = this.findJinsDegree(maqam, toJins);
+
+    if (fromDegree === null || toDegree === null) {
+      return false;
+    }
+
+    // Check if pathway exists in network
+    return maqam.network.pathways.some(
+      pathway => pathway.fromDegree === fromDegree && pathway.toDegree === toDegree
+    );
+  }
+
+  /**
+   * Find the scale degree of a jins within a maqam's network.
+   */
+  private static findJinsDegree(maqam: Maqam, jins: Jins): number | null {
+    if (!maqam.network) {
+      return null;
+    }
+
+    const matchingNode = maqam.network.nodes.find(
+      node => node.jinsId === jins.definition.id && node.root.equals(jins.root)
+    );
+
+    return matchingNode ? matchingNode.scaleDegree : null;
   }
 
   /**

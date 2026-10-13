@@ -5,6 +5,7 @@ import {
   Maqam,
   MaqamatCatalogue,
 } from './maqam';
+import { ModulationCategory } from './sayr';
 
 export type ModulationRelation =
   | 'same-family'      // Same family (shares lower root jins, e.g. Rast -> Suznak / Nairuz / Mahur)
@@ -36,6 +37,7 @@ export interface ModulationPathway {
   readonly targetMaqam: Maqam;
   readonly relation: ModulationRelation;
   readonly technique: ModulationTechnique;
+  readonly category: ModulationCategory; // Three-tier classification from PDF
   readonly pivotPoint: PivotPoint;
   readonly bridgeJins: {
     readonly definition: JinsDefinition;
@@ -48,6 +50,7 @@ export interface ModulationPathway {
   readonly historicalContext: string;
   readonly commonInRepertoire: boolean;
   readonly affinityScore: number; // 1 - 100 affinity/smoothness score
+  readonly frequency: 'common' | 'uncommon' | 'rare'; // Frequency in repertoire
 }
 
 export class ModulationPathwayEngine {
@@ -111,6 +114,7 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'same-family',
         technique: sameTonic ? 'Tanjees' : 'Intiqal',
+        category: sameTonic ? '2_Internal' : '2_Internal',
         pivotPoint: {
           pitch: pivot,
           pitchName: pivot.toScientificString(),
@@ -131,7 +135,8 @@ export class ModulationPathwayEngine {
         arabicRationale: `تحويل ضمن فصيلة ${source.family}: تصعد الجملة إلى الغماز (${pivot.toScientificString()}) وتستبدل جنس ${source.upperJins.definition.arabicName} بجنس ${target.upperJins.definition.arabicName}.`,
         historicalContext: `Classic Wasla technique extensively documented by D'Erlanger and contemporary masters for introducing ornamentation while retaining family identity.`,
         commonInRepertoire: true,
-        affinityScore: 95
+        affinityScore: 95,
+        frequency: 'common'
       });
     }
 
@@ -151,6 +156,7 @@ export class ModulationPathwayEngine {
         targetMaqam: target,
         relation: 'ghammaz-pivot',
         technique: 'Intiqal',
+        category: '3_FullMaqam',
         pivotPoint: {
           pitch: sourceGhammaz,
           pitchName: sourceGhammaz.toScientificString(),
@@ -175,7 +181,8 @@ export class ModulationPathwayEngine {
         arabicRationale: `انتقال مقامي كامل: تتكئ الجملة على الغماز (${sourceGhammaz.toScientificString()}) وتحوله إلى قرار ومستقر مقامي جديد.`,
         historicalContext: `A hallmark of Muwashahat and Taqasim improvisation, moving from lower registers to upper tonal plateaus.`,
         commonInRepertoire: true,
-        affinityScore: 90
+        affinityScore: 90,
+        frequency: 'common'
       });
     }
 

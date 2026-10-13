@@ -24,6 +24,28 @@ export interface AlternateJinsBranch {
 
 export type SayrTrajectory = 'ascending' | 'descending_octave_first' | 'undulating';
 
+/**
+ * Network representation of maqam as graph of ajnas with acceptable pathways.
+ * From Abu Shumays' "Maqam Analysis: A Primer" - Example 17, 23.
+ */
+export interface ModulationNode {
+  readonly jinsId: string;
+  readonly scaleDegree: number; // 1-12 relative to maqam tonic
+  readonly root: ArabicPitch;
+  readonly connections: readonly number[]; // scale degrees this node connects to
+  readonly frequency: 'common' | 'uncommon' | 'rare';
+}
+
+export interface MaqamNetwork {
+  readonly nodes: readonly ModulationNode[];
+  readonly pathways: readonly {
+    readonly fromDegree: number;
+    readonly toDegree: number;
+    readonly technique: 'Ittisal' | 'Infisal' | 'Tadakhul';
+    readonly frequency: 'common' | 'uncommon' | 'rare';
+  }[];
+}
+
 export interface MaqamFamily {
   readonly mnemonic: MaqamFamilyMnemonic;
   readonly arabicLetter: string;
@@ -48,6 +70,11 @@ export interface MaqamScaleStructure {
    * Upper register extensions or octave alterations (e.g. Saba's flat octave D♭).
    */
   readonly extraPitches?: ArabicPitch[];
+  /**
+   * Network graph of ajnas and acceptable pathways within the maqam.
+   * From Abu Shumays' "Maqam Analysis: A Primer".
+   */
+  readonly network?: MaqamNetwork;
   readonly description: string;
 }
 
@@ -63,6 +90,7 @@ export class Maqam {
   public readonly alternateUpperAjnas: readonly AlternateJinsBranch[];
   public readonly sayrDirection: SayrTrajectory;
   public readonly extraPitches: readonly ArabicPitch[];
+  public readonly network: MaqamNetwork | undefined;
   public readonly description: string;
 
   constructor(structure: MaqamScaleStructure) {
@@ -77,6 +105,7 @@ export class Maqam {
     this.alternateUpperAjnas = structure.alternateUpperAjnas ?? [];
     this.sayrDirection = structure.sayrDirection ?? 'ascending';
     this.extraPitches = structure.extraPitches ?? [];
+    this.network = structure.network;
     this.description = structure.description;
     this.validateConnection();
   }
@@ -253,10 +282,35 @@ export class MaqamatCatalogue {
    * Constructs Maqam Rast (Module 3.4)
    * Lower: Jins Rast on C4 | Infisal | Upper: Jins Rast on G4 | Ghammaz = G4
    * Alternate Upper: Jins Nahawand on G4
+   * Network: Based on PDF Example 17 - nodes at degrees 1, 3, 5 with multiple connections
    */
   public static buildRast(): Maqam {
     const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch('C', '♮', 4));
     const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch('G', '♮', 4));
+
+    // Network definition based on PDF Example 17
+    const rastNetwork: MaqamNetwork = {
+      nodes: [
+        { jinsId: 'rast', scaleDegree: 1, root: new ArabicPitch('C', '♮', 4), connections: [3, 5], frequency: 'common' },
+        { jinsId: 'sikah', scaleDegree: 3, root: new ArabicPitch('E', '𝄳', 4), connections: [1, 5], frequency: 'common' },
+        { jinsId: 'secondary-rast-gc', scaleDegree: 5, root: new ArabicPitch('G', '♮', 4), connections: [1, 8], frequency: 'common' },
+        { jinsId: 'nahawand', scaleDegree: 5, root: new ArabicPitch('G', '♮', 4), connections: [1, 8], frequency: 'common' },
+        { jinsId: 'hijaz', scaleDegree: 5, root: new ArabicPitch('G', '♮', 4), connections: [1, 8], frequency: 'common' },
+        { jinsId: 'bayati', scaleDegree: 5, root: new ArabicPitch('G', '♮', 4), connections: [1, 8], frequency: 'common' },
+        { jinsId: 'saba', scaleDegree: 5, root: new ArabicPitch('G', '♮', 4), connections: [1, 8], frequency: 'uncommon' },
+        { jinsId: 'rast', scaleDegree: 8, root: new ArabicPitch('C', '♮', 5), connections: [5], frequency: 'common' }
+      ],
+      pathways: [
+        { fromDegree: 1, toDegree: 3, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 1, toDegree: 5, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 3, toDegree: 1, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 3, toDegree: 5, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 5, toDegree: 1, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 5, toDegree: 8, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 8, toDegree: 5, technique: 'Ittisal', frequency: 'common' }
+      ]
+    };
+
     return new Maqam({
       id: 'rast',
       name: 'Maqam Rast',
@@ -275,6 +329,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('C', '♮', 5)],
+      network: rastNetwork,
       description: "The principal maqam in the Rast family and one of the most common and central maqamat in the Arabic repertory. Its scale begins with the root jins Rast on the tonic, with the upper section often continuing through either upper Rast or Nahawand at the ghammaz."
     });
   }
@@ -283,10 +338,46 @@ export class MaqamatCatalogue {
    * Constructs Maqam Bayati (Module 8.1)
    * Lower: Jins Bayati on D4 | Ittisal | Upper: Jins Nahawand on G4 | Ghammaz = G4
    * Alternate Upper: Jins Rast on G4
+   * Network: Based on PDF Example 23 - nodes at degrees 1, 4, 5, 6, 8 with multiple connections
    */
   public static buildBayati(): Maqam {
     const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch('D', '♮', 4));
     const upper = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch('G', '♮', 4));
+
+    // Network definition based on PDF Example 23
+    const bayatiNetwork: MaqamNetwork = {
+      nodes: [
+        { jinsId: 'bayati', scaleDegree: 1, root: new ArabicPitch('D', '♮', 4), connections: [4, 5, 6, 8], frequency: 'common' },
+        { jinsId: 'hijaz', scaleDegree: 4, root: new ArabicPitch('G', '♮', 4), connections: [1, 5, 8], frequency: 'common' },
+        { jinsId: 'rast', scaleDegree: 4, root: new ArabicPitch('G', '♮', 4), connections: [1, 5, 8], frequency: 'common' },
+        { jinsId: 'nahawand', scaleDegree: 4, root: new ArabicPitch('G', '♮', 4), connections: [1, 5, 6, 8], frequency: 'common' },
+        { jinsId: 'bayati', scaleDegree: 5, root: new ArabicPitch('A', '♮', 4), connections: [1, 4, 6, 8], frequency: 'common' },
+        { jinsId: 'ajam', scaleDegree: 6, root: new ArabicPitch('B', '♭', 4), connections: [1, 4, 5, 8], frequency: 'common' },
+        { jinsId: 'bayati', scaleDegree: 8, root: new ArabicPitch('D', '♮', 5), connections: [1, 4, 5, 6], frequency: 'common' }
+      ],
+      pathways: [
+        { fromDegree: 1, toDegree: 4, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 1, toDegree: 5, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 1, toDegree: 6, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 1, toDegree: 8, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 4, toDegree: 1, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 4, toDegree: 5, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 4, toDegree: 8, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 5, toDegree: 1, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 5, toDegree: 4, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 5, toDegree: 6, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 5, toDegree: 8, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 6, toDegree: 1, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 6, toDegree: 4, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 6, toDegree: 5, technique: 'Ittisal', frequency: 'common' },
+        { fromDegree: 6, toDegree: 8, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 8, toDegree: 1, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 8, toDegree: 4, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 8, toDegree: 5, technique: 'Infisal', frequency: 'common' },
+        { fromDegree: 8, toDegree: 6, technique: 'Infisal', frequency: 'common' }
+      ]
+    };
+
     return new Maqam({
       id: 'bayati',
       name: 'Maqam Bayati',
@@ -305,6 +396,7 @@ export class MaqamatCatalogue {
       ],
       sayrDirection: 'ascending',
       extraPitches: [new ArabicPitch('D', '♮', 5)],
+      network: bayatiNetwork,
       description: "The principal maqam in the Bayati family and a cornerstone of Arabic modal practice. It starts with jins Bayati on the tonic and commonly continues with Nahawand or Rast at the upper pivot."
     });
   }

@@ -17,6 +17,13 @@ export interface JinsDefinition {
   readonly hasQuarterTones: boolean;
   readonly defaultRoot: ArabicPitch;
   readonly tonicCharacteristic: string;
+  /**
+   * "Jins Baggage" - consistent notes BELOW the tonic that are part of the jins character.
+   * Negative values represent intervals descending from the tonic.
+   * e.g., Bayati on D: [-4, -7] = C-natural, B-half-flat below D
+   * From Abu Shumays' "Maqam Analysis: A Primer"
+   */
+  readonly baggageIntervals?: readonly number[];
 }
 
 export class Jins {
@@ -57,6 +64,56 @@ export class Jins {
     return pitches;
   }
 
+  /**
+   * Get full jins scale including baggage notes below the tonic.
+   * Returns pitches in ascending order from lowest baggage note to highest interval note.
+   */
+  public getPitchesWithBaggage(): ArabicPitch[] {
+    const pitches: ArabicPitch[] = [];
+    let currentQt = this.root.toQuarterToneIndex();
+
+    // Add baggage notes below tonic (in reverse order, then reverse for ascending)
+    if (this.definition.baggageIntervals && this.definition.baggageIntervals.length > 0) {
+      const baggagePitches: ArabicPitch[] = [];
+      for (const interval of this.definition.baggageIntervals) {
+        currentQt += interval; // interval is negative
+        baggagePitches.push(ArabicPitch.fromQuarterToneIndex(currentQt));
+      }
+      // Reverse to get ascending order
+      pitches.push(...baggagePitches.reverse());
+    }
+
+    // Reset to tonic and add main intervals
+    currentQt = this.root.toQuarterToneIndex();
+    pitches.push(this.root);
+    for (const step of this.definition.intervals) {
+      currentQt += step;
+      pitches.push(ArabicPitch.fromQuarterToneIndex(currentQt));
+    }
+
+    return pitches;
+  }
+
+  /**
+   * Get just the baggage notes below the tonic (in ascending order).
+   */
+  public getBaggageNotes(): ArabicPitch[] {
+    if (!this.definition.baggageIntervals || this.definition.baggageIntervals.length === 0) {
+      return [];
+    }
+
+    const pitches: ArabicPitch[] = [];
+    let currentQt = this.root.toQuarterToneIndex();
+
+    for (const interval of this.definition.baggageIntervals) {
+      currentQt += interval; // interval is negative
+      pitches.push(ArabicPitch.fromQuarterToneIndex(currentQt));
+    }
+
+    // Reverse to get ascending order
+    return pitches.reverse();
+  }
+
   public getTopPitch(): ArabicPitch {
     const pitches = this.getPitches();
     return pitches[pitches.length - 1];
@@ -84,7 +141,8 @@ export class AjnasLibrary {
     description: 'Bright, stately root cell with neutral 3rd (Sikah)',
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('C', '♮', 4),
-    tonicCharacteristic: 'Grounding, noble, majestic foundation'
+    tonicCharacteristic: 'Grounding, noble, majestic foundation',
+    baggageIntervals: [-7, -10] // A-natural, B-half-flat below tonic
   };
 
   public static readonly BAYATI: JinsDefinition = {
@@ -96,7 +154,8 @@ export class AjnasLibrary {
     description: 'Gentle, yearning opening with immediate neutral 2nd',
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('D', '♮', 4),
-    tonicCharacteristic: 'Deeply expressive, reflective, bittersweet'
+    tonicCharacteristic: 'Deeply expressive, reflective, bittersweet',
+    baggageIntervals: [-4, -7] // C-natural, B-half-flat below tonic
   };
 
   public static readonly HIJAZ: JinsDefinition = {
@@ -108,7 +167,8 @@ export class AjnasLibrary {
     description: 'Dramatic cell with augmented 2nd (6 qt = 300 cents), no quarter-tones',
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('D', '♮', 4),
-    tonicCharacteristic: 'Mystical, theatrical, yearning with augmented 2nd stretch'
+    tonicCharacteristic: 'Mystical, theatrical, yearning with augmented 2nd stretch',
+    baggageIntervals: [-2, -5] // C♭ (B-natural), D♭ below tonic
   };
 
   public static readonly NAHAWAND: JinsDefinition = {
@@ -120,7 +180,8 @@ export class AjnasLibrary {
     description: 'Identical to natural minor tetrachord (whole-half-whole)',
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('C', '♮', 4),
-    tonicCharacteristic: 'Melancholic, elegant, harmonic clarity'
+    tonicCharacteristic: 'Melancholic, elegant, harmonic clarity',
+    baggageIntervals: [-5, -9] // F-natural, E♭ below tonic
   };
 
   public static readonly SIKAH: JinsDefinition = {
@@ -183,6 +244,95 @@ export class AjnasLibrary {
     tonicCharacteristic: 'Heart-wrenching grief, ultra-compressed span'
   };
 
+  /**
+   * Previously unnamed ajnas from Abu Shumays' "Maqam Analysis: A Primer"
+   */
+
+  /**
+   * Jins Secondary Rast G/C - Tonicizes the 4th above (C) while using Rast intervals.
+   * Common in Maqam Rast (on the 5th scale degree) and Maqam Sikah.
+   * Unlike true Rast on G, it lacks the characteristic baggage (F-half-sharp, E-natural) underneath.
+   */
+  public static readonly SECONDARY_RAST_GC: JinsDefinition = {
+    id: 'secondary-rast-gc',
+    name: 'Secondary Rast G/C',
+    arabicName: 'راست ثانوي ج/دو',
+    type: 'Tetrachord',
+    intervals: [4, 3, 3],
+    description: 'Rast intervals but tonicizes the 4th degree above (e.g., G tonicizing C). Common in Rast and Sikah. Lacks typical Rast baggage underneath.',
+    hasQuarterTones: true,
+    defaultRoot: new ArabicPitch('G', '♮', 4),
+    tonicCharacteristic: 'Secondary tonic at 4th degree, typically leads back to root'
+  };
+
+  /**
+   * Jins Hijazkar C - Distinct Hijaz variant with diminished 3rd around tonic.
+   * Characteristic of Maqam Hijazkar and Maqam Nawa Athar.
+   * Features diminished 3rd (D♭ to B-natural) around the tonic, distinguishing it from regular Hijaz.
+   */
+  public static readonly HIJAZKAR: JinsDefinition = {
+    id: 'hijazkar',
+    name: 'Hijazkar',
+    arabicName: 'حجازكار',
+    type: 'Tetrachord',
+    intervals: [2, 6, 2],
+    description: 'Hijaz variant with distinctive diminished 3rd (D♭ to B-natural) around tonic. Central to Hijazkar and Nawa Athar.',
+    hasQuarterTones: false,
+    defaultRoot: new ArabicPitch('C', '♮', 4),
+    tonicCharacteristic: 'Intense, dramatic with characteristic diminished 3rd inflection'
+  };
+
+  /**
+   * Jins Pseudo-Sikah - Resembles Sikah melodic motion but on natural pitch.
+   * Typically tonicizes the 3rd scale degree of Hijaz or Ajam.
+   * Brief and unstable, sometimes considered subsidiary tonicization within those ajnas.
+   */
+  public static readonly PSEUDO_SIKAH: JinsDefinition = {
+    id: 'pseudo-sikah',
+    name: 'Pseudo-Sikah',
+    arabicName: 'سيكاه مزيف',
+    type: 'Trichord',
+    intervals: [3, 4],
+    description: 'Melodic motion resembling Sikah but on natural pitch (not quarter-tone). Tonicizes 3rd degree of Hijaz or Ajam. Brief and unstable.',
+    hasQuarterTones: false,
+    defaultRoot: new ArabicPitch('F', '♯', 4),
+    tonicCharacteristic: 'Passing inflection, typically brief and unstable'
+  };
+
+  /**
+   * Jins Secondary Saba - Intervallically Saba but tonicizes its 3rd note.
+   * Named with two tonics: conventional (A) and actual (C).
+   * Used in Maqam Rast, Maqam Ajam Ushayran, and Maqam Zanjaran.
+   */
+  public static readonly SECONDARY_SABA: JinsDefinition = {
+    id: 'secondary-saba',
+    name: 'Secondary Saba',
+    arabicName: 'صبا ثانوي',
+    type: 'Tetrachord',
+    intervals: [3, 3, 2],
+    description: 'Intervallically Saba but tonicizes its 3rd note (C instead of A). Creates intense dissonance. Used in Rast, Ajam, and Zanjaran.',
+    hasQuarterTones: true,
+    defaultRoot: new ArabicPitch('A', '♮', 4),
+    tonicCharacteristic: 'Intense secondary tonic at 3rd degree, dramatic tension'
+  };
+
+  /**
+   * Jins Secondary Ajam - Tonicizes the 4th above conventional tonic.
+   * e.g., C/F in Maqam Ajam (conventionally Ajam C, actually tonicizes F).
+   * Common in Maqam Zanjaran and expanded Ajam passages.
+   */
+  public static readonly SECONDARY_AJAM: JinsDefinition = {
+    id: 'secondary-ajam',
+    name: 'Secondary Ajam',
+    arabicName: 'عجم ثانوي',
+    type: 'Pentachord',
+    intervals: [4, 4, 2, 4],
+    description: 'Ajam intervals but tonicizes the 4th above conventional root. Common in Zanjaran and expanded Ajam passages.',
+    hasQuarterTones: false,
+    defaultRoot: new ArabicPitch('C', '♮', 4),
+    tonicCharacteristic: 'Secondary tonic at 4th degree, bright major character'
+  };
+
   public static getAllDefinitions(): JinsDefinition[] {
     return [
       this.RAST,
@@ -193,7 +343,13 @@ export class AjnasLibrary {
       this.AJAM,
       this.NAWA_ATHAR_NIKRIZ,
       this.KURD,
-      this.SABA
+      this.SABA,
+      // Previously unnamed ajnas from Abu Shumays
+      this.SECONDARY_RAST_GC,
+      this.HIJAZKAR,
+      this.PSEUDO_SIKAH,
+      this.SECONDARY_SABA,
+      this.SECONDARY_AJAM
     ];
   }
 
