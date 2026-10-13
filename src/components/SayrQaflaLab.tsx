@@ -10,16 +10,20 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Slider } from './ui/slider';
-import { Play, Square, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Zap, BookOpen } from 'lucide-react';
+import { Play, Square, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Zap, BookOpen, Compass, GitFork } from 'lucide-react';
+import { SayrVisualizationDialog } from './SayrVisualizationDialog';
+import { ModulationPathwaysDrawer } from './ModulationPathwaysDrawer';
 import { useLanguage } from '../state/language';
 
 interface Props {
   currentMaqam: Maqam;
   timbre: TimbreType;
   maqamRevision?: number;
+  onOpenModulationPathways?: () => void;
+  onSelectMaqam?: (m: Maqam) => void;
 }
 
-export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0, timbre }) => {
+export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0, timbre, onOpenModulationPathways, onSelectMaqam }) => {
   const { t } = useLanguage();
   useEffect(() => () => {
     MicrotonalAudioEngine.stopSequence('sayr');
@@ -30,6 +34,16 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
   const sayrData = SayrEngine.getSayrForMaqam(currentMaqam.id) || SayrEngine.getSayrForMaqam('rast')!;
   const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null);
   const [isPlayingSayr, setIsPlayingSayr] = useState(false);
+  const [showSayrDialog, setShowSayrDialog] = useState(false);
+  const [showModulationDrawerLocal, setShowModulationDrawerLocal] = useState(false);
+
+  const handleOpenModulation = () => {
+    if (onOpenModulationPathways) {
+      onOpenModulationPathways();
+    } else {
+      setShowModulationDrawerLocal(true);
+    }
+  };
   // Modulation analysis state
   const [targetMaqamId, setTargetMaqamIdState] = useState<string>(
     () => getWorkspaceState().drafts.sayr.targetMaqamId
@@ -156,14 +170,27 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
               </CardDescription>
             </div>
 
-            <Button
-              variant={isPlayingSayr ? "destructive" : "amber"}
-              onClick={handlePlaySayr}
-              className="gap-2"
-            >
-              {isPlayingSayr ? <Square className="fill-current" /> : <Play className="fill-current" />}
-              {isPlayingSayr ? t('stopSayr') : t('playFullSayr')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSayrDialog(true)}
+                className="gap-1.5 border-slate-700 bg-slate-950 text-sky-300 hover:text-white hover:bg-sky-950/40 cursor-pointer"
+                title="Open Sayr Trajectory Diagram"
+              >
+                <Compass className="h-4 w-4 text-sky-400" />
+                <span>Sayr Diagram (مخطط السير)</span>
+              </Button>
+
+              <Button
+                variant={isPlayingSayr ? "destructive" : "amber"}
+                onClick={handlePlaySayr}
+                className="gap-2"
+              >
+                {isPlayingSayr ? <Square className="fill-current" /> : <Play className="fill-current" />}
+                {isPlayingSayr ? t('stopSayr') : t('playFullSayr')}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -327,16 +354,27 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
 
       {/* Modulation Engine: Tanjees vs Intiqal */}
       <Card className="bg-slate-900/90 border-slate-800">
-        <CardHeader className="pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-amber-400" />
-            <CardTitle className="text-lg">
-              {t('modulationEngine')}
-            </CardTitle>
+        <CardHeader className="pb-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5 text-amber-400" />
+              <CardTitle className="text-lg">
+                {t('modulationEngine')}
+              </CardTitle>
+            </div>
+            <CardDescription className="mt-1">
+              {t('modulationDescription')}
+            </CardDescription>
           </div>
-          <CardDescription className="mt-1">
-            {t('modulationDescription')}
-          </CardDescription>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenModulation}
+            className="gap-2 border-emerald-500/50 bg-emerald-950/40 text-emerald-300 hover:text-white hover:border-emerald-400 cursor-pointer shrink-0 self-start sm:self-auto"
+          >
+            <GitFork className="w-4 h-4 text-emerald-400" />
+            <span>Open Modulation Pathways Tool</span>
+          </Button>
         </CardHeader>
 
         <CardContent className="pt-4">
@@ -460,6 +498,25 @@ export const SayrQaflaLab: React.FC<Props> = ({ currentMaqam, maqamRevision = 0,
           </div>
         </CardContent>
       </Card>
+
+      {/* Sayr Visualization Dialog */}
+      <SayrVisualizationDialog
+        open={showSayrDialog}
+        onOpenChange={setShowSayrDialog}
+        maqam={currentMaqam}
+        timbre={timbre}
+      />
+
+      {/* Standalone Modulation Pathways Drawer */}
+      {showModulationDrawerLocal && (
+        <ModulationPathwaysDrawer
+          open={showModulationDrawerLocal}
+          onOpenChange={setShowModulationDrawerLocal}
+          currentMaqam={currentMaqam}
+          onSelectMaqam={onSelectMaqam}
+          timbre={timbre}
+        />
+      )}
     </div>
   );
 };

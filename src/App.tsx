@@ -30,12 +30,29 @@ import { AsyncFeedback } from "./components/AsyncFeedback"
 import { MainMenu } from "./components/MainMenu"
 import { MaqamBuilderDrawer } from "./components/MaqamBuilderDrawer"
 import { MaqamFactsDrawer } from "./components/MaqamFactsDrawer"
+import { SayrVisualizationDialog } from "./components/SayrVisualizationDialog"
+import { ModulationPathwaysDrawer } from "./components/ModulationPathwaysDrawer"
 import type { ViolinTuningPreset } from "./components/ViolinFingerboard"
 import { useLanguage } from "./state/language"
 import { Button } from "./components/ui/button"
 import { Badge } from "./components/ui/badge"
 import { Card } from "./components/ui/card"
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./components/ui/sheet"
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "./components/ui/tooltip"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "./components/ui/dropdown-menu"
 import {
   Music,
   Radio,
@@ -51,8 +68,7 @@ import {
   CheckCircle2,
   GraduationCap,
   Square,
-  Wand2,
-  BookOpen,
+  HelpCircle,
 } from "lucide-react"
 
 interface NavTabItem {
@@ -121,6 +137,8 @@ export default function App() {
   const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>("arabic")
   const [showMaqamBuilder, setShowMaqamBuilder] = useState<boolean>(false)
   const [showMaqamFacts, setShowMaqamFacts] = useState<boolean>(false)
+  const [showSayrDialog, setShowSayrDialog] = useState<boolean>(false)
+  const [showModulationDrawer, setShowModulationDrawer] = useState<boolean>(false)
   const [systemTuningMode, setSystemTuningMode] = useState<"24edo" | "12tet">("24edo")
 
   const isPopNavigatingRef = useRef(false)
@@ -333,50 +351,13 @@ export default function App() {
               onToggleDrone={() => handleToggleDrone(tonic)}
               onOpenMaqamBuilder={() => setShowMaqamBuilder(true)}
               onOpenMaqamFacts={() => setShowMaqamFacts(true)}
+              onOpenSayrVisualization={() => setShowSayrDialog(true)}
+              onOpenModulationPathways={() => setShowModulationDrawer(true)}
               onOpenAudioSettings={() => setShowAudioSettings(true)}
               systemTuningMode={systemTuningMode}
               onSystemTuningChange={setSystemTuningMode}
             />
 
-            {/* Western vs Arabic Violin Tuning Header Toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setViolinTuning((prev) => (prev === "arabic" ? "western" : "arabic"))}
-              className={`h-8 px-2 sm:px-2.5 text-[11px] font-mono font-medium gap-1 sm:gap-1.5 transition-all cursor-pointer ${
-                violinTuning === "western"
-                  ? "border-indigo-500/80 bg-indigo-950/50 text-indigo-300 shadow-xs"
-                  : "border-amber-500/60 bg-amber-950/40 text-amber-300"
-              }`}
-              title="Switch Violin Tuning Preset: Classical Arabic (G-D-G-D) vs Western Standard (G-D-A-E)"
-            >
-              <span className="hidden xl:inline text-[10px] text-muted-foreground uppercase">Tuning:</span>
-              <span className="font-bold">{violinTuning === "western" ? "Western (GDAE)" : "Arabic (GDGD)"}</span>
-            </Button>
-
-            {/* Quick Maqam Builder Header Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMaqamBuilder(true)}
-              className="hidden lg:inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 cursor-pointer"
-              title="Open Maqam Builder & Ajnas Architect"
-            >
-              <Wand2 className="h-3.5 w-3.5" />
-              <span className="hidden xl:inline">Builder</span>
-            </Button>
-
-            {/* Quick Maqam Facts Header Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMaqamFacts(true)}
-              className="hidden lg:inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
-              title="Open Maqam Facts Reference Drawer"
-            >
-              <BookOpen className="h-3.5 w-3.5 text-indigo-400" />
-              <span className="hidden xl:inline">Facts</span>
-            </Button>
 
             <div className="relative">
               <select
@@ -431,12 +412,27 @@ export default function App() {
               size="sm"
               onClick={() => setShowAudioSettings(true)}
               aria-label={t("audioSettings")}
-              className="gap-1.5 px-2.5 text-muted-foreground hover:text-foreground sm:px-3"
+              className="gap-1.5 px-2.5 text-muted-foreground hover:text-foreground sm:px-3 cursor-pointer"
               title="Tone.js DSP Audio Settings"
             >
               <Settings2 className="h-3.5 w-3.5 text-amber-400" />
               <span className="hidden text-xs font-medium lg:inline">
                 {t("audioDsp")}
+              </span>
+            </Button>
+
+            {/* Help & Maqam Theory (صُنع بسحرك & Modal Reference) */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowMaqamFacts(true)}
+              aria-label={t("helpTheory")}
+              className="gap-1.5 px-2.5 text-muted-foreground hover:text-foreground sm:px-3 cursor-pointer"
+              title="Help & Maqam Theory (صُنع بسحرك)"
+            >
+              <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
+              <span className="hidden text-xs font-medium lg:inline">
+                {t("helpTheory")}
               </span>
             </Button>
 
@@ -557,48 +553,146 @@ export default function App() {
             </Button>
           )}
         </div>
-        {/* Studio Navigation Tabs (Responsive scrollable tablist with active semantics & keyboard navigation) */}
-        <div className="mx-auto max-w-7xl rounded-lg border border-border/60 dark:bg-slate-600 px-2 sm:px-6 lg:px-8">
+        {/* Studio Navigation (Responsive: Small screens = icons only with tooltip support; Other screens = Dropdown list) */}
+        <div className="mx-auto max-w-7xl rounded-lg border border-border/60 bg-muted/30 px-2 sm:px-6 lg:px-8 dark:bg-slate-900/60">
+          {/* Small screens: icons only with tooltip support */}
           <nav
             role="tablist"
             aria-label={t("studioNavigation")}
-            className="flex items-center gap-1 overflow-x-auto py-2.5 text-xs font-semibold scrollbar-none sm:gap-1.5  md:flex-wrap"
+            className="flex md:hidden items-center justify-between gap-1 overflow-x-auto py-2 text-xs font-semibold scrollbar-none"
           >
-            {NAV_TABS.map((tab, index) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  id={`tab-${tab.id}`}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls={`panel-${tab.id}`}
-                  tabIndex={isActive ? 0 : -1}
-                  onKeyDown={(e) => handleTabKeyDown(e, index)}
-                  onClick={() => handleSelectTab(tab.id)}
-                  aria-label={t(tab.labelKey)}
-                  title={t(tab.labelKey)}
-                  className={`flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2 whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-95 ${
-                    isActive
-                      ? "border border-amber-500/50 bg-amber-500/15 font-bold text-amber-500 shadow-xs dark:bg-amber-500/20 dark:text-amber-300"
-                      : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                  }`}
-                >
-                  <Icon
-                    className={`h-4 w-4 shrink-0 ${
-                      isActive
-                        ? "text-amber-500 dark:text-amber-400"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                  <span className="inline text-[11px] sm:text-xs">
-                    {t(tab.labelKey)}
-                  </span>
-                </button>
-              )
-            })}
+            <TooltipProvider delay={100}>
+              {NAV_TABS.map((tab, index) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <Tooltip key={tab.id}>
+                    <TooltipTrigger
+                      id={`tab-${tab.id}-sm`}
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-controls={`panel-${tab.id}`}
+                      tabIndex={isActive ? 0 : -1}
+                      onKeyDown={(e) => handleTabKeyDown(e, index)}
+                      onClick={() => handleSelectTab(tab.id)}
+                      aria-label={t(tab.labelKey)}
+                      className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-95 ${
+                        isActive
+                          ? "border border-amber-500/50 bg-amber-500/20 font-bold text-amber-500 shadow-xs dark:bg-amber-500/25 dark:text-amber-300"
+                          : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      }`}
+                    >
+                      <Icon
+                        className={`h-4.5 w-4.5 ${
+                          isActive
+                            ? "text-amber-500 dark:text-amber-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                      <span className="sr-only">{t(tab.labelKey)}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p className="font-semibold text-xs">{t(tab.labelKey)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              })}
+            </TooltipProvider>
           </nav>
+
+          {/* Other screens: Dropdown list */}
+          <div className="hidden md:flex items-center justify-between gap-4 py-2">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {t("studioNavigation")}:
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="flex h-8.5 min-w-56 items-center justify-between gap-2.5 rounded-xl border border-border/80 bg-muted/50 px-3 text-xs font-semibold text-foreground hover:border-amber-500/60 hover:bg-muted/80 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    {React.createElement(
+                      NAV_TABS.find((t) => t.id === activeTab)?.icon || Layers,
+                      { className: "h-4 w-4 text-amber-500 shrink-0" }
+                    )}
+                    <span className="truncate">
+                      {t(NAV_TABS.find((t) => t.id === activeTab)?.labelKey || "maqamFamilies")}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-64 border-slate-700 bg-slate-900 text-slate-100 shadow-xl">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-amber-400 px-2 py-1.5">
+                      Studio Labs &amp; Modules
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-slate-800" />
+                    {NAV_TABS.map((tab) => {
+                      const Icon = tab.icon
+                      const isCurrent = activeTab === tab.id
+                      return (
+                        <DropdownMenuItem
+                          key={tab.id}
+                          onClick={() => handleSelectTab(tab.id)}
+                          className={`flex cursor-pointer items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${
+                            isCurrent
+                              ? "bg-amber-500/20 text-amber-300 font-bold"
+                              : "text-slate-200 hover:bg-slate-800 hover:text-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon className={`h-4 w-4 ${isCurrent ? "text-amber-400" : "text-slate-400"}`} />
+                            <span>{t(tab.labelKey)}</span>
+                          </div>
+                          {isCurrent && <CheckCircle2 className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
+                        </DropdownMenuItem>
+                      )
+                    })}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Direct Tab Pill Navigation for Larger Screens */}
+            <nav
+              role="tablist"
+              aria-label={t("studioNavigation")}
+              className="flex items-center gap-1 overflow-x-auto text-xs font-semibold scrollbar-none"
+            >
+              {NAV_TABS.map((tab, index) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    id={`tab-${tab.id}`}
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={`panel-${tab.id}`}
+                    tabIndex={isActive ? 0 : -1}
+                    onKeyDown={(e) => handleTabKeyDown(e, index)}
+                    onClick={() => handleSelectTab(tab.id)}
+                    aria-label={t(tab.labelKey)}
+                    title={t(tab.labelKey)}
+                    className={`flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 whitespace-nowrap text-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-95 ${
+                      isActive
+                        ? "border border-amber-500/50 bg-amber-500/15 font-bold text-amber-500 shadow-xs dark:bg-amber-500/20 dark:text-amber-300"
+                        : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                    }`}
+                  >
+                    <Icon
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        isActive
+                          ? "text-amber-500 dark:text-amber-400"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                    <span>{t(tab.labelKey)}</span>
+                  </button>
+                )
+              })}
+            </nav>
+          </div>
         </div>
       </header>
 
@@ -634,6 +728,7 @@ export default function App() {
             timbre={timbre}
           />
         )}
+
         {activeTab === "explorer" && (
           <MaqamExplorer
             currentMaqam={currentMaqam}
@@ -646,6 +741,8 @@ export default function App() {
             onToggleDrone={handleToggleDrone}
             onOpenMaqamFacts={() => setShowMaqamFacts(true)}
             onOpenMaqamBuilder={() => setShowMaqamBuilder(true)}
+            onOpenSayrVisualization={() => setShowSayrDialog(true)}
+            onOpenModulationPathways={() => setShowModulationDrawer(true)}
           />
         )}
 
@@ -701,7 +798,13 @@ export default function App() {
         )}
 
         {activeTab === "sayr" && (
-          <SayrQaflaLab currentMaqam={currentMaqam} maqamRevision={maqamRevision} timbre={timbre} />
+          <SayrQaflaLab
+            currentMaqam={currentMaqam}
+            maqamRevision={maqamRevision}
+            timbre={timbre}
+            onOpenModulationPathways={() => setShowModulationDrawer(true)}
+            onSelectMaqam={handleSelectMaqam}
+          />
         )}
 
         {activeTab === "score" && (
@@ -980,7 +1083,25 @@ export default function App() {
         open={showMaqamFacts}
         onOpenChange={setShowMaqamFacts}
         timbre={timbre}
+        currentMaqam={currentMaqam}
         onSelectMaqam={handleSelectMaqam}
+      />
+
+      {/* Sayr Visualization & Melodic Course Dialog */}
+      <SayrVisualizationDialog
+        open={showSayrDialog}
+        onOpenChange={setShowSayrDialog}
+        maqam={currentMaqam}
+        timbre={timbre}
+      />
+
+      {/* Modulation Pathways & Pivot Points Drawer */}
+      <ModulationPathwaysDrawer
+        open={showModulationDrawer}
+        onOpenChange={setShowModulationDrawer}
+        currentMaqam={currentMaqam}
+        onSelectMaqam={handleSelectMaqam}
+        timbre={timbre}
       />
     </div>
   )

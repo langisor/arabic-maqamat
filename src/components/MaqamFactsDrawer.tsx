@@ -21,15 +21,15 @@ import {
   Sparkles,
   Layers,
   Compass,
-  Info,
   Volume2,
   X,
   Music,
   CheckCircle2,
   ExternalLink,
+  HelpCircle,
 } from "lucide-react"
-import { Maqam, MaqamatCatalogue } from "../theory/maqam"
-import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
+import { Maqam, MaqamatCatalogue, type MaqamFamilyMnemonic } from "../theory/maqam"
+import { MicrotonalAudioEngine, type TimbreType } from "../audio/microtonal-audio"
 import { useLanguage } from "../state/language"
 
 interface FactSection {
@@ -116,10 +116,11 @@ const MAQAM_FACTS_DATA: FactSection[] = [
   },
 ]
 
-interface MaqamFactsDrawerProps {
+export interface MaqamFactsDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   timbre?: TimbreType
+  currentMaqam?: Maqam
   onSelectMaqam?: (maqam: Maqam) => void
 }
 
@@ -127,14 +128,18 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
   open,
   onOpenChange,
   timbre = "violin",
+  currentMaqam,
   onSelectMaqam,
 }) => {
   const { language } = useLanguage()
   const [expandedSections, setExpandedSections] = useState<string[]>([
+    "taxonomy-grid",
     "core-concepts",
-    "family-system",
   ])
   const [auditioningMaqamId, setAuditioningMaqamId] = useState<string | null>(null)
+
+  const allMaqamat = MaqamatCatalogue.getAllMaqamat()
+  const families = Object.values(MaqamatCatalogue.FAMILIES)
 
   const handleAuditionSample = (maqamId?: string) => {
     if (!maqamId) return
@@ -153,6 +158,13 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
     )
   }
 
+  const handleFamilyClick = (mnemonic: MaqamFamilyMnemonic) => {
+    const found = allMaqamat.find((m) => m.family === mnemonic)
+    if (found && onSelectMaqam) {
+      onSelectMaqam(found)
+    }
+  }
+
   const handleLoadMaqam = (maqamId?: string) => {
     if (!maqamId || !onSelectMaqam) return
     const maqam = MaqamatCatalogue.findById(maqamId)
@@ -164,22 +176,22 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh] bg-slate-950 text-slate-100 border-t border-amber-800/40">
+      <DrawerContent className="max-h-[92vh] bg-slate-950 text-slate-100 border-t border-amber-800/40">
         <DrawerHeader className="border-b border-slate-800/80 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
-                <BookOpen className="h-5 w-5" />
+                <HelpCircle className="h-5 w-5" />
               </div>
               <div>
                 <DrawerTitle className="text-xl font-bold flex items-center gap-2">
-                  <span>Maqam Facts &amp; Theory</span>
+                  <span>Maqam Theory &amp; 8 Families</span>
                   <span className="font-arabic text-amber-400 text-sm font-semibold">
-                    (نظريات ومفاهيم المقام)
+                    (دليل المقامات وفصائل صُنِعَ بِسِحْرِك)
                   </span>
                 </DrawerTitle>
                 <DrawerDescription className="text-xs text-slate-400">
-                  Comprehensive reference for classical Arabic modal music theory, ajnas, and violin pedagogy
+                  Comprehensive reference for classical Arabic modal music theory, the 8 families mnemonic (صُـنِـعَ بِـسِـحْـرِكَ), ajnas, and violin pedagogy
                 </DrawerDescription>
               </div>
             </div>
@@ -197,9 +209,101 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
         </DrawerHeader>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto px-6 py-5 space-y-6 max-h-[calc(90vh-140px)] scrollbar-thin">
-          {/* Hero Banner */}
-          <div className="rounded-2xl border border-amber-500/30 bg-linear-to-r from-amber-950/50 via-slate-900 to-indigo-950/40 p-4">
+        <div className="overflow-y-auto px-6 py-5 space-y-6 max-h-[calc(92vh-140px)] scrollbar-thin">
+          {/* 8 Families Mnemonic Banner (صُنِعَ بِسِحْرِك) */}
+          <div className="rounded-2xl border border-amber-800/40 bg-linear-to-r from-amber-950/50 via-slate-900 to-indigo-950/40 p-4 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-800/30 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold tracking-widest uppercase text-amber-400">
+                    The 8 Fundamental Families
+                  </span>
+                  <Badge variant="secondary" className="font-arabic text-[11px] font-bold bg-amber-500/20 text-amber-300">
+                    صُـنِـعَ بِـسِـحْـرِكَ
+                  </Badge>
+                </div>
+                <h3 className="mt-1 text-lg font-extrabold text-white">
+                  Maqam Family Taxonomy
+                </h3>
+              </div>
+              <p className="max-w-md text-xs text-slate-300">
+                The classical mnemonic{" "}
+                <span className="font-serif text-sm font-bold text-amber-300">
+                  "صُنع بسحرك"
+                </span>{" "}
+                categorizes modal systems by their root lower Jins. Click any card to select its archetype Maqam in the studio:
+              </p>
+            </div>
+
+            {/* 8 Family Interactive Grid */}
+            <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
+              {families.map((fam) => {
+                const isSelected = currentMaqam?.family === fam.mnemonic
+                const sampleMaqam = allMaqamat.find((m) => m.family === fam.mnemonic)
+                const isAuditioning = sampleMaqam && auditioningMaqamId === sampleMaqam.id
+
+                return (
+                  <div
+                    key={fam.mnemonic}
+                    className={`group flex flex-col justify-between rounded-xl border p-3 transition-all ${
+                      isSelected
+                        ? "border-amber-300 bg-amber-500/20 text-slate-100 shadow-lg ring-2 ring-amber-400/50"
+                        : "border-slate-800/80 bg-slate-950/70 text-slate-200 hover:border-amber-500/40 hover:bg-slate-900/90"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleFamilyClick(fam.mnemonic)}
+                      className="cursor-pointer text-center w-full focus:outline-none"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span
+                          className={`font-serif text-2xl font-bold transition-transform group-hover:scale-110 ${
+                            isSelected ? "text-amber-300" : "text-amber-400"
+                          }`}
+                        >
+                          {fam.arabicLetter}
+                        </span>
+                        {isSelected && (
+                          <Badge variant="default" className="text-[9px] px-1 py-0 h-4 bg-amber-500 text-slate-950 font-bold">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="mt-1 block text-xs font-bold truncate">
+                        {fam.mnemonic}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] text-amber-400/90 font-arabic">
+                        {fam.arabicName}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] text-slate-400 truncate">
+                        {fam.rootJinsDef.name}
+                      </span>
+                    </button>
+
+                    {sampleMaqam && (
+                      <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAuditionSample(sampleMaqam.id)}
+                          disabled={Boolean(isAuditioning)}
+                          className="h-6 w-full text-[10px] p-0 text-slate-300 hover:text-white hover:bg-amber-500/20"
+                          title={`Listen to ${sampleMaqam.name}`}
+                        >
+                          <Volume2 className={`h-2.5 w-2.5 mr-1 text-amber-400 ${isAuditioning ? "animate-pulse" : ""}`} />
+                          <span>{isAuditioning ? "Playing" : "Hear"}</span>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Theoretical Foundations & Facts */}
+          <div className="rounded-2xl border border-amber-500/30 bg-linear-to-r from-amber-950/40 via-slate-900 to-indigo-950/30 p-4">
             <div className="flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
               <div>
@@ -207,7 +311,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                   The Organic Nature of Arabic Modal Architecture
                 </h4>
                 <p className="mt-1 text-xs text-slate-300 leading-relaxed">
-                  Unlike Western major and minor keys, a Maqam is not a simple collection of pitches. It is a living, evolving modal pathway defined by its root jins, upper tetrachords, secondary pivots, cadential closures, and microtonal nuances in the 24-EDO quarter-tone system.
+                  Unlike Western major and minor scales, a Maqam is not a static set of pitches. It is a living, evolving modal pathway defined by its root lower jins, upper tetrachords, secondary pivots (ghammaz), cadential closures (qaflat), and microtonal nuances in the 24-EDO quarter-tone system.
                 </p>
               </div>
             </div>
@@ -270,7 +374,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                             size="sm"
                             onClick={() => handleAuditionSample(section.sampleMaqamId)}
                             disabled={isAuditioning}
-                            className="h-7 text-xs gap-1 border-slate-700 bg-slate-800 text-slate-200 hover:text-white"
+                            className="h-7 text-xs gap-1 border-slate-700 bg-slate-800 text-slate-200 hover:text-white cursor-pointer"
                           >
                             <Volume2 className={`h-3 w-3 text-amber-400 ${isAuditioning ? "animate-pulse" : ""}`} />
                             <span>{isAuditioning ? "Playing..." : "Listen"}</span>
@@ -281,7 +385,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => handleLoadMaqam(section.sampleMaqamId)}
-                              className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300"
+                              className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300 cursor-pointer"
                             >
                               <span>Explore in Studio</span>
                               <ExternalLink className="h-3 w-3" />
@@ -316,3 +420,5 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
     </Drawer>
   )
 }
+
+export const MaqamHelpDrawer = MaqamFactsDrawer

@@ -3,7 +3,6 @@ import React, { useState } from "react"
 import {
   Maqam,
   MaqamatCatalogue,
-  type MaqamFamilyMnemonic,
 } from "../theory/maqam"
 import {
   ArabicPitch,
@@ -28,24 +27,19 @@ import {
 } from "./ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs"
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import {
   Play,
   Square,
   Radio,
   RotateCcw,
   Sparkles,
   SlidersHorizontal,
-  BookOpen,
   Wand2,
+  Compass,
+  GitFork,
 } from "lucide-react"
-import { MaqamFactsDrawer } from "./MaqamFactsDrawer"
+import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
+import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
-import { SayrVisualization } from "./SayrVisualization"
 
 interface Props {
   currentMaqam: Maqam
@@ -58,6 +52,8 @@ interface Props {
   onToggleDrone: (pitch: ArabicPitch) => void
   onOpenMaqamFacts?: () => void
   onOpenMaqamBuilder?: () => void
+  onOpenSayrVisualization?: () => void
+  onOpenModulationPathways?: () => void
 }
 
 export const MaqamExplorer: React.FC<Props> = ({
@@ -69,15 +65,26 @@ export const MaqamExplorer: React.FC<Props> = ({
   onStopScale,
   isDroneActive,
   onToggleDrone,
-  onOpenMaqamFacts,
   onOpenMaqamBuilder,
+  onOpenSayrVisualization,
+  onOpenModulationPathways,
 }) => {
-  const [showFactsDrawerLocal, setShowFactsDrawerLocal] = useState(false)
-  const handleOpenFacts = () => {
-    if (onOpenMaqamFacts) {
-      onOpenMaqamFacts()
+  const [showSayrDialogLocal, setShowSayrDialogLocal] = useState(false)
+  const [showModulationDrawerLocal, setShowModulationDrawerLocal] = useState(false)
+
+  const handleOpenSayr = () => {
+    if (onOpenSayrVisualization) {
+      onOpenSayrVisualization()
     } else {
-      setShowFactsDrawerLocal(true)
+      setShowSayrDialogLocal(true)
+    }
+  }
+
+  const handleOpenModulation = () => {
+    if (onOpenModulationPathways) {
+      onOpenModulationPathways()
+    } else {
+      setShowModulationDrawerLocal(true)
     }
   }
 
@@ -134,8 +141,6 @@ export const MaqamExplorer: React.FC<Props> = ({
     })
   }
 
-  const allMaqamat = MaqamatCatalogue.getAllMaqamat()
-  const families = Object.values(MaqamatCatalogue.FAMILIES)
   const spineNotes = ArabicNoteSpine.getSpine()
 
   // Determine base original template for current maqam id
@@ -158,12 +163,6 @@ export const MaqamExplorer: React.FC<Props> = ({
   const candidateDeltaQt = originalTonic.diffQuarterTones(candidatePitch)
   const candidateCents = candidateDeltaQt * 50
 
-  const handleFamilyClick = (mnemonic: MaqamFamilyMnemonic) => {
-    const found = allMaqamat.find((m) => m.family === mnemonic)
-    if (found) {
-      onSelectMaqam(found)
-    }
-  }
 
   const handleTransposeToPitch = (targetPitch: ArabicPitch) => {
     const transposed = baseMaqam.transpose(targetPitch)
@@ -417,34 +416,16 @@ export const MaqamExplorer: React.FC<Props> = ({
 
   return (
     <div className="space-y-6">
-      {/* Maqam Theory & Facts Educational Modal Trigger Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-amber-800/40 bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
-            <BookOpen className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white">Maqam Facts &amp; Modal Theory Reference</span>
-              <Badge variant="secondary" className="font-arabic text-[10px]">نظريات ومفاهيم المقام</Badge>
-            </div>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Explore classical rules of ajnas chaining, the 8 families (صُنِعَ بِسِحْرِك), ghammaz pivots, and violin pedagogy in a dedicated reference drawer.
-            </p>
-          </div>
+      {/* Quick Studio Tools Bar (Maqam Builder & Modulation Pathways) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/60 shadow-xs">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-amber-400" />
+          <span className="text-xs font-semibold text-slate-300">
+            Interactive Analysis &amp; Construction Tools:
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleOpenFacts}
-            className="gap-2 bg-linear-to-r from-amber-600 to-amber-500 text-slate-950 font-bold hover:from-amber-500 hover:to-amber-400 cursor-pointer shadow-sm"
-          >
-            <BookOpen className="h-4 w-4" />
-            <span>Open Maqam Facts</span>
-          </Button>
-
+        <div className="flex flex-wrap items-center gap-2">
           {onOpenMaqamBuilder && (
             <Button
               variant="outline"
@@ -456,82 +437,18 @@ export const MaqamExplorer: React.FC<Props> = ({
               <span>Maqam Builder</span>
             </Button>
           )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenModulation}
+            className="gap-1.5 border-emerald-700/60 bg-emerald-950/40 text-emerald-300 hover:text-white hover:border-emerald-500 cursor-pointer"
+          >
+            <GitFork className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Modulation Pathways</span>
+          </Button>
         </div>
       </div>
-
-      {/* Standalone MaqamFactsDrawer when opened locally */}
-      {showFactsDrawerLocal && (
-        <MaqamFactsDrawer
-          open={showFactsDrawerLocal}
-          onOpenChange={setShowFactsDrawerLocal}
-          timbre={timbre}
-          onSelectMaqam={onSelectMaqam}
-        />
-      )}
-
-      {/* 8 Families Mnemonic Banner (صُنِعَ بِسِحْرِك) */}
-      <Accordion className="border-amber-800/30 bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40">
-        <AccordionItem
-          value="taxonomy"
-          className="border-b border-border/50 pb-3"
-        >
-          <AccordionTrigger className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold tracking-widest uppercase">
-                  The 8 Fundamental Families
-                </span>
-                <Badge variant="secondary" className="font-arabic text-[10px]">
-                  صُـنِـعَ بِـسِـحْـرِكَ
-                </Badge>
-              </div>
-              <CardTitle className="mt-1 text-xl sm:text-2xl">
-                Maqam Family Taxonomy
-              </CardTitle>
-            </div>
-            <CardDescription className="max-w-sm text-[11px] text-slate-300">
-              The classical mnemonic{" "}
-              <span className="font-serif text-sm font-bold text-amber-300">
-                "صُنع بسحرك"
-              </span>{" "}
-              categorizes modal systems by their root lower Jins.
-            </CardDescription>
-          </AccordionTrigger>
-
-          {/* 8 Family Interactive Grid */}
-          <AccordionContent className="pt-4">
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
-              {families.map((fam) => {
-                const isSelected = currentMaqam.family === fam.mnemonic
-                return (
-                  <button
-                    key={fam.mnemonic}
-                    onClick={() => handleFamilyClick(fam.mnemonic)}
-                    className={`group flex cursor-pointer flex-col items-center justify-between rounded-xl border p-3 text-center transition-all ${isSelected
-                      ? "scale-102 border-amber-300 bg-amber-500 text-slate-950 shadow-lg ring-2 ring-amber-400/40"
-                      : "border-slate-800/80 bg-slate-950/70 text-slate-200 hover:border-amber-500/40 hover:bg-slate-800/80"
-                      }`}
-                  >
-                    <span
-                      className={`font-serif text-2xl font-bold ${isSelected ? "text-slate-950" : "text-amber-400 transition-transform group-hover:scale-110"}`}
-                    >
-                      {fam.arabicLetter}
-                    </span>
-                    <span className="mt-1 text-xs font-bold">
-                      {fam.mnemonic}
-                    </span>
-                    <span
-                      className={`mt-0.5 text-[10px] ${isSelected ? "font-medium text-slate-800" : "text-slate-400"}`}
-                    >
-                      {fam.rootJinsDef.name}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
 
       {/* Selected Maqam Inspector & Playback Controls */}
       <Card className="border-slate-800/90 bg-slate-900/90">
@@ -796,11 +713,88 @@ export const MaqamExplorer: React.FC<Props> = ({
           )}
 
 
-          {/* Sayr Visualization */}
-          <SayrVisualization
-            sayrDirection={currentMaqam.sayrDirection}
-            maqamName={currentMaqam.name}
-          />
+          {/* Sayr Melodic Trajectory Modal Trigger Banner */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-sky-800/40 bg-linear-to-r from-sky-950/40 via-slate-900/90 to-indigo-950/40 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400">
+                <Compass className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-white">Sayr Melodic Trajectory &amp; Course</span>
+                  <Badge variant="secondary" className="font-arabic text-[10px]">مسار السير والتحويلات</Badge>
+                  <Badge variant="outline" className="text-[10px] text-sky-300 border-sky-500/30 capitalize">
+                    {currentMaqam.sayrDirection.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Explore interactive quarter-tone trajectory curves, pivot stops (Qarar, Ghammaz, Jawab), and modulation branches in a dedicated modal dialog.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleOpenSayr}
+              className="gap-2 bg-linear-to-r from-sky-600 to-sky-500 text-slate-950 font-bold hover:from-sky-500 hover:to-sky-400 cursor-pointer shadow-sm"
+            >
+              <Compass className="h-4 w-4" />
+              <span>Open Sayr Visualization</span>
+            </Button>
+          </div>
+
+          {/* Standalone SayrVisualizationDialog when opened locally */}
+          {showSayrDialogLocal && (
+            <SayrVisualizationDialog
+              open={showSayrDialogLocal}
+              onOpenChange={setShowSayrDialogLocal}
+              maqam={currentMaqam}
+              timbre={timbre}
+            />
+          )}
+
+          {/* Modulation Pathways Modal Trigger Banner */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-emerald-800/40 bg-linear-to-r from-emerald-950/40 via-slate-900/90 to-teal-950/40 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+                <GitFork className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-white">Modulation Pathways &amp; Pivot Ajnas</span>
+                  <Badge variant="secondary" className="font-arabic text-[10px]">مسارات الانتقال والتنجيس</Badge>
+                  <Badge variant="outline" className="text-[10px] text-emerald-300 border-emerald-500/30">
+                    Shared Ajnas &amp; Cross-Family Pivots
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Discover idiomatic pivot points between <strong className="text-emerald-200">{currentMaqam.name}</strong> and other Maqamat in the {currentMaqam.family} family or related families. Audition pivot phrases in real-time.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleOpenModulation}
+              className="gap-2 bg-linear-to-r from-emerald-600 to-emerald-500 text-slate-950 font-bold hover:from-emerald-500 hover:to-emerald-400 cursor-pointer shadow-sm"
+            >
+              <GitFork className="h-4 w-4" />
+              <span>Explore Modulation Pathways</span>
+            </Button>
+          </div>
+
+          {/* Standalone ModulationPathwaysDrawer when opened locally */}
+          {showModulationDrawerLocal && (
+            <ModulationPathwaysDrawer
+              open={showModulationDrawerLocal}
+              onOpenChange={setShowModulationDrawerLocal}
+              currentMaqam={currentMaqam}
+              onSelectMaqam={onSelectMaqam}
+              timbre={timbre}
+            />
+          )}
 
           {/* Quick Scale Degree Buttons */}
           <div>

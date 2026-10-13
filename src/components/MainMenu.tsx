@@ -31,6 +31,7 @@ import {
   SlidersHorizontal,
   ChevronRight,
   Globe,
+  GitFork,
 } from "lucide-react"
 import { ValidLab } from "../state/workspace-state"
 import { ViolinTuningPreset } from "./ViolinFingerboard"
@@ -48,6 +49,8 @@ interface MainMenuProps {
   onToggleDrone: () => void
   onOpenMaqamBuilder: () => void
   onOpenMaqamFacts: () => void
+  onOpenSayrVisualization?: () => void
+  onOpenModulationPathways?: () => void
   onOpenAudioSettings: () => void
   systemTuningMode?: "24edo" | "12tet"
   onSystemTuningChange?: (mode: "24edo" | "12tet") => void
@@ -64,6 +67,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onToggleDrone,
   onOpenMaqamBuilder,
   onOpenMaqamFacts,
+  onOpenSayrVisualization,
+  onOpenModulationPathways,
   onOpenAudioSettings,
   systemTuningMode = "24edo",
   onSystemTuningChange,
@@ -196,6 +201,48 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     </div>
                   </div>
                 </button>
+
+                {/* Sayr Visualization Dialog Button */}
+                {onOpenSayrVisualization && (
+                  <button
+                    type="button"
+                    onClick={() => handleAction(onOpenSayrVisualization)}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-sky-500/40 bg-linear-to-r from-sky-950/40 to-slate-900 text-left transition-all hover:border-sky-400 hover:shadow-md cursor-pointer group"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/20 text-sky-400 group-hover:scale-110 transition-transform">
+                      <Compass className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white group-hover:text-sky-200">
+                        Sayr Trajectory Diagram
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-arabic">
+                        مسار سير المقام والتحويلات
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {/* Modulation Pathway Tool Button */}
+                {onOpenModulationPathways && (
+                  <button
+                    type="button"
+                    onClick={() => handleAction(onOpenModulationPathways)}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-emerald-500/40 bg-linear-to-r from-emerald-950/40 to-slate-900 text-left transition-all hover:border-emerald-400 hover:shadow-md cursor-pointer group"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:scale-110 transition-transform">
+                      <GitFork className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white group-hover:text-emerald-200">
+                        Modulation Pathways
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-arabic">
+                        مسارات الانتقال والتنجيس
+                      </div>
+                    </div>
+                  </button>
+                )}
               </div>
             </div>
 
