@@ -16,14 +16,14 @@ export function SessionBar({ maqam, isDroneActive, transportStatus, onNavigate }
   const { t } = useLanguage()
   const tonic = maqam.getTonic()
   const ghammaz = maqam.getGhammaz()
-  const scale = maqam.getScale().map((pitch) => pitch.toScientificString()).join(" · ")
+  const scale = maqam.getScale().map((pitch) => pitch.toScientificString()).join("  ")
 
   return (
     <section
       aria-label={t("currentSession")}
-      className="border-b border-border bg-muted/35 px-4 py-3 sm:px-6 lg:px-8"
+      className="border-b border-border bg-muted/35 px-3 py-2 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto grid max-w-7xl gap-x-6 gap-y-3 md:grid-cols-[minmax(13rem,1fr)_minmax(16rem,1.6fr)_auto] md:items-center">
+      <div className="mx-auto grid max-w-7xl gap-x-4 sm:gap-x-6 gap-y-2 sm:gap-y-3 md:grid-cols-[minmax(12rem,1fr)_minmax(14rem,1.5fr)_auto] md:items-center">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase text-muted-foreground">{t("currentSession")}</p>
           <div className="flex min-w-0 items-center gap-2">
@@ -66,6 +66,9 @@ export function SessionBar({ maqam, isDroneActive, transportStatus, onNavigate }
           </span>
           <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={() => onNavigate("explorer")}>
             {t("explore")}<ArrowRight className="h-3 w-3 rtl:rotate-180" aria-hidden="true" />
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-purple-300 hover:text-purple-200" onClick={() => onNavigate("jins-analysis")}>
+            Baggage
           </Button>
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onNavigate("training")}>{t("practice")}</Button>
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onNavigate("score")}>{t("score")}</Button>

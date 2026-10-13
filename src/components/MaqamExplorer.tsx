@@ -36,9 +36,12 @@ import {
   Wand2,
   Compass,
   GitFork,
+  Network,
+  Package,
 } from "lucide-react"
 import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
+import { MaqamNetworkGraph } from "./MaqamNetworkGraph"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
 
 interface Props {
@@ -54,6 +57,7 @@ interface Props {
   onOpenMaqamBuilder?: () => void
   onOpenSayrVisualization?: () => void
   onOpenModulationPathways?: () => void
+  onOpenJinsAnalysis?: () => void
 }
 
 export const MaqamExplorer: React.FC<Props> = ({
@@ -68,9 +72,11 @@ export const MaqamExplorer: React.FC<Props> = ({
   onOpenMaqamBuilder,
   onOpenSayrVisualization,
   onOpenModulationPathways,
+  onOpenJinsAnalysis,
 }) => {
   const [showSayrDialogLocal, setShowSayrDialogLocal] = useState(false)
   const [showModulationDrawerLocal, setShowModulationDrawerLocal] = useState(false)
+  const [explorerTab, setExplorerTab] = useState<'structure' | 'network'>('structure')
 
   const handleOpenSayr = () => {
     if (onOpenSayrVisualization) {
@@ -163,7 +169,6 @@ export const MaqamExplorer: React.FC<Props> = ({
   const candidateDeltaQt = originalTonic.diffQuarterTones(candidatePitch)
   const candidateCents = candidateDeltaQt * 50
 
-
   const handleTransposeToPitch = (targetPitch: ArabicPitch) => {
     const transposed = baseMaqam.transpose(targetPitch)
     onSelectMaqam(transposed)
@@ -173,250 +178,14 @@ export const MaqamExplorer: React.FC<Props> = ({
     onSelectMaqam(baseMaqam)
   }
 
-  // Classical popular transpositions for the current base Maqam
-  const getClassicalTranspositionsForMaqam = (): {
-    pitch: ArabicPitch
-    title: string
-    arabicTitle: string
-    noteName: string
-  }[] => {
-    switch (baseMaqam.id) {
-      case "rast":
-        return [
-          {
-            pitch: new ArabicPitch("G", "♮", 3),
-            title: "Maqam Yakah",
-            arabicTitle: "يكاه",
-            noteName: "Yakah (G3)",
-          },
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Maqam Rast (Original)",
-            arabicTitle: "راست",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("D", "♮", 4),
-            title: "Maqam Nirz",
-            arabicTitle: "نيرز",
-            noteName: "Dukah (D4)",
-          },
-          {
-            pitch: new ArabicPitch("G", "♮", 4),
-            title: "Maqam Mahur / Nawa",
-            arabicTitle: "ماهور (راست نوى)",
-            noteName: "Nawa (G4)",
-          },
-          {
-            pitch: new ArabicPitch("C", "♮", 5),
-            title: "Maqam Kirdan",
-            arabicTitle: "كردان",
-            noteName: "Kirdan (C5)",
-          },
-        ]
-      case "bayati":
-        return [
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Bayati ‘ala al-Rast",
-            arabicTitle: "بياتي راست",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("D", "♮", 4),
-            title: "Maqam Bayati (Original)",
-            arabicTitle: "بياتي",
-            noteName: "Dukah (D4)",
-          },
-          {
-            pitch: new ArabicPitch("G", "♮", 4),
-            title: "Maqam Shuri (Bayati Nawa)",
-            arabicTitle: "شوري (بياتي نوى)",
-            noteName: "Nawa (G4)",
-          },
-          {
-            pitch: new ArabicPitch("A", "♮", 4),
-            title: "Maqam Husayni",
-            arabicTitle: "حسيني",
-            noteName: "Husayni (A4)",
-          },
-        ]
-      case "hijaz":
-        return [
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Maqam Hijaz Kar",
-            arabicTitle: "حجاز كار",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("D", "♮", 4),
-            title: "Maqam Hijaz (Original)",
-            arabicTitle: "حجاز",
-            noteName: "Dukah (D4)",
-          },
-          {
-            pitch: new ArabicPitch("G", "♮", 4),
-            title: "Maqam Shahnaz",
-            arabicTitle: "شهناز",
-            noteName: "Nawa (G4)",
-          },
-          {
-            pitch: new ArabicPitch("A", "♮", 4),
-            title: "Maqam Suzidil",
-            arabicTitle: "سوزدل",
-            noteName: "Husayni (A4)",
-          },
-        ]
-      case "nahawand":
-        return [
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Maqam Nahawand (Original)",
-            arabicTitle: "نهاوند",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("D", "♮", 4),
-            title: "Nahawand Murassah",
-            arabicTitle: "نهاوند مرصع",
-            noteName: "Dukah (D4)",
-          },
-          {
-            pitch: new ArabicPitch("G", "♮", 4),
-            title: "Maqam Farahfaza",
-            arabicTitle: "فرحفزا",
-            noteName: "Nawa (G4)",
-          },
-        ]
-      case "sikah":
-        return [
-          {
-            pitch: new ArabicPitch("B", "𝄳", 3),
-            title: "Maqam ‘Iraq",
-            arabicTitle: "عراق",
-            noteName: "‘Iraq (B𝄳3)",
-          },
-          {
-            pitch: new ArabicPitch("E", "𝄳", 4),
-            title: "Maqam Sikah (Original)",
-            arabicTitle: "سيكاه",
-            noteName: "Sikah (E𝄳4)",
-          },
-          {
-            pitch: new ArabicPitch("B", "𝄳", 4),
-            title: "Maqam Awj",
-            arabicTitle: "أوج",
-            noteName: "Awj (B𝄳4)",
-          },
-        ]
-      case "kurd":
-        return [
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Kurd ‘ala al-Rast",
-            arabicTitle: "كرد راست",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("D", "♮", 4),
-            title: "Maqam Kurd (Original)",
-            arabicTitle: "كرد",
-            noteName: "Dukah (D4)",
-          },
-          {
-            pitch: new ArabicPitch("G", "♮", 4),
-            title: "Maqam Kurd Nawa",
-            arabicTitle: "كرد نوى",
-            noteName: "Nawa (G4)",
-          },
-          {
-            pitch: new ArabicPitch("A", "♮", 4),
-            title: "Maqam Hijazkar Kurd",
-            arabicTitle: "حجاز كار كرد",
-            noteName: "Husayni (A4)",
-          },
-        ]
-      case "ajam":
-        return [
-          {
-            pitch: new ArabicPitch("B", "♭", 3),
-            title: "Maqam ‘Ajam ‘Ushayran (Original)",
-            arabicTitle: "عجم عشيران",
-            noteName: "‘Ajam (B♭3)",
-          },
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Maqam Jaharkah / ‘Ajam",
-            arabicTitle: "جهاركاه / عجم",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("F", "♮", 4),
-            title: "Maqam ‘Ajam Nawa",
-            arabicTitle: "عجم نوى",
-            noteName: "Jiharkah (F4)",
-          },
-        ]
-      case "saba":
-        return [
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Saba ‘ala al-Rast",
-            arabicTitle: "صبا راست",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("D", "♮", 4),
-            title: "Maqam Saba (Original)",
-            arabicTitle: "صبا",
-            noteName: "Dukah (D4)",
-          },
-          {
-            pitch: new ArabicPitch("G", "♮", 4),
-            title: "Maqam Saba Zamzam / Nawa",
-            arabicTitle: "صبا زمزم",
-            noteName: "Nawa (G4)",
-          },
-        ]
-      case "nikriz":
-        return [
-          {
-            pitch: new ArabicPitch("C", "♮", 4),
-            title: "Maqam Nikriz (Original)",
-            arabicTitle: "نكريز",
-            noteName: "Rast (C4)",
-          },
-          {
-            pitch: new ArabicPitch("G", "♮", 4),
-            title: "Maqam Nawa Athar",
-            arabicTitle: "نوى أثر",
-            noteName: "Nawa (G4)",
-          },
-        ]
-      default:
-        return [
-          {
-            pitch: baseMaqam.getTonic(),
-            title: `${baseMaqam.name} (Original)`,
-            arabicTitle: "الأصل",
-            noteName: baseMaqam.getTonic().toScientificString(),
-          },
-        ]
-    }
-  }
-
-  const classicalTranspositions = getClassicalTranspositionsForMaqam()
   const scalePitches = currentMaqam.getScale()
   const tonic = currentMaqam.getTonic()
   const ghammaz = currentMaqam.getGhammaz()
-
-
-  console.log("Current Maqam raw data: ", currentMaqam)
+  const baggageNotes = currentMaqam.lowerJins.getBaggageNotes()
 
   return (
     <div className="space-y-6">
-      {/* Quick Studio Tools Bar (Maqam Builder & Modulation Pathways) */}
+      {/* Quick Studio Tools Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/60 shadow-xs">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-amber-400" />
@@ -424,7 +193,6 @@ export const MaqamExplorer: React.FC<Props> = ({
             Interactive Analysis &amp; Construction Tools:
           </span>
         </div>
-
         <div className="flex flex-wrap items-center gap-2">
           {onOpenMaqamBuilder && (
             <Button
@@ -437,7 +205,6 @@ export const MaqamExplorer: React.FC<Props> = ({
               <span>Maqam Builder</span>
             </Button>
           )}
-
           <Button
             variant="outline"
             size="sm"
@@ -447,11 +214,20 @@ export const MaqamExplorer: React.FC<Props> = ({
             <GitFork className="h-3.5 w-3.5 text-emerald-400" />
             <span>Modulation Pathways</span>
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOpenSayr}
+            className="gap-1.5 border-sky-700/60 bg-sky-950/40 text-sky-300 hover:text-white hover:border-sky-500 cursor-pointer"
+          >
+            <Compass className="h-3.5 w-3.5 text-sky-400" />
+            <span>Sayr Trajectory</span>
+          </Button>
         </div>
       </div>
 
       {/* Selected Maqam Inspector & Playback Controls */}
-      <Card className="border-slate-800/90 bg-slate-900/90">
+      <Card className="border-slate-800/90 bg-slate-900/90 shadow-xl">
         <CardHeader className="border-b border-border/60 pb-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -469,7 +245,6 @@ export const MaqamExplorer: React.FC<Props> = ({
                 <MaqamTermTooltip term="family" showIcon={false}>
                   <Badge variant="secondary">Family: {currentMaqam.family}</Badge>
                 </MaqamTermTooltip>
-
                 {isTransposed && (
                   <Badge
                     variant="default"
@@ -481,7 +256,6 @@ export const MaqamExplorer: React.FC<Props> = ({
                   </Badge>
                 )}
               </div>
-
               <CardDescription className="mt-1 max-w-2xl text-sm text-slate-300">
                 {currentMaqam.description}
               </CardDescription>
@@ -494,7 +268,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 onClick={() =>
                   isPlayingScale ? onStopScale() : onPlayScale(scalePitches)
                 }
-                className="gap-2"
+                className="gap-2 font-bold cursor-pointer"
               >
                 {isPlayingScale ? (
                   <Square className="fill-current" />
@@ -503,22 +277,20 @@ export const MaqamExplorer: React.FC<Props> = ({
                 )}
                 {isPlayingScale ? "Stop Scale" : "Play Full Scale"}
               </Button>
-
               <Button
                 variant={isDroneActive ? "default" : "outline"}
                 onClick={() => onToggleDrone(tonic)}
-                className="gap-2"
+                className="gap-2 cursor-pointer"
               >
                 <Radio className={isDroneActive ? "animate-pulse" : ""} />
                 {isDroneActive ? "Drone Active" : "Qarar Drone"}
               </Button>
-
               {isTransposed && (
                 <Button
                   variant="outline"
                   size="default"
                   onClick={handleResetTransposition}
-                  className="gap-1.5"
+                  className="gap-1.5 cursor-pointer"
                   title={`Reset to original ${baseMaqam.name}`}
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -527,328 +299,300 @@ export const MaqamExplorer: React.FC<Props> = ({
               )}
             </div>
           </div>
+
+          {/* Toggle between Structural View and Network Graph View */}
+          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-800">
+            <span className="text-xs font-semibold text-slate-400">View Mode:</span>
+            <div className="flex rounded-xl border border-slate-800 bg-slate-950 p-1">
+              <button
+                type="button"
+                onClick={() => setExplorerTab('structure')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                  explorerTab === 'structure'
+                    ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                <span>Modal Structure &amp; Ajnas</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setExplorerTab('network')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                  explorerTab === 'network'
+                    ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Network className="h-3.5 w-3.5" />
+                <span>Ajnas Network Graph (Abu Shumays)</span>
+              </button>
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-6 pt-6">
-          {/* Structural Architecture: Lower Jins, Connection, Upper Jins */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {/* Lower Jins */}
-            <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <MaqamTermTooltip term="root jins" showIcon={false}>
-                    <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">
-                      Jins al-Asl (جنس الأصل)
-                    </span>
-                  </MaqamTermTooltip>
-                  <Badge variant="default" className="text-[10px]">
-                    {currentMaqam.lowerJins.definition.type}
-                  </Badge>
-                </div>
-                <h4 className="mt-1 text-lg font-bold text-white">
-                  Jins {currentMaqam.lowerJins.definition.name}
-                </h4>
-                <p className="mt-1 text-xs text-slate-400">
-                  Root:{" "}
-                  <strong className="text-amber-300">
-                    {formatPitchWithLargeAccidentalReact(currentMaqam.lowerJins.root, { size: 'large' })}
-                  </strong>{" "}
-                  (
-                  {ArabicNoteSpine.resolveDegreeName(
-                    currentMaqam.lowerJins.root
-                  )}
-                  )
-                </p>
-                <div className="mt-2 flex items-center gap-1.5 font-mono text-xs text-slate-300">
-                  <span className="text-slate-500">Steps (qt):</span>
-                  <span className="font-semibold text-amber-300">
-                    [{currentMaqam.lowerJins.definition.intervals.join(" - ")}]
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    ({currentMaqam.lowerJins.getTotalSpanCents()}¢)
-                  </span>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
-                <span className="text-slate-400">Tonic (قرار):</span>
-                <span className="font-bold text-emerald-400">
-                  {formatPitchWithLargeAccidentalReact(tonic, { size: 'large' })}
-                </span>
-              </div>
-            </div>
-
-            {/* Connection Type & Ghammaz */}
-            <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold tracking-wider text-sky-400 uppercase">
-                    Connection &amp; Pivot
-                  </span>
-                  <Badge variant="default" className="text-[10px]">
-                    {currentMaqam.connection} (
-                    {currentMaqam.connection === "Ittisal"
-                      ? "اتصال"
-                      : currentMaqam.connection === "Infisal"
-                        ? "انفصال"
-                        : "تداخل"}
-                    )
-                  </Badge>
-                </div>
-                <h4 className="mt-1 text-lg font-bold text-white">
-                  <MaqamTermTooltip term="ghammaz" showIcon={false}>
-                    Ghammaz (غمّاز)
-                  </MaqamTermTooltip>
-                  : {formatPitchWithLargeAccidentalReact(ghammaz, { size: 'large' })}
-                </h4>
-                <p className="mt-1 text-xs text-slate-400">
-                  {currentMaqam.connection === "Ittisal"
-                    ? "Conjunct: Lower Jins top merges into Upper Jins root (Pivot Note)."
-                    : currentMaqam.connection === "Infisal"
-                      ? "Disjunct: 1 whole tone (4 quarter-tones / 200¢) gap between cells."
-                      : "Overlapping / Interlocking cell structure."}
-                </p>
-              </div>
-              <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
-                <span className="text-slate-400">Ghammaz Frequency:</span>
-                <span className="font-bold text-sky-400">
-                  {ghammaz.toFrequency().toFixed(1)} Hz
-                </span>
-              </div>
-            </div>
-
-            {/* Upper Jins */}
-            <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <MaqamTermTooltip term="jins" showIcon={false}>
-                    <span className="text-[11px] font-bold tracking-wider text-purple-400 uppercase">
-                      Jins al-Far' (جنس الفرع)
-                    </span>
-                  </MaqamTermTooltip>
-                  <Badge variant="default" className="text-[10px]">
-                    {currentMaqam.upperJins.definition.type}
-                  </Badge>
-                </div>
-                <h4 className="mt-1 text-lg font-bold text-white">
-                  Jins {currentMaqam.upperJins.definition.name}
-                </h4>
-                <p className="mt-1 text-xs text-slate-400">
-                  Root:{" "}
-                  <strong className="text-purple-300">
-                    {formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.root, { size: 'large' })}
-                  </strong>{" "}
-                  (
-                  {ArabicNoteSpine.resolveDegreeName(
-                    currentMaqam.upperJins.root
-                  )}
-                  )
-                </p>
-                <div className="mt-2 flex items-center gap-1.5 font-mono text-xs text-slate-300">
-                  <span className="text-slate-500">Steps (qt):</span>
-                  <span className="font-semibold text-purple-300">
-                    [{currentMaqam.upperJins.definition.intervals.join(" - ")}]
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    ({currentMaqam.upperJins.getTotalSpanCents()}¢)
-                  </span>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
-                <span className="text-slate-400">Upper Octave Apex:</span>
-                <span className="font-bold text-purple-400">
-                  {currentMaqam.extraPitches[
-                    currentMaqam.extraPitches.length - 1
-                  ] ? formatPitchWithLargeAccidentalReact(currentMaqam.extraPitches[currentMaqam.extraPitches.length - 1], { size: 'large' })
-                    : formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.getTopPitch(), { size: 'large' })}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Show alternate upper jins if available */}
-          {currentMaqam.alternateUpperAjnas.length > 0 && (
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="text-sm font-semibold text-slate-300">
-                  Alternate Upper Jins
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {currentMaqam.alternateUpperAjnas.map((jins, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-lg border border-slate-800 bg-slate-800 p-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-purple-300">
-                          Jins {jins.jins.definition.name}
+          {explorerTab === 'network' ? (
+            /* Network Graph View */
+            <MaqamNetworkGraph maqam={currentMaqam} timbre={timbre} />
+          ) : (
+            /* Standard Structural View */
+            <>
+              {/* Structural Architecture: Lower Jins, Connection, Upper Jins */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {/* Lower Jins with Baggage display */}
+                <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <MaqamTermTooltip term="root jins" showIcon={false}>
+                        <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">
+                          Jins al-Asl (جنس الأصل)
                         </span>
-                        <Badge variant="outline" className="text-[11px]">
-                          {jins.jins.definition.intervals.join(" - ")}
-                        </Badge>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-400">
-                        Root:{" "}
-                        <strong className="text-purple-300">
-                          {formatPitchWithLargeAccidentalReact(jins.jins.root, { size: 'large' })}
-                        </strong>{" "}
-                        (
-                        {ArabicNoteSpine.resolveDegreeName(jins.jins.root)}
-                        )
-                      </p>
+                      </MaqamTermTooltip>
+                      <Badge variant="default" className="text-[10px]">
+                        {currentMaqam.lowerJins.definition.type}
+                      </Badge>
                     </div>
-                  ))}
-
-            
-                </div>
-
-              </CardContent>
-            </Card>
-          )}
-
-
-          {/* Sayr Melodic Trajectory Modal Trigger Banner */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-sky-800/40 bg-linear-to-r from-sky-950/40 via-slate-900/90 to-indigo-950/40 shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400">
-                <Compass className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white">Sayr Melodic Trajectory &amp; Course</span>
-                  <Badge variant="secondary" className="font-arabic text-[10px]">مسار السير والتحويلات</Badge>
-                  <Badge variant="outline" className="text-[10px] text-sky-300 border-sky-500/30 capitalize">
-                    {currentMaqam.sayrDirection.replace(/_/g, " ")}
-                  </Badge>
-                </div>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  Explore interactive quarter-tone trajectory curves, pivot stops (Qarar, Ghammaz, Jawab), and modulation branches in a dedicated modal dialog.
-                </p>
-              </div>
-            </div>
-
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleOpenSayr}
-              className="gap-2 bg-linear-to-r from-sky-600 to-sky-500 text-slate-950 font-bold hover:from-sky-500 hover:to-sky-400 cursor-pointer shadow-sm"
-            >
-              <Compass className="h-4 w-4" />
-              <span>Open Sayr Visualization</span>
-            </Button>
-          </div>
-
-          {/* Standalone SayrVisualizationDialog when opened locally */}
-          {showSayrDialogLocal && (
-            <SayrVisualizationDialog
-              open={showSayrDialogLocal}
-              onOpenChange={setShowSayrDialogLocal}
-              maqam={currentMaqam}
-              timbre={timbre}
-            />
-          )}
-
-          {/* Modulation Pathways Modal Trigger Banner */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-emerald-800/40 bg-linear-to-r from-emerald-950/40 via-slate-900/90 to-teal-950/40 shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
-                <GitFork className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white">Modulation Pathways &amp; Pivot Ajnas</span>
-                  <Badge variant="secondary" className="font-arabic text-[10px]">مسارات الانتقال والتنجيس</Badge>
-                  <Badge variant="outline" className="text-[10px] text-emerald-300 border-emerald-500/30">
-                    Shared Ajnas &amp; Cross-Family Pivots
-                  </Badge>
-                </div>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  Discover idiomatic pivot points between <strong className="text-emerald-200">{currentMaqam.name}</strong> and other Maqamat in the {currentMaqam.family} family or related families. Audition pivot phrases in real-time.
-                </p>
-              </div>
-            </div>
-
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleOpenModulation}
-              className="gap-2 bg-linear-to-r from-emerald-600 to-emerald-500 text-slate-950 font-bold hover:from-emerald-500 hover:to-emerald-400 cursor-pointer shadow-sm"
-            >
-              <GitFork className="h-4 w-4" />
-              <span>Explore Modulation Pathways</span>
-            </Button>
-          </div>
-
-          {/* Standalone ModulationPathwaysDrawer when opened locally */}
-          {showModulationDrawerLocal && (
-            <ModulationPathwaysDrawer
-              open={showModulationDrawerLocal}
-              onOpenChange={setShowModulationDrawerLocal}
-              currentMaqam={currentMaqam}
-              onSelectMaqam={onSelectMaqam}
-              timbre={timbre}
-            />
-          )}
-
-          {/* Quick Scale Degree Buttons */}
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400">
-                Scale Degrees &amp; Frequencies (24-EDO)
-              </span>
-              <span className="text-[11px] text-amber-400">
-                Click note to audition
-              </span>
-            </div>
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 sm:grid-cols-4 lg:grid-cols-8">
-              {scalePitches.map((pitch, idx) => {
-                const isTonic = pitch.equals(tonic)
-                const isGhammaz = pitch.equals(ghammaz)
-                const pitchTheme = getPitchThemeClasses(pitch, "card")
-
-                return (
-                  <button
-                    key={idx}
-                    onClick={() =>
-                      MicrotonalAudioEngine.playPitch(pitch, 0.7, timbre)
-                    }
-                    className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border p-2 sm:p-2.5 transition hover:scale-105 ${isTonic
-                      ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-md ring-1 ring-emerald-500/30"
-                      : isGhammaz
-                        ? "border-sky-500/50 bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/30"
-                        : pitchTheme.combined
-                      }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className="font-mono text-sm sm:text-base font-bold">
-                        {formatPitchWithLargeAccidentalReact(pitch, { size: 'large' })}
+                    <h4 className="mt-1 text-lg font-bold text-white">
+                      Jins {currentMaqam.lowerJins.definition.name}
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Root:{" "}
+                      <strong className="text-amber-300">
+                        {formatPitchWithLargeAccidentalReact(currentMaqam.lowerJins.root, { size: 'large' })}
+                      </strong>{" "}
+                      (
+                      {ArabicNoteSpine.resolveDegreeName(
+                        currentMaqam.lowerJins.root
+                      )}
+                      )
+                    </p>
+                    <div className="mt-2 flex items-center gap-1.5 font-mono text-xs text-slate-300">
+                      <span className="text-slate-500">Steps (qt):</span>
+                      <span className="font-semibold text-amber-300">
+                        [{currentMaqam.lowerJins.definition.intervals.join(" - ")}]
                       </span>
-                      {isTonic && (
-                        <span className="rounded bg-emerald-500 px-1 text-[9px] font-bold text-slate-950">
-                          1
-                        </span>
-                      )}
-                      {isGhammaz && (
-                        <span className="rounded bg-sky-500 px-1 text-[9px] font-bold text-slate-950">
-                          G
-                        </span>
-                      )}
+                      <span className="text-[11px] text-slate-500">
+                        ({currentMaqam.lowerJins.getTotalSpanCents()}¢)
+                      </span>
                     </div>
-                    <span className="mt-0.5 font-mono text-[10px] text-slate-400">
-                      {pitch.toFrequency().toFixed(1)} Hz
-                    </span>
-                    <span className="text-[9px] text-slate-500">
-                      {ArabicNoteSpine.findByPitch(pitch)?.transliteration ||
-                        ""}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
 
-          {/* Dynamic Transposition Hub (الـتـصـويـر) */}
+                    {/* Baggage notes chip if available */}
+                    {baggageNotes.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-slate-900">
+                        <div className="text-[11px] text-purple-300 flex items-center justify-between font-semibold">
+                          <div className="flex items-center gap-1">
+                            <Package className="h-3 w-3 text-purple-400" />
+                            <span>Jins Baggage Notes (أمتعة الجنس):</span>
+                          </div>
+                          {onOpenJinsAnalysis && (
+                            <button
+                              type="button"
+                              onClick={onOpenJinsAnalysis}
+                              className="text-[10px] text-purple-400 hover:text-purple-200 underline cursor-pointer"
+                            >
+                              Staff Analysis &rarr;
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {baggageNotes.map((bp, i) => (
+                            <span key={i} className="px-1.5 py-0.5 rounded bg-purple-950/40 border border-purple-800/60 font-mono text-[10px] text-purple-200">
+                              {formatPitchWithLargeAccidentalReact(bp, { size: 'large' })}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
+                    <span className="text-slate-400">Tonic (قرار):</span>
+                    <span className="font-bold text-emerald-400">
+                      {formatPitchWithLargeAccidentalReact(tonic, { size: 'large' })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Connection Type & Ghammaz */}
+                <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold tracking-wider text-sky-400 uppercase">
+                        Connection &amp; Pivot
+                      </span>
+                      <Badge variant="default" className="text-[10px]">
+                        {currentMaqam.connection} (
+                        {currentMaqam.connection === "Ittisal"
+                          ? "اتصال"
+                          : currentMaqam.connection === "Infisal"
+                            ? "انفصال"
+                            : "تداخل"}
+                        )
+                      </Badge>
+                    </div>
+                    <h4 className="mt-1 text-lg font-bold text-white">
+                      <MaqamTermTooltip term="ghammaz" showIcon={false}>
+                        Ghammaz (الغمّاز)
+                      </MaqamTermTooltip>
+                      : {formatPitchWithLargeAccidentalReact(ghammaz, { size: 'large' })}
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {currentMaqam.connection === "Ittisal"
+                        ? "Conjunct: Lower Jins top merges into Upper Jins root (Pivot Note)."
+                        : currentMaqam.connection === "Infisal"
+                          ? "Disjunct: 1 whole tone (4 quarter-tones / 200¢) gap between cells."
+                          : "Overlapping / Interlocking cell structure."}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
+                    <span className="text-slate-400">Ghammaz Frequency:</span>
+                    <span className="font-bold text-sky-400">
+                      {ghammaz.toFrequency().toFixed(1)} Hz
+                    </span>
+                  </div>
+                </div>
+
+                {/* Upper Jins */}
+                <div className="flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <MaqamTermTooltip term="jins" showIcon={false}>
+                        <span className="text-[11px] font-bold tracking-wider text-purple-400 uppercase">
+                          Jins al-Far' (جنس الفرع)
+                        </span>
+                      </MaqamTermTooltip>
+                      <Badge variant="default" className="text-[10px]">
+                        {currentMaqam.upperJins.definition.type}
+                      </Badge>
+                    </div>
+                    <h4 className="mt-1 text-lg font-bold text-white">
+                      Jins {currentMaqam.upperJins.definition.name}
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Root:{" "}
+                      <strong className="text-purple-300">
+                        {formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.root, { size: 'large' })}
+                      </strong>{" "}
+                      (
+                      {ArabicNoteSpine.resolveDegreeName(
+                        currentMaqam.upperJins.root
+                      )}
+                      )
+                    </p>
+                    <div className="mt-2 flex items-center gap-1.5 font-mono text-xs text-slate-300">
+                      <span className="text-slate-500">Steps (qt):</span>
+                      <span className="font-semibold text-purple-300">
+                        [{currentMaqam.upperJins.definition.intervals.join(" - ")}]
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        ({currentMaqam.upperJins.getTotalSpanCents()}¢)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
+                    <span className="text-slate-400">Upper Octave Apex:</span>
+                    <span className="font-bold text-purple-400">
+                      {currentMaqam.extraPitches[
+                        currentMaqam.extraPitches.length - 1
+                      ] ? formatPitchWithLargeAccidentalReact(currentMaqam.extraPitches[currentMaqam.extraPitches.length - 1], { size: 'large' })
+                        : formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.getTopPitch(), { size: 'large' })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Show alternate upper jins if available */}
+              {currentMaqam.alternateUpperAjnas.length > 0 && (
+                <Card className="border-slate-800 bg-slate-950/60 p-4">
+                  <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-2">
+                    Alternate Upper Ajnas (فروع نغمية بديلة)
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {currentMaqam.alternateUpperAjnas.map((jins, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-lg border border-slate-800 bg-slate-900 p-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-purple-300">
+                            Jins {jins.jins.definition.name}
+                          </span>
+                          <Badge variant="outline" className="text-[11px]">
+                            {jins.jins.definition.intervals.join(" - ")}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-400">
+                          Root:{" "}
+                          <strong className="text-purple-300">
+                            {formatPitchWithLargeAccidentalReact(jins.jins.root, { size: 'large' })}
+                          </strong>
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">{jins.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Scale Degree Buttons */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-400">
+                    Scale Degrees &amp; Frequencies (24-EDO)
+                  </span>
+                  <span className="text-[11px] text-amber-400">
+                    Click note to audition
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2 sm:grid-cols-4 lg:grid-cols-8">
+                  {scalePitches.map((pitch, idx) => {
+                    const isTonic = pitch.equals(tonic)
+                    const isGhammaz = pitch.equals(ghammaz)
+                    const pitchTheme = getPitchThemeClasses(pitch, "card")
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() =>
+                          MicrotonalAudioEngine.playPitch(pitch, 0.7, timbre)
+                        }
+                        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border p-2 sm:p-2.5 transition hover:scale-105 ${isTonic
+                          ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-md ring-1 ring-emerald-500/30"
+                          : isGhammaz
+                            ? "border-sky-500/50 bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/30"
+                            : pitchTheme.combined
+                          }`}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono text-sm sm:text-base font-bold">
+                            {formatPitchWithLargeAccidentalReact(pitch, { size: 'large' })}
+                          </span>
+                          {isTonic && (
+                            <span className="rounded bg-emerald-500 px-1 text-[9px] font-bold text-slate-950">
+                              1
+                            </span>
+                          )}
+                          {isGhammaz && (
+                            <span className="rounded bg-sky-500 px-1 text-[9px] font-bold text-slate-950">
+                              G
+                            </span>
+                          )}
+                        </div>
+                        <span className="mt-0.5 font-mono text-[10px] text-slate-400">
+                          {pitch.toFrequency().toFixed(1)} Hz
+                        </span>
+                        <span className="text-[9px] text-slate-500">
+                          {ArabicNoteSpine.findByPitch(pitch)?.transliteration || ""}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Dynamic Transposition Hub */}
           <div className="border-t border-border/60 pt-6">
             <Tabs
               value={transpositionTab}
@@ -860,7 +604,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                   <div className="flex items-center gap-2">
                     <SlidersHorizontal className="h-4 w-4 text-amber-400" />
                     <span className="text-xs font-bold tracking-widest text-amber-400 uppercase">
-                      Maqam Transposition Hub (تـصـويـر الـمـقـامـات)
+                      Maqam Transposition Hub (تصوير المقامات)
                     </span>
                     {isTransposed && (
                       <Badge
@@ -877,11 +621,9 @@ export const MaqamExplorer: React.FC<Props> = ({
                     Transpose {baseMaqam.name} to Any Target Tonic
                   </h3>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    Preserves exact microtonal interval architecture, Ghammaz
-                    pivot relationship, and violin ergonomics.
+                    Preserves exact microtonal interval architecture, Ghammaz pivot relationship, and violin ergonomics.
                   </p>
                 </div>
-
                 <TabsList>
                   <TabsTrigger value="classical">Classical Targets</TabsTrigger>
                   <TabsTrigger value="spine">12-Note Spine</TabsTrigger>
@@ -899,15 +641,16 @@ export const MaqamExplorer: React.FC<Props> = ({
                     Click to apply transposition
                   </span>
                 </div>
-
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-                  {classicalTranspositions.map((item) => {
+                  {[
+                    { pitch: originalTonic, title: `${baseMaqam.name} (Original)`, arabicTitle: "الأصل", noteName: originalTonic.toScientificString() },
+                    { pitch: originalTonic.transpose(4), title: `On 2nd Degree`, arabicTitle: "على الدرجة الثانية", noteName: originalTonic.transpose(4).toScientificString() },
+                    { pitch: ghammaz, title: `On Ghammaz (${ghammaz.toScientificString()})`, arabicTitle: "على الغمّاز", noteName: ghammaz.toScientificString() },
+                    { pitch: originalTonic.transpose(24), title: `Octave Apex (Jawab)`, arabicTitle: "الجواب", noteName: originalTonic.transpose(24).toScientificString() }
+                  ].map((item) => {
                     const isCurrent = tonic.equals(item.pitch)
-                    const stepDeltaQt = originalTonic.diffQuarterTones(
-                      item.pitch
-                    )
+                    const stepDeltaQt = originalTonic.diffQuarterTones(item.pitch)
                     const stepCents = stepDeltaQt * 50
-
                     return (
                       <button
                         key={item.title}
@@ -925,15 +668,12 @@ export const MaqamExplorer: React.FC<Props> = ({
                             {item.arabicTitle}
                           </span>
                         </div>
-
                         <div className="mt-2 flex items-center justify-between border-t border-slate-900 pt-2 text-[11px]">
                           <span className="font-mono font-semibold text-amber-300">
                             Target: {item.noteName}
                           </span>
                           <span className="font-mono text-[10px] text-slate-400">
-                            {stepDeltaQt === 0
-                              ? "Original"
-                              : `${stepDeltaQt > 0 ? "+" : ""}${stepCents}¢`}
+                            {stepDeltaQt === 0 ? "Original" : `${stepDeltaQt > 0 ? "+" : ""}${stepCents}¢`}
                           </span>
                         </div>
                       </button>
@@ -950,7 +690,6 @@ export const MaqamExplorer: React.FC<Props> = ({
                     Yakah to Muhayyar
                   </span>
                 </div>
-
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12">
                   {spineNotes.map((note) => {
                     const isCurrent = tonic.equals(note.pitch)
@@ -974,9 +713,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                           {formatPitchWithLargeAccidentalReact(note.pitch, { size: 'large' })}
                         </div>
                         <div className="mt-0.5 font-mono text-[9px] text-slate-400">
-                          {stepDelta === 0
-                            ? "0¢"
-                            : `${stepDelta > 0 ? "+" : ""}${stepDelta * 50}¢`}
+                          {stepDelta === 0 ? "0¢" : `${stepDelta > 0 ? "+" : ""}${stepDelta * 50}¢`}
                         </div>
                       </button>
                     )
@@ -1031,7 +768,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                               { acc: "♭", label: "♭ Flat (-100¢)" },
                               { acc: "𝄳", label: "𝄳 Quarter-Flat (-50¢)" },
                               { acc: "♮", label: "♮ Natural (0¢)" },
-                              { acc: "𝄵", label: "𝄵 Quarter-Sharp (+50¢)" },
+                              { acc: "𝄲", label: "𝄲 Quarter-Sharp (+50¢)" },
                               { acc: "♯", label: "♯ Sharp (+100¢)" },
                             ] as { acc: MicrotonalAccidental; label: string }[]
                           ).map((item) => (
@@ -1072,7 +809,6 @@ export const MaqamExplorer: React.FC<Props> = ({
                       </div>
                     </div>
 
-                    {/* Candidate Pitch Summary & Apply Action */}
                     <div className="flex items-center gap-3">
                       <div className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-right">
                         <span className="block text-[10px] text-slate-400">
@@ -1086,57 +822,16 @@ export const MaqamExplorer: React.FC<Props> = ({
                             ({candidatePitch.toFrequency().toFixed(1)} Hz)
                           </span>
                         </div>
-                        <span className="font-mono text-[10px] text-slate-400">
-                          Shift:{" "}
-                          {candidateDeltaQt === 0
-                            ? "0¢ (Original)"
-                            : `${candidateDeltaQt > 0 ? "+" : ""}${candidateCents}¢`}
-                        </span>
                       </div>
-
                       <Button
                         variant="default"
                         onClick={() => handleTransposeToPitch(candidatePitch)}
-                        className="gap-2"
+                        className="gap-2 cursor-pointer"
                       >
                         <SlidersHorizontal className="h-4 w-4" />
-                        Transpose {baseMaqam.name} to{" "}
-                        {candidatePitch.toScientificString()}
-                        {candidatePitch.octave}
+                        Transpose to {candidatePitch.toScientificString()}{candidatePitch.octave}
                       </Button>
                     </div>
-                  </div>
-
-                  {/* Quick suggestion helper chips */}
-                  <div className="flex flex-wrap items-center gap-1.5 border-t border-slate-900 pt-2 text-xs">
-                    <span className="mr-1 text-[11px] text-slate-500">
-                      Popular Quick Tonics:
-                    </span>
-                    {[
-                      new ArabicPitch("G", "♮", 3), // Yakah
-                      new ArabicPitch("C", "♮", 4), // Rast
-                      new ArabicPitch("D", "♮", 4), // Dukah
-                      new ArabicPitch("E", "𝄳", 4), // Sikah
-                      new ArabicPitch("F", "♮", 4), // Jaharkah
-                      new ArabicPitch("G", "♮", 4), // Nawa
-                      new ArabicPitch("A", "♮", 4), // Husayni
-                      new ArabicPitch("B", "♭", 4), // Ajam
-                      new ArabicPitch("C", "♮", 5), // Kirdan
-                    ].map((qp, i) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setCustomTonicDirect(qp)
-                          handleTransposeToPitch(qp)
-                        }}
-                        className={`cursor-pointer rounded-lg border px-2.5 py-1 font-mono text-[11px] font-bold transition ${tonic.equals(qp)
-                          ? "border-amber-400 bg-amber-500 text-slate-950"
-                          : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600 hover:text-white"
-                          }`}
-                      >
-                        {formatPitchWithLargeAccidentalReact(qp, { size: 'large' })}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </TabsContent>
@@ -1144,6 +839,27 @@ export const MaqamExplorer: React.FC<Props> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Standalone Sayr Dialog */}
+      {showSayrDialogLocal && (
+        <SayrVisualizationDialog
+          open={showSayrDialogLocal}
+          onOpenChange={setShowSayrDialogLocal}
+          maqam={currentMaqam}
+          timbre={timbre}
+        />
+      )}
+
+      {/* Standalone Modulation Pathways Drawer */}
+      {showModulationDrawerLocal && (
+        <ModulationPathwaysDrawer
+          open={showModulationDrawerLocal}
+          onOpenChange={setShowModulationDrawerLocal}
+          currentMaqam={currentMaqam}
+          onSelectMaqam={onSelectMaqam}
+          timbre={timbre}
+        />
+      )}
     </div>
   )
 }

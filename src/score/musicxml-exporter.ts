@@ -129,7 +129,7 @@ export interface RoundTripReport {
 }
 
 const VALID_DIATONIC_BASES = new Set<string>(['C', 'D', 'E', 'F', 'G', 'A', 'B']);
-const VALID_ACCIDENTALS = new Set<string>(['𝄫', '♭', '𝄳', '♮', '𝄵', '♯', '𝄪']);
+const VALID_ACCIDENTALS = new Set<string>(['𝄫', '♭', '𝄳', '♮', '𝄲', '♯', '𝄪']);
 
 export class MusicXMLExporter {
   public static readonly DEFAULT_DIVISIONS = 16;
@@ -148,7 +148,7 @@ export class MusicXMLExporter {
         return { alter: -0.5, name: 'quarter-flat' };
       case '♮':
         return { alter: 0.0, name: 'natural' };
-      case '𝄵':
+      case '𝄲':
         return { alter: 0.5, name: 'quarter-sharp' };
       case '♯':
         return { alter: 1.0, name: 'sharp' };
@@ -167,7 +167,7 @@ export class MusicXMLExporter {
     if (accidentalName) {
       const lower = accidentalName.toLowerCase();
       if (lower === 'quarter-flat' || lower === 'slash-flat' || lower === 'half-flat') return '𝄳';
-      if (lower === 'quarter-sharp' || lower === 'slash-sharp' || lower === 'half-sharp') return '𝄵';
+      if (lower === 'quarter-sharp' || lower === 'slash-sharp' || lower === 'half-sharp') return '𝄲';
       if (lower === 'flat-flat') return '𝄫';
       if (lower === 'double-sharp') return '𝄪';
       if (lower === 'flat') return '♭';
@@ -181,10 +181,9 @@ export class MusicXMLExporter {
     if (rounded === -1.0) return '♭';
     if (rounded === -0.5) return '𝄳';
     if (rounded === 0.0) return '♮';
-    if (rounded === 0.5) return '𝄵';
+    if (rounded === 0.5) return '𝄲';
     if (rounded === 1.0) return '♯';
     if (rounded === 2.0) return '𝄪';
-
     return '♮';
   }
 
@@ -221,7 +220,6 @@ export class MusicXMLExporter {
     const issues: MusicXMLValidationIssue[] = [];
     const errors: string[] = [];
     const warnings: string[] = [];
-
     const stats = {
       totalNotes: 0,
       totalDurationBeats: 0,
@@ -251,7 +249,6 @@ export class MusicXMLExporter {
 
     const timeSig = options?.timeSignature || '4/4';
     const measureCapacity = timeSig === '4/4' ? 4.0 : timeSig === '3/4' ? 3.0 : timeSig === '2/4' ? 2.0 : timeSig === '6/8' ? 3.0 : 5.0;
-
     let accumulatedBeats = 0;
     stats.totalNotes = notes.length;
 
@@ -284,7 +281,7 @@ export class MusicXMLExporter {
         }
 
         if (!pitch.accidental || !VALID_ACCIDENTALS.has(pitch.accidental)) {
-          const msg = `Note #${noteNum} has unsupported accidental "${pitch.accidental}". Supported: 𝄫, ♭, 𝄳, ♮, 𝄵, ♯, 𝄪.`;
+          const msg = `Note #${noteNum} has unsupported accidental "${pitch.accidental}". Supported: 𝄫, ♭, 𝄳, ♮, 𝄲, ♯, 𝄪.`;
           issues.push({
             severity: 'error',
             code: 'INVALID_PITCH',
@@ -293,7 +290,7 @@ export class MusicXMLExporter {
           });
           errors.push(msg);
         } else {
-          if (pitch.accidental === '𝄳' || pitch.accidental === '𝄵') {
+          if (pitch.accidental === '𝄳' || pitch.accidental === '𝄲') {
             stats.quarterToneCount++;
           } else if (pitch.accidental === '♮') {
             stats.naturalCount++;
@@ -327,7 +324,6 @@ export class MusicXMLExporter {
         errors.push(msg);
       } else {
         accumulatedBeats += duration;
-
         if (duration > measureCapacity) {
           const msg = `Note #${noteNum} duration (${duration} beats) exceeds measure capacity (${measureCapacity} beats) for ${timeSig}.`;
           issues.push({
@@ -347,8 +343,6 @@ export class MusicXMLExporter {
           });
           warnings.push(msg);
         } else {
-          // Check standard binary / dotted subdivisions:
-          // 4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5, 0.375, 0.25, 0.125
           const isStandardSubdivision = [
             4.0, 3.0, 2.0, 1.5, 1.0, 0.75, 0.5, 0.375, 0.25, 0.125,
           ].some((val) => Math.abs(duration - val) < 0.001);
@@ -391,7 +385,6 @@ export class MusicXMLExporter {
   ): { durationUnits: number; noteType: string; dots: number } {
     const safeDuration = Math.max(0.0625, durationQuarter);
     const durationUnits = Math.max(1, Math.round(safeDuration * divisions));
-
     let noteType: string;
     let dots = 0;
 
@@ -426,7 +419,6 @@ export class MusicXMLExporter {
 
   /**
    * Generates a fully compliant MusicXML 4.0 string for any Maqam scale (ascending + descending).
-   * Escapes XML text and attribute values, sets tempo, and includes microtonal alteration.
    */
   public static generateScaleMusicXML(maqam: Maqam, options?: ScaleExportOptions): string {
     const divisions = options?.divisions || this.DEFAULT_DIVISIONS;
@@ -436,7 +428,6 @@ export class MusicXMLExporter {
 
     const ascending = maqam.getScale();
     const direction = options?.direction || 'both';
-
     let allPitches: ArabicPitch[];
     if (direction === 'ascending') {
       allPitches = [...ascending];
@@ -450,10 +441,8 @@ export class MusicXMLExporter {
     const notesPerMeasure = 4;
     let measureIndex = 1;
     let measuresXml = '';
-
     const escapedMaqamName = escapeXmlText(maqam.name);
     const titleText = `${escapedMaqamName} - ${direction === 'both' ? 'Ascending &amp; Descending' : direction === 'ascending' ? 'Ascending Scale' : 'Descending Scale'}`;
-
     const measuresPerSystem = options?.measuresPerSystem;
 
     for (let i = 0; i < allPitches.length; i += notesPerMeasure) {
@@ -462,12 +451,10 @@ export class MusicXMLExporter {
       const shouldBreakSystem = !isFirst && measuresPerSystem === 1;
       const printBreakTag = shouldBreakSystem ? '\n      <print new-system="yes"/>' : '';
 
-      measuresXml += `
-    <measure number="${escapeXmlAttribute(String(measureIndex))}">${printBreakTag}
+      measuresXml += `     <measure number="${escapeXmlAttribute(String(measureIndex))}">${printBreakTag}
       ${
         isFirst
-          ? `
-      <attributes>
+          ? `       <attributes>
         <divisions>${divisions}</divisions>
         <key><fifths>0</fifths></key>
         <time><beats>4</beats><beat-type>4</beat-type></time>
@@ -484,7 +471,7 @@ export class MusicXMLExporter {
       </direction>`
           : ''
       }
-      ${slice.map((p) => this.pitchToNoteXml(p, 1.0, divisions)).join('\n')}
+${slice.map((p) => this.pitchToNoteXml(p, 1.0, divisions)).join('\n')}
     </measure>`;
       measureIndex++;
     }
@@ -504,15 +491,13 @@ export class MusicXMLExporter {
     </score-part>
   </part-list>
   <part id="${escapeXmlAttribute(partId)}">
-    ${measuresXml}
+${measuresXml}
   </part>
 </score-partwise>`;
   }
 
   /**
-   * Generates MusicXML 4.0 for an arbitrary melodic phrase (e.g. Sayr, Qafla, Sight-Reading).
-   * Correctly preserves note durations, phrase timing, meters (4/4, 3/4, 2/4), tempo markings,
-   * microtonal accidental alterations, and XML escaping.
+   * Generates MusicXML 4.0 for an arbitrary melodic phrase.
    */
   public static generatePhraseMusicXML(
     title: string,
@@ -534,7 +519,6 @@ export class MusicXMLExporter {
     let beats = 4;
     let beatType = 4;
     let measureCapacity = 4.0;
-
     if (timeSig === '3/4') {
       beats = 3;
       beatType = 4;
@@ -546,14 +530,13 @@ export class MusicXMLExporter {
     } else if (timeSig === '6/8') {
       beats = 6;
       beatType = 8;
-      measureCapacity = 3.0; // 6 eighths = 3 quarter beats
+      measureCapacity = 3.0;
     } else if (timeSig === '10/8') {
       beats = 10;
       beatType = 8;
-      measureCapacity = 5.0; // 10 eighths = 5 quarter beats
+      measureCapacity = 5.0;
     }
 
-    // Group notes into measures based on actual durations
     interface MeasureGroup {
       measureIndex: number;
       notes: MusicXMLNoteInput[];
@@ -568,7 +551,6 @@ export class MusicXMLExporter {
       const note = this.normalizeNoteInput(raw);
       const noteDuration = note.durationQuarter ?? 1.0;
 
-      // If adding note would overflow measure and measure already has notes, close measure
       if (currentMeasureNotes.length > 0 && currentMeasureBeats + noteDuration > measureCapacity + 0.001) {
         measures.push({
           measureIndex: currentMeasureIndex,
@@ -582,7 +564,6 @@ export class MusicXMLExporter {
       currentMeasureNotes.push(note);
       currentMeasureBeats += noteDuration;
 
-      // If measure reached or exceeded capacity, close it
       if (currentMeasureBeats >= measureCapacity - 0.001) {
         measures.push({
           measureIndex: currentMeasureIndex,
@@ -594,7 +575,6 @@ export class MusicXMLExporter {
       }
     }
 
-    // Push final remaining notes if any
     if (currentMeasureNotes.length > 0) {
       measures.push({
         measureIndex: currentMeasureIndex,
@@ -604,19 +584,17 @@ export class MusicXMLExporter {
 
     const measuresPerSystem = options?.measuresPerSystem;
     const conciseLyrics = Boolean(options?.conciseLyrics);
-
     let measuresXml = '';
+
     for (const measure of measures) {
       const isFirst = measure.measureIndex === 1;
       const shouldBreakSystem = !isFirst && measuresPerSystem === 1;
       const printBreakTag = shouldBreakSystem ? '\n      <print new-system="yes"/>' : '';
 
-      measuresXml += `
-    <measure number="${escapeXmlAttribute(String(measure.measureIndex))}">${printBreakTag}
+      measuresXml += `     <measure number="${escapeXmlAttribute(String(measure.measureIndex))}">${printBreakTag}
       ${
         isFirst
-          ? `
-      <attributes>
+          ? `       <attributes>
         <divisions>${divisions}</divisions>
         <key><fifths>0</fifths></key>
         <time><beats>${beats}</beats><beat-type>${beatType}</beat-type></time>
@@ -633,18 +611,18 @@ export class MusicXMLExporter {
       </direction>`
           : ''
       }
-      ${measure.notes
-        .map((n) => {
-          const rawLyric = options?.includeLyrics !== false ? n.lyric || n.arabicName : undefined;
-          const lyric = conciseLyrics && rawLyric ? MusicXMLExporter.formatConciseLyric(rawLyric) : rawLyric;
-          return this.pitchToNoteXml(
-            n.pitch,
-            n.durationQuarter ?? 1.0,
-            divisions,
-            lyric
-          );
-        })
-        .join('\n')}
+${measure.notes
+  .map((n) => {
+    const rawLyric = options?.includeLyrics !== false ? n.lyric || n.arabicName : undefined;
+    const lyric = conciseLyrics && rawLyric ? MusicXMLExporter.formatConciseLyric(rawLyric) : rawLyric;
+    return this.pitchToNoteXml(
+      n.pitch,
+      n.durationQuarter ?? 1.0,
+      divisions,
+      lyric
+    );
+  })
+  .join('\n')}
     </measure>`;
     }
 
@@ -663,14 +641,11 @@ export class MusicXMLExporter {
     </score-part>
   </part-list>
   <part id="${partId}">
-    ${measuresXml}
+${measuresXml}
   </part>
 </score-partwise>`;
   }
 
-  /**
-   * Generates single <note> XML tag with accurate alter decimal, accidental text, duration, and type.
-   */
   private static pitchToNoteXml(
     pitch: ArabicPitch,
     durationQuarter: number = 1.0,
@@ -679,7 +654,6 @@ export class MusicXMLExporter {
   ): string {
     const { alter, name } = this.accidentalToXml(pitch.accidental);
     const { durationUnits, noteType, dots } = this.durationToXmlAttributes(durationQuarter, divisions);
-
     const stepEscaped = escapeXmlText(pitch.diatonic);
     const alterTag = alter !== 0 ? `<alter>${alter.toFixed(1)}</alter>` : '';
     const dotsTag = dots > 0 ? '<dot/>'.repeat(dots) : '';
@@ -702,10 +676,6 @@ export class MusicXMLExporter {
       </note>`;
   }
 
-  /**
-   * Compacts long degree or phrase text into concise note labels for small screen notation.
-   * e.g., 'القرار / Rast (Deg. 1)' -> 'Rast 1'
-   */
   public static formatConciseLyric(lyric: string): string {
     if (!lyric || typeof lyric !== 'string') return '';
     const trimmed = lyric.trim();
@@ -722,11 +692,6 @@ export class MusicXMLExporter {
     return clean.length > 10 ? clean.slice(0, 10).trim() : clean;
   }
 
-  /**
-   * Parses MusicXML 4.0 string back into structured representation,
-   * preserving quarter tones, pitch spelling, and note durations.
-   * Supports both browser DOMParser and Node.js environments.
-   */
   public static parseMusicXML(xmlString: string): ParsedMusicXML {
     if (!xmlString || typeof xmlString !== 'string') {
       throw new Error('Invalid or empty MusicXML string');
@@ -808,7 +773,6 @@ export class MusicXMLExporter {
           const step: DiatonicBase = VALID_DIATONIC_BASES.has(stepText) ? stepText : 'C';
           const octave = octaveText ? parseInt(octaveText, 10) : 4;
           const alter = alterText ? parseFloat(alterText) : 0.0;
-
           const accidental = this.xmlToAccidental(alter, accidentalText);
           const pitch = new ArabicPitch(step, accidental, octave);
 
@@ -822,7 +786,6 @@ export class MusicXMLExporter {
             lyric,
             isRest: false,
           };
-
           measureNotes.push(parsedNote);
           allNotes.push(parsedNote);
         });
@@ -845,13 +808,9 @@ export class MusicXMLExporter {
       };
     }
 
-    // Node.js / non-browser regex fallback
     return this.parseMusicXMLRegex(xmlString);
   }
 
-  /**
-   * Deterministic regex parser for environments without native DOMParser (e.g. Node CLI, tests).
-   */
   private static parseMusicXMLRegex(xml: string): ParsedMusicXML {
     const getTag = (source: string, tag: string): string => {
       const match = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i').exec(source);
@@ -860,21 +819,17 @@ export class MusicXMLExporter {
 
     const workTitle = getTag(xml, 'work-title');
     const partName = getTag(xml, 'part-name') || 'Violin';
-
     const divMatch = /<divisions>(\d+)<\/divisions>/i.exec(xml);
     const divisions = divMatch ? parseInt(divMatch[1], 10) : this.DEFAULT_DIVISIONS;
-
     const beatsMatch = /<beats>(\d+)<\/beats>/i.exec(xml);
     const beatTypeMatch = /<beat-type>(\d+)<\/beat-type>/i.exec(xml);
     const beats = beatsMatch ? parseInt(beatsMatch[1], 10) : 4;
     const beatType = beatTypeMatch ? parseInt(beatTypeMatch[1], 10) : 4;
-
     const soundMatch = /<sound[^>]*tempo="([^"]+)"/i.exec(xml);
     const tempoBpm = soundMatch ? parseFloat(soundMatch[1]) : undefined;
 
     const measures: ParsedMusicXMLMeasure[] = [];
     const allNotes: ParsedMusicXMLNote[] = [];
-
     const measureRegex = /<measure[^>]*number="?([^">\s]+)"?[^>]*>([\s\S]*?)<\/measure>/gi;
     let mMatch: RegExpExecArray | null;
 
@@ -882,18 +837,15 @@ export class MusicXMLExporter {
       const mNum = parseInt(mMatch[1], 10) || measures.length + 1;
       const mContent = mMatch[2];
       const measureNotes: ParsedMusicXMLNote[] = [];
-
       const noteRegex = /<note[^>]*>([\s\S]*?)<\/note>/gi;
       let nMatch: RegExpExecArray | null;
 
       while ((nMatch = noteRegex.exec(mContent)) !== null) {
         const nContent = nMatch[1];
         const isRest = /<rest\s*\/?>/i.test(nContent);
-
         const durMatch = /<duration>(\d+)<\/duration>/i.exec(nContent);
         const durationUnits = durMatch ? parseInt(durMatch[1], 10) : divisions;
         const durationQuarter = durationUnits / divisions;
-
         const noteType = getTag(nContent, 'type') || 'quarter';
         const dots = (nContent.match(/<dot\s*\/?>/gi) || []).length;
         const lyric = getTag(getTag(nContent, 'lyric'), 'text') || undefined;
@@ -921,7 +873,6 @@ export class MusicXMLExporter {
         const step: DiatonicBase = VALID_DIATONIC_BASES.has(stepText) ? stepText : 'C';
         const octave = octaveText ? parseInt(octaveText, 10) : 4;
         const alter = alterText ? parseFloat(alterText) : 0.0;
-
         const accidental = this.xmlToAccidental(alter, accidentalText);
         const pitch = new ArabicPitch(step, accidental, octave);
 
@@ -935,7 +886,6 @@ export class MusicXMLExporter {
           lyric,
           isRest: false,
         };
-
         measureNotes.push(parsedNote);
         allNotes.push(parsedNote);
       }
@@ -958,10 +908,6 @@ export class MusicXMLExporter {
     };
   }
 
-  /**
-   * Verifies that quarter tones, pitch spelling, and note durations survive a round-trip
-   * export and re-import via MusicXML 4.0.
-   */
   public static verifyRoundTrip(
     originalNotes: (ArabicPitch | MusicXMLNoteInput | { pitch: ArabicPitch; durationQuarter?: number })[],
     exportedXml: string
@@ -970,8 +916,8 @@ export class MusicXMLExporter {
     let exactPitchMatches = 0;
     let exactDurationMatches = 0;
     let quarterTonesPreserved = 0;
-
     let parsed: ParsedMusicXML;
+
     try {
       parsed = this.parseMusicXML(exportedXml);
     } catch (err) {
@@ -986,7 +932,6 @@ export class MusicXMLExporter {
     }
 
     const nonRestParsedNotes = parsed.allNotes.filter((n) => !n.isRest);
-
     if (nonRestParsedNotes.length !== originalNotes.length) {
       failures.push(
         `Note count mismatch: original has ${originalNotes.length}, parsed has ${nonRestParsedNotes.length}`
@@ -994,17 +939,13 @@ export class MusicXMLExporter {
     }
 
     const count = Math.min(originalNotes.length, nonRestParsedNotes.length);
-
     for (let i = 0; i < count; i++) {
       const orig = this.normalizeNoteInput(originalNotes[i] as ArabicPitch | MusicXMLNoteInput);
       const imported = nonRestParsedNotes[i];
-
       const origPitch = orig.pitch;
       const impPitch = imported.pitch;
+      const isQuarterTone = origPitch.accidental === '𝄳' || origPitch.accidental === '𝄲';
 
-      const isQuarterTone = origPitch.accidental === '𝄳' || origPitch.accidental === '𝄵';
-
-      // Check step and accidental spelling
       const spellingMatch =
         origPitch.diatonic === impPitch.diatonic &&
         origPitch.accidental === impPitch.accidental &&
@@ -1021,7 +962,6 @@ export class MusicXMLExporter {
         );
       }
 
-      // Check duration match
       const expectedDur = orig.durationQuarter ?? 1.0;
       if (Math.abs(expectedDur - imported.durationQuarter) < 0.05) {
         exactDurationMatches++;
@@ -1033,7 +973,6 @@ export class MusicXMLExporter {
     }
 
     const success = failures.length === 0 && exactPitchMatches === originalNotes.length;
-
     return {
       success,
       notesTested: originalNotes.length,

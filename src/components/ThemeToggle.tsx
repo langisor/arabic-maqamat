@@ -10,6 +10,7 @@ interface ThemeToggleProps {
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
   const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
+
   const themeLabel = theme === 'light' ? t('themeLight') : theme === 'dark' ? t('themeDark') : t('themeAuto');
 
   const toggleSingle = () => {
@@ -18,7 +19,6 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
     } else if (theme === 'light') {
       setTheme('dark');
     } else {
-      // If currently on system, toggle to light or dark based on system preference
       const isSystemDark =
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -66,7 +66,6 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
           <Sun className="w-3.5 h-3.5 shrink-0" />
           <span className="hidden xl:inline text-[11px]">{t('themeLight')}</span>
         </button>
-
         <button
           type="button"
           onClick={() => setTheme('dark')}
@@ -82,7 +81,6 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
           <Moon className="w-3.5 h-3.5 shrink-0" />
           <span className="hidden xl:inline text-[11px]">{t('themeDark')}</span>
         </button>
-
         <button
           type="button"
           onClick={() => setTheme('system')}

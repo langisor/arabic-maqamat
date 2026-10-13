@@ -39,19 +39,19 @@ const TRAJECTORY_BADGES: Record<
 > = {
   ascending: {
     label: "Ascending Sayr (سير صاعد)",
-    arabic: "يبدأ من القرار صعوداً إلى الغماز ثم الجواب",
+    arabic: "سير صاعد يبدأ من القرار ويتدرج صعوداً",
     icon: ArrowUp,
     color: "border-emerald-500/60 bg-emerald-950/40 text-emerald-300",
   },
   descending_octave_first: {
     label: "Descending / Octave Sayr (سير هابط)",
-    arabic: "يفتتح من الجواب أو الأوج هبوطاً إلى القرار",
+    arabic: "سير هابط يستهل من الجواب ويستقر على القرار",
     icon: ArrowDown,
     color: "border-sky-500/60 bg-sky-950/40 text-sky-300",
   },
   undulating: {
-    label: "Undulating Sayr (سير متدرج)",
-    arabic: "يدور حول الغماز بتوازن قبل الاستقرار",
+    label: "Undulating Sayr (سير متموج)",
+    arabic: "سير متموج يتنقل بين الغماز والقرار والطبقات العليا",
     icon: ArrowUpDown,
     color: "border-amber-500/60 bg-amber-950/40 text-amber-300",
   },
@@ -69,17 +69,15 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
   const trajectoryInfo = TRAJECTORY_BADGES[maqam.sayrDirection] || TRAJECTORY_BADGES.ascending
   const TrajectoryIcon = trajectoryInfo.icon
 
-  // Handle clicking an interactive stop in the Sayr curve
   const handleStopSelect = (stop: SayrStop) => {
     setActiveStopIndex(stop.index)
     if (stop.pitch) {
-      // Parse scientific pitch and play
-      const match = stop.pitch.match(/^([A-G][♭♯𝄳𝄵#b]?)([0-9])$/u)
+      const match = stop.pitch.match(/^([A-G][𝄫♭𝄳♮𝄲♯𝄪]?)([0-9])$/u)
       if (match) {
         const diatonic = match[1].charAt(0) as ArabicPitch["diatonic"]
         let acc: ArabicPitch["accidental"] = "♮"
         if (match[1].includes("𝄳")) acc = "𝄳"
-        else if (match[1].includes("𝄵")) acc = "𝄵"
+        else if (match[1].includes("𝄲")) acc = "𝄲"
         else if (match[1].includes("♭") || match[1].includes("b")) acc = "♭"
         else if (match[1].includes("♯") || match[1].includes("#")) acc = "♯"
         const oct = parseInt(match[2], 10) || 4
@@ -89,7 +87,6 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
     }
   }
 
-  // Play ascending/descending scale sequence tracing the Sayr
   const handlePlaySayrCourse = () => {
     if (isPlayingSayr) {
       MicrotonalAudioEngine.stopSequence("sayr-dialog-playback")
@@ -124,7 +121,6 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
         className="h-[92vh] max-h-[92vh] w-full max-w-none flex flex-col justify-between overflow-y-auto bg-slate-950 p-0 text-slate-100 border-t border-amber-800/40 shadow-2xl scrollbar-thin"
         showCloseButton={false}
       >
-        {/* Header */}
         <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 bg-slate-950/95 backdrop-blur-md z-10">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
@@ -134,7 +130,7 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
               <SheetTitle className="text-lg sm:text-xl font-bold flex items-center gap-2 text-white">
                 <span>Sayr Trajectory &amp; Melodic Path</span>
                 <span className="font-arabic text-amber-400 text-sm font-semibold">
-                  (مسار سير {maqam.arabicName || maqam.name})
+                  (سير {maqam.arabicName || maqam.name})
                 </span>
               </SheetTitle>
               <SheetDescription className="text-xs text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
@@ -144,13 +140,11 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
               </SheetDescription>
             </div>
           </div>
-
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={`hidden sm:inline-flex items-center gap-1 text-xs px-2.5 py-1 ${trajectoryInfo.color}`}>
               <TrajectoryIcon className="h-3 w-3" />
               <span>{trajectoryInfo.label}</span>
             </Badge>
-
             <Button
               variant="ghost"
               size="sm"
@@ -163,9 +157,7 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
           </div>
         </div>
 
-        {/* Dialog Body with Sayr Visualization */}
         <div className="px-6 py-5 flex-1 space-y-6 overflow-y-auto max-w-6xl mx-auto w-full">
-          {/* Quick Context Card */}
           <div className="rounded-2xl border border-slate-800 bg-linear-to-r from-amber-950/30 via-slate-900 to-indigo-950/30 p-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
@@ -197,13 +189,12 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
               ) : (
                 <>
                   <Play className="h-3.5 w-3.5 fill-current" />
-                  <span>Audition Sayr Course (عزف المسار)</span>
+                  <span>Audition Sayr Course (عزف السير)</span>
                 </>
               )}
             </Button>
           </div>
 
-          {/* Full Sayr Visualization SVG & Inspector */}
           <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-2 sm:p-4 shadow-xl">
             <SayrVisualization
               sayrDirection={maqam.sayrDirection}
@@ -214,13 +205,11 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
           </div>
         </div>
 
-        {/* Footer */}
         <div className="border-t border-slate-800 px-6 py-3.5 bg-slate-950 flex flex-row items-center justify-between sticky bottom-0 z-10">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             <span>Interactive Quarter-Tone Distance Mapping (1 qt = 50¢)</span>
           </div>
-
           <Button
             variant="outline"
             size="sm"

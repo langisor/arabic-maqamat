@@ -7,15 +7,16 @@ import type { MetronomeSoundType } from '../audio/metronome-engine';
 export const WORKSPACE_SCHEMA_VERSION = 1;
 export const WORKSPACE_STORAGE_KEY = 'arabic_maqamat_workspace_v1';
 
-export type ValidLab =
-  | 'explorer'
-  | 'transposition'
-  | 'violin'
-  | 'sayr'
-  | 'score'
-  | 'tuning'
-  | 'detector'
-  | 'training';
+export type ValidLab = 
+  | 'explorer' 
+  | 'transposition' 
+  | 'violin' 
+  | 'sayr' 
+  | 'score' 
+  | 'tuning' 
+  | 'detector' 
+  | 'training'
+  | 'jins-analysis';
 
 export const VALID_LABS: readonly ValidLab[] = [
   'explorer',
@@ -25,7 +26,8 @@ export const VALID_LABS: readonly ValidLab[] = [
   'score',
   'tuning',
   'detector',
-  'training'
+  'training',
+  'jins-analysis'
 ] as const;
 
 export interface SerializedPitch {
@@ -45,7 +47,7 @@ export function serializePitch(pitch: ArabicPitch): SerializedPitch {
 export function deserializePitch(serialized: SerializedPitch | null | undefined): ArabicPitch | null {
   if (!serialized) return null;
   const validDiatonics: DiatonicBase[] = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  const validAccidentals: MicrotonalAccidental[] = ['♭', '𝄳', '♮', '𝄵', '♯'];
+  const validAccidentals: MicrotonalAccidental[] = ['𝄫', '♭', '𝄳', '♮', '𝄲', '♯', '𝄪'];
   if (!validDiatonics.includes(serialized.diatonic)) return null;
   if (!validAccidentals.includes(serialized.accidental)) return null;
   if (typeof serialized.octave !== 'number' || serialized.octave < 1 || serialized.octave > 8) return null;
@@ -165,7 +167,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
   if (!raw || typeof raw !== 'object') {
     return JSON.parse(JSON.stringify(DEFAULT_WORKSPACE_STATE));
   }
-
   const obj = raw as Partial<WorkspaceState>;
   const result: WorkspaceState = JSON.parse(JSON.stringify(DEFAULT_WORKSPACE_STATE));
 
@@ -176,7 +177,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
   // Validate Global
   if (obj.global && typeof obj.global === 'object') {
     const g = obj.global as Partial<WorkspaceGlobalState>;
-
     // Maqam ID validation
     if (typeof g.selectedMaqamId === 'string' && g.selectedMaqamId.trim()) {
       const baseId = g.selectedMaqamId.split('-transposed-')[0];
@@ -184,17 +184,14 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         result.global.selectedMaqamId = g.selectedMaqamId;
       }
     }
-
     // Active lab validation
     if (g.activeLab && VALID_LABS.includes(g.activeLab as ValidLab)) {
       result.global.activeLab = g.activeLab as ValidLab;
     }
-
     // Timbre validation
     if (g.timbre === 'violin' || g.timbre === 'oud' || g.timbre === 'kanun') {
       result.global.timbre = g.timbre;
     }
-
     // Audio settings validation
     if (g.audioSettings && typeof g.audioSettings === 'object') {
       const a = g.audioSettings;
@@ -208,7 +205,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         result.global.audioSettings.referenceA4 = a.referenceA4;
       }
     }
-
     // Metronome validation
     if (g.metronome && typeof g.metronome === 'object') {
       const m = g.metronome;
@@ -230,7 +226,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
   // Validate Drafts
   if (obj.drafts && typeof obj.drafts === 'object') {
     const d = obj.drafts as Partial<WorkspaceDrafts>;
-
     // Explorer
     if (d.explorer) {
       if (['classical', 'spine', 'custom'].includes(d.explorer.transpositionTab as string)) {
@@ -241,7 +236,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         result.drafts.explorer.customTonic = serializePitch(customP);
       }
     }
-
     // Transposition
     if (d.transposition && d.transposition.targetTonic) {
       const targetP = deserializePitch(d.transposition.targetTonic);
@@ -249,7 +243,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         result.drafts.transposition.targetTonic = serializePitch(targetP);
       }
     }
-
     // Violin
     if (d.violin) {
       if (d.violin.orientation === 'vertical' || d.violin.orientation === 'horizontal') {
@@ -275,7 +268,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         result.drafts.violin.touchZoom = d.violin.touchZoom;
       }
     }
-
     // Sayr
     if (d.sayr) {
       if (typeof d.sayr.targetMaqamId === 'string' && MaqamatCatalogue.findById(d.sayr.targetMaqamId)) {
@@ -285,7 +277,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         result.drafts.sayr.measureDuration = d.sayr.measureDuration;
       }
     }
-
     // Jins Detector
     if (d.jinsDetector && Array.isArray(d.jinsDetector.customPhrase)) {
       const validPhrase = d.jinsDetector.customPhrase
@@ -294,7 +285,6 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         .map(serializePitch);
       result.drafts.jinsDetector.customPhrase = validPhrase.length > 0 ? validPhrase : null;
     }
-
     // Training
     if (d.training) {
       if (['memorize', 'sight', 'tracker', 'record'].includes(d.training.activeMode)) {
@@ -321,13 +311,11 @@ const stateListeners = new Set<(state: WorkspaceState) => void>();
 
 export function getWorkspaceState(): WorkspaceState {
   if (cachedState) return cachedState;
-
   if (typeof window === 'undefined' || !window.localStorage) {
     const fallback = JSON.parse(JSON.stringify(DEFAULT_WORKSPACE_STATE));
     cachedState = fallback;
     return fallback;
   }
-
   try {
     const raw = localStorage.getItem(WORKSPACE_STORAGE_KEY);
     if (!raw) {
@@ -410,7 +398,6 @@ export function subscribeWorkspace(listener: (state: WorkspaceState) => void): (
 // -------------------------------------------------------------
 // URL NAVIGATION SYNCHRONIZATION HELPERS
 // -------------------------------------------------------------
-
 export interface UrlNavigationParams {
   lab?: ValidLab;
   maqamId?: string;
@@ -451,7 +438,6 @@ export function syncNavigationToUrl(
   mode: 'replace' | 'push' = 'replace'
 ): void {
   if (typeof window === 'undefined' || !window.history) return;
-
   try {
     const url = new URL(window.location.href);
     const prevLab = url.searchParams.get('lab');
@@ -463,8 +449,8 @@ export function syncNavigationToUrl(
 
     url.searchParams.set('lab', lab);
     url.searchParams.set('maqam', maqamId);
-
     const targetUrl = url.pathname + url.search + url.hash;
+
     if (mode === 'push') {
       window.history.pushState({ lab, maqamId }, '', targetUrl);
     } else {

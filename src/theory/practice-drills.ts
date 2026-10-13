@@ -13,9 +13,9 @@ import {
 
 export type PracticeDrillType =
   | 'scale-run'        // Scale / Maqam Drills (Ascending & Descending Run)
-  | 'sequence-3'       // Sequences of 3 (ثلاثيات)
-  | 'sequence-4'       // Sequences of 4 (رباعيات)
-  | 'position-shift'   // Position Shift (التحويل بين المراكز للكمان)
+  | 'sequence-3'       // Sequences of 3 (متتاليات ثلاثية)
+  | 'sequence-4'       // Sequences of 4 (متتاليات رباعية - أرباع/أجناس)
+  | 'position-shift'   // Position Shift (تنقلات المراكز)
   | 'sightreading';    // Free Algorithmic Melody Sight-Reading
 
 export type DrillDirection = 'both' | 'ascending' | 'descending';
@@ -56,9 +56,9 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'scale-run',
     titleEn: 'Scale & Maqam Drills',
-    titleAr: 'تمارين السلم والمقام (صعود وهبوط)',
+    titleAr: 'تمارين السلالم ودرجات المقام',
     descriptionEn: 'Ascending and descending scalar runs traversing the full maqam with authentic microtones and fingerings.',
-    descriptionAr: 'مسارات صعود وهبوط كاملة عبر درجات المقام مع ربع التون والأصابع الدقيقة للكمان.',
+    descriptionAr: 'صعود وهبوط سلم المقام كاملاً لترسيخ نغمات السيكاه وأرباع النغمة وضبط مسافات الأصابع بدقة.',
     icon: 'Activity',
     badge: 'Core Foundation',
     pedagogicalFocus: 'Intonation, microtonal finger placement, and scalar fluidity.',
@@ -66,9 +66,9 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'sequence-3',
     titleEn: 'Sequences of 3',
-    titleAr: 'تعاقب الثلاثيات (ثلاثيات النغم)',
+    titleAr: 'متتاليات ثلاثية (Sequences of 3)',
     descriptionEn: 'Three-note pedagogical step patterns (1-2-3, 2-3-4, 3-4-5...) developing agility and microtonal accuracy.',
-    descriptionAr: 'أنماط تعاقب ثلاثية الدرجات لصقل سرعة الأصابع وتثبيت المسافات الميكروتونالية.',
+    descriptionAr: 'حركات لحنية ثلاثية متتالية تعزز استقلالية الأصابع وسرعة الانتقال ووضوح المسافات الصوتية.',
     icon: 'Layers',
     badge: 'Scalar Agility',
     pedagogicalFocus: 'Finger independence, neighbor-tone clarity, and steady tempo.',
@@ -76,9 +76,9 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'sequence-4',
     titleEn: 'Sequences of 4',
-    titleAr: 'تعاقب الرباعيات (أجناس النغم)',
+    titleAr: 'متتاليات رباعية (الأجناس والرباعيات)',
     descriptionEn: 'Four-note melodic patterns traversing ajnas (tetrachords) and cementing jins transition pivots.',
-    descriptionAr: 'أنماط رباعية تحاكي بنية الأجناس الموسيقية وتعزز الانتقال المحكم عند الغماز.',
+    descriptionAr: 'متتاليات من أربع نغمات تطابق تركيبة الأجناس وتثبت نقطة الغماز المحورية أثناء العزف.',
     icon: 'Grid',
     badge: 'Ajnas Mastery',
     pedagogicalFocus: 'Jins awareness, pivot stabilization, and four-finger dexterity.',
@@ -86,9 +86,9 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'position-shift',
     titleEn: 'Position Shift Drills',
-    titleAr: 'تمارين تحويل المراكز (Violin Position Shifts)',
+    titleAr: 'تمارين التنقل بين المراكز (Violin Position Shifts)',
     descriptionEn: 'Violin shifts between 1st and 3rd positions on Ghammaz pivots and octave leaps with guide finger technique.',
-    descriptionAr: 'تمارين الانتقال بين الوضعيات الأولى والثالثة على الغماز وقفزات الديوان مع إرشادات الأصبع الدليل.',
+    descriptionAr: 'الانتقال بالكمان بين البوزيسيون الأول والثالث عند نغمة الغماز أو قفزة الجواب مع الزحلقة التعبيرية.',
     icon: 'ArrowUpRight',
     badge: 'Violin Technique',
     pedagogicalFocus: 'Position shifts, guide fingers, vocal portamento (Zahlaka), and upper register resonance.',
@@ -96,9 +96,9 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'sightreading',
     titleEn: 'Algorithmic Sight-Reading',
-    titleAr: 'قراءة النوتة الموسيقية المرتجلة',
+    titleAr: 'قراءة النوتة اللحظية (Sight-Reading)',
     descriptionEn: 'Randomized authentic phrases generated algorithmically with authentic Sayr motion and Qafla cadences.',
-    descriptionAr: 'جمل لحنية توليدية تحاكي السير النغمي الحقيقي للمقام وتنتهي بقفلة كلاسيكية.',
+    descriptionAr: 'توليد جمل لحنية عشوائية تحاكي سير المقام الشرقي وقفلاته الأصيلة لاختبار القراءة المباشرة.',
     icon: 'Music',
     badge: 'Prima Vista',
     pedagogicalFocus: 'Real-time notation reading, phrase interpretation, and cadential resolution.',
@@ -156,7 +156,6 @@ export class PracticeDrillEngine {
 
     // Ascending run
     const ascendingPitches = [...scale];
-
     // Descending run (reverse from octave - 1 down to tonic)
     const descendingPitches = [...scale].slice(0, scale.length - 1).reverse();
 
@@ -197,7 +196,7 @@ export class PracticeDrillEngine {
       if (item.role === 'asc') roleLabel = 'صعود';
       else if (item.role === 'desc') roleLabel = 'هبوط';
       else if (item.role === 'turn') roleLabel = 'قمة السلم';
-      else if (item.role === 'res') roleLabel = 'استقرار';
+      else if (item.role === 'res') roleLabel = 'قرار';
 
       notes.push({
         pitch: item.pitch,
@@ -216,8 +215,8 @@ export class PracticeDrillEngine {
       direction === 'both'
         ? 'Ascending & Descending Run (صعود وهبوط)'
         : direction === 'ascending'
-        ? 'Ascending Run (صعود)'
-        : 'Descending Run (هبوط)';
+        ? 'Ascending Run (صعود فقط)'
+        : 'Descending Run (هبوط فقط)';
 
     return {
       id: `drill-scale-${Date.now()}`,
@@ -236,7 +235,7 @@ export class PracticeDrillEngine {
   }
 
   /**
-   * 2. Sequences of 3 (ثلاثيات النغم)
+   * 2. Sequences of 3 (متتاليات ثلاثية)
    * Patterns: 1-2-3, 2-3-4, 3-4-5, 4-5-6, 5-6-7, 6-7-8
    */
   public static generateSequence3Drill(
@@ -268,7 +267,7 @@ export class PracticeDrillEngine {
             arabicName: `${pitch.toDisplayString()} [${i + 1}-${i + 2}-${i + 3}]`,
             violinPlacement: placement,
             positionNumber: 1,
-            pedagogicalNote: `مجموعة ${i + 1}: الدرجة ${subIdx + 1} (${pitch.toScientificString()})`,
+            pedagogicalNote: `مجموعة ${i + 1}: خطوة ${subIdx + 1} (${pitch.toScientificString()})`,
           });
         });
       }
@@ -286,7 +285,7 @@ export class PracticeDrillEngine {
             arabicName: `${pitch.toDisplayString()} [${i + 1}-${i}-${i - 1}]`,
             violinPlacement: placement,
             positionNumber: 1,
-            pedagogicalNote: `هبوط ${N - i}: الدرجة ${subIdx + 1} (${pitch.toScientificString()})`,
+            pedagogicalNote: `مجموعة هبوط ${N - i}: خطوة ${subIdx + 1} (${pitch.toScientificString()})`,
           });
         });
       }
@@ -299,10 +298,10 @@ export class PracticeDrillEngine {
     notes.push({
       pitch: tonic,
       durationQuarter: resolutionDuration,
-      arabicName: `${tonic.toDisplayString()} (استقرار)`,
+      arabicName: `${tonic.toDisplayString()} (قرار الاستقرار)`,
       violinPlacement: tonicPlacement,
       positionNumber: 1,
-      pedagogicalNote: `قرار المقام - استقرار كامل`,
+      pedagogicalNote: `استقرار تام على قرار المقام`,
     });
 
     const totalBeats = notes.reduce((sum, n) => sum + n.durationQuarter, 0);
@@ -317,7 +316,7 @@ export class PracticeDrillEngine {
 
     return {
       id: `drill-seq3-${Date.now()}`,
-      title: `${maqam.name} - ${dirTitle} (ثلاثيات)`,
+      title: `${maqam.name} - ${dirTitle} (متتاليات ثلاثية)`,
       maqam,
       difficulty: 'level2',
       timeSignature: timeSig,
@@ -332,7 +331,7 @@ export class PracticeDrillEngine {
   }
 
   /**
-   * 3. Sequences of 4 (رباعيات النغم)
+   * 3. Sequences of 4 (متتاليات رباعية)
    * Patterns: 1-2-3-4 (Root Jins!), 2-3-4-5 (reaches Ghammaz!), 3-4-5-6, 4-5-6-7, 5-6-7-8 (Upper Jins!)
    */
   public static generateSequence4Drill(
@@ -359,16 +358,15 @@ export class PracticeDrillEngine {
         quartet.forEach((pitch, subIdx) => {
           const placement = ViolinErgonomicsEngine.mapPitchToPosition(pitch, 1);
           let label = `${pitch.toDisplayString()} [${i + 1}-${i + 4}]`;
-          if (i === 0 && subIdx === 3) label += ' (نهاية جنس الجذع)';
-          if (i === 1 && subIdx === 3) label += ' (غمّاز المقام)';
-
+          if (i === 0 && subIdx === 3) label += ' (غماز)';
+          if (i === 1 && subIdx === 3) label += ' (غماز)';
           notes.push({
             pitch,
             durationQuarter: noteDuration,
             arabicName: label,
             violinPlacement: placement,
             positionNumber: 1,
-            pedagogicalNote: `رباعية ${i + 1}: الخطوة ${subIdx + 1} (${pitch.toScientificString()})`,
+            pedagogicalNote: `رباعية ${i + 1}: خطوة ${subIdx + 1} (${pitch.toScientificString()})`,
           });
         });
       }
@@ -386,7 +384,7 @@ export class PracticeDrillEngine {
             arabicName: `${pitch.toDisplayString()} [${i + 1}-${i - 2}]`,
             violinPlacement: placement,
             positionNumber: 1,
-            pedagogicalNote: `هبوط رباعي ${N - i}: الخطوة ${subIdx + 1}`,
+            pedagogicalNote: `رباعية هبوط ${N - i}: خطوة ${subIdx + 1}`,
           });
         });
       }
@@ -398,10 +396,10 @@ export class PracticeDrillEngine {
     notes.push({
       pitch: tonic,
       durationQuarter: 2.0, // 2 beats resolution to finish the 4/4 bar
-      arabicName: `${tonic.toDisplayString()} (قرار وقَفلة)`,
+      arabicName: `${tonic.toDisplayString()} (قرار الاستقرار)`,
       violinPlacement: tonicPlacement,
       positionNumber: 1,
-      pedagogicalNote: `استقرار تام على درجة القرار`,
+      pedagogicalNote: `استقرار على قرار المقام الأصلي`,
     });
 
     const totalBeats = notes.reduce((sum, n) => sum + n.durationQuarter, 0);
@@ -416,7 +414,7 @@ export class PracticeDrillEngine {
 
     return {
       id: `drill-seq4-${Date.now()}`,
-      title: `${maqam.name} - ${dirTitle} (رباعيات الأجناس)`,
+      title: `${maqam.name} - ${dirTitle} (متتاليات رباعية - أجناس)`,
       maqam,
       difficulty: 'level2',
       timeSignature: timeSig,
@@ -431,7 +429,7 @@ export class PracticeDrillEngine {
   }
 
   /**
-   * 4. Position Shift Drills (التحويل بين المراكز للكمان)
+   * 4. Position Shift Drills (تمارين التنقل بين البوزيسيونات)
    * Focused on shifting between 1st Position and 3rd Position in Arabic violin practice.
    */
   public static generatePositionShiftDrill(
@@ -465,7 +463,7 @@ export class PracticeDrillEngine {
           arabicName: `${p.toDisplayString()} (Pos I)`,
           violinPlacement: placement,
           positionNumber: 1,
-          pedagogicalNote: `الوضعية الأولى (Pos I) - الإصبع ${placement.finger}`,
+          pedagogicalNote: `بوزيسيون 1 (Pos I) - إصبع ${placement.finger}`,
         });
       }
 
@@ -478,8 +476,8 @@ export class PracticeDrillEngine {
         violinPlacement: shiftPos3Ghammaz,
         positionNumber: 3,
         isShiftPoint: true,
-        shiftInstruction: `سحب الإصبع الأول إلى المركز الثالث (Pos III on ${shiftPos3Ghammaz.string}-string)`,
-        pedagogicalNote: `تحويل للمركز الثالث: حرك اليد بسلاسة حتى يستقر الإصبع الأول على الغماز (${pivotPitch.toScientificString()})`,
+        shiftInstruction: `انتقال للبوزيسيون الثالث (Pos III on ${shiftPos3Ghammaz.string}-string)`,
+        pedagogicalNote: `تحول محوري على الغماز (${pivotPitch.toScientificString()})`,
       });
 
       // 3. Play upper register in 3rd Position
@@ -492,7 +490,7 @@ export class PracticeDrillEngine {
           arabicName: `${p.toDisplayString()} (Pos III)`,
           violinPlacement: placement,
           positionNumber: 3,
-          pedagogicalNote: `المركز الثالث (Pos III) - الإصبع ${placement.finger} بنغمة دافئة مع فيبراتو`,
+          pedagogicalNote: `بوزيسيون 3 (Pos III) - إصبع ${placement.finger} مع رنين علوي`,
         });
       }
 
@@ -506,7 +504,7 @@ export class PracticeDrillEngine {
           arabicName: `${p.toDisplayString()} (Pos III)`,
           violinPlacement: placement,
           positionNumber: 3,
-          pedagogicalNote: `هبوط في المركز الثالث (Pos III)`,
+          pedagogicalNote: `هبوط في البوزيسيون الثالث (Pos III)`,
         });
       }
 
@@ -519,8 +517,8 @@ export class PracticeDrillEngine {
         violinPlacement: shiftDownPos1,
         positionNumber: 1,
         isShiftPoint: true,
-        shiftInstruction: `عودة سلسة إلى المركز الأول (Pos I)`,
-        pedagogicalNote: `تحويل هابط: خفف ضغط الإصبع وانزلق برفق إلى المركز الأول`,
+        shiftInstruction: `هبوط رجوعاً للبوزيسيون الأول (Pos I)`,
+        pedagogicalNote: `استقرار إصبع الدليل والنزول للبوزيسيون الأول`,
       });
 
       // 6. Resolve to Tonic in 1st Position
@@ -533,7 +531,7 @@ export class PracticeDrillEngine {
           arabicName: `${p.toDisplayString()} (Pos I)`,
           violinPlacement: placement,
           positionNumber: 1,
-          pedagogicalNote: i === 0 ? `استقرار تام على القرار في المركز الأول` : `هبوط نحو القرار`,
+          pedagogicalNote: i === 0 ? `استقرار القفلة على القرار` : `هبوط سلس للبوزيسيون الأول`,
         });
       }
     } else if (variation === 'octave-leap') {
@@ -546,10 +544,10 @@ export class PracticeDrillEngine {
       notes.push({
         pitch: tonic,
         durationQuarter: 2.0,
-        arabicName: `${tonic.toDisplayString()} (القرار - Pos I)`,
+        arabicName: `${tonic.toDisplayString()} (قرار - Pos I)`,
         violinPlacement: tonicPos1,
         positionNumber: 1,
-        pedagogicalNote: `نغمة القرار في المركز الأول`,
+        pedagogicalNote: `تثبيت القرار في البوزيسيون الأول`,
       });
 
       // Leap and Shift to Octave in Pos 3
@@ -560,8 +558,8 @@ export class PracticeDrillEngine {
         violinPlacement: octavePos3,
         positionNumber: 3,
         isShiftPoint: true,
-        shiftInstruction: `قفزة ديوان: تحويل مباشر من المركز الأول إلى المركز الثالث`,
-        pedagogicalNote: `ثبّت نغمة الجواب في المركز الثالث بدقة ربع التون`,
+        shiftInstruction: `قفزة جوابية للبوزيسيون الثالث مع تحريك كف اليد`,
+        pedagogicalNote: `إصبع 1 على جواب القرار (Jawab)`,
       });
 
       // Upper neighbor in Pos 3
@@ -574,7 +572,7 @@ export class PracticeDrillEngine {
           arabicName: `${subTonic.toDisplayString()} (Pos III)`,
           violinPlacement: subPos3,
           positionNumber: 3,
-          pedagogicalNote: `درجة ما قبل الجواب في المركز الثالث`,
+          pedagogicalNote: `نغمة جوار عليا`,
         });
         notes.push({
           pitch: octavePitch,
@@ -594,18 +592,18 @@ export class PracticeDrillEngine {
         violinPlacement: ViolinErgonomicsEngine.mapPitchToPosition(pivotPitch, 1),
         positionNumber: 1,
         isShiftPoint: true,
-        shiftInstruction: `انتقال عودة للمركز الأول`,
-        pedagogicalNote: `هبوط للمركز الأول عند الغماز`,
+        shiftInstruction: `نزول للبوزيسيون الأول على الغماز`,
+        pedagogicalNote: `الوصول للغماز بأمان`,
       });
 
       // Cadential resolution to Tonic
       notes.push({
         pitch: tonic,
         durationQuarter: 2.0,
-        arabicName: `${tonic.toDisplayString()} (قَفلة القرار)`,
+        arabicName: `${tonic.toDisplayString()} (قرار الاستقرار)`,
         violinPlacement: tonicPos1,
         positionNumber: 1,
-        pedagogicalNote: `قفلة القرار في المركز الأول`,
+        pedagogicalNote: `قفلة تامة على القرار`,
       });
     } else {
       // Expressive Slide (Zahlaka) into upper register
@@ -618,7 +616,7 @@ export class PracticeDrillEngine {
           arabicName: `${p.toDisplayString()} (Pos I)`,
           violinPlacement: ViolinErgonomicsEngine.mapPitchToPosition(p, 1),
           positionNumber: 1,
-          pedagogicalNote: `تمهيد في المركز الأول`,
+          pedagogicalNote: `تدرج صعودي نحو الغماز`,
         });
       }
 
@@ -627,12 +625,12 @@ export class PracticeDrillEngine {
       notes.push({
         pitch: pivotPitch,
         durationQuarter: 2.0,
-        arabicName: `${pivotPitch.toDisplayString()} ~ [زحلقة للمركز الثالث]`,
+        arabicName: `${pivotPitch.toDisplayString()} ~ [زحلقة للبوزيسيون 3]`,
         violinPlacement: ghammazPos3,
         positionNumber: 3,
         isShiftPoint: true,
-        shiftInstruction: `زحلقة لحنية (Glissando / Zahlaka) إلى المركز الثالث`,
-        pedagogicalNote: `انزلاق شرقي تعبيري دافئ يحاكي الصوت البشري`,
+        shiftInstruction: `زحلقة تعبيرية (Glissando / Zahlaka) نحو البوزيسيون الثالث`,
+        pedagogicalNote: `زحلقة شرقية مميزة بأصبع السبابة`,
       });
 
       // Continue to Octave
@@ -642,19 +640,19 @@ export class PracticeDrillEngine {
         arabicName: `${octavePitch.toDisplayString()} (جواب - Pos III)`,
         violinPlacement: ViolinErgonomicsEngine.mapPitchToPosition(octavePitch, 3),
         positionNumber: 3,
-        pedagogicalNote: `الجواب في المركز الثالث مع فيبراتو عربي غني`,
+        pedagogicalNote: `استعراض الصوت الغنائي في البوزيسيون الثالث`,
       });
 
       // Return and resolve
       notes.push({
         pitch: scale[0],
         durationQuarter: 2.0,
-        arabicName: `${scale[0].toDisplayString()} (القرار)`,
+        arabicName: `${scale[0].toDisplayString()} (قرار الاستقرار)`,
         violinPlacement: ViolinErgonomicsEngine.mapPitchToPosition(scale[0], 1),
         positionNumber: 1,
         isShiftPoint: true,
-        shiftInstruction: `انتقال نحو المركز الأول للاستقرار`,
-        pedagogicalNote: `استقرار ختامي`,
+        shiftInstruction: `هبوط نهائي للبوزيسيون الأول`,
+        pedagogicalNote: `قفلة القرار الأصلية`,
       });
     }
 
@@ -670,7 +668,7 @@ export class PracticeDrillEngine {
 
     return {
       id: `drill-shift-${Date.now()}`,
-      title: `${maqam.name} - ${varTitle} (تحويل المراكز)`,
+      title: `${maqam.name} - ${varTitle} (تنقلات المراكز بالكمان)`,
       maqam,
       difficulty: 'level3',
       timeSignature: timeSig,

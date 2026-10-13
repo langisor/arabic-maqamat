@@ -1,3 +1,4 @@
+// src/audio/audio-transport.ts
 export interface TransportSessionStatus {
   scope: string;
   activity: string;
@@ -67,7 +68,6 @@ export class AudioTransport {
       this.audioContextReady = false;
     }
     if (this.audioStartup) return this.audioStartup;
-
     this.audioStartupError = null;
     let startupPromise: Promise<void>;
     try {
@@ -78,7 +78,6 @@ export class AudioTransport {
       this.publish();
       return Promise.reject(error);
     }
-
     this.audioStartup = startupPromise
       .then(() => {
         this.audioContextReady = true;
@@ -97,14 +96,12 @@ export class AudioTransport {
         this.audioStartup = null;
         this.publish();
       });
-
     this.publish();
     return this.audioStartup;
   }
 
   public static startSession(scope: string, activity: string): TransportSession {
     this.stopScope(scope);
-
     const record: SessionRecord = {
       id: this.nextSessionId++,
       scope,
@@ -137,7 +134,8 @@ export class AudioTransport {
       },
       setInterval: (callback, intervalMs) => {
         const timer = globalThis.setInterval(() => {
-          if (isCurrent()) callback();
+          if (!isCurrent()) return;
+          callback();
         }, intervalMs);
         record.timers.add(() => globalThis.clearInterval(timer));
         return timer;
@@ -149,7 +147,6 @@ export class AudioTransport {
   public static stopScope(scope: string): void {
     const record = this.sessions.get(scope);
     if (!record) return;
-
     this.sessions.delete(scope);
     record.active = false;
     record.timers.forEach((clearTimer) => clearTimer());
@@ -184,11 +181,17 @@ export class AudioTransport {
 
   private static finishSession(record: SessionRecord): void {
     if (this.sessions.get(record.scope)?.id !== record.id) return;
-
     this.sessions.delete(record.scope);
     record.active = false;
     record.timers.forEach((clearTimer) => clearTimer());
     record.timers.clear();
+    record.cancelCallbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch {
+        // Continue cancelling the remaining session resources.
+      }
+    });
     record.cancelCallbacks.clear();
     this.publish();
   }

@@ -145,6 +145,7 @@ export class MicrotonalPitchDetector {
     const denominator = 2 * (y1 - 2 * y2 + y3);
     const delta = denominator !== 0 ? (y1 - y3) / denominator : 0;
     const refinedPeriod = bestPeriod + delta;
+
     const rawFrequency = this.sampleRate / refinedPeriod;
 
     // Discard out-of-range frequencies
@@ -179,8 +180,8 @@ export class MicrotonalPitchDetector {
       this.smoothedCents = this.smoothedCents + 0.4 * (rawCents - this.smoothedCents);
     }
     const centsDeviation = Math.round(this.smoothedCents * 10) / 10;
-
     const inTune = Math.abs(centsDeviation) <= this.inTuneCentsTolerance;
+
     let status: 'in-tune' | 'sharp' | 'flat' | 'too-quiet';
     if (inTune) {
       status = 'in-tune';

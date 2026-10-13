@@ -63,22 +63,19 @@ export const PitchBadge: React.FC<PitchBadgeProps> = ({
     hasHover: Boolean(onClick)
   });
 
-  const spine = showArabicSpine
+  const spine = showArabicSpine 
     ? (arabicSpineName || ArabicNoteSpine.findByPitch(pitch)?.transliteration || '')
     : null;
 
-  // Resolve accessible descriptive label
   const accDescription = getAccidentalLabel(pitch.accidental, 'en');
   const accessibleName = ariaLabel || `${pitch.toScientificString()} (${accDescription}), octave ${pitch.octave}, ${pitch.toFrequency().toFixed(1)} Hertz`;
 
-  // Size variations
   const sizeClasses = {
     sm: 'px-2 py-1 text-xs gap-1 min-h-7',
     md: 'px-2.5 py-1.5 text-xs sm:text-sm gap-1.5 min-h-9',
     lg: 'px-3.5 py-2.5 text-sm sm:text-base gap-2 min-h-12'
   }[size];
 
-  // Indicator badge if present or derived from tonic/ghammaz
   const resolvedBadgeLabel = badgeLabel ?? (isTonic ? '1' : isGhammaz ? 'G' : null);
   const resolvedBadgeColor = badgeColor ?? (isTonic ? 'emerald' : isGhammaz ? 'sky' : 'amber');
 
@@ -88,13 +85,11 @@ export const PitchBadge: React.FC<PitchBadgeProps> = ({
         <span className="font-mono font-bold">
           {pitch.toScientificString()}
         </span>
-
         {showOctave && (
           <span className="text-[10px] opacity-75 font-mono">
             {pitch.octave}
           </span>
         )}
-
         {resolvedBadgeLabel && (
           <span
             className={`rounded px-1 text-[9px] font-black uppercase tracking-tight shadow-xs ${BADGE_COLOR_CLASSES[resolvedBadgeColor]}`}
@@ -121,7 +116,6 @@ export const PitchBadge: React.FC<PitchBadgeProps> = ({
           {spine}
         </span>
       )}
-
       {children}
     </>
   );

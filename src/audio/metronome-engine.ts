@@ -23,7 +23,7 @@ export const TIME_SIGNATURE_PRESETS: TimeSignatureOption[] = [
     name: '4/4',
     beatsPerBar: 4,
     beatUnit: 4,
-    arabicName: 'مقصوم / واحدة / بلدي',
+    arabicName: 'مقسوم / وحدة / بلدي',
     arabicTransliteration: 'Maqsum / Wahda / Baladi',
     description: 'Foundational 4-beat cycle for Rast, Bayati, and Nahawand maqamat',
     downbeats: [0],
@@ -47,7 +47,7 @@ export const TIME_SIGNATURE_PRESETS: TimeSignatureOption[] = [
     name: '3/4',
     beatsPerBar: 3,
     beatUnit: 4,
-    arabicName: 'دارج / سماعي دارج',
+    arabicName: 'درج / سماعي دارج',
     arabicTransliteration: 'Darj / Samai Darij',
     description: 'Classical 3-beat Muwashah & instrumental Darj suite pieces',
     downbeats: [0],
@@ -59,7 +59,7 @@ export const TIME_SIGNATURE_PRESETS: TimeSignatureOption[] = [
     name: '6/8',
     beatsPerBar: 6,
     beatUnit: 8,
-    arabicName: 'يورك سماعي / مدوّر',
+    arabicName: 'يورك سماعي / مدور',
     arabicTransliteration: 'Yuruk Semai / Mudawwar',
     description: 'Flowing 6-beat cycle common in Ottoman-Arab classical repertoire',
     downbeats: [0],
@@ -107,7 +107,7 @@ export const TIME_SIGNATURE_PRESETS: TimeSignatureOption[] = [
     name: '5/4',
     beatsPerBar: 5,
     beatUnit: 4,
-    arabicName: 'خماسي',
+    arabicName: 'خماسي / أعرج',
     arabicTransliteration: 'Quintupal / 5-Beat',
     description: 'Modern and classical 5-beat compound practice meter',
     downbeats: [0],
@@ -277,12 +277,12 @@ export class MetronomeAudioEngine {
       session.finish();
       throw error;
     }
+
     if (!session.isActive()) return;
 
     this.isPlaying = true;
     this.currentBeatIndex = 0;
     this.nextBeatAudioTime = audioTime ?? Tone.now() + 0.05;
-
     this.notifyState(true);
     this.runScheduler(session);
   }
@@ -297,7 +297,6 @@ export class MetronomeAudioEngine {
 
   private static stopInternal(): void {
     if (!this.isPlaying && this.timerId === null) return;
-
     this.isPlaying = false;
     if (this.timerId !== null) {
       window.clearInterval(this.timerId);
@@ -339,7 +338,7 @@ export class MetronomeAudioEngine {
         // Calculate step duration based on time signature beat unit:
         // beatUnit === 4: quarter note = 60 / bpm seconds
         // beatUnit === 8: eighth note  = (60 / bpm) * 0.5 seconds
-        const stepSeconds =
+        const stepSeconds = 
           this.timeSignature.beatUnit === 8
             ? (60 / this.bpm) * 0.5
             : 60 / this.bpm;

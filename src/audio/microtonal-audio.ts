@@ -18,10 +18,8 @@ export class MicrotonalAudioEngine {
   private static violinSynth: Tone.PolySynth | null = null;
   private static violinFilter: Tone.Filter | null = null;
   private static violinVibrato: Tone.Vibrato | null = null;
-
   private static oudSynth: Tone.PolySynth | null = null;
   private static oudFilter: Tone.Filter | null = null;
-
   private static kanunSynth: Tone.PolySynth | null = null;
   private static kanunFilter: Tone.Filter | null = null;
 
@@ -147,6 +145,7 @@ export class MicrotonalAudioEngine {
       type: 'lowpass',
       rolloff: -24
     }).connect(this.droneChorus);
+
     this.droneChorus.connect(this.droneGain);
 
     this.isInitialized = true;
@@ -249,7 +248,6 @@ export class MicrotonalAudioEngine {
   ): void {
     this.requestAudioContext();
     const now = Tone.now();
-
     try {
       if (timbre === 'violin' && this.violinSynth) {
         this.violinSynth.triggerAttackRelease(freq, durationSeconds, now, velocity);
@@ -286,12 +284,14 @@ export class MicrotonalAudioEngine {
     const session = AudioTransport.startSession(scope, 'Sequence');
     const voices = { timbre, frequencies: [] as number[] };
     this.sequenceVoices.set(scope, voices);
+
     session.onCancel(() => {
       if (this.sequenceVoices.get(scope) === voices) {
         this.releaseSequenceVoices(voices);
         this.sequenceVoices.delete(scope);
       }
     });
+
     const startTime = audioTime ?? Tone.now();
     const intervalSeconds = intervalMs / 1000;
 
@@ -340,6 +340,7 @@ export class MicrotonalAudioEngine {
     const session = AudioTransport.startSession(scope, 'Sequence');
     const voices = { timbre, frequencies: [] as number[] };
     this.sequenceVoices.set(scope, voices);
+
     session.onCancel(() => {
       if (this.sequenceVoices.get(scope) === voices) {
         this.releaseSequenceVoices(voices);
@@ -360,7 +361,6 @@ export class MicrotonalAudioEngine {
         this.playPitch(note.pitch, noteDurationSec * 0.92, timbre, 0.75);
         if (onStepChange) onStepChange(index);
       }, stepTime);
-
       accumulatedSeconds += noteDurationSec;
     });
 
@@ -391,7 +391,6 @@ export class MicrotonalAudioEngine {
    */
   public static toggleDrone(pitch: ArabicPitch, enable: boolean): void {
     this.requestAudioContext();
-
     if (!enable) {
       const session = this.droneSession;
       if (!session?.isActive()) return;
@@ -415,9 +414,7 @@ export class MicrotonalAudioEngine {
   }
 
   private static startDrone(pitch: ArabicPitch): void {
-
     if (!this.droneFilter || !this.droneGain) return;
-
     const freq = pitch.toFrequency(this.referenceA4);
 
     // Multi-voice acoustic drone:
@@ -460,10 +457,10 @@ export class MicrotonalAudioEngine {
 
   private static releaseSequenceVoices(voices: { timbre: TimbreType; frequencies: number[] }): void {
     if (voices.frequencies.length === 0) return;
-    const synth = voices.timbre === 'oud'
-      ? this.oudSynth
-      : voices.timbre === 'kanun'
-        ? this.kanunSynth
+    const synth = voices.timbre === 'oud' 
+      ? this.oudSynth 
+      : voices.timbre === 'kanun' 
+        ? this.kanunSynth 
         : this.violinSynth;
     try {
       synth?.triggerRelease(voices.frequencies, Tone.now());

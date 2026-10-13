@@ -9,8 +9,8 @@ import {
   Compass,
   RotateCcw,
   type LucideIcon,
+  Package,
 } from "lucide-react"
-
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,33 +28,20 @@ import type {
   SayrTrajectory,
 } from "@/theory/maqam"
 
-/* -------------------------------------------------------------------------- */
-/*  Types                                                                     */
-/* -------------------------------------------------------------------------- */
-
 type StopRole = "tonic" | "lower-jins" | "ghammaz" | "upper-jins" | "octave"
 
 export interface SayrStop {
-  /** Position within the trajectory (0-based). */
   index: number
   role: StopRole
   label: string
-  /** Scientific pitch name, e.g. "G4". Only available when `maqam` is passed. */
   pitch?: string
-  /** Distance above the tonic in quarter tones (1 qt = 50¢). */
   quarterTones: number
 }
 
 export interface SayrVisualizationProps {
   sayrDirection: SayrTrajectory
   maqamName: string
-  /**
-   * Optional. When provided, the diagram plots the maqam's real pitches
-   * (heights are true quarter-tone distances, jins ranges and alternate
-   * branches come from the maqam). Without it, a schematic shape is drawn.
-   */
   maqam?: Maqam
-  /** Fired when a stop is clicked or activated with the keyboard (e.g. to play its pitch). */
   onStopSelect?: (stop: SayrStop) => void
   className?: string
 }
@@ -73,12 +60,9 @@ interface SayrModel {
   lowerBand: readonly [number, number]
   upperBand: readonly [number, number]
   branches: SayrBranch[]
+  baggagePitches: ArabicPitch[]
   isSchematic: boolean
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Static content                                                            */
-/* -------------------------------------------------------------------------- */
 
 const ROLES: Record<
   StopRole,
@@ -91,7 +75,7 @@ const ROLES: Record<
   },
   "lower-jins": {
     label: "Lower jins",
-    arabic: "جنس أسفل",
+    arabic: "جنس الأصل",
     hint: "The middle of the lower jins, where the maqam's basic colour is set.",
   },
   ghammaz: {
@@ -101,8 +85,8 @@ const ROLES: Record<
   },
   "upper-jins": {
     label: "Upper jins",
-    arabic: "جنس أعلى",
-    hint: "The middle of the upper jins. This area is often reshaped by the alternate branches.",
+    arabic: "جنس الفرع",
+    hint: "The middle of the upper jins. This area is often reshaped by alternate branches.",
   },
   octave: {
     label: "Octave",
@@ -158,38 +142,32 @@ const BRANCH_ROLE_LABELS: Record<AlternateJinsBranch["role"], string> = {
   descent_only: "Descent only",
 }
 
-/** Used when no `maqam` is passed: a plausible, evenly readable shape. */
 const SCHEMATIC_MODEL: SayrModel = {
   qt: { tonic: 0, "lower-jins": 5, ghammaz: 10, "upper-jins": 17, octave: 24 },
   pitch: {},
   lowerBand: [0, 10],
   upperBand: [10, 20],
   branches: [],
+  baggagePitches: [],
   isSchematic: true,
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Model + geometry helpers                                                  */
-/* -------------------------------------------------------------------------- */
-
-// toString() omits the natural sign: "G4", "B♭4", "B𝄳4"
 const pitchName = (p: ArabicPitch) => p.toString()
 const midPitch = (pitches: ArabicPitch[]) =>
   pitches[Math.floor(pitches.length / 2)]
 
 function buildModel(maqam?: Maqam): SayrModel {
   if (!maqam) return SCHEMATIC_MODEL
-
   try {
     const tonic = maqam.getTonic()
     const qtOf = (p: ArabicPitch) => tonic.diffQuarterTones(p)
-
     const octave = tonic.transpose(24)
     const lowerMid = midPitch(maqam.lowerJins.getPitches())
     const upperMid = midPitch(maqam.upperJins.getPitches())
     const ghammaz = maqam.getGhammaz()
+    const baggage = maqam.lowerJins.getBaggageNotes()
 
-    const branches: SayrBranch[] = maqam.alternateUpperAjnas.map((b, i) => ({
+    const branches: SayrBranch[] = maqam.alternateUpperAjnas.map((b: AlternateJinsBranch, i: number) => ({
       letter: String.fromCharCode(65 + i),
       roleLabel: BRANCH_ROLE_LABELS[b.role],
       description: b.description,
@@ -218,10 +196,10 @@ function buildModel(maqam?: Maqam): SayrModel {
         qtOf(maqam.upperJins.getTopPitch()),
       ],
       branches,
+      baggagePitches: baggage,
       isSchematic: false,
     }
   } catch {
-    // If the pitch API ever changes shape, degrade to the schematic view.
     return SCHEMATIC_MODEL
   }
 }
@@ -232,13 +210,11 @@ const PAD_TOP = 20
 const PAD_BOTTOM = 20
 const PLOT_LEFT = 56
 const BRANCH_STEP = 16
-
 const r1 = (n: number) => Math.round(n * 10) / 10
 
 function layout(pattern: StopRole[], model: SayrModel) {
   const branchCount = model.branches.length
   const plotRight = VIEW_W - 20 - (branchCount ? 8 + branchCount * BRANCH_STEP : 0)
-
   const maxQt = Math.max(24, ...model.branches.map((b) => b.topQt))
   const yOf = (qt: number) =>
     r1(PAD_TOP + (1 - qt / maxQt) * (VIEW_H - PAD_TOP - PAD_BOTTOM))
@@ -250,7 +226,6 @@ function layout(pattern: StopRole[], model: SayrModel) {
     y: yOf(model.qt[role]),
   }))
 
-  // Smooth S-curves between stops: flat at each stop, never overshoots.
   const d = points
     .map((p, i) => {
       if (i === 0) return `M ${p.x} ${p.y}`
@@ -289,10 +264,6 @@ function layout(pattern: StopRole[], model: SayrModel) {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Reduced-motion hook (SSR-safe)                                            */
-/* -------------------------------------------------------------------------- */
-
 function usePrefersReducedMotion() {
   return useSyncExternalStore(
     (onChange) => {
@@ -305,13 +276,7 @@ function usePrefersReducedMotion() {
   )
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Component                                                                 */
-/* -------------------------------------------------------------------------- */
-
 export function SayrVisualization(props: SayrVisualizationProps) {
-  // Re-key so selection and the trace animation reset when the maqam or
-  // trajectory changes, without needing an effect.
   return (
     <SayrDiagram
       key={`${props.sayrDirection}:${props.maqam?.id ?? "schematic"}`}
@@ -329,7 +294,6 @@ function SayrDiagram({
 }: SayrVisualizationProps) {
   const info = TRAJECTORIES[sayrDirection] ?? TRAJECTORIES.ascending
   const Icon = info.icon
-
   const model = useMemo(() => buildModel(maqam), [maqam])
   const geo = useMemo(() => layout(info.pattern, model), [info.pattern, model])
   const reducedMotion = usePrefersReducedMotion()
@@ -393,7 +357,6 @@ function SayrDiagram({
       </CardHeader>
 
       <CardContent className="space-y-5 pt-6">
-        {/* Path diagram */}
         <div>
           <div className="relative rounded-xl border border-slate-800 bg-slate-950/60 p-2 sm:p-3">
             <svg
@@ -417,7 +380,6 @@ function SayrDiagram({
                 </linearGradient>
               </defs>
 
-              {/* Jins ranges */}
               <rect
                 x={PLOT_LEFT}
                 width={geo.plotRight - PLOT_LEFT}
@@ -435,7 +397,6 @@ function SayrDiagram({
                 className="fill-violet-400/10"
               />
 
-              {/* Pitch guides */}
               {geo.guides.map((g) => (
                 <g key={g.role}>
                   <line
@@ -458,7 +419,6 @@ function SayrDiagram({
                 </g>
               ))}
 
-              {/* Alternate upper ajnas: vertical range bars in the right margin */}
               {geo.branchBars.map((b) => (
                 <g key={b.letter}>
                   <title>{`${b.roleLabel}: ${b.description}`}</title>
@@ -481,7 +441,6 @@ function SayrDiagram({
                 </g>
               ))}
 
-              {/* Melodic path (drawn once on mount; replay with the button) */}
               <g key={run}>
                 <path
                   id={pathId}
@@ -505,7 +464,6 @@ function SayrDiagram({
                     />
                   )}
                 </path>
-
                 {!reducedMotion && (
                   <circle r={4} className="pointer-events-none fill-white">
                     <animateMotion
@@ -521,7 +479,6 @@ function SayrDiagram({
                 )}
               </g>
 
-              {/* Stops */}
               {geo.points.map((p, i) => {
                 const pivot = isPivot(p.role)
                 const isSelected = i === selected
@@ -543,7 +500,6 @@ function SayrDiagram({
                       }
                     }}
                   >
-                    {/* Larger invisible hit area for touch */}
                     <circle cx={p.x} cy={p.y} r={18} fill="transparent" />
                     {isSelected && (
                       <circle
@@ -581,7 +537,6 @@ function SayrDiagram({
             )}
           </div>
 
-          {/* Legend */}
           <ul className="flex flex-wrap gap-x-4 gap-y-1 px-1 pt-2 text-xs text-slate-400">
             <li className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-full bg-amber-400" aria-hidden />
@@ -605,13 +560,9 @@ function SayrDiagram({
                 Alternate upper jins
               </li>
             )}
-            {model.isSchematic && (
-              <li className="text-slate-500">Schematic shape</li>
-            )}
           </ul>
         </div>
 
-        {/* Stop sequence */}
         <ol
           className="flex flex-wrap gap-1.5"
           aria-label="Sayr stops in order"
@@ -626,11 +577,11 @@ function SayrDiagram({
                   aria-pressed={isSelected}
                   onClick={() => activate(i)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400",
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 cursor-pointer",
                     isSelected
                       ? pivot
-                        ? "border-amber-400 bg-amber-400 text-slate-950"
-                        : "border-sky-400/60 bg-sky-400/15 text-sky-100"
+                        ? "border-amber-400 bg-amber-400 text-slate-950 font-bold"
+                        : "border-sky-400/60 bg-sky-400/15 text-sky-100 font-bold"
                       : pivot
                         ? "border-amber-500/40 text-amber-300 hover:border-amber-400"
                         : "border-slate-700 text-slate-300 hover:border-slate-500"
@@ -644,7 +595,6 @@ function SayrDiagram({
           })}
         </ol>
 
-        {/* Selected stop + trajectory description */}
         <div
           aria-live="polite"
           className="rounded-lg border border-sky-500/20 bg-sky-500/5 p-4"
@@ -675,7 +625,25 @@ function SayrDiagram({
           </p>
         </div>
 
-        {/* Alternate branches */}
+        {/* Jins Baggage Callout */}
+        {model.baggagePitches.length > 0 && (
+          <div className="rounded-lg border border-purple-500/30 bg-purple-950/20 p-3.5 flex items-start gap-3">
+            <Package className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
+            <div className="space-y-1 text-xs">
+              <span className="font-semibold text-purple-200">
+                Jins Baggage Notes (أمتعة الجنس):
+              </span>
+              <p className="text-slate-300 leading-relaxed">
+                Consistent notes below the tonic that belong inherently to this maqam's lower jins character:{" "}
+                <span className="font-mono text-purple-300 font-bold">
+                  {model.baggagePitches.map(p => p.toString()).join(", ")}
+                </span>
+                . These notes are frequently visited in melodic approaches and cadential descents.
+              </p>
+            </div>
+          </div>
+        )}
+
         {model.branches.length > 0 && (
           <ul className="space-y-2">
             {model.branches.map((b) => (

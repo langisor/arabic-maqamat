@@ -36,14 +36,14 @@ export class MelodyGenerator {
    * Traditional Arabic pitch degree names mapped by scale index
    */
   private static readonly ARABIC_DEGREE_NAMES: Record<number, string> = {
-    0: 'القرار / Rast (Deg. 1)',
-    1: 'الدوكه / Dukah (Deg. 2)',
-    2: 'السيكاه / Sikah (Deg. 3)',
-    3: 'الجهاركاه / Jaharkah (Deg. 4)',
-    4: 'الغمّاز / Nawa (Deg. 5)',
-    5: 'الحسيني / Husayni (Deg. 6)',
-    6: 'الأوج / Awj (Deg.7)',
-    7: 'الجواب / Kirdan (Oct. 8)',
+    0: 'راست / Rast (Deg. 1)',
+    1: 'دوكاه / Dukah (Deg. 2)',
+    2: 'سيكاه / Sikah (Deg. 3)',
+    3: 'جهاركاه / Jaharkah (Deg. 4)',
+    4: 'نوى / Nawa (Deg. 5)',
+    5: 'حسيني / Husayni (Deg. 6)',
+    6: 'أوج / Awj (Deg. 7)',
+    7: 'كردان / Kirdan (Oct. 8)',
   };
 
   /**
@@ -81,7 +81,6 @@ export class MelodyGenerator {
     const validStartIndices = difficulty === 'level1' 
       ? [0] 
       : [0, ghammazIdx > 0 ? ghammazIdx : Math.min(4, maxIndex)];
-
     let currentIdx = validStartIndices[Math.floor(Math.random() * validStartIndices.length)];
 
     // 1. Initial Note
@@ -97,8 +96,8 @@ export class MelodyGenerator {
     while (currentBeats < targetMelodicBeats) {
       const remaining = targetMelodicBeats - currentBeats;
       const duration = this.getRandomDuration(difficulty, remaining);
-
       let nextIdx: number;
+
       if (difficulty === 'level1') {
         // Strict stepwise within lower Jins
         const step = Math.random() < 0.45 ? 1 : Math.random() < 0.9 ? -1 : 0;
@@ -127,7 +126,6 @@ export class MelodyGenerator {
           });
           currentBeats += 0.5;
         }
-
         nextIdx = Math.max(0, Math.min(maxIndex, currentIdx + move));
       }
 
@@ -140,7 +138,7 @@ export class MelodyGenerator {
       currentBeats += duration;
     }
 
-    // 3. Cadence Phrase (قَفلة - Qafla)
+    // 3. Cadence Phrase (قفلة - Qafla)
     // Stepwise descent from 2nd degree (Dukah/Thani) to 1st degree (Qarar/Tonic)
     const cadenceSubtonicIdx = 1 < scale.length ? 1 : 0;
     
@@ -148,14 +146,14 @@ export class MelodyGenerator {
     notes.push({
       pitch: scale[cadenceSubtonicIdx],
       durationQuarter: 0.5,
-      arabicName: `${this.getArabicDegreeName(cadenceSubtonicIdx)} (مسار القَفلة)`
+      arabicName: `${this.getArabicDegreeName(cadenceSubtonicIdx)} (تمهيد قفلة)`
     });
 
     // Final Cadential Resolution Note (Tonic)
     notes.push({
       pitch: scale[0],
       durationQuarter: 1.5,
-      arabicName: `${this.getArabicDegreeName(0)} (قَفلة / Qarar)`
+      arabicName: `${this.getArabicDegreeName(0)} (قفلة / Qarar)`
     });
 
     const totalBeats = notes.reduce((acc, n) => acc + n.durationQuarter, 0);
@@ -186,7 +184,6 @@ export class MelodyGenerator {
    */
   private static getRandomDuration(difficulty: MelodyDifficulty, remainingBeats: number): number {
     let pool: number[];
-
     if (difficulty === 'level1') {
       pool = [1.0, 1.0, 0.5, 0.5];
     } else if (difficulty === 'level2') {
@@ -199,7 +196,6 @@ export class MelodyGenerator {
     if (filtered.length === 0) {
       return remainingBeats;
     }
-
     return filtered[Math.floor(Math.random() * filtered.length)];
   }
 

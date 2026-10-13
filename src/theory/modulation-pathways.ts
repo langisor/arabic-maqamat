@@ -64,7 +64,6 @@ export class ModulationPathwayEngine {
 
     for (const target of allMaqamat) {
       if (target.id === source.id) continue;
-
       const discovered = this.evaluatePair(source, target);
       if (discovered) {
         pathways.push(...discovered);
@@ -84,6 +83,7 @@ export class ModulationPathwayEngine {
     const targetTonic = target.getTonic();
     const sourceGhammaz = source.getGhammaz();
     const targetGhammaz = target.getGhammaz();
+
     const isSameFamily = source.family !== 'None' && source.family === target.family;
 
     // 1. Same-family modulations (Intra-family substitution / alteration)
@@ -123,7 +123,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.upperJins.definition.name,
           targetJinsName: target.upperJins.definition.name,
           description: `Shared Ghammaz pivot on ${pivot.toScientificString()} while maintaining root ${source.lowerJins.definition.name} foundation.`,
-          arabicDescription: `غمّاز مشترك على نغمة ${pivot.toScientificString()} مع ثبات الجنس الأساسي (${source.lowerJins.definition.arabicName}).`
+          arabicDescription: `غمّاز مشترك على ${pivot.toScientificString()} مع المحافظة على جنس الأصل (${source.lowerJins.definition.arabicName}).`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -132,7 +132,7 @@ export class ModulationPathwayEngine {
         },
         transitionNotes: transition,
         rationale: `Intra-family modulation within ${source.family}. Melodic phrases ascend to the Ghammaz (${pivot.toScientificString()}) and substitute ${source.upperJins.definition.name} with ${target.upperJins.definition.name}.`,
-        arabicRationale: `تحويل ضمن فصيلة ${source.family}: تصعد الجملة إلى الغماز (${pivot.toScientificString()}) وتستبدل جنس ${source.upperJins.definition.arabicName} بجنس ${target.upperJins.definition.arabicName}.`,
+        arabicRationale: `تحويل داخلي ضمن عائلة ${source.family}: تصعد الجمل إلى الغماز (${pivot.toScientificString()}) ثم تستبدل ${source.upperJins.definition.arabicName} بجنس ${target.upperJins.definition.arabicName}.`,
         historicalContext: `Classic Wasla technique extensively documented by D'Erlanger and contemporary masters for introducing ornamentation while retaining family identity.`,
         commonInRepertoire: true,
         affinityScore: 95,
@@ -165,7 +165,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.upperJins.definition.name,
           targetJinsName: target.lowerJins.definition.name,
           description: `Ghammaz of ${source.name} serves directly as the Tonic Qarar for ${target.name}.`,
-          arabicDescription: `يتحول غمّاز ${source.name} مباشرة إلى قرار واستقرار لـ ${target.name}.`
+          arabicDescription: `غمّاز مقام ${source.name} يتحول مباشرة إلى قرار أساسي لمقام ${target.name}.`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -178,7 +178,7 @@ export class ModulationPathwayEngine {
           ...bridgePitches.slice(0, 4)
         ],
         rationale: `Direct structural shift (Intiqal). The melody lingers on the dominant Ghammaz (${sourceGhammaz.toScientificString()}) and elevates it into a new home tonic.`,
-        arabicRationale: `انتقال مقامي كامل: تتكئ الجملة على الغماز (${sourceGhammaz.toScientificString()}) وتحوله إلى قرار ومستقر مقامي جديد.`,
+        arabicRationale: `انتقال مقامي كامل عبر الغماز (${sourceGhammaz.toScientificString()}) حيث يتأسس قرار مقامي جديد.`,
         historicalContext: `A hallmark of Muwashahat and Taqasim improvisation, moving from lower registers to upper tonal plateaus.`,
         commonInRepertoire: true,
         affinityScore: 90,
@@ -191,6 +191,7 @@ export class ModulationPathwayEngine {
       const scalePitches = source.getScale();
       const degIndex = scalePitches.findIndex(p => p.equals(sourceGhammaz));
       const scaleDegree = degIndex !== -1 ? degIndex + 1 : 5;
+
       const bridgeJins = target.upperJins;
       const bridgePitches = bridgeJins.getPitches();
 
@@ -209,7 +210,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.upperJins.definition.name,
           targetJinsName: target.upperJins.definition.name,
           description: `Shared Ghammaz dominant on ${sourceGhammaz.toScientificString()} across ${source.family} and ${target.family}.`,
-          arabicDescription: `غمّاز مشترك على نغمة ${sourceGhammaz.toScientificString()} بين فصيلة ${source.family} وفصيلة ${target.family}.`
+          arabicDescription: `غمّاز مشترك على ${sourceGhammaz.toScientificString()} يجمع بين عائلة ${source.family} وعائلة ${target.family}.`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -223,7 +224,7 @@ export class ModulationPathwayEngine {
           targetTonic
         ],
         rationale: `Both modes meet on the shared dominant Ghammaz (${sourceGhammaz.toScientificString()}). The improviser can suspend on this pivot before settling into ${target.name}.`,
-        arabicRationale: `يلتقي المقامان عند نفس الغماز (${sourceGhammaz.toScientificString()}). يمكن للعازف الوقوف عليه ثم الهبوط إلى قرار ${target.name}.`,
+        arabicRationale: `يلتقي المقامان عند الغماز المشترك (${sourceGhammaz.toScientificString()}). ومنه يتم التمهيد للحلول في ${target.name}.`,
         historicalContext: `Classic modulation technique in Wasla suites when pivoting across related families.`,
         commonInRepertoire: true,
         affinityScore: 84,
@@ -232,8 +233,6 @@ export class ModulationPathwayEngine {
     }
 
     // 3. Shared Upper Jins across different families
-    // E.g., Bayati on D has Upper Nahawand on G. Maqam Nahawand on C has Upper Kurd or Hijaz.
-    // If target has lower or upper jins sharing definition and root:
     const sharesUpperJinsWithTargetLower =
       source.upperJins.definition.id === target.lowerJins.definition.id &&
       source.upperJins.root.equals(target.lowerJins.root);
@@ -258,7 +257,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.upperJins.definition.name,
           targetJinsName: target.lowerJins.definition.name,
           description: `Upper Jins (${source.upperJins.definition.name}) on ${bridgeJins.root.toScientificString()} is identical to the root foundation of ${target.name}.`,
-          arabicDescription: `الجنس الأعلى لـ ${source.name} مطابق تماماً للجنس الأساسي لـ ${target.name}.`
+          arabicDescription: `الجنس الأعلى لمقام ${source.name} يطابق جنس الأصل لمقام ${target.name}.`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -271,7 +270,7 @@ export class ModulationPathwayEngine {
           ...bridgePitches
         ],
         rationale: `Seamless pivot through a shared Jins cell (${source.upperJins.definition.name}). The ear accepts the transition naturally because the pitches are already established in the upper branch.`,
-        arabicRationale: `جسر انسيابي عبر جنس مشترك (${source.upperJins.definition.arabicName}): تستسيغ الأذن التحويل لأن نغماته مسموعة وممهدة بالفعل.`,
+        arabicRationale: `انتقال عضوي عبر جنس مشترك (${source.upperJins.definition.arabicName}): يتقبل السامع التحول لأن نغماته ممهدة مسبقاً في الفرع الأعلى.`,
         historicalContext: `Fundamental principle of melodic modulation described by Al-Farabi and Safi al-Din al-Urmawi.`,
         commonInRepertoire: true,
         affinityScore: 88
@@ -279,7 +278,6 @@ export class ModulationPathwayEngine {
     }
 
     // 4. Parallel Tonic Modulations (Taswir / parallel shift on same tonic pitch)
-    // E.g. Rast on C4 -> Nahawand on C4 or Nikriz on C4 or Hijaz Kar on C4
     if (!isSameFamily && sourceTonic.equals(targetTonic)) {
       const bridgeJins = target.lowerJins;
       const bridgePitches = bridgeJins.getPitches();
@@ -300,7 +298,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.lowerJins.definition.name,
           targetJinsName: target.lowerJins.definition.name,
           description: `Parallel modulation on tonic Qarar (${sourceTonic.toScientificString()}), swapping interval character while resting on the same home pitch.`,
-          arabicDescription: `تحويل متوازي على نفس درجة القرار (${sourceTonic.toScientificString()}) مع استبدال طبيعة الأبعاد اللحنية.`
+          arabicDescription: `تلوين مقامي على نفس القرار (${sourceTonic.toScientificString()}) بتغيير أبعاد الجنس الأساسي مع الحفاظ على درجة الاستقرار.`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -314,7 +312,7 @@ export class ModulationPathwayEngine {
           ...bridgePitches.slice(1, 4)
         ],
         rationale: `Color shift on identical tonic base. The music preserves the ground note (${sourceTonic.toScientificString()}) but introduces fresh emotive warmth or tension via altered scale degrees.`,
-        arabicRationale: `تغيير نكهة المقام على نفس القرار: يحافظ العازف على نغمة الارتكاز مع إدخال أبعاد تعبيرية جديدة.`,
+        arabicRationale: `تبديل مقامي على نفس القرار يتيح تباينات درامية وشعورية غنية دون تغيير الدرجة الأساسية.`,
         historicalContext: `Widely used in 20th century Egyptian art songs (Umm Kulthum, Abdel Wahab) for dramatic contrast between couplets.`,
         commonInRepertoire: true,
         affinityScore: 82
@@ -340,7 +338,7 @@ export class ModulationPathwayEngine {
             sourceJinsName: `Alternate: ${alt.jins.definition.name}`,
             targetJinsName: target.lowerJins.definition.name,
             description: `Documented Sayr alternate branch (${alt.description}) linking directly into ${target.name}.`,
-            arabicDescription: `فرع تحويل موثق في مسار السير (${alt.jins.definition.arabicName}) يفتح الباب لـ ${target.name}.`
+            arabicDescription: `مسار سير مقامي موثق (${alt.jins.definition.arabicName}) يربط مباشرة بمقام ${target.name}.`
           },
           bridgeJins: {
             definition: alt.jins.definition,
@@ -353,7 +351,7 @@ export class ModulationPathwayEngine {
             ...alt.jins.getPitches()
           ],
           rationale: `Canonized melodic branching: ${alt.description}. The sayr explicitly prepares this pathway for idiomatic excursions.`,
-          arabicRationale: `مسار تحويلي معتمد: ${alt.description}. يمهد سير المقام لهذا الانتقال بشكل طبيعي.`,
+          arabicRationale: `تفرع مقامي مألوف في السير: ${alt.description}. يمهد الطريق لانتقال انسيابي.`,
           historicalContext: `Documented in classical sayr tables from maqamworld.com and conservatory treatises.`,
           commonInRepertoire: true,
           affinityScore: 86
@@ -361,8 +359,7 @@ export class ModulationPathwayEngine {
       }
     }
 
-    // 6. Closely coupled historical relatives
-    // E.g., Bayati on D4 & Saba on D4: Saba starts on D4 with neutral second E𝄳4, identical to Bayati!
+    // 6. Closely coupled historical relatives (Bayati/Saba, Kurd/Hijaz, Rast/Nahawand)
     if (
       (source.id === 'bayati' && target.id === 'saba') ||
       (source.id === 'saba' && target.id === 'bayati')
@@ -384,7 +381,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.lowerJins.definition.name,
           targetJinsName: target.lowerJins.definition.name,
           description: `Shared Dukah (D4) and neutral second Sikah (E𝄳4). The two modes overlap on their first three degrees.`,
-          arabicDescription: `اشتراك في درجة الدوكاه (D4) والدرجة الثانية (E𝄳4). يتطابق المقامان في الدرجات الثلاث الأولى.`
+          arabicDescription: `تطابق درجات دوكاه (D4) وسيكاه (E𝄳4). يتلاقى المقامان في الدرجات الثلاث الأولى قبل الافتراق.`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -395,17 +392,16 @@ export class ModulationPathwayEngine {
           new ArabicPitch('D', '♮', 4),
           new ArabicPitch('E', '𝄳', 4),
           new ArabicPitch('F', '♮', 4),
-          target.getScale()[3] || new ArabicPitch('G', '♭', 4)
+          target.getScale()[3] || new ArabicPitch('G', '♮', 4)
         ],
         rationale: `Intimate kin relationship between Bayati and Saba. Both rely on the soul of Dukah and Sikah before diverging at the 4th degree (G vs G♭).`,
-        arabicRationale: `قرابة وثيقة بين البياتي والصبا: يشتركان في روح الدوكاه والسيكاه قبل أن ينفصلا عند الدرجة الرابعة.`,
+        arabicRationale: `علاقة قرابة وثيقة بين البياتي والصبا تشترك في استهلال السيكاه والدوكاه قبل التمايز عند الدرجة الرابعة.`,
         historicalContext: `A frequent poetic device in classical Mawwal and Wasla compositions for deepening emotional poignancy.`,
         commonInRepertoire: true,
         affinityScore: 92
       });
     }
 
-    // E.g., Kurd on D4 & Hijaz on D4: Shared tonic D4 and semitone step to E♭4!
     if (
       (source.id === 'kurd' && target.id === 'hijaz') ||
       (source.id === 'hijaz' && target.id === 'kurd')
@@ -427,7 +423,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.lowerJins.definition.name,
           targetJinsName: target.lowerJins.definition.name,
           description: `Shared semitone opening D4 -> E♭4. Modulation occurs by stretching the 3rd degree (F♮ in Kurd vs F♯ in Hijaz).`,
-          arabicDescription: `اشتراك في الخطوة النصفية الأولى (D4 -> E♭4) والتحويل يتم بتوسيع الدرجة الثالثة (فا طبيعية بالكرد وفاديز بالحجاز).`
+          arabicDescription: `تشابه استهلال نصف النصف دييز/بيمول (D4 -> E♭4). ويتم التحول عبر فتح أو تضييق البعد الثالث.`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -437,18 +433,17 @@ export class ModulationPathwayEngine {
         transitionNotes: [
           new ArabicPitch('D', '♮', 4),
           new ArabicPitch('E', '♭', 4),
-          target.lowerJins.getPitches()[2] || new ArabicPitch('F', '♯', 4),
+          target.lowerJins.getPitches()[2] || new ArabicPitch('F', '♮', 4),
           new ArabicPitch('G', '♮', 4)
         ],
         rationale: `Kinship based on shared minor second opening. The transition pivots on E♭4 and dramatically introduces or resolves the augmented second interval.`,
-        arabicRationale: `قرابة قائمة على النصف تون الأول: التحويل يتكئ على مي بيمول للدخول إلى الحجاز أو الاستقرار في الكرد.`,
+        arabicRationale: `تحول سلس عبر درجة الكرد E♭4 مع إبراز أو إخفاء البعد الزائد المشهور للحجاز.`,
         historicalContext: `Standard modulation pattern in Andalusian Muwashahat and Levantine Bashraf.`,
         commonInRepertoire: true,
         affinityScore: 85
       });
     }
 
-    // E.g., Rast on C4 & Nahawand on C4: Shared tonic and fifth G4
     if (
       (source.id === 'rast' && target.id === 'nahawand') ||
       (source.id === 'nahawand' && target.id === 'rast')
@@ -470,7 +465,7 @@ export class ModulationPathwayEngine {
           sourceJinsName: source.upperJins.definition.name,
           targetJinsName: target.upperJins.definition.name,
           description: `Shared outer framework of C4 (Tonic) and G4 (Ghammaz). Modulation pivots between neutral 3rd (E𝄳4) and minor 3rd (E♭4).`,
-          arabicDescription: `إطار مشترك لدرجتي الراست (C4) والنوى (G4). التحويل يتم بتبديل الدرجة الثالثة بين السيكاه والمي بيمول.`
+          arabicDescription: `إطار نغمي مشترك يربط بين الراست (C4) والنوى (G4). ويتم التلوين بالتنقل بين الثالثة المحايدة والثالثة الصغيرة.`
         },
         bridgeJins: {
           definition: bridgeJins.definition,
@@ -484,7 +479,7 @@ export class ModulationPathwayEngine {
           new ArabicPitch('G', '♮', 4)
         ],
         rationale: `The fundamental modal dialogue of Arabic art music: shifting between the majestic serenity of Rast and the poignant lyricism of Nahawand within the C-G frame.`,
-        arabicRationale: `الحوار المقامي الأبرز في الموسيقى الشرقية: التنقل بين جلال الراست وعاطفية النهاوند ضمن إطار دو - صول.`,
+        arabicRationale: `حوار مقامي أصيل في التراث العربي: تنقل بين جلال الراست ودفء النهاوند ضمن هيكل دو-صول.`,
         historicalContext: `Pivotal technique in Wasla suites, Longas, and orchestral compositions across Egypt, Syria, and Iraq.`,
         commonInRepertoire: true,
         affinityScore: 94
@@ -494,4 +489,3 @@ export class ModulationPathwayEngine {
     return pathways;
   }
 }
-

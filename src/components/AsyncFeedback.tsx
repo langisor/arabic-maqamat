@@ -26,7 +26,11 @@ export function AsyncFeedback({ kind, title, description, action, className }: P
       <Alert variant="destructive" className={className} aria-live="assertive">
         <AlertTitle>{title}</AlertTitle>
         {description && <AlertDescription>{description}</AlertDescription>}
-        {action && <Button size="sm" variant="outline" onClick={action.onClick} disabled={action.disabled}>{action.label}</Button>}
+        {action && (
+          <Button size="sm" variant="outline" onClick={action.onClick} disabled={action.disabled} className="mt-2">
+            {action.label}
+          </Button>
+        )}
       </Alert>
     )
   }

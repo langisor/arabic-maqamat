@@ -1,5 +1,4 @@
 // src/theory/training-progress.ts
-
 export interface TrainingBadge {
   id: string;
   title: string;
@@ -24,23 +23,23 @@ export interface TrainingStats {
 export const INITIAL_BADGES: TrainingBadge[] = [
   {
     id: 'first_step',
-    title: 'First Note (البداية)',
+    title: 'First Note (النغمة الأولى)',
     description: 'Complete your first practice or quiz exercise',
-    icon: '🎯',
+    icon: '🎵',
     unlocked: false
   },
   {
     id: 'streak_5',
-    title: 'Rhythmic Focus (تركيز الإيقاع)',
+    title: 'Rhythmic Focus (التركيز الإيقاعي)',
     description: 'Answer 5 memorization questions correctly in a row',
-    icon: '🔥',
+    icon: '⚡',
     unlocked: false
   },
   {
     id: 'streak_15',
-    title: 'Maestro Streak (أستاذ المقامات)',
+    title: 'Maestro Streak (المعزوفة المتواصلة)',
     description: 'Answer 15 questions correctly in a row',
-    icon: '⚡',
+    icon: '🔥',
     unlocked: false
   },
   {
@@ -52,21 +51,21 @@ export const INITIAL_BADGES: TrainingBadge[] = [
   },
   {
     id: 'sight_reader',
-    title: 'Prima Vista (قارئ النوتة)',
+    title: 'Prima Vista (القراءة المباشرة)',
     description: 'Generate and review 5 sight-reading melodies',
     icon: '🎼',
     unlocked: false
   },
   {
     id: 'recording_artist',
-    title: 'Taqsim Recordist (عازف التسجيل)',
+    title: 'Taqsim Recordist (مسجل التقاسيم)',
     description: 'Record 3 performance takes with A/B comparison',
     icon: '🎙️',
     unlocked: false
   },
   {
     id: 'rast_virtuoso',
-    title: 'Rast Master (سيّد الرست)',
+    title: 'Rast Master (أستاذ الراست)',
     description: 'Master the scale degrees of Maqam Rast',
     icon: '👑',
     unlocked: false
@@ -75,33 +74,33 @@ export const INITIAL_BADGES: TrainingBadge[] = [
     id: 'bayati_virtuoso',
     title: 'Bayati Heart (روح البياتي)',
     description: 'Master the scale degrees of Maqam Bayati',
-    icon: '🌙',
+    icon: '❤️',
     unlocked: false
   },
   {
     id: 'scale_runner',
-    title: 'Scale Virtuoso (عدّاء السلالم)',
+    title: 'Scale Virtuoso (عازف السلالم)',
     description: 'Complete ascending & descending scale run drills',
-    icon: '⚡',
+    icon: '🏃',
     unlocked: false
   },
   {
     id: 'sequences_master',
-    title: 'Sequencer (سيّد التعاقب)',
+    title: 'Sequencer (سيد المتتاليات)',
     description: 'Master Sequences of 3 and Sequences of 4 ajnas drills',
-    icon: '🧬',
+    icon: '🔢',
     unlocked: false
   },
   {
     id: 'position_shifter',
-    title: 'Position Shifter (فنّان التحويل)',
+    title: 'Position Shifter (التنقل بين المراكز)',
     description: 'Master violin shifts from 1st to 3rd position on the Ghammaz',
     icon: '🎻',
     unlocked: false
   },
   {
     id: 'intonation_master',
-    title: 'Intonation Master (ضابط الدوزان)',
+    title: 'Intonation Master (ضبط المقامات)',
     description: 'Hold an in-tune note (±7¢) for 3+ seconds with the Real-time Microphone Pitch Tracker',
     icon: '🎯',
     unlocked: false
@@ -120,7 +119,6 @@ export class TrainingStorage {
     } catch {
       // safe fallback
     }
-
     return {
       xp: 0,
       level: 1,

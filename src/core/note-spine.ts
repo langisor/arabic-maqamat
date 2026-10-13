@@ -16,7 +16,7 @@ export class ArabicNoteSpine {
   private static readonly SPINE: ArabicNoteInfo[] = [
     { arabicName: 'يكاه', transliteration: 'Yakah', pitch: new ArabicPitch('G', '♮', 3), roleDescription: 'G below Rast' },
     { arabicName: 'عشيران', transliteration: 'Ushayran', pitch: new ArabicPitch('A', '♮', 3), roleDescription: 'A below Rast' },
-    { arabicName: 'عراق', transliteration: "‘Iraq", pitch: new ArabicPitch('B', '𝄳', 3), roleDescription: 'Neutral 7th below Rast' },
+    { arabicName: 'عراق', transliteration: " Iraq", pitch: new ArabicPitch('B', '𝄳', 3), roleDescription: 'Neutral 7th below Rast' },
     { arabicName: 'راست', transliteration: 'Rast', pitch: new ArabicPitch('C', '♮', 4), roleDescription: 'Tonic base / Fundamental' },
     { arabicName: 'دوكاه', transliteration: 'Dukah', pitch: new ArabicPitch('D', '♮', 4), roleDescription: 'Root for Bayati, Hijaz, Kurd, Saba' },
     { arabicName: 'سيكاه', transliteration: 'Sikah', pitch: new ArabicPitch('E', '𝄳', 4), roleDescription: 'Neutral third above Rast' },

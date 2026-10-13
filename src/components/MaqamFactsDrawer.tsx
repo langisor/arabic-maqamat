@@ -27,6 +27,8 @@ import {
   CheckCircle2,
   ExternalLink,
   HelpCircle,
+  Network,
+  Package,
 } from "lucide-react"
 import { Maqam, MaqamatCatalogue, type MaqamFamilyMnemonic } from "../theory/maqam"
 import { MicrotonalAudioEngine, type TimbreType } from "../audio/microtonal-audio"
@@ -45,66 +47,94 @@ interface FactSection {
 const MAQAM_FACTS_DATA: FactSection[] = [
   {
     id: "core-concepts",
-    title: "Core Maqam Concepts (المفاهيم الجوهرية)",
-    arabicTitle: "المفاهيم الجوهرية لعلم المقامات",
+    title: "Core Maqam Concepts (مفاهيم المقام الأساسية)",
+    arabicTitle: "المفاهيم الجوهرية",
     icon: BookOpen,
     highlighted: true,
     sampleMaqamId: "rast",
     content: [
       "A maqam is not merely a static scale; it is an organic melodic framework built from chained ajnas (tetrachords, trichords, and pentachords).",
-      "The root jins (الجنس الأساسي) defines the maqam family, anchoring its emotional ethos and tonal foundation.",
+      "The root jins (جنس الأصل) defines the maqam family, anchoring its emotional ethos and tonal foundation.",
       "The ghammaz (الغمّاز) is the secondary focal note, serving as a melodic pivot and modulation gateway, typically on the 4th, 5th, or 3rd degree.",
-      "The sayr (السير) governs the temporal melodic trajectory—dictating whether melodies ascend from the tonic, undulate around the ghammaz, or descend from the octave.",
-      "Traditional maqamat are classified into 8 primary families by their lower jins using the classical mnemonic: صُـنِـعَ بِـسِـحْـرِكَ."
+      "The sayr (السير) governs the temporal melodic trajectory dictating whether melodies ascend from the tonic, undulate around the ghammaz, or descend from the octave.",
+      "Traditional maqamat are classified into 8 primary families by their lower jins using the classical mnemonic: صنع بسحرك."
+    ],
+  },
+  {
+    id: "jins-baggage",
+    title: "Jins Baggage Concept (أمتعة الجنس - أبو شميس)",
+    arabicTitle: "أمتعة الجنس النغمية",
+    icon: Package,
+    highlighted: true,
+    sampleMaqamId: "bayati",
+    content: [
+      "Key concept from Sami Abu Shumays: Ajnas include consistent notes BELOW the tonic that are integral to the jins character.",
+      "In Jins Bayati on D, baggage notes include C-natural (Rast) and B-half-flat (Iraq) below the tonic.",
+      "In Jins Rast on C, baggage notes include Iraq (B-half-flat 3), Ushayran (A3), and Yakah (G3).",
+      "Baggage notes explain why certain descents feel natural and define the preparatory contour of cadences (Qaflat)."
+    ],
+  },
+  {
+    id: "network-theory",
+    title: "Network View & Small-World Properties (شبكة الأجناس)",
+    arabicTitle: "التمثيل الشبكي للمقامات",
+    icon: Network,
+    highlighted: true,
+    sampleMaqamId: "rast",
+    content: [
+      "Maqamat should be understood as graphs of ajnas where nodes are scale degrees and edges are acceptable pathways.",
+      "Small-World network topology: High clustering coefficient around key hubs (degrees 1, 4, 5) with short path lengths.",
+      "Acceptable pathways indicate how composers move from node to node without destabilizing the modal narrative.",
+      "Three modulation categories govern transitions: Category 1 (Ornamental), Category 2 (Internal within network), Category 3 (Full Maqam shift)."
     ],
   },
   {
     id: "family-system",
-    title: "The 8 Classical Families (صُـنِـعَ بِـسِـحْـرِكَ)",
-    arabicTitle: "فصائل المقامات الثمانية",
+    title: "The 8 Classical Families (العائلات المقامية الثماني)",
+    arabicTitle: "عائلات صنع بسحرك",
     icon: Layers,
     sampleMaqamId: "bayati",
     content: [
-      "ص = Saba (صبا) — Heart-wrenching microtonal compression with lower 400¢ span.",
-      "ن = Nahawand (نهاوند) — Natural minor tetrachord (whole-half-whole), elegant and harmonic.",
-      "ع = ‘Ajam (عجم) — Major pentachord (700¢ span) with celebratory Western affinity.",
-      "ب = Bayati (بياتي) — Quintessential Arabic sound with neutral second degree (Dukah to Sikah half-flat).",
-      "س = Sikah (سيكاه) — Meditative trichord rooted directly on neutral quarter-tone 3rd (E𝄳).",
-      "ح = Hijaz (حجاز) — Dramatic and mystical, featuring the characteristic augmented second (300¢ step).",
-      "ر = Rast (راست) — Stately, noble 'King of Maqamat' with neutral 3rd and 7th degrees.",
-      "ك = Kurd (كرد) — Tender Phrygian tetrachord starting with a half-step."
+      "ص = Saba (صبا): Heart-wrenching microtonal compression with lower 400¢ span.",
+      "ن = Nahawand (نهاوند): Natural minor tetrachord (whole-half-whole), elegant and harmonic.",
+      "ع = ‘Ajam (عجم): Major pentachord (700¢ span) with celebratory Western affinity.",
+      "ب = Bayati (بياتي): Quintessential Arabic sound with neutral second degree (Dukah to Sikah half-flat).",
+      "س = Sikah (سيكاه): Meditative trichord rooted directly on neutral quarter-tone 3rd (E𝄳).",
+      "ح = Hijaz (حجاز): Dramatic and mystical, featuring the characteristic augmented second (300¢ step).",
+      "ر = Rast (راست): Stately, noble 'King of Maqamat' with neutral 3rd and 7th degrees.",
+      "ك = Kurd (كرد): Tender Phrygian tetrachord starting with a half-step."
     ],
   },
   {
     id: "structural-connections",
-    title: "Jins Connections (طرق اتصال الأجناس)",
-    arabicTitle: "الاتصال والانفصال والتداخل",
+    title: "Jins Connections (الوصل والاتصال بين الأجناس)",
+    arabicTitle: "أنواع الوصل النغمي",
     icon: Sparkles,
     sampleMaqamId: "hijaz",
     content: [
       "Ittisal (اتصال / Conjunct): The upper jins begins directly on the highest note of the lower jins (sharing the pivot note). Example: Bayati on D + Nahawand on G.",
-      "Infisal (انفصال / Disjunct): The lower and upper ajnas are separated by a whole-tone interval (فاصلة / Fasila of 4 quarter-tones = 200¢). Example: Rast on C + Rast on G.",
+      "Infisal (انفصال / Disjunct): The lower and upper ajnas are separated by a whole-tone interval (فاصلة طنينية / Fasila of 4 quarter-tones = 200¢). Example: Rast on C + Rast on G.",
       "Tadakhul (تداخل / Overlapping): The upper jins root overlaps inside the span of the lower jins. Characteristic of Maqam Saba and Sikah variants.",
       "Upper Alternate Ajnas: During performance, masters modulate to alternate upper ajnas (e.g. Bayati shifting from upper Nahawand to upper Rast or Hijaz)."
     ],
   },
   {
     id: "sayr-pathways",
-    title: "Melodic Course & Cadences (السير والقفلة)",
-    arabicTitle: "السير والقفلات الموسيقية",
+    title: "Melodic Course & Cadences (السير المقامي والقفلات)",
+    arabicTitle: "السير والقفلة",
     icon: Compass,
     sampleMaqamId: "saba",
     content: [
       "Ascending Sayr (سير صاعد): Begins near the tonic (qarar), develops through the root jins, climbs through the ghammaz into the upper register, and returns home.",
       "Descending / Octave Sayr (سير هابط): Opens directly at the octave (jawab) or upper jins, exploring high tensions before resolving down to the tonic.",
-      "Undulating Sayr (سير متدرج): Centers around the ghammaz pivot note from the start, oscillating between lower and upper modal layers.",
+      "Undulating Sayr (سير متموج): Centers around the ghammaz pivot note from the start, oscillating between lower and upper modal layers.",
       "The Qafla (القفلة): The definitive cadential formula that stamps the maqam's identity before resolving onto the tonic."
     ],
   },
   {
     id: "violin-pedagogy",
-    title: "Violin Pedagogy & Tuning (دوزان الكمان وعزف أرباع التون)",
-    arabicTitle: "دوزان الكمان العربي والغربي",
+    title: "Violin Pedagogy & Tuning (الكمان الشرقي والدوزان)",
+    arabicTitle: "أصول عزف الكمان الشرقي",
     icon: Music,
     sampleMaqamId: "rast",
     content: [
@@ -135,6 +165,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "taxonomy-grid",
     "core-concepts",
+    "jins-baggage",
   ])
   const [auditioningMaqamId, setAuditioningMaqamId] = useState<string | null>(null)
 
@@ -145,7 +176,6 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
     if (!maqamId) return
     const maqam = MaqamatCatalogue.findById(maqamId)
     if (!maqam) return
-
     setAuditioningMaqamId(maqamId)
     MicrotonalAudioEngine.playSequence(
       maqam.getScale(),
@@ -187,15 +217,14 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                 <DrawerTitle className="text-xl font-bold flex items-center gap-2">
                   <span>Maqam Theory &amp; 8 Families</span>
                   <span className="font-arabic text-amber-400 text-sm font-semibold">
-                    (دليل المقامات وفصائل صُنِعَ بِسِحْرِك)
+                    (نظرية المقامات وعائلاتها)
                   </span>
                 </DrawerTitle>
                 <DrawerDescription className="text-xs text-slate-400">
-                  Comprehensive reference for classical Arabic modal music theory, the 8 families mnemonic (صُـنِـعَ بِـسِـحْـرِكَ), ajnas, and violin pedagogy
+                  Comprehensive reference for classical Arabic modal music theory, jins baggage, network pathways, and the 8 families mnemonic (صنع بسحرك)
                 </DrawerDescription>
               </div>
             </div>
-
             <Button
               variant="ghost"
               size="sm"
@@ -208,9 +237,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
           </div>
         </DrawerHeader>
 
-        {/* Scrollable Content */}
         <div className="overflow-y-auto px-6 py-5 space-y-6 max-h-[calc(92vh-140px)] scrollbar-thin">
-          {/* 8 Families Mnemonic Banner (صُنِعَ بِسِحْرِك) */}
           <div className="rounded-2xl border border-amber-800/40 bg-linear-to-r from-amber-950/50 via-slate-900 to-indigo-950/40 p-4 shadow-md">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-800/30 pb-3">
               <div>
@@ -219,7 +246,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                     The 8 Fundamental Families
                   </span>
                   <Badge variant="secondary" className="font-arabic text-[11px] font-bold bg-amber-500/20 text-amber-300">
-                    صُـنِـعَ بِـسِـحْـرِكَ
+                    صنع بسحرك
                   </Badge>
                 </div>
                 <h3 className="mt-1 text-lg font-extrabold text-white">
@@ -229,19 +256,17 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
               <p className="max-w-md text-xs text-slate-300">
                 The classical mnemonic{" "}
                 <span className="font-serif text-sm font-bold text-amber-300">
-                  "صُنع بسحرك"
+                  "صنع بسحرك"
                 </span>{" "}
                 categorizes modal systems by their root lower Jins. Click any card to select its archetype Maqam in the studio:
               </p>
             </div>
 
-            {/* 8 Family Interactive Grid */}
             <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
               {families.map((fam) => {
                 const isSelected = currentMaqam?.family === fam.mnemonic
                 const sampleMaqam = allMaqamat.find((m) => m.family === fam.mnemonic)
                 const isAuditioning = sampleMaqam && auditioningMaqamId === sampleMaqam.id
-
                 return (
                   <div
                     key={fam.mnemonic}
@@ -302,22 +327,6 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
             </div>
           </div>
 
-          {/* Theoretical Foundations & Facts */}
-          <div className="rounded-2xl border border-amber-500/30 bg-linear-to-r from-amber-950/40 via-slate-900 to-indigo-950/30 p-4">
-            <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
-              <div>
-                <h4 className="text-sm font-bold text-amber-200">
-                  The Organic Nature of Arabic Modal Architecture
-                </h4>
-                <p className="mt-1 text-xs text-slate-300 leading-relaxed">
-                  Unlike Western major and minor scales, a Maqam is not a static set of pitches. It is a living, evolving modal pathway defined by its root lower jins, upper tetrachords, secondary pivots (ghammaz), cadential closures (qaflat), and microtonal nuances in the 24-EDO quarter-tone system.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Accordion Modules */}
           <Accordion
             value={expandedSections}
             onValueChange={setExpandedSections}
@@ -326,7 +335,6 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
             {MAQAM_FACTS_DATA.map((section) => {
               const Icon = section.icon
               const isAuditioning = auditioningMaqamId === section.sampleMaqamId
-
               return (
                 <AccordionItem
                   key={section.id}
@@ -350,7 +358,6 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                       </div>
                     </div>
                   </AccordionTrigger>
-
                   <AccordionContent className="pb-4 pt-1 border-t border-slate-800/60 mt-1">
                     <ul className="space-y-2.5 text-xs text-slate-300">
                       {section.content.map((item, idx) => (
@@ -361,13 +368,11 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                       ))}
                     </ul>
 
-                    {/* Audition & Explorer Shortcuts */}
                     {section.sampleMaqamId && (
                       <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
                         <span className="text-[11px] text-slate-400 font-mono">
                           Example: Maqam {section.sampleMaqamId.toUpperCase()}
                         </span>
-
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
@@ -379,7 +384,6 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                             <Volume2 className={`h-3 w-3 text-amber-400 ${isAuditioning ? "animate-pulse" : ""}`} />
                             <span>{isAuditioning ? "Playing..." : "Listen"}</span>
                           </Button>
-
                           {onSelectMaqam && (
                             <Button
                               variant="ghost"
@@ -406,7 +410,6 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             <span>Tone.js 24-EDO Microtonal Tuning Standard</span>
           </div>
-
           <Button
             variant="outline"
             size="sm"

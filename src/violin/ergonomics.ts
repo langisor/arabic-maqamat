@@ -1,5 +1,5 @@
 // src/violin/ergonomics.ts
-import { ArabicPitch,   } from "@/core/pitch"
+import { ArabicPitch } from "@/core/pitch"
 
 export type ViolinStringName = 'G' | 'D' | 'A' | 'E';
 export type ViolinFinger = 0 | 1 | 2 | 3 | 4;
@@ -46,28 +46,28 @@ export class ViolinErgonomicsEngine {
   public static readonly POSITION_INFO: Record<ViolinPositionNumber, PositionRangeInfo> = {
     1: {
       position: 1,
-      name: '1st Position (الوضعية الأولى)',
+      name: '1st Position (البوزيسيون الأول)',
       description: 'Hand rests at the nut. The bedrock foundation of violin playing.',
       firstFingerPitches: { G: 'A3', D: 'E4', A: 'B4', E: 'F♯5' },
       arabicTraditionRole: 'Standard position for Maqam Rast, Bayati, and Hijaz on Dukah/Rast roots. Ideal for open resonance and quick ornamentations.'
     },
     2: {
       position: 2,
-      name: '2nd Position (الوضعية الثانية)',
+      name: '2nd Position (البوزيسيون الثاني)',
       description: 'Hand shifted up by one diatonic whole-tone.',
       firstFingerPitches: { G: 'B3', D: 'F4', A: 'C5', E: 'G5' },
       arabicTraditionRole: 'Used for fluid shifts between Dukah and Jaharkah without crossing strings, allowing expressive glissando.'
     },
     3: {
       position: 3,
-      name: '3rd Position (الوضعية الثالثة)',
+      name: '3rd Position (البوزيسيون الثالث)',
       description: 'Hand rests against the violin body ribs/shoulder. 1st finger plays 4th degree above open string.',
       firstFingerPitches: { G: 'C4', D: 'G4', A: 'D5', E: 'A5' },
       arabicTraditionRole: 'Fundamental in classical Arabic violin: allows playing Kardan (C5) and Muhayyar (D5) with warm finger vibrato rather than open string sound.'
     },
     4: {
       position: 4,
-      name: '4th Position (الوضعية الرابعة)',
+      name: '4th Position (البوزيسيون الرابع)',
       description: 'High expressive register for soaring taqasim.',
       firstFingerPitches: { G: 'D4', D: 'A4', A: 'E5', E: 'B5' },
       arabicTraditionRole: 'High vocal mimicry, soaring climax phrases in Dawr, Muwashah, and instrumental Bashraf.'
@@ -252,7 +252,6 @@ export class ViolinErgonomicsEngine {
     for (const str of stringOrder) {
       const openQt = this.STRING_BASE_PITCHES[str].toQuarterToneIndex();
       const intervalQt = targetQt - openQt;
-
       if (intervalQt < 0) continue; // cannot play below open string
 
       // Try positions 1, 2, 3, 4
@@ -300,7 +299,7 @@ export class ViolinErgonomicsEngine {
     pos: ViolinPositionNumber
   ): string {
     if (pitch.accidental === '𝄳') {
-      return `Neutral quarter-tone (سيكاه / أوج): Place finger ${finger} halfway between the flat and natural positions (+50 cents) with relaxed left-hand knuckle.`;
+      return `Neutral quarter-tone (نصف بيمول): Place finger ${finger} halfway between the flat and natural positions (+50 cents) with relaxed left-hand knuckle.`;
     }
     if (pitch.accidental === '♯' && pitch.diatonic === 'F' && str === 'D') {
       return `Hijaz augmented 2nd stretch (300¢): Extend 3rd finger forward toward G, creating the signature theatrical Hijaz tension.`;
@@ -378,7 +377,6 @@ export class ViolinErgonomicsEngine {
     const spanQt = maxQt - minQt;
     const spanOctaves = parseFloat((spanQt / 24).toFixed(2));
     const maxAllowedQt = 48; // exactly 2 octaves
-
     const valid = spanQt <= maxAllowedQt;
 
     return {
@@ -387,7 +385,7 @@ export class ViolinErgonomicsEngine {
       spanOctaves,
       lowestPitch: lowest,
       highestPitch: highest,
-      message: valid
+      message: valid 
         ? `Span: ${spanOctaves} octaves (${spanQt * 50}¢). Within 2-octave limit.`
         : `Span exceeds 2 octaves! Current span is ${spanOctaves} octaves (${spanQt * 50}¢). Maximum is 2.0 octaves.`
     };
@@ -402,7 +400,6 @@ export class ViolinErgonomicsEngine {
     // G5 = 5 * 24 + 14 = 134 (48 quarter-tones = 2 full octaves)
     const startQt = 86; // G3
     const endQt = 134;   // G5
-
     for (let qt = startQt; qt <= endQt; qt++) {
       palette.push(ArabicPitch.fromQuarterToneIndex(qt));
     }

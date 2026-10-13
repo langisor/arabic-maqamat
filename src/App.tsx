@@ -1,735 +1,318 @@
-import React, { useEffect, useState, useRef } from "react"
-import { Maqam, MaqamatCatalogue } from "./theory/maqam"
-import { ArabicPitch } from "./core/pitch"
-import { formatPitchWithLargeAccidentalReact } from "./core/pitch-styling"
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Maqam, MaqamatCatalogue } from './theory/maqam';
+import { ArabicPitch } from './core/pitch';
+import { MicrotonalAudioEngine, TimbreType } from './audio/microtonal-audio';
+import { AudioTransport } from './audio/audio-transport';
+import { ValidLab, getWorkspaceState, updateWorkspaceGlobal } from './state/workspace-state';
+import { LanguageProvider, useLanguage } from './state/language';
+import { ThemeProvider } from './components/theme-provider';
+
+// UI & Components
+import { MainMenu } from './components/MainMenu';
+import { SessionBar } from './components/SessionBar';
+import { MaqamExplorer } from './components/MaqamExplorer';
+import { ViolinFingerboard, ViolinTuningPreset } from './components/ViolinFingerboard';
+import { SayrQaflaLab } from './components/SayrQaflaLab';
+import { MaqamNetworkGraph } from './components/MaqamNetworkGraph';
+import { MicrotonalPitchTracker } from './components/MicrotonalPitchTracker';
+import { Metronome } from './components/Metronome';
+import { MaqamFacts } from './components/MaqamFacts';
+import { MaqamBuilderDrawer } from './components/MaqamBuilderDrawer';
+import { MaqamFactsDrawer } from './components/MaqamFactsDrawer';
+import { SayrVisualizationDialog } from './components/SayrVisualizationDialog';
+import { ModulationPathwaysDrawer } from './components/ModulationPathwaysDrawer';
+import { JinsAnalysisTool } from './components/JinsAnalysisTool';
+import { JinsAnalysisDrawer } from './components/JinsAnalysisDrawer';
+import { ThemeToggle } from './components/ThemeToggle';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { Button } from './components/ui/button';
+import { Badge } from './components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './components/ui/card';
+
+// Icons
 import {
-  MicrotonalAudioEngine,
-  type TimbreType,
-} from "./audio/microtonal-audio"
-import { AudioTransport, type AudioTransportStatus } from "./audio/audio-transport"
-import {
-  getWorkspaceState,
-  updateWorkspaceGlobal,
-  parseNavigationFromUrl,
-  syncNavigationToUrl,
-  type ValidLab,
-  VALID_LABS,
-} from "./state/workspace-state"
-import { PWAInstallButton } from "./components/PWAInstallButton"
-import { MaqamExplorer } from "./components/MaqamExplorer"
-import { ViolinFingerboard } from "./components/ViolinFingerboard"
-import { ScoreViewer } from "./components/ScoreViewer"
-import { SayrQaflaLab } from "./components/SayrQaflaLab"
-import { TuningWheel24EDO } from "./components/TuningWheel24EDO"
-import { JinsDetectorLab } from "./components/JinsDetectorLab"
-import { TranspositionLab } from "./components/TranspositionLab"
-import { ThemeToggle } from "./components/ThemeToggle"
-import { Metronome } from "./components/Metronome"
-import { TrainingLab } from "./components/TrainingLab"
-import { SessionBar } from "./components/SessionBar"
-import { AsyncFeedback } from "./components/AsyncFeedback"
-import { MainMenu } from "./components/MainMenu"
-import { MaqamBuilderDrawer } from "./components/MaqamBuilderDrawer"
-import { MaqamFactsDrawer } from "./components/MaqamFactsDrawer"
-import { SayrVisualizationDialog } from "./components/SayrVisualizationDialog"
-import { ModulationPathwaysDrawer } from "./components/ModulationPathwaysDrawer"
-import type { ViolinTuningPreset } from "./components/ViolinFingerboard"
-import { useLanguage } from "./state/language"
-import { Button } from "./components/ui/button"
-import { Badge } from "./components/ui/badge"
-import { Card } from "./components/ui/card"
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./components/ui/sheet"
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "./components/ui/tooltip"
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "./components/ui/dropdown-menu"
-import {
-  Music,
-  Radio,
   Layers,
+  Music,
   Compass,
-  Sliders,
-  FileMusic,
+  Network,
+  Mic,
+  BookOpen,
   Sparkles,
-  ArrowLeftRight,
-  ChevronDown,
-  Volume2,
-  Settings2,
-  CheckCircle2,
-  GraduationCap,
+  Radio,
+  Sliders,
+  Play,
   Square,
+  Wand2,
+  GitFork,
+  ChevronRight,
   HelpCircle,
-} from "lucide-react"
+  Package,
+} from 'lucide-react';
 
-interface NavTabItem {
-  id: ValidLab
-  labelKey: Parameters<ReturnType<typeof useLanguage>["t"]>[0]
-  icon: React.ComponentType<{ className?: string }>
-}
+function StudioContent() {
+  const { t, language, setLanguage } = useLanguage();
 
-const NAV_TABS: NavTabItem[] = [
-  { id: "explorer", labelKey: "maqamFamilies", icon: Layers },
-  { id: "transposition", labelKey: "transposition", icon: ArrowLeftRight },
-  { id: "violin", labelKey: "violin", icon: Music },
-  { id: "sayr", labelKey: "sayr", icon: Compass },
-  { id: "score", labelKey: "notation", icon: FileMusic },
-  { id: "tuning", labelKey: "tuning", icon: Sliders },
-  { id: "detector", labelKey: "detector", icon: Sparkles },
-  { id: "training", labelKey: "training", icon: GraduationCap },
-]
+  // State
+  const [allMaqamat, setAllMaqamat] = useState<Maqam[]>(() => MaqamatCatalogue.getAll());
+  const [currentMaqam, setCurrentMaqam] = useState<Maqam>(() => {
+    return MaqamatCatalogue.getById('rast') || MaqamatCatalogue.getAll()[0];
+  });
+  const [activeLab, setActiveLab] = useState<ValidLab>('explorer');
+  const [timbre, setTimbre] = useState<TimbreType>('violin');
+  const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>('arabic');
+  const [isDroneActive, setIsDroneActive] = useState<boolean>(false);
+  const [isPlayingScale, setIsPlayingScale] = useState<boolean>(false);
+  const [systemTuningMode, setSystemTuningMode] = useState<'24edo' | '12tet'>('24edo');
 
-export default function App() {
-  const { language, setLanguage, t } = useLanguage()
-  const allMaqamat = MaqamatCatalogue.getAllMaqamat()
+  // Modals & Drawers state
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [isFactsOpen, setIsFactsOpen] = useState(false);
+  const [isSayrDialogOpen, setIsSayrDialogOpen] = useState(false);
+  const [isModulationOpen, setIsModulationOpen] = useState(false);
+  const [isJinsAnalysisDrawerOpen, setIsJinsAnalysisDrawerOpen] = useState(false);
 
-  // Resolve initial state from URL parameters or stored workspace state
-  const [initialNav] = useState(() => {
-    const urlParams = parseNavigationFromUrl()
-    const stored = getWorkspaceState()
-
-    let resolvedLab: ValidLab = stored.global.activeLab
-    if (urlParams.lab && VALID_LABS.includes(urlParams.lab)) {
-      resolvedLab = urlParams.lab
-    }
-
-    let resolvedMaqamId = stored.global.selectedMaqamId
-    if (urlParams.maqamId) {
-      resolvedMaqamId = urlParams.maqamId
-    }
-    const baseId = resolvedMaqamId.split("-transposed-")[0]
-    const initialMaqam = MaqamatCatalogue.findById(baseId) || MaqamatCatalogue.buildRast()
-
-    return {
-      lab: resolvedLab,
-      maqam: initialMaqam,
-      stored,
-    }
-  })
-
-  const [currentMaqam, setCurrentMaqam] = useState<Maqam>(initialNav.maqam)
-  const [maqamRevision, setMaqamRevision] = useState(0)
-  const [activeTab, setActiveTab] = useState<ValidLab>(initialNav.lab)
-  const [timbre, setTimbre] = useState<TimbreType>(initialNav.stored.global.timbre)
-  const [isDroneActive, setIsDroneActive] = useState(false)
-  const [isPlayingScale, setIsPlayingScale] = useState(false)
-  const [activePitchIndex, setActivePitchIndex] = useState<number | null>(null)
-  const [transportStatus, setTransportStatus] = useState<AudioTransportStatus>(
-    () => AudioTransport.getStatus()
-  )
-
-  // Tone.js Audio DSP Studio Controls
-  const [masterVolume, setMasterVolume] = useState<number>(initialNav.stored.global.audioSettings.masterVolume)
-  const [reverbWet, setReverbWet] = useState<number>(initialNav.stored.global.audioSettings.reverbWet)
-  const [referenceA4, setReferenceA4State] = useState<number>(initialNav.stored.global.audioSettings.referenceA4)
-  const [showAudioSettings, setShowAudioSettings] = useState<boolean>(false)
-
-  // Violin Tuning Preset & Modal Drawers
-  const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>("arabic")
-  const [showMaqamBuilder, setShowMaqamBuilder] = useState<boolean>(false)
-  const [showMaqamFacts, setShowMaqamFacts] = useState<boolean>(false)
-  const [showSayrDialog, setShowSayrDialog] = useState<boolean>(false)
-  const [showModulationDrawer, setShowModulationDrawer] = useState<boolean>(false)
-  const [systemTuningMode, setSystemTuningMode] = useState<"24edo" | "12tet">("24edo")
-
-  const isPopNavigatingRef = useRef(false)
-
-  const scalePitches = currentMaqam.getScale()
-  const tonic = currentMaqam.getTonic()
+  // Audio Transport state
+  const [transportStatus, setTransportStatus] = useState(() => AudioTransport.getStatus());
 
   useEffect(() => {
-    const unsubscribe = AudioTransport.subscribe(setTransportStatus)
-    return () => {
-      unsubscribe()
-      AudioTransport.stopAll()
-    }
-  }, [])
+    const unsubscribe = AudioTransport.subscribe((status) => {
+      setTransportStatus(status);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  // Initialize engine with persisted settings and sync URL on mount
-  useEffect(() => {
-    MicrotonalAudioEngine.setMasterVolume(masterVolume / 100)
-    MicrotonalAudioEngine.setReverbWet(reverbWet / 100)
-    MicrotonalAudioEngine.setReferenceA4(referenceA4)
-    syncNavigationToUrl(activeTab, currentMaqam.id, "replace")
-  }, [])
-
-  // Handle browser back/forward navigation without synchronization loops
-  useEffect(() => {
-    const handlePopState = () => {
-      isPopNavigatingRef.current = true
-      const { lab, maqamId } = parseNavigationFromUrl()
-      if (lab && VALID_LABS.includes(lab) && lab !== activeTab) {
-        AudioTransport.stopAll()
-        setIsDroneActive(false)
-        setIsPlayingScale(false)
-        setActivePitchIndex(null)
-        setActiveTab(lab)
-        updateWorkspaceGlobal({ activeLab: lab })
+  // Drone Toggle
+  const handleToggleDrone = useCallback(
+    async (pitch?: ArabicPitch) => {
+      const dronePitch = pitch || currentMaqam.getTonic();
+      if (isDroneActive) {
+        MicrotonalAudioEngine.toggleDrone(dronePitch, false);
+        setIsDroneActive(false);
+      } else {
+        MicrotonalAudioEngine.toggleDrone(dronePitch, true);
+        setIsDroneActive(true);
       }
-      if (maqamId && maqamId !== currentMaqam.id) {
-        const baseId = maqamId.split("-transposed-")[0]
-        const found = MaqamatCatalogue.findById(baseId)
-        if (found) {
-          AudioTransport.stopAll()
-          setIsDroneActive(false)
-          setIsPlayingScale(false)
-          setActivePitchIndex(null)
-          setCurrentMaqam(found)
-          setMaqamRevision((revision) => revision + 1)
-          updateWorkspaceGlobal({ selectedMaqamId: maqamId })
-        }
+    },
+    [currentMaqam, isDroneActive]
+  );
+
+  // Play Full Scale Sequence
+  const handlePlayScale = useCallback(
+    async (pitches: ArabicPitch[]) => {
+      setIsPlayingScale(true);
+      try {
+        MicrotonalAudioEngine.playSequence(
+          pitches,
+          450,
+          timbre,
+          undefined,
+          () => {
+            setIsPlayingScale(false);
+          },
+          undefined,
+          'scale'
+        );
+      } catch {
+        setIsPlayingScale(false);
       }
-      setTimeout(() => {
-        isPopNavigatingRef.current = false
-      }, 50)
-    }
+    },
+    [timbre]
+  );
 
-    window.addEventListener("popstate", handlePopState)
-    return () => window.removeEventListener("popstate", handlePopState)
-  }, [activeTab, currentMaqam.id])
+  const handleStopScale = useCallback(() => {
+    MicrotonalAudioEngine.stopSequence('scale');
+    setIsPlayingScale(false);
+  }, []);
 
-  const handleSelectTab = (tab: ValidLab) => {
-    if (tab === activeTab) return
-    AudioTransport.stopAll()
-    setIsDroneActive(false)
-    setIsPlayingScale(false)
-    setActivePitchIndex(null)
-    setActiveTab(tab)
-    updateWorkspaceGlobal({ activeLab: tab })
-    if (!isPopNavigatingRef.current) {
-      syncNavigationToUrl(tab, currentMaqam.id, "push")
-    }
-  }
+  // Select a Maqam
+  const handleSelectMaqam = useCallback(
+    (maqam: Maqam) => {
+      setCurrentMaqam(maqam);
+      // If drone was active, re-pitch drone to the new maqam tonic
+      if (isDroneActive) {
+        MicrotonalAudioEngine.toggleDrone(currentMaqam.getTonic(), false);
+        MicrotonalAudioEngine.toggleDrone(maqam.getTonic(), true);
+      }
+    },
+    [isDroneActive, currentMaqam]
+  );
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, index: number) => {
-    const total = NAV_TABS.length
-    let nextIndex: number
-    if (e.key === (language === "ar" ? "ArrowLeft" : "ArrowRight")) {
-      e.preventDefault()
-      nextIndex = (index + 1) % total
-    } else if (e.key === (language === "ar" ? "ArrowRight" : "ArrowLeft")) {
-      e.preventDefault()
-      nextIndex = (index - 1 + total) % total
-    } else if (e.key === "Home") {
-      e.preventDefault()
-      nextIndex = 0
-    } else if (e.key === "End") {
-      e.preventDefault()
-      nextIndex = total - 1
-    } else {
-      return
-    }
-
-    const nextTab = NAV_TABS[nextIndex]
-    handleSelectTab(nextTab.id)
-    const nextElem = document.getElementById(`tab-${nextTab.id}`)
-    nextElem?.focus()
-  }
-
-  const handleTimbreChange = (t: TimbreType) => {
-    setTimbre(t)
-    updateWorkspaceGlobal({ timbre: t })
-  }
-
-  const handleVolumeChange = (val: number) => {
-    setMasterVolume(val)
-    MicrotonalAudioEngine.setMasterVolume(val / 100)
-    updateWorkspaceGlobal({ audioSettings: { masterVolume: val, reverbWet, referenceA4 } })
-  }
-
-  const handleReverbChange = (val: number) => {
-    setReverbWet(val)
-    MicrotonalAudioEngine.setReverbWet(val / 100)
-    updateWorkspaceGlobal({ audioSettings: { masterVolume, reverbWet: val, referenceA4 } })
-  }
-
-  const handleA4Change = (val: number) => {
-    setReferenceA4State(val)
-    MicrotonalAudioEngine.setReferenceA4(val)
-    updateWorkspaceGlobal({ audioSettings: { masterVolume, reverbWet, referenceA4: val } })
-  }
-
-  const handleSelectMaqam = (m: Maqam) => {
-    AudioTransport.stopAll()
-    setIsDroneActive(false)
-    setIsPlayingScale(false)
-    setActivePitchIndex(null)
-    setCurrentMaqam(m)
-    setMaqamRevision((revision) => revision + 1)
-    updateWorkspaceGlobal({ selectedMaqamId: m.id })
-    if (!isPopNavigatingRef.current) {
-      syncNavigationToUrl(activeTab, m.id, "push")
-    }
-  }
-
-  const handleToggleDrone = (pitch: ArabicPitch) => {
-    const newState = !isDroneActive
-    setIsDroneActive(newState)
-    MicrotonalAudioEngine.toggleDrone(pitch, newState)
-  }
-
-  const handlePlayScale = (pitches: ArabicPitch[]) => {
-    setIsPlayingScale(true)
-    MicrotonalAudioEngine.playSequence(
-      pitches,
-      500,
-      timbre,
-      (idx) => {
-        setActivePitchIndex(idx === -1 ? null : idx)
-      },
-      () => {
-        setIsPlayingScale(false)
-        setActivePitchIndex(null)
-      },
-      undefined,
-      "app-scale"
-    )
-  }
-
-  const handleStopScale = () => {
-    MicrotonalAudioEngine.stopSequence("app-scale")
-    setIsPlayingScale(false)
-    setActivePitchIndex(null)
-  }
-
-  const handleRecoverAudio = () => {
-    void MicrotonalAudioEngine.startAudioContext().catch(() => {})
-  }
+  // Navigation tabs
+  const navTabs: { id: ValidLab; label: string; arabic: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: 'explorer', label: 'Maqam Explorer', arabic: 'مستكشف المقامات', icon: Layers },
+    { id: 'jins-analysis', label: 'Jins Analysis', arabic: 'أمتعة الأجناس', icon: Package },
+    { id: 'violin', label: 'Violin Studio', arabic: 'لوحة أصابع الكمان', icon: Music },
+    { id: 'sayr', label: 'Sayr & Qafla Lab', arabic: 'السير والقفلات', icon: Compass },
+    { id: 'detector', label: 'Network Pathways', arabic: 'شبكة المقامات والمسارات', icon: Network },
+    { id: 'tuning', label: 'Microtonal Tuner', arabic: 'الدوزان والترددات', icon: Mic },
+    { id: 'training', label: 'Theory & Baggage', arabic: 'النظرية وأمتعة الأجناس', icon: BookOpen },
+  ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground selection:bg-amber-500/30 selection:text-amber-200">
-      {/* Top Heritage Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/90 shadow-xs backdrop-blur-xl dark:bg-slate-950/90">
-        <div className="mx-auto flex min-h-18 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:gap-4 sm:px-6 lg:px-8">
-          {/* Logo & Brand */}
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500/30 font-sans">
+      {/* Top Main Navigation Bar */}
+      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-2.5 sm:px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Brand & Menu */}
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-linear-to-tr from-amber-600 to-amber-400 p-0.5 shadow-lg shadow-amber-500/20">
-              <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-slate-950">
-                <Music className="h-5 w-5 text-amber-400" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight text-foreground">
-                  Arabic Maqamat
-                </span>
-                <span
-                  className="hidden font-arabic text-base font-bold text-amber-500 lg:inline"
-                  dir="rtl"
-                >
-                  المقامات العربية
-                </span>
-                <Badge variant="secondary" className="text-[10px] font-bold">
-                  24-EDO Studio
-                </Badge>
-              </div>
-              <p className="-mt-0.5 hidden text-[11px] text-muted-foreground sm:block">
-                Arabic Music Theory &amp; Violin Pedagogy Engine
-              </p>
-            </div>
-          </div>
-
-          {/* Main Menu Drawer Trigger */}
-          <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
             <MainMenu
-              activeLab={activeTab}
-              onNavigateLab={handleSelectTab}
+              activeLab={activeLab}
+              onNavigateLab={setActiveLab}
               violinTuning={violinTuning}
               onViolinTuningChange={setViolinTuning}
               timbre={timbre}
-              onTimbreChange={handleTimbreChange}
+              onTimbreChange={setTimbre}
               isDroneActive={isDroneActive}
-              onToggleDrone={() => handleToggleDrone(tonic)}
-              onOpenMaqamBuilder={() => setShowMaqamBuilder(true)}
-              onOpenMaqamFacts={() => setShowMaqamFacts(true)}
-              onOpenSayrVisualization={() => setShowSayrDialog(true)}
-              onOpenModulationPathways={() => setShowModulationDrawer(true)}
-              onOpenAudioSettings={() => setShowAudioSettings(true)}
+              onToggleDrone={() => handleToggleDrone()}
+              onOpenMaqamBuilder={() => setIsBuilderOpen(true)}
+              onOpenMaqamFacts={() => setIsFactsOpen(true)}
+              onOpenSayrVisualization={() => setIsSayrDialogOpen(true)}
+              onOpenModulationPathways={() => setIsModulationOpen(true)}
+              onOpenJinsAnalysis={() => setIsJinsAnalysisDrawerOpen(true)}
+              onOpenAudioSettings={() => {}}
               systemTuningMode={systemTuningMode}
               onSystemTuningChange={setSystemTuningMode}
             />
 
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center shadow-md shadow-amber-500/20 text-slate-950 font-black text-xs sm:text-sm shrink-0">
+                م
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-xs sm:text-base font-bold tracking-tight text-white flex items-center gap-1.5 truncate">
+                  <span>Arabic Maqamat</span>
+                  <span className="hidden md:inline text-xs font-normal text-amber-400/90 font-arabic">
+                    الاستوديو المقامي الشامل
+                  </span>
+                </h1>
+                <p className="text-[10px] text-slate-400 hidden sm:block truncate">
+                  24-EDO Microtonal Theory • Jins Baggage • Network Pathways
+                </p>
+              </div>
+            </div>
+          </div>
 
-            <div className="relative">
-              <select
-                value={currentMaqam.id}
-                onChange={(e) => {
-                  const found = allMaqamat.find((m) => m.id === e.target.value)
-                  if (found) handleSelectMaqam(found)
-                }}
-                aria-label={t("selectMaqam")}
-                className="w-auto max-w-[130px] xs:max-w-[160px] cursor-pointer appearance-none truncate rounded-xl border border-border bg-muted/60 py-1.5 pe-7 ps-2.5 text-xs font-semibold text-foreground shadow-xs transition hover:border-amber-500/60 focus:ring-2 focus:ring-amber-500/40 focus:outline-none sm:max-w-none sm:py-2 dark:bg-slate-900"
-                title={t("selectMaqam")}
-              >
-                {currentMaqam.id.includes("-transposed-") && (
-                  <option value={currentMaqam.id}>
-                    ⚡ {currentMaqam.name}
-                  </option>
-                )}
-                {allMaqamat.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.family})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 inset-e-2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          {/* Quick Controls & Tools - Responsive */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Quick Jins Baggage Tool Sidebar Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsJinsAnalysisDrawerOpen(true)}
+              className="hidden md:flex text-xs gap-1.5 h-8 px-2.5 rounded-xl border-purple-500/40 text-purple-300 hover:bg-purple-950/40 hover:text-purple-200 cursor-pointer"
+              title="Open Jins Analysis Tool (Baggage & Staff)"
+            >
+              <Package className="w-3.5 h-3.5 text-purple-400" />
+              <span>Baggage Tool</span>
+            </Button>
+
+            {/* Drone Toggle Button */}
+            <Button
+              variant={isDroneActive ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleToggleDrone()}
+              className={`text-[11px] sm:text-xs gap-1 sm:gap-1.5 h-7 sm:h-8 px-2 sm:px-2.5 rounded-xl transition-all cursor-pointer ${
+                isDroneActive
+                  ? 'bg-amber-500 text-slate-950 hover:bg-amber-400 font-semibold shadow-md shadow-amber-500/20 animate-pulse'
+                  : 'border-slate-700 hover:border-slate-600 text-slate-300'
+              }`}
+              title={isDroneActive ? 'Stop drone on tonic' : `Start tonic drone (${currentMaqam.getTonic().toString()})`}
+            >
+              <Radio className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isDroneActive ? 'text-slate-950' : 'text-amber-400'}`} />
+              <span className="hidden xs:inline">Drone:</span>
+              <span className="font-mono font-bold">{currentMaqam.getTonic().toString()}</span>
+            </Button>
+
+            {/* Timbre Switcher (large screens) */}
+            <div className="hidden lg:flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs">
+              {(['violin', 'oud', 'kanun'] as TimbreType[]).map((tVal) => (
+                <button
+                  key={tVal}
+                  onClick={() => setTimbre(tVal)}
+                  className={`px-2.5 py-1 rounded-lg capitalize font-medium transition-all ${
+                    timbre === tVal
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {tVal}
+                </button>
+              ))}
             </div>
 
-            {currentMaqam.id.includes("-transposed-") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const baseId = currentMaqam.id.split("-transposed-")[0]
-                  const base = MaqamatCatalogue.findById(baseId)
-                  if (base) handleSelectMaqam(base)
-                }}
-                className="hidden gap-1 xl:inline-flex"
-                title="Reset to natural tonic"
-              >
-                <span>
-                  Tonic: {formatPitchWithLargeAccidentalReact(tonic, { size: 'large' })}
-                </span>
-                <span className="text-muted-foreground hover:text-foreground">
-                  ✕
-                </span>
-              </Button>
-            )}
+            {/* Metronome Popover */}
+            <Metronome />
 
-            {/* Audio Settings / Tone.js DSP Controls (Accessible directly on sm+, or via Main Menu on mobile) */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAudioSettings(true)}
-              aria-label={t("audioSettings")}
-              className="hidden sm:inline-flex gap-1.5 px-2.5 text-muted-foreground hover:text-foreground sm:px-3 cursor-pointer"
-              title="Tone.js DSP Audio Settings"
-            >
-              <Settings2 className="h-3.5 w-3.5 text-amber-400" />
-              <span className="hidden text-xs font-medium lg:inline">
-                {t("audioDsp")}
-              </span>
-            </Button>
-
-            {/* Help & Maqam Theory (Accessible directly on sm+, or via Main Menu on mobile) */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMaqamFacts(true)}
-              aria-label={t("helpTheory")}
-              className="hidden sm:inline-flex gap-1.5 px-2.5 text-muted-foreground hover:text-foreground sm:px-3 cursor-pointer"
-              title="Help & Maqam Theory (صُنع بسحرك)"
-            >
-              <HelpCircle className="h-3.5 w-3.5 text-amber-400" />
-              <span className="hidden text-xs font-medium lg:inline">
-                {t("helpTheory")}
-              </span>
-            </Button>
-
-            {/* PWA Install & Offline Status */}
+            {/* PWA Install */}
             <PWAInstallButton />
 
-            {/* Theme Toggler & Language Switcher */}
-            <div className="hidden sm:flex items-center rounded-lg border border-border p-0.5" role="group" aria-label={t("language")}>
-              <Button type="button" variant={language === "en" ? "secondary" : "ghost"} size="sm" aria-pressed={language === "en"} onClick={() => setLanguage("en")} className="h-7 px-2 text-[10px]">EN</Button>
-              <Button type="button" variant={language === "ar" ? "secondary" : "ghost"} size="sm" aria-pressed={language === "ar"} onClick={() => setLanguage("ar")} className="h-7 px-2 font-arabic text-[10px]">عربي</Button>
-            </div>
+            {/* Theme & Language */}
             <ThemeToggle />
-          </div>
-        </div>
-        {/* Timbre Toggle (Violin / Oud / Kanun) */}
-        <div className="mx-auto flex max-w-7xl flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2 border-t border-border/60 px-2 py-1.5 sm:px-6 lg:px-8 overflow-x-auto scrollbar-none">
-          <div className="flex rounded-xl border border-border bg-muted/60 p-0.5 text-[11px] sm:p-1 sm:text-xs dark:bg-slate-900">
             <Button
-              variant={timbre === "violin" ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
-              onClick={() => handleTimbreChange("violin")}
-              aria-pressed={timbre === "violin"}
-              className={`cursor-pointer rounded-lg px-2 py-1 font-medium transition sm:px-2.5 sm:py-1.5 ${
-                timbre === "violin"
-                  ? "bg-amber-500 font-bold text-slate-950 shadow"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Violin Bowed Sound (Tone.js Model)"
+              onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+              className="text-[11px] sm:text-xs h-7 sm:h-8 px-1.5 sm:px-2 text-slate-400 hover:text-white"
+              title="Toggle English / العربية"
             >
-              Violin
+              {language === 'en' ? 'عربي' : 'EN'}
             </Button>
-            <Button
-              disabled
-              variant={timbre === "oud" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => handleTimbreChange("oud")}
-              aria-pressed={timbre === "oud"}
-
-              className={`cursor-pointer rounded-lg px-2 py-1 font-medium transition sm:px-2.5 sm:py-1.5 ${
-                timbre === "oud"
-                  ? "bg-amber-500 font-bold text-slate-950 shadow"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Oud Plucked Sound (Tone.js Model)"
-            >
-              Oud
-            </Button>
-            <Button
-              disabled
-              variant={timbre === "kanun" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => handleTimbreChange("kanun")}
-              aria-pressed={timbre === "kanun"}
-              className={`cursor-pointer rounded-lg px-2 py-1 font-medium transition sm:px-2.5 sm:py-1.5 ${
-                timbre === "kanun"
-                  ? "bg-amber-500 font-bold text-slate-950 shadow"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              title="Kanun Zither Sound (Tone.js Model)"
-            >
-              Kanun
-            </Button>
-          </div>
-
-          {/* Continuous Drone Shortcut */}
-          <Button
-            variant={isDroneActive ? "default" : "ghost"}
-            size="sm"
-            onClick={() => handleToggleDrone(tonic)}
-            aria-pressed={isDroneActive}
-            aria-label={isDroneActive ? t("droneOn") : t("drone")}
-            className="gap-1.5 px-2.5 sm:px-3"
-            title="Continuous Tonic Qarar Drone"
-          >
-            <Radio
-              className={`h-3.5 w-3.5 ${isDroneActive ? "animate-pulse text-amber-400" : ""}`}
-            />
-            <span className="hidden md:inline">
-              {isDroneActive ? t("droneOn") : t("drone")}
-            </span>
-          </Button>
-
-          {/* Synchronized Visual Metronome */}
-          <Metronome />
-          <Badge
-            variant={transportStatus.activeSessions.length > 0 ? "default" : "secondary"}
-            role="status"
-            aria-live="polite"
-            title={transportStatus.activeSessions.map(({ activity }) => activity).join(", ") || (transportStatus.audioContextReady ? t("audioReady") : t("audioIdle"))}
-            className="hidden sm:inline-flex"
-          >
-            {transportStatus.audioStarting
-              ? t("audioStarting")
-              : transportStatus.activeSessions.length > 0
-                ? `${t("audioActive")}: ${transportStatus.activeSessions.length}`
-                : transportStatus.audioContextReady
-                  ? t("audioReady")
-                  : t("audioIdle")}
-          </Badge>
-          {transportStatus.activeSessions.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              aria-label={`${t("stopAudio")} (${transportStatus.activeSessions.length})`}
-              onClick={() => {
-                AudioTransport.stopAll()
-                setIsDroneActive(false)
-                setIsPlayingScale(false)
-                setActivePitchIndex(null)
-              }}
-              className="gap-1.5 px-2.5 sm:px-3"
-              title="Stop all audio playback"
-            >
-              <Square className="h-3.5 w-3.5 fill-current" />
-              <span className="hidden md:inline">
-                {t("stopAudio")} ({transportStatus.activeSessions.length})
-              </span>
-            </Button>
-          )}
-        </div>
-        {/* Studio Navigation (Responsive: Small screens = icons only with tooltip support; Other screens = Dropdown list) */}
-        <div className="mx-auto max-w-7xl rounded-lg border border-border/60 bg-muted/30 px-2 sm:px-6 lg:px-8 dark:bg-slate-900/60">
-          {/* Small screens: icons only with tooltip support */}
-          <nav
-            role="tablist"
-            aria-label={t("studioNavigation")}
-            className="flex md:hidden items-center justify-start gap-1.5 overflow-x-auto py-2 px-1 text-xs font-semibold scrollbar-none"
-          >
-            <TooltipProvider delay={100}>
-              {NAV_TABS.map((tab, index) => {
-                const Icon = tab.icon
-                const isActive = activeTab === tab.id
-                return (
-                  <Tooltip key={tab.id}>
-                    <TooltipTrigger
-                      id={`tab-${tab.id}-sm`}
-                      role="tab"
-                      aria-selected={isActive}
-                      aria-controls={`panel-${tab.id}`}
-                      tabIndex={isActive ? 0 : -1}
-                      onKeyDown={(e) => handleTabKeyDown(e, index)}
-                      onClick={() => handleSelectTab(tab.id)}
-                      aria-label={t(tab.labelKey)}
-                      className={`flex h-10 w-10 min-w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-95 ${
-                        isActive
-                          ? "border border-amber-500/50 bg-amber-500/20 font-bold text-amber-500 shadow-xs ring-1 ring-amber-500/30 dark:bg-amber-500/25 dark:text-amber-300"
-                          : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                      }`}
-                    >
-                      <Icon
-                        className={`h-4.5 w-4.5 ${
-                          isActive
-                            ? "text-amber-500 dark:text-amber-400"
-                            : "text-muted-foreground"
-                        }`}
-                      />
-                      <span className="sr-only">{t(tab.labelKey)}</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p className="font-semibold text-xs">{t(tab.labelKey)}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )
-              })}
-            </TooltipProvider>
-          </nav>
-
-          {/* Tablet & Desktop screens: Dropdown on md+, direct tab pills on lg+ */}
-          <div className="hidden md:flex items-center justify-between gap-4 py-2">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {t("studioNavigation")}:
-              </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  className="flex h-8.5 min-w-56 items-center justify-between gap-2.5 rounded-xl border border-border/80 bg-muted/50 px-3 text-xs font-semibold text-foreground hover:border-amber-500/60 hover:bg-muted/80 cursor-pointer"
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    {React.createElement(
-                      NAV_TABS.find((t) => t.id === activeTab)?.icon || Layers,
-                      { className: "h-4 w-4 text-amber-500 shrink-0" }
-                    )}
-                    <span className="truncate">
-                      {t(NAV_TABS.find((t) => t.id === activeTab)?.labelKey || "maqamFamilies")}
-                    </span>
-                  </div>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-64 border-slate-700 bg-slate-900 text-slate-100 shadow-xl">
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-wider text-amber-400 px-2 py-1.5">
-                      Studio Labs &amp; Modules
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-slate-800" />
-                    {NAV_TABS.map((tab) => {
-                      const Icon = tab.icon
-                      const isCurrent = activeTab === tab.id
-                      return (
-                        <DropdownMenuItem
-                          key={tab.id}
-                          onClick={() => handleSelectTab(tab.id)}
-                          className={`flex cursor-pointer items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition ${
-                            isCurrent
-                              ? "bg-amber-500/20 text-amber-300 font-bold"
-                              : "text-slate-200 hover:bg-slate-800 hover:text-white"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Icon className={`h-4 w-4 ${isCurrent ? "text-amber-400" : "text-slate-400"}`} />
-                            <span>{t(tab.labelKey)}</span>
-                          </div>
-                          {isCurrent && <CheckCircle2 className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
-                        </DropdownMenuItem>
-                      )
-                    })}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Direct Tab Pill Navigation for Larger Screens (hidden on md tablet to prevent crowding, visible on lg+) */}
-            <nav
-              role="tablist"
-              aria-label={t("studioNavigation")}
-              className="hidden lg:flex items-center gap-1 overflow-x-auto text-xs font-semibold scrollbar-none"
-            >
-              {NAV_TABS.map((tab, index) => {
-                const Icon = tab.icon
-                const isActive = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    id={`tab-${tab.id}`}
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-controls={`panel-${tab.id}`}
-                    tabIndex={isActive ? 0 : -1}
-                    onKeyDown={(e) => handleTabKeyDown(e, index)}
-                    onClick={() => handleSelectTab(tab.id)}
-                    aria-label={t(tab.labelKey)}
-                    title={t(tab.labelKey)}
-                    className={`flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 whitespace-nowrap text-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-95 ${
-                      isActive
-                        ? "border border-amber-500/50 bg-amber-500/15 font-bold text-amber-500 shadow-xs dark:bg-amber-500/20 dark:text-amber-300"
-                        : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                    }`}
-                  >
-                    <Icon
-                      className={`h-3.5 w-3.5 shrink-0 ${
-                        isActive
-                          ? "text-amber-500 dark:text-amber-400"
-                          : "text-muted-foreground"
-                      }`}
-                    />
-                    <span>{t(tab.labelKey)}</span>
-                  </button>
-                )
-              })}
-            </nav>
           </div>
         </div>
       </header>
 
-      {transportStatus.audioStartupError && (
-        <AsyncFeedback
-          kind="error"
-          title={t("audioStartupFailed")}
-          action={{ label: transportStatus.audioStarting ? t("audioStarting") : t("retryAudio"), onClick: handleRecoverAudio, disabled: transportStatus.audioStarting }}
-          className="mx-auto w-full max-w-7xl border-x-0 border-t-0 px-4 sm:px-6 lg:px-8"
-        />
-      )}
+      {/* Session Status Ribbon */}
       <SessionBar
         maqam={currentMaqam}
         isDroneActive={isDroneActive}
         transportStatus={transportStatus}
-        onNavigate={handleSelectTab}
+        onNavigate={setActiveLab}
       />
 
-      {/* Main Studio Viewport */}
-      <main
-        id={`panel-${activeTab}`}
-        role="tabpanel"
-        aria-labelledby={`tab-${activeTab}`}
-        tabIndex={0}
-        className="mx-auto w-full max-w-7xl flex-1 space-y-8 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8"
-      >
-        {activeTab === "training" && (
-          <TrainingLab
-            currentMaqam={currentMaqam}
-            maqamRevision={maqamRevision}
-            allMaqamat={allMaqamat}
-            onSelectMaqam={handleSelectMaqam}
-            timbre={timbre}
-          />
-        )}
+      {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}
+      <div className="relative border-b border-slate-800/80 bg-slate-900/60">
+        {/* Subtle mobile edge fade indicators */}
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-slate-950/80 to-transparent z-10 sm:hidden" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-slate-950/80 to-transparent z-10 sm:hidden" />
 
-        {activeTab === "explorer" && (
+        <nav className="px-2.5 sm:px-6 overflow-x-auto touch-pan-x scrollbar-none scroll-smooth" aria-label="Studio labs tabs">
+          <div className="max-w-7xl mx-auto flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2 min-w-max py-2 sm:py-2.5">
+            {navTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeLab === tab.id;
+              const primaryLabel = language === 'ar' ? tab.arabic : tab.label;
+              const secondaryLabel = language === 'ar' ? tab.label : tab.arabic;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveLab(tab.id)}
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all cursor-pointer select-none shrink-0 min-h-[38px] ${
+                    isActive
+                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 active:scale-95'
+                  }`}
+                  title={`${tab.label} (${tab.arabic})`}
+                >
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />
+                  <span className={language === 'ar' ? 'font-arabic text-xs' : ''}>{primaryLabel}</span>
+                  <span className={`text-[10px] hidden lg:inline font-arabic ${isActive ? 'text-slate-900/80' : 'text-slate-500'}`}>
+                    {secondaryLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </div>
+
+      {/* Main Workspace Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        {activeLab === 'explorer' && (
           <MaqamExplorer
             currentMaqam={currentMaqam}
             onSelectMaqam={handleSelectMaqam}
@@ -739,370 +322,176 @@ export default function App() {
             onStopScale={handleStopScale}
             isDroneActive={isDroneActive}
             onToggleDrone={handleToggleDrone}
-            onOpenMaqamFacts={() => setShowMaqamFacts(true)}
-            onOpenMaqamBuilder={() => setShowMaqamBuilder(true)}
-            onOpenSayrVisualization={() => setShowSayrDialog(true)}
-            onOpenModulationPathways={() => setShowModulationDrawer(true)}
+            onOpenMaqamFacts={() => setIsFactsOpen(true)}
+            onOpenMaqamBuilder={() => setIsBuilderOpen(true)}
+            onOpenSayrVisualization={() => setIsSayrDialogOpen(true)}
+            onOpenModulationPathways={() => setIsModulationOpen(true)}
+            onOpenJinsAnalysis={() => setIsJinsAnalysisDrawerOpen(true)}
           />
         )}
 
-        {activeTab === "transposition" && (
-          <TranspositionLab
-            currentMaqam={currentMaqam}
-            onSelectMaqam={handleSelectMaqam}
+        {activeLab === 'jins-analysis' && (
+          <JinsAnalysisTool
+            initialJinsId={currentMaqam.lowerJins.definition.id}
+            initialRoot={currentMaqam.getTonic()}
             timbre={timbre}
-            isDroneActive={isDroneActive}
-            onToggleDrone={handleToggleDrone}
+            onTimbreChange={setTimbre}
           />
         )}
 
-        {activeTab === "violin" && (
-          <div className="space-y-6">
-            <ViolinFingerboard
-              scalePitches={scalePitches}
-              activePitchIndex={activePitchIndex}
-              timbre={timbre}
-              currentMaqam={currentMaqam}
-              violinTuning={violinTuning}
-              onViolinTuningChange={setViolinTuning}
-            />
-
-            {/* Quick Context Summary */}
-            <Card className="flex flex-wrap items-center justify-between gap-4 border-slate-800 bg-slate-900/80 p-5">
-              <div>
-                <h4 className="text-sm font-bold text-white">
-                  Active Fingerboard Maqam: {currentMaqam.name}
-                </h4>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  1st position stop ratios computed mathematically via{" "}
-                  <code className="text-amber-300">L = 1 - 2^(-qt / 24)</code>{" "}
-                  with quarter-tone finger displacement adjustments.
-                </p>
-              </div>
-
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() =>
-                  isPlayingScale
-                    ? handleStopScale()
-                    : handlePlayScale(scalePitches)
-                }
-              >
-                {isPlayingScale
-                  ? "Stop Playback"
-                  : "Play & Trace on Fingerboard"}
-              </Button>
-            </Card>
-          </div>
+        {activeLab === 'violin' && (
+          <ViolinFingerboard
+            currentMaqam={currentMaqam}
+            timbre={timbre}
+            tuning={violinTuning}
+            onTuningChange={setViolinTuning}
+          />
         )}
 
-        {activeTab === "sayr" && (
+        {activeLab === 'sayr' && (
           <SayrQaflaLab
             currentMaqam={currentMaqam}
-            maqamRevision={maqamRevision}
             timbre={timbre}
-            onOpenModulationPathways={() => setShowModulationDrawer(true)}
+            onOpenModulationPathways={() => setIsModulationOpen(true)}
             onSelectMaqam={handleSelectMaqam}
           />
         )}
 
-        {activeTab === "score" && (
-          <ScoreViewer
-            maqam={currentMaqam}
-            activePitchIndex={activePitchIndex}
-          />
+        {activeLab === 'detector' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Network className="w-5 h-5 text-amber-400" />
+                  Maqam Network Explorer (Sami Abu Shumays Model)
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Maqamat structured as small-world networks of ajnas with three-tier modulation pathways &amp; transition probabilities
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsModulationOpen(true)}
+                  className="text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+                >
+                  <GitFork className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                  Modulation Drawer
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSayrDialogOpen(true)}
+                  className="text-xs border-slate-700 text-slate-300 hover:bg-slate-800"
+                >
+                  <Compass className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+                  Sayr Visualizer
+                </Button>
+              </div>
+            </div>
+
+            <MaqamNetworkGraph
+              maqam={currentMaqam}
+              timbre={timbre}
+            />
+          </div>
         )}
 
-        {activeTab === "tuning" && (
-          <TuningWheel24EDO timbre={timbre} currentMaqam={currentMaqam} />
+        {activeLab === 'tuning' && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Mic className="w-5 h-5 text-amber-400" />
+                24-EDO Real-Time Microtonal Pitch Tracker
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Sing or play your violin into the microphone to measure quarter-tone intonation against Maqam {currentMaqam.name}
+              </p>
+            </div>
+            <MicrotonalPitchTracker
+              currentMaqam={currentMaqam}
+              timbre={timbre}
+            />
+          </div>
         )}
 
-        {activeTab === "detector" && <JinsDetectorLab timbre={timbre} />}
+        {activeLab === 'training' && (
+          <div className="space-y-6">
+            <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-amber-400" />
+                Maqamat Theory &amp; Jins Baggage Compendium
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Theoretical foundations grounded in Sami Abu Shumays&apos; &quot;Maqam Analysis: A Primer&quot;
+              </p>
+            </div>
+            <MaqamFacts />
+          </div>
+        )}
       </main>
 
-      {/* Footer Heritage & Credit */}
-      <footer className="mt-12 border-t border-border/40 bg-card/40 py-6 text-center text-xs text-muted-foreground dark:bg-slate-700">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <span className="font-arabic text-sm font-bold text-amber-400">
-            مقامات عربية
-            </span>
-            <span>
-              • Foundations of Arabic Music Theory &amp; Violin Pedagogy (Levels
-              1 &amp; 2)
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
-            <span>Tone.js 24-EDO Microtonal Audio</span>
-            <span>•</span>
-            <span className="font-arabic font-medium text-amber-500/90">
-              صُنِعَ بِسِحْرِك (8 Families)
-            </span>
-            <span>•</span>
-            <span>MusicXML 4.0</span>
-          </div>
-        </div>
-      </footer>
-
-      {/* Tone.js Audio DSP Studio Modal */}
-      <Sheet open={showAudioSettings} onOpenChange={setShowAudioSettings}>
-          <SheetContent
-            side={language === "ar" ? "left" : "right"}
-            className="w-[min(32rem,90vw)] max-w-none max-h-dvh gap-5 overflow-y-auto border-slate-700/80 bg-slate-900 p-6 text-slate-100 shadow-2xl"
-            showCloseButton
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400">
-                  <Settings2 className="h-4 w-4" />
-                </div>
-                <div>
-                  <SheetTitle className="flex items-center gap-2 text-base font-bold text-white">
-                    {t("dspTitle")}
-                    <Badge variant="secondary" className="text-[10px]">
-                      v15.1
-                    </Badge>
-                  </SheetTitle>
-                  <SheetDescription className="text-xs text-slate-400">
-                    {t("dspDescription")}
-                  </SheetDescription>
-                </div>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="space-y-4 text-xs">
-              {/* Master Volume */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="master-volume" className="flex items-center gap-1.5 font-semibold text-slate-300">
-                    <Volume2 className="h-3.5 w-3.5 text-amber-400" />
-                    {t("masterVolume")}
-                  </label>
-                  <span className="font-mono font-bold text-amber-300">
-                    {masterVolume}%
-                  </span>
-                </div>
-                <input
-                  id="master-volume"
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={masterVolume}
-                  onChange={(e) => handleVolumeChange(Number(e.target.value))}
-                  className="w-full cursor-pointer accent-amber-500"
-                />
-              </div>
-
-              {/* Freeverb Reverb Wet */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="reverb-wet" className="font-semibold text-slate-300">
-                    {t("chamberReverb")} ({t("wetDry")})
-                  </label>
-                  <span className="font-mono font-bold text-amber-300">
-                    {reverbWet}%
-                  </span>
-                </div>
-                <input
-                  id="reverb-wet"
-                  type="range"
-                  min="0"
-                  max="60"
-                  value={reverbWet}
-                  onChange={(e) => handleReverbChange(Number(e.target.value))}
-                  className="w-full cursor-pointer accent-amber-500"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  {t("reverbHelp")}
-                </p>
-              </div>
-
-              {/* Reference Concert Pitch A4 */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-300">
-                    {t("concertPitch")}
-                  </span>
-                  <span className="font-mono font-bold text-amber-300">
-                    {referenceA4} Hz
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2" role="group" aria-label={t("concertPitch")}>
-                  {[
-                    { freq: 432, label: "432 Hz", desc: "Verdi / Acoustic" },
-                    { freq: 440, label: "440 Hz", desc: "Modern ISO Standard" },
-                    { freq: 442, label: "442 Hz", desc: "Concert Orchestral" },
-                  ].map((item) => (
-                    <button
-                      key={item.freq}
-                      onClick={() => handleA4Change(item.freq)}
-                      aria-pressed={referenceA4 === item.freq}
-                      aria-label={`Set reference pitch to ${item.label}, ${item.desc}`}
-                      className={`cursor-pointer rounded-xl border p-2 text-center transition ${
-                        referenceA4 === item.freq
-                          ? "border-amber-400 bg-amber-500/20 font-bold text-white"
-                          : "border-slate-800 bg-slate-950 text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      <div className="font-mono text-xs">{item.label}</div>
-                      <div className="text-[10px] text-slate-400">
-                        {item.desc}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Active Timbre Model */}
-              <div className="space-y-1.5">
-                <span className="block font-semibold text-slate-300">
-                  {t("instrumentModel")}
-                </span>
-                <div className="grid grid-cols-3 gap-2" role="group" aria-label={t("instrumentModel")}>
-                  {/* Violin */}
-                  <button
-                    onClick={() => handleTimbreChange("violin")}
-                    aria-pressed={timbre === "violin"}
-                    className={`cursor-pointer rounded-xl border p-2 text-left transition ${
-                      timbre === "violin"
-                        ? "border-amber-400 bg-amber-500/20 text-white"
-                        : "border-slate-800 bg-slate-950 text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <div className="font-bold">{t("instrumentViolin")}</div>
-                    <div className="text-[10px] text-slate-400">
-                      Bowed string + 5.2Hz LFO
-                    </div>
-                  </button>
-                  {/* Oud */}
-                  <button
-                    disabled
-                    onClick={() => handleTimbreChange("oud")}
-                    aria-pressed={timbre === "oud"}
-                    className={`cursor-pointer rounded-xl border p-2 text-left transition ${
-                      timbre === "oud"
-                        ? "border-amber-400 bg-amber-500/20 text-white"
-                        : "border-slate-800 bg-slate-950 text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <div className="font-bold">{t("instrumentOud")}</div>
-                    <div className="text-[10px] text-slate-400">
-                      Plucked lute + bowl body
-                    </div>
-                  </button>
-                  {/* Kanun */}
-                  <button
-                    disabled
-                    onClick={() => handleTimbreChange("kanun")}
-                    aria-pressed={timbre === "kanun"}
-                    className={`cursor-pointer rounded-xl border p-2 text-left transition ${
-                      timbre === "kanun"
-                        ? "border-amber-400 bg-amber-500/20 text-white"
-                        : "border-slate-800 bg-slate-950 text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <div className="font-bold">{t("instrumentKanun")}</div>
-                    <div className="text-[10px] text-slate-400">
-                      Bright 78-string zither
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Engine Specs Box */}
-              <div className="space-y-1 rounded-xl border border-slate-800/80 bg-slate-950 p-3 text-[11px] text-slate-400">
-                <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Tone.js Audio Graph Active</span>
-                </div>
-                <p>
-                  &bull; 24-EDO Quarter-Tone precision: exact mathematical
-                  calculation via{" "}
-                  <code className="text-amber-300">
-                    f = A4 &times; 2^((qt - 114)/24)
-                  </code>
-                  .
-                </p>
-                <p>
-                  &bull; Master brickwall limiter (-0.5 dB) prevents harmonic
-                  clipping during dense polyphony or drone overlap.
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-between border-t border-slate-800 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Audition neutral third (D4 -> E𝄳4 -> A4)
-                  const d4 = new ArabicPitch("D", "♮", 4)
-                  const eHalfFlat4 = new ArabicPitch("E", "𝄳", 4)
-                  const a4 = new ArabicPitch("A", "♮", 4)
-                  MicrotonalAudioEngine.playSequence(
-                    [d4, eHalfFlat4, a4],
-                    350,
-                    timbre,
-                    undefined,
-                    undefined,
-                    undefined,
-                    "audio-settings-audition"
-                  )
-                }}
-                className="gap-1.5"
-              >
-                <Volume2 className="h-3.5 w-3.5" />
-                {t("auditionPhrase")}
-              </Button>
-
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setShowAudioSettings(false)}
-              >
-                {t("done")}
-              </Button>
-            </div>
-            </SheetContent>
-          </Sheet>
-
-      {/* Maqam Builder & Ajnas Architect Drawer */}
+      {/* Global Interactive Drawers */}
       <MaqamBuilderDrawer
-        open={showMaqamBuilder}
-        onOpenChange={setShowMaqamBuilder}
+        open={isBuilderOpen}
+        onOpenChange={setIsBuilderOpen}
         onSelectMaqam={handleSelectMaqam}
         timbre={timbre}
       />
 
-      {/* Maqam Facts & Theory Reference Drawer */}
       <MaqamFactsDrawer
-        open={showMaqamFacts}
-        onOpenChange={setShowMaqamFacts}
+        open={isFactsOpen}
+        onOpenChange={setIsFactsOpen}
         timbre={timbre}
         currentMaqam={currentMaqam}
         onSelectMaqam={handleSelectMaqam}
       />
 
-      {/* Sayr Visualization & Melodic Course Dialog */}
       <SayrVisualizationDialog
-        open={showSayrDialog}
-        onOpenChange={setShowSayrDialog}
+        open={isSayrDialogOpen}
+        onOpenChange={setIsSayrDialogOpen}
         maqam={currentMaqam}
         timbre={timbre}
       />
 
-      {/* Modulation Pathways & Pivot Points Drawer */}
       <ModulationPathwaysDrawer
-        open={showModulationDrawer}
-        onOpenChange={setShowModulationDrawer}
+        open={isModulationOpen}
+        onOpenChange={setIsModulationOpen}
         currentMaqam={currentMaqam}
-        onSelectMaqam={handleSelectMaqam}
         timbre={timbre}
+        onSelectMaqam={handleSelectMaqam}
       />
+
+      <JinsAnalysisDrawer
+        open={isJinsAnalysisDrawerOpen}
+        onOpenChange={setIsJinsAnalysisDrawerOpen}
+        timbre={timbre}
+        initialJinsId={currentMaqam.lowerJins.definition.id}
+        initialRoot={currentMaqam.getTonic()}
+      />
+
+      {/* Footer */}
+      <footer className="border-t border-slate-800/80 bg-slate-950 py-4 px-6 text-center text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>
+            Arabic Maqamat &amp; 24-EDO Microtonal Violin Studio • Grounded in Sami Abu Shumays&apos; theoretical research
+          </span>
+          <span className="font-arabic text-amber-500/80">
+            صنع بسحرك — راست · بياتي · سيكاه · حجاز · نهاوند · كرد · عجم · صبا
+          </span>
+        </div>
+      </footer>
     </div>
-  )
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="arabic-maqamat-theme">
+      <LanguageProvider>
+        <StudioContent />
+      </LanguageProvider>
+    </ThemeProvider>
+  );
 }

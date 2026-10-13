@@ -14,7 +14,7 @@ import {
   CardContent,
 } from "./ui/card"
 import { Badge } from "./ui/badge"
-import { BookOpen, Sparkles, Layers, Compass, Info } from "lucide-react"
+import { BookOpen, Sparkles, Layers, Compass, Info, Network, Package } from "lucide-react"
 
 interface FactSection {
   id: string
@@ -31,31 +31,54 @@ const maqamFacts: FactSection[] = [
     icon: BookOpen,
     highlighted: true,
     content: [
-      "A maqam is not just a scale; it is a melodic framework built from chained ajnas (jins).",
+      "A maqam is not just a scale; it is an interconnected melodic framework built from chained ajnas (jins).",
       "The root jins defines the family, while the melodic course or sayr is shaped by the movement between ajnas and their pivots.",
       "The root jins is the first jins in the scale and it anchors the maqam's character.",
       "The ghammaz is the most important secondary emphasis, usually the note most often used as a pivot or modulation point.",
-      "Traditional maqamat are grouped into families by shared root jins: Rast, Bayati, Hijaz, Nahawand, Kurd, Saba, Ajam, and Sikah."
+      "Traditional maqamat are grouped into families by shared root jins: Rast, Bayati, Hijaz, Nahawand, Kurd, Saba, Ajam, and Sikah (صنع بسحرك)."
+    ]
+  },
+  {
+    id: "jins-baggage",
+    title: "Jins Baggage (أمتعة الجنس)",
+    icon: Package,
+    highlighted: true,
+    content: [
+      "Key concept from Sami Abu Shumays: Ajnas carry consistent notes BELOW the tonic that form part of the jins identity.",
+      "In Jins Bayati on D, baggage notes include C-natural and B-half-flat below the tonic.",
+      "In Jins Rast on C, baggage notes include Yakah (G3), Ushayran (A3), and Iraq (B-half-flat 3).",
+      "Baggage notes dictate how melodies approach the tonic and shape authentic cadential descents."
+    ]
+  },
+  {
+    id: "network-theory",
+    title: "Network View of Maqam & Small-World Graphs",
+    icon: Network,
+    content: [
+      "Maqamat are graphs/networks of ajnas with directed edges representing permissible pathways.",
+      "Hubs cluster around the tonic (Qarar) and dominant (Ghammaz) with high clustering coefficients and short path lengths.",
+      "Instead of smooth continuous modulation, classical maqam performance navigates discrete, structurally grounded nodes.",
+      "Understanding the network reveals why certain modulations sound effortless and inevitable while others create stark surprise."
     ]
   },
   {
     id: "family-system",
-    title: "The 8 Maqam Families",
+    title: "The 8 Maqam Families (صنع بسحرك)",
     icon: Layers,
     content: [
-      "The classical mnemonic 'صُنِعَ بِسِحْرِك' categorizes modal systems by their root lower Jins.",
+      "The classical mnemonic 'صنع بسحرك' categorizes modal systems by their root lower Jins.",
       "Each family shares the same root jins but differs in upper ajnas, ghammaz, and sayr patterns.",
       "Understanding the family system helps predict melodic behavior and modulation possibilities."
     ]
   },
   {
-    id: "structural-elements",
-    title: "Structural Elements",
+    id: "modulation-tiers",
+    title: "Three Categories of Modulation",
     icon: Sparkles,
     content: [
-      "The common thread across maqamat is that their identity comes from the relationship between the root jins, the upper jins, the ghammaz, and the overall sayr.",
-      "Family and mood are carried by the ajnas, not by a single isolated scale formula.",
-      "The connection type (Ittisal, Infisal, Tadakhul) determines how ajnas join together."
+      "Category 1 (Ornamental): Brief passing accidentals within a single jins that do not establish a new tonic center.",
+      "Category 2 (Internal): Typical jins-to-jins modulations within the established network of the maqam (not a true maqam change).",
+      "Category 3 (Full Maqam): Structural modulation that destabilizes the root jins and firmly shifts the tonal foundation to a new maqam."
     ]
   },
   {
@@ -88,16 +111,15 @@ export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
             <div>
               <CardTitle className="text-xl">Maqam Facts</CardTitle>
               <CardDescription className="text-xs text-slate-300">
-                Classical Arabic modal system fundamentals
+                Classical Arabic modal system fundamentals &amp; Abu Shumays Primer insights
               </CardDescription>
             </div>
           </div>
           <Badge variant="secondary" className="font-arabic text-[10px]">
-            نظريات المقام
+            حقائق المقامات
           </Badge>
         </div>
       </CardHeader>
-
       <CardContent className="pt-4">
         <Accordion value={expandedSection} onValueChange={(val) => setExpandedSection(val)}>
           {maqamFacts.map((section) => {
@@ -129,12 +151,11 @@ export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
             )
           })}
         </Accordion>
-
         <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
           <div className="flex items-start gap-2">
             <Sparkles className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
             <p className="text-xs text-amber-200/90 leading-relaxed">
-              <span className="font-semibold">Practical note:</span> The family and mood are carried by the ajnas, not by a single isolated scale formula. Understanding these relationships is key to authentic Arabic music performance.
+              <span className="font-semibold">Practical note:</span> The family and mood are carried by the ajnas and their baggage notes, not by an isolated scale formula. Navigating the network graph reveals authentic pathways between modal regions.
             </p>
           </div>
         </div>

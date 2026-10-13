@@ -12,22 +12,17 @@ import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Input } from "./ui/input"
 import {
-  Sliders,
   Sparkles,
   Music,
-  Volume2,
   X,
   Radio,
-  ArrowRight,
   CheckCircle2,
-  Layers,
   Wand2,
   Play,
   Square,
-  RefreshCw,
 } from "lucide-react"
 import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from "../core/pitch"
-import { Jins, AjnasLibrary, JinsDefinition } from "../theory/jins"
+import { Jins, AjnasLibrary } from "../theory/jins"
 import {
   Maqam,
   MaqamatCatalogue,
@@ -58,17 +53,17 @@ const BUILDER_PRESETS: PresetTemplate[] = [
     tonic: { diatonic: "C", accidental: "♮", octave: 4 },
     connection: "Infisal",
     upperJinsId: "hijaz",
-    family: "Rāst",
+    family: "Rast",
     description: "Rast root with dramatic upper Hijaz on G4 (characteristic of Turkish and Arab art music).",
   },
   {
-    name: "Maqam Bayati Shuri (بياتي شوري)",
-    arabicName: "مقام بياتي شوري",
+    name: "Maqam Bayati Shuri (شورى)",
+    arabicName: "مقام بياتي شورى",
     lowerJinsId: "bayati",
     tonic: { diatonic: "D", accidental: "♮", octave: 4 },
     connection: "Ittisal",
     upperJinsId: "hijaz",
-    family: "Bayātī",
+    family: "Bayati",
     description: "Heartfelt Bayati root transitioning into intense upper Hijaz on G4.",
   },
   {
@@ -78,17 +73,17 @@ const BUILDER_PRESETS: PresetTemplate[] = [
     tonic: { diatonic: "C", accidental: "♮", octave: 4 },
     connection: "Infisal",
     upperJinsId: "hijaz",
-    family: "Nahāwand",
+    family: "Nahawand",
     description: "Melancholic Nahawand on C with fiery upper Hijaz on G4.",
   },
   {
-    name: "Maqam Nairuz / Yakah (نيروز / يكاه)",
+    name: "Maqam Nairuz / Yakah (نيروز)",
     arabicName: "مقام نيروز",
     lowerJinsId: "rast",
     tonic: { diatonic: "C", accidental: "♮", octave: 4 },
     connection: "Infisal",
     upperJinsId: "bayati",
-    family: "Rāst",
+    family: "Rast",
     description: "Classical Rast on C with upper Bayati on G4 featuring Awj (B𝄳4).",
   },
   {
@@ -98,7 +93,7 @@ const BUILDER_PRESETS: PresetTemplate[] = [
     tonic: { diatonic: "C", accidental: "♮", octave: 4 },
     connection: "Infisal",
     upperJinsId: "ajam",
-    family: "Rāst",
+    family: "Rast",
     description: "Rast on C ascending into celebratory upper Ajam major pentachord on G4.",
   },
   {
@@ -122,12 +117,12 @@ const TONIC_CHOICES: TonicChoice[] = [
   { label: "C4 (راست)", pitch: new ArabicPitch("C", "♮", 4) },
   { label: "D4 (دوكاه)", pitch: new ArabicPitch("D", "♮", 4) },
   { label: "E𝄳4 (سيكاه)", pitch: new ArabicPitch("E", "𝄳", 4) },
-  { label: "E♭4 (كردي)", pitch: new ArabicPitch("E", "♭", 4) },
+  { label: "E♭4 (كرد)", pitch: new ArabicPitch("E", "♭", 4) },
   { label: "F4 (جهاركاه)", pitch: new ArabicPitch("F", "♮", 4) },
   { label: "G4 (نوى)", pitch: new ArabicPitch("G", "♮", 4) },
   { label: "A4 (حسيني)", pitch: new ArabicPitch("A", "♮", 4) },
-  { label: "B♭4 (عجم)", pitch: new ArabicPitch("B", "♭", 4) },
   { label: "B𝄳4 (أوج)", pitch: new ArabicPitch("B", "𝄳", 4) },
+  { label: "B♭4 (عجم)", pitch: new ArabicPitch("B", "♭", 4) },
   { label: "G3 (يكاه)", pitch: new ArabicPitch("G", "♮", 3) },
   { label: "B𝄳3 (عراق)", pitch: new ArabicPitch("B", "𝄳", 3) },
 ]
@@ -169,37 +164,29 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
     return AjnasLibrary.findById(upperJinsId) ?? AjnasLibrary.HIJAZ
   }, [upperJinsId])
 
-  // Instantiate lower jins
   const lowerJins = useMemo(() => {
     return new Jins(lowerDef, activeTonic)
   }, [lowerDef, activeTonic])
 
-  // Compute canonical upper jins root according to connection type
   const upperRoot = useMemo(() => {
     const lowerTop = lowerJins.getTopPitch()
     if (connectionType === "Ittisal") {
-      // Upper jins root is exactly the top note of lower jins
       return lowerTop
     } else if (connectionType === "Infisal") {
-      // Separated by whole tone (4 quarter-tones = 200 cents)
       return lowerTop.transpose(4)
     } else {
-      // Tadakhul: Overlapping inside lower jins (transpose down 2 quarter-tones from top)
       return lowerTop.transpose(-2)
     }
   }, [lowerJins, connectionType])
 
-  // Instantiate upper jins
   const upperJins = useMemo(() => {
     return new Jins(upperDef, upperRoot)
   }, [upperDef, upperRoot])
 
-  // Ghammaz is the upper root or pivot note
   const ghammazPitch = useMemo(() => {
     return upperRoot
   }, [upperRoot])
 
-  // Auto-generate suggested maqam name
   const suggestedName = useMemo(() => {
     if (customMaqamName.trim()) return customMaqamName.trim()
     return `Maqam ${lowerDef.name}-${upperDef.name}`
@@ -210,22 +197,20 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
     return `مقام ${lowerDef.arabicName} ${upperDef.arabicName}`
   }, [customArabicName, lowerDef.arabicName, upperDef.arabicName])
 
-  // Map to family mnemonic
   const familyMnemonic: MaqamFamilyMnemonic = useMemo(() => {
     switch (lowerDef.id) {
-      case "rast": return "Rāst"
-      case "bayati": return "Bayātī"
-      case "hijaz": return "Ḥijāz"
-      case "nahawand": return "Nahāwand"
+      case "rast": return "Rast"
+      case "bayati": return "Bayati"
+      case "hijaz": return "Hijaz"
+      case "nahawand": return "Nahawand"
       case "kurd": return "Kurd"
-      case "saba": return "Ṣabā"
-      case "sikah": return "Sīkāh"
-      case "ajam": return "ʿAjam"
-      default: return "Rāst"
+      case "saba": return "صنع"
+      case "sikah": return "Sikah"
+      case "ajam": return "‘Ajam"
+      default: return "Rast"
     }
   }, [lowerDef.id])
 
-  // Build temporary Maqam object for preview
   const constructedMaqam = useMemo(() => {
     try {
       const structure: MaqamScaleStructure = {
@@ -241,7 +226,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
       }
       return new Maqam(structure)
     } catch {
-      // Fallback
       return MaqamatCatalogue.buildRast()
     }
   }, [lowerDef, upperDef, activeTonic, connectionType, lowerJins, upperJins, ghammazPitch, suggestedName, suggestedArabic, familyMnemonic])
@@ -250,7 +234,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
     return constructedMaqam.getScale()
   }, [constructedMaqam])
 
-  // Play / Stop Audition
   const handleTogglePlay = () => {
     if (isPlayingScale) {
       MicrotonalAudioEngine.stopSequence("builder-scale")
@@ -273,27 +256,23 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
     }
   }
 
-  // Toggle Drone
   const handleToggleDrone = () => {
     const nextState = !isDroneActive
     setIsDroneActive(nextState)
     MicrotonalAudioEngine.toggleDrone(activeTonic, nextState)
   }
 
-  // Load preset template
   const handleApplyPreset = (preset: PresetTemplate) => {
     setLowerJinsId(preset.lowerJinsId)
     setUpperJinsId(preset.upperJinsId)
     setConnectionType(preset.connection)
     setCustomMaqamName(preset.name)
     setCustomArabicName(preset.arabicName)
-
     const targetTonic = new ArabicPitch(preset.tonic.diatonic, preset.tonic.accidental, preset.tonic.octave)
     const idx = TONIC_CHOICES.findIndex(c => c.pitch.equals(targetTonic))
     if (idx !== -1) setSelectedTonicIndex(idx)
   }
 
-  // Load constructed Maqam into main workspace
   const handleApplyToStudio = () => {
     if (isDroneActive) {
       MicrotonalAudioEngine.toggleDrone(activeTonic, false)
@@ -303,7 +282,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
       MicrotonalAudioEngine.stopSequence("builder-scale")
       setIsPlayingScale(false)
     }
-
     onSelectMaqam(constructedMaqam)
     onOpenChange(false)
   }
@@ -321,7 +299,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 <DrawerTitle className="text-xl font-bold flex items-center gap-2">
                   <span>Maqam Builder &amp; Architect</span>
                   <span className="font-arabic text-amber-400 text-sm font-semibold">
-                    (مُنشئ ومُركّب المقامات)
+                    (معمارية وتركيب المقامات)
                   </span>
                 </DrawerTitle>
                 <DrawerDescription className="text-xs text-slate-400">
@@ -329,7 +307,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 </DrawerDescription>
               </div>
             </div>
-
             <Button
               variant="ghost"
               size="sm"
@@ -342,20 +319,17 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
           </div>
         </DrawerHeader>
 
-        {/* Scrollable Builder Studio */}
         <div className="overflow-y-auto px-6 py-5 space-y-6 max-h-[calc(92vh-140px)] scrollbar-thin">
-          {/* Quick Presets Carousel */}
           <div>
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                <span>Classical Compound Templates (نماذج مقامات مركبة):</span>
+                <span>Classical Compound Templates (قوالب جاهزة):</span>
               </span>
               <span className="text-[11px] text-muted-foreground font-mono">
                 Click to load formula
               </span>
             </div>
-
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {BUILDER_PRESETS.map((p, idx) => (
                 <button
@@ -371,24 +345,21 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
             </div>
           </div>
 
-          {/* Builder Controls Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Step 1: Lower Jins & Tonic */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-[11px]">1</span>
-                  <span>Lower Jins (الجنس الأساسي)</span>
+                  <span>Lower Jins (جنس الأصل)</span>
                 </span>
                 <Badge variant="outline" className="text-[10px] text-amber-300 border-amber-500/30">
                   {lowerDef.type}
                 </Badge>
               </div>
 
-              {/* Tonic Selector */}
               <div>
                 <label className="text-[11px] text-slate-400 font-medium block mb-1">
-                  Root Tonic (درجة القرار):
+                  Root Tonic (القرار):
                 </label>
                 <select
                   value={selectedTonicIndex}
@@ -403,7 +374,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 </select>
               </div>
 
-              {/* Jins Type */}
               <div>
                 <label className="text-[11px] text-slate-400 font-medium block mb-1">
                   Root Jins Cell:
@@ -415,13 +385,12 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 >
                   {allAjnas.map((j) => (
                     <option key={j.id} value={j.id}>
-                      {j.name} ({j.arabicName}) • {j.type}
+                      {j.name} ({j.arabicName}) — {j.type}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Jins characteristic details */}
               <div className="rounded-xl bg-slate-950/60 p-2.5 text-[11px] text-slate-300 border border-slate-800/80">
                 <div className="font-semibold text-amber-200">{lowerDef.arabicName} ({lowerDef.name}):</div>
                 <div className="text-[10px] text-slate-400 mt-0.5">{lowerDef.description}</div>
@@ -431,19 +400,17 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
               </div>
             </div>
 
-            {/* Step 2: Connection Type & Ghammaz */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500/20 text-[11px]">2</span>
-                  <span>Connection (طريقة الاتصال)</span>
+                  <span>Connection (الوصل والغمّاز)</span>
                 </span>
                 <Badge variant="outline" className="text-[10px] text-cyan-300 border-cyan-500/30">
                   Pivot
                 </Badge>
               </div>
 
-              {/* Connection Type Radio Buttons */}
               <div>
                 <label className="text-[11px] text-slate-400 font-medium block mb-1.5">
                   Jins Junction:
@@ -471,7 +438,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 </div>
               </div>
 
-              {/* Ghammaz Indicator */}
               <div className="rounded-xl bg-slate-950/60 p-2.5 text-[11px] text-slate-300 border border-slate-800/80">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-cyan-200">Ghammaz Pivot (الغمّاز):</span>
@@ -485,19 +451,17 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
               </div>
             </div>
 
-            {/* Step 3: Upper Jins */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-[11px]">3</span>
-                  <span>Upper Jins (الجنس الفرعي)</span>
+                  <span>Upper Jins (جنس الفرع)</span>
                 </span>
                 <Badge variant="outline" className="text-[10px] text-emerald-300 border-emerald-500/30">
                   {upperDef.type}
                 </Badge>
               </div>
 
-              {/* Upper Root Pitch indicator */}
               <div>
                 <label className="text-[11px] text-slate-400 font-medium block mb-1">
                   Upper Jins Root Pitch:
@@ -510,7 +474,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 </div>
               </div>
 
-              {/* Upper Jins Cell */}
               <div>
                 <label className="text-[11px] text-slate-400 font-medium block mb-1">
                   Upper Jins Cell:
@@ -522,13 +485,12 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 >
                   {allAjnas.map((j) => (
                     <option key={j.id} value={j.id}>
-                      {j.name} ({j.arabicName}) • {j.type}
+                      {j.name} ({j.arabicName}) — {j.type}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Jins Details */}
               <div className="rounded-xl bg-slate-950/60 p-2.5 text-[11px] text-slate-300 border border-slate-800/80">
                 <div className="font-semibold text-emerald-200">{upperDef.arabicName} ({upperDef.name}):</div>
                 <div className="text-[10px] text-slate-400 mt-0.5">{upperDef.description}</div>
@@ -539,11 +501,10 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
             </div>
           </div>
 
-          {/* Custom Name Inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Custom English Name (اسم المقام بالإنجليزي):
+                Custom English Name (الاسم الإنجليزي):
               </label>
               <Input
                 value={customMaqamName}
@@ -554,7 +515,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1">
-                Custom Arabic Name (اسم المقام بالعربي):
+                Custom Arabic Name (الاسم العربي):
               </label>
               <Input
                 value={customArabicName}
@@ -566,7 +527,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
             </div>
           </div>
 
-          {/* Real-time Scale Degree Preview & Audition */}
           <div className="rounded-2xl border border-amber-500/30 bg-linear-to-r from-amber-950/40 via-slate-900 to-indigo-950/30 p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -575,13 +535,12 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                   <span className="font-arabic text-amber-400 text-sm">({suggestedArabic})</span>
                 </h4>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Family: <strong className="text-amber-300">{familyMnemonic}</strong> • Tonic:{" "}
-                  <strong className="text-white">{formatPitchWithLargeAccidentalReact(activeTonic, { size: 'large' })}</strong> • Connection:{" "}
+                  Family: <strong className="text-amber-300">{familyMnemonic}</strong> · Tonic:{" "}
+                  <strong className="text-white">{formatPitchWithLargeAccidentalReact(activeTonic, { size: 'large' })}</strong> · Connection:{" "}
                   <strong className="text-cyan-300">{connectionType}</strong>
                 </p>
               </div>
 
-              {/* Audition Controls */}
               <div className="flex items-center gap-2">
                 <Button
                   variant={isPlayingScale ? "destructive" : "default"}
@@ -597,11 +556,10 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                   ) : (
                     <>
                       <Play className="h-3.5 w-3.5 fill-current" />
-                      <span>Audition Scale (استماع)</span>
+                      <span>Audition Scale (عزف السلم)</span>
                     </>
                   )}
                 </Button>
-
                 <Button
                   variant={isDroneActive ? "default" : "outline"}
                   size="sm"
@@ -614,14 +572,12 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
               </div>
             </div>
 
-            {/* Scale Note Badges */}
             <div className="flex flex-wrap items-center gap-2.5 pt-2">
               {scalePitches.map((p: ArabicPitch, idx: number) => {
                 const isActive = activeAuditionIndex === idx
                 const isTonic = p.equals(activeTonic)
                 const isGhammaz = p.equals(ghammazPitch)
-                const isQuarterTone = p.accidental === "𝄳" || p.accidental === "𝄵"
-
+                const isQuarterTone = p.accidental === "𝄳" || p.accidental === "𝄲"
                 return (
                   <div
                     key={idx}
@@ -639,19 +595,17 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                     <div className="flex items-center gap-1 font-mono font-bold text-xs">
                       <span>{formatPitchWithLargeAccidentalReact(p, { size: 'large' })}</span>
                     </div>
-
                     <div className="text-[10px] text-muted-foreground mt-0.5">
                       {isTonic ? (
                         <span className="text-amber-400 font-semibold">Tonic</span>
                       ) : isGhammaz ? (
                         <span className="text-cyan-400 font-semibold">Ghammaz</span>
                       ) : isQuarterTone ? (
-                        <span className="text-amber-300">𝄳 50¢</span>
+                        <span className="text-amber-300">ربع صوت</span>
                       ) : (
                         `#${idx + 1}`
                       )}
                     </div>
-
                     <div className="text-[9px] text-slate-400 font-mono mt-0.5">
                       {p.toFrequency().toFixed(1)} Hz
                     </div>
@@ -662,7 +616,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
         <DrawerFooter className="border-t border-slate-800/80 px-6 py-3.5 flex flex-row items-center justify-between">
           <Button
             variant="ghost"
@@ -672,7 +625,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
           >
             Cancel
           </Button>
-
           <Button
             variant="default"
             size="default"
@@ -680,7 +632,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
             className="gap-2 bg-linear-to-r from-amber-600 to-amber-500 text-slate-950 font-bold hover:from-amber-500 hover:to-amber-400 cursor-pointer shadow-lg shadow-amber-500/20"
           >
             <CheckCircle2 className="h-4 w-4" />
-            <span>Apply to Studio &amp; All Labs (تطبيق في الأستوديو)</span>
+            <span>Apply to Studio &amp; All Labs (تطبيق على الاستوديو)</span>
           </Button>
         </DrawerFooter>
       </DrawerContent>

@@ -6,7 +6,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetClose,
 } from "./ui/sheet"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -23,15 +22,15 @@ import {
   GraduationCap,
   Wand2,
   BookOpen,
-  Mic,
   Settings2,
   Radio,
   CheckCircle2,
-  Volume2,
   SlidersHorizontal,
   ChevronRight,
   Globe,
   GitFork,
+  Network,
+  Package,
 } from "lucide-react"
 import { ValidLab } from "../state/workspace-state"
 import { ViolinTuningPreset } from "./ViolinFingerboard"
@@ -51,6 +50,7 @@ interface MainMenuProps {
   onOpenMaqamFacts: () => void
   onOpenSayrVisualization?: () => void
   onOpenModulationPathways?: () => void
+  onOpenJinsAnalysis?: () => void
   onOpenAudioSettings: () => void
   systemTuningMode?: "24edo" | "12tet"
   onSystemTuningChange?: (mode: "24edo" | "12tet") => void
@@ -69,6 +69,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onOpenMaqamFacts,
   onOpenSayrVisualization,
   onOpenModulationPathways,
+  onOpenJinsAnalysis,
   onOpenAudioSettings,
   systemTuningMode = "24edo",
   onSystemTuningChange,
@@ -77,14 +78,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const { language, setLanguage } = useLanguage()
 
   const labsList: { id: ValidLab; title: string; arabic: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: "explorer", title: "Maqam Families Explorer", arabic: "مستكشف الفصائل والمقامات", icon: Layers },
-    { id: "transposition", title: "Transposition Lab (Tasweer)", arabic: "مختبر تصوير المقامات", icon: ArrowLeftRight },
-    { id: "violin", title: "Violin Fingerboard Studio", arabic: "لوحة أصابع الكمان التعليمية", icon: Music },
-    { id: "sayr", title: "Sayr & Qafla Lab", arabic: "مختبر السير والقفلات", icon: Compass },
-    { id: "score", title: "Interactive Score & MusicXML", arabic: "التدوين والنوتة التفاعلية", icon: FileMusic },
-    { id: "tuning", title: "24-EDO Tuning Wheel & Tracker", arabic: "عجلة الدوزان ومقياس التون", icon: Sliders },
-    { id: "detector", title: "Jins Detector Lab", arabic: "مستكشف ومحلل الأجناس", icon: Sparkles },
-    { id: "training", title: "Training Lab & Pedagogy Drills", arabic: "مختبر التمارين والتدريب", icon: GraduationCap },
+    { id: "explorer", title: "Maqam Families Explorer", arabic: "مستكشف المقامات والعائلات", icon: Layers },
+    { id: "transposition", title: "Transposition Lab (Tasweer)", arabic: "مختبر التصوير الموسيقي", icon: ArrowLeftRight },
+    { id: "violin", title: "Violin Fingerboard Studio", arabic: "لوحة أصابع الكمان", icon: Music },
+    { id: "sayr", title: "Sayr & Qafla Lab", arabic: "مختبر السير والقفلة", icon: Compass },
+    { id: "score", title: "Interactive Score & MusicXML", arabic: "النوتة والتدوين الموسيقي", icon: FileMusic },
+    { id: "tuning", title: "24-EDO Tuning Wheel & Tracker", arabic: "دوزان ٢٤ ربع صوت", icon: Sliders },
+    { id: "jins-analysis", title: "Jins Analysis Tool (Baggage)", arabic: "تحليل الأجناس وأمتعة النغم", icon: Package },
+    { id: "detector", title: "Jins Classifier", arabic: "محلل الأجناس الموسيقية", icon: Sparkles },
+    { id: "training", title: "Training Lab & Pedagogy Drills", arabic: "مختبر التدريب والتمرين", icon: GraduationCap },
   ]
 
   const handleLabSelect = (lab: ValidLab) => {
@@ -136,15 +138,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <SheetTitle className="text-base font-bold text-white flex items-center gap-2">
                   <span>Arabic Maqamat Studio</span>
                   <Badge variant="secondary" className="text-[10px] font-bold">
-                    v2.5
+                    v2.6
                   </Badge>
                 </SheetTitle>
                 <SheetDescription className="text-xs text-slate-400">
-                  Main Navigation, Tools &amp; Tuning Presets
+                  Main Navigation, Tools, Networks &amp; Tuning Presets
                 </SheetDescription>
               </div>
             </div>
-
             <Button
               variant="ghost"
               size="sm"
@@ -162,7 +163,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
                 Creative Tools &amp; Drawers
               </span>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {/* Maqam Builder Drawer Button */}
                 <button
@@ -178,7 +178,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                       Maqam Builder
                     </div>
                     <div className="text-[10px] text-slate-400 font-arabic">
-                      مُركّب المقامات والأجناس
+                      معمارية المقامات
                     </div>
                   </div>
                 </button>
@@ -194,10 +194,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   </div>
                   <div>
                     <div className="text-xs font-bold text-white group-hover:text-indigo-200">
-                      Maqam Facts
+                      Maqam Facts &amp; Theory
                     </div>
                     <div className="text-[10px] text-slate-400 font-arabic">
-                      نظريات ومفاهيم المقام
+                      حقائق ونظرية المقامات
                     </div>
                   </div>
                 </button>
@@ -214,10 +214,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-white group-hover:text-sky-200">
-                        Sayr Trajectory Diagram
+                        Sayr Trajectory
                       </div>
                       <div className="text-[10px] text-slate-400 font-arabic">
-                        مسار سير المقام والتحويلات
+                        المسار اللحني والسير
                       </div>
                     </div>
                   </button>
@@ -238,7 +238,28 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                         Modulation Pathways
                       </div>
                       <div className="text-[10px] text-slate-400 font-arabic">
-                        مسارات الانتقال والتنجيس
+                        مسارات التحويل والانتقال
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {/* Jins Analysis Tool Button */}
+                {onOpenJinsAnalysis && (
+                  <button
+                    type="button"
+                    onClick={() => handleAction(onOpenJinsAnalysis)}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-purple-500/40 bg-linear-to-r from-purple-950/40 to-slate-900 text-left transition-all hover:border-purple-400 hover:shadow-md cursor-pointer group"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/20 text-purple-400 group-hover:scale-110 transition-transform">
+                      <Package className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white group-hover:text-purple-200">
+                        Jins Baggage Sidebar
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-arabic">
+                        أمتعة الأجناس والنوتة الموسيقية
                       </div>
                     </div>
                   </button>
@@ -261,7 +282,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 </Badge>
               </div>
 
-              {/* Segmented Tuning Toggle */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -277,10 +297,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     {violinTuning === "arabic" && <CheckCircle2 className="h-3.5 w-3.5 text-amber-400" />}
                   </div>
                   <div className="text-[11px] font-mono text-amber-300/90 mt-0.5">
-                    G3 • D4 • G4 • D5
+                    G3 · D4 · G4 · D5
                   </div>
                   <div className="text-[9px] text-slate-400 mt-1 font-arabic">
-                    يكاه • دوكاه • نوى • محير
+                    يكاه - دوكاه - نوى - محير
                   </div>
                 </button>
 
@@ -298,21 +318,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     {violinTuning === "western" && <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" />}
                   </div>
                   <div className="text-[11px] font-mono text-indigo-300/90 mt-0.5">
-                    G3 • D4 • A4 • E5
+                    G3 · D4 · A4 · E5
                   </div>
                   <div className="text-[9px] text-slate-400 mt-1 font-arabic">
-                    يكاه • دوكاه • حسيني • بوسليك
+                    صل - ري - لا - مي
                   </div>
                 </button>
               </div>
 
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                {violinTuning === "western"
-                  ? "Western Standard Tuning (G-D-A-E) in perfect 5ths. Notes on the 1st (E5) and 2nd (A4) strings conform to European orchestral violins."
-                  : "Classical Arabic Violin Tuning (G-D-G-D) drops strings I and II a whole tone, granting resonant sympathetics on Dukah (D) and Nawa (G)."}
-              </p>
-
-              {/* 24-EDO vs 12-TET System Toggle */}
               {onSystemTuningChange && (
                 <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
                   <span className="text-slate-300 font-medium">Tuning System:</span>
@@ -349,12 +362,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Studio Labs &amp; Modules
               </span>
-
               <div className="space-y-1">
                 {labsList.map((lab) => {
                   const Icon = lab.icon
                   const isActive = activeLab === lab.id
-
                   return (
                     <button
                       key={lab.id}
@@ -375,7 +386,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           </div>
                         </div>
                       </div>
-
                       {isActive ? (
                         <Badge variant="default" className="text-[9px] bg-amber-500 text-slate-950 font-bold">
                           Active
@@ -394,7 +404,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Audio DSP &amp; Instrument Timbre
               </span>
-
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
@@ -405,7 +414,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   <Settings2 className="h-3.5 w-3.5 text-amber-400" />
                   <span>Tone.js DSP Audio Settings</span>
                 </Button>
-
                 <Button
                   variant={isDroneActive ? "default" : "outline"}
                   size="sm"
@@ -466,7 +474,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 </button>
               </div>
             </div>
-
             <span className="font-mono text-[10px]">A4 = 440 Hz</span>
           </div>
         </SheetContent>

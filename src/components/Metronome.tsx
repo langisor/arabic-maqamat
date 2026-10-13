@@ -50,16 +50,13 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isTapping, setIsTapping] = useState<boolean>(false);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
-  
-  void className; // unused prop for now, but can be used for styling
-  // Pendulum swing angle state (-28 to +28 degrees)
+
+  void className;
   const [pendulumAngle, setPendulumAngle] = useState<number>(0);
 
-  // Tap tempo state
   const tapTimesRef = useRef<number[]>([]);
   const tapTimeoutRef = useRef<number | null>(null);
 
-  // Sync initial settings into engine on mount
   useEffect(() => {
     MetronomeAudioEngine.setBpm(bpm);
     MetronomeAudioEngine.setTimeSignature(timeSignature);
@@ -67,14 +64,11 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
     MetronomeAudioEngine.setVolume(volume / 100);
   }, []);
 
-  // Subscribe to MetronomeAudioEngine events
   useEffect(() => {
     const unsubBeat = MetronomeAudioEngine.subscribeBeat((info) => {
       setCurrentBeat(info.beatIndex);
       setIsDownbeat(info.isDownbeat);
       setIsAccent(info.isAccent);
-
-      // Calculate pendulum swing: alternate left (-26 deg) and right (+26 deg)
       setPendulumAngle((prev) => (prev <= 0 ? 26 : -26));
     });
 
@@ -94,7 +88,6 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
     };
   }, []);
 
-  // Sync settings when changed
   const handleBpmChange = useCallback((newBpm: number) => {
     const clamped = Math.max(30, Math.min(280, Math.round(newBpm)));
     setBpm(clamped);
@@ -159,7 +152,6 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
     }
   }, []);
 
-  // Tap Tempo Handler
   const handleTapTempo = () => {
     const now = Date.now();
     setIsTapping(true);
@@ -185,27 +177,6 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
     }
   };
 
-  // Close popover when clicking outside
-  // useEffect(() => {
-  //   const handleClickOutside = (event: MouseEvent) => {
-  //     if (
-  //       isOpen &&
-  //       panelRef.current &&
-  //       !panelRef.current.contains(event.target as Node) &&
-  //       triggerRef.current &&
-  //       !triggerRef.current.contains(event.target as Node)
-  //     ) {
-  //       setIsOpen(false);
-  //     }
-  //   };
-
-  //   document.addEventListener('mousedown', handleClickOutside);
-  //   return () => {
-  //     document.removeEventListener('mousedown', handleClickOutside);
-  //   };
-  // }, [isOpen]);
-
-  // Keyboard shortcut listener ('m' to toggle metronome)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeTag = (document.activeElement?.tagName || '').toLowerCase();
@@ -217,20 +188,19 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
         void togglePlayback();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [togglePlayback]);
-  // Tempo markings helper
+
   const getTempoDescription = (tempo: number) => {
     if (tempo < 60) return { term: 'Largo / Thaqil Jiddan', ar: 'ثقيل جداً' };
     if (tempo < 76) return { term: 'Adagio / Thaqil', ar: 'ثقيل' };
     if (tempo < 108) return { term: 'Andante / Mutawassit', ar: 'متوسط' };
     if (tempo < 132) return { term: 'Moderato / Darij', ar: 'دارج' };
-    if (tempo < 168) return { term: 'Allegro / Sari’', ar: 'سريع' };
-    return { term: 'Presto / Sari’ Jiddan', ar: 'سريع جداً' };
+    if (tempo < 168) return { term: 'Allegro / Sari‘', ar: 'سريع' };
+    return { term: 'Presto / Sari‘ Jiddan', ar: 'سريع جداً' };
   };
 
   const tempoInfo = getTempoDescription(bpm);
@@ -238,16 +208,13 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
   return (
     <div>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
-      {/* Header Compact Metronome Widget */}
-      <div
-      
+      <div 
         className={`flex items-center rounded-xl border transition-all duration-200 select-none shadow-xs ${
           isPlaying
             ? 'bg-amber-500/10 border-amber-500/60 shadow-amber-500/10'
             : 'bg-muted/60 dark:bg-slate-900 border-border hover:border-amber-500/50'
         }`}
       >
-        {/* Play / Stop Direct Toggle Button */}
         <button
           type="button"
           onClick={togglePlayback}
@@ -266,14 +233,12 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
           )}
         </button>
 
-        {/* Metronome Information & Visual Pulse Bar */}
         <PopoverTrigger
           type="button"
           className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs cursor-pointer hover:bg-muted/40 transition-colors"
           title="Click to open Metronome settings & Iqa' practice controls"
           aria-label="Metronome controls"
         >
-          {/* Animated Metronome Icon */}
           <Timer
             className={`w-3.5 h-3.5 transition-transform duration-150 ${
               isPlaying
@@ -285,17 +250,14 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
                 : 'text-muted-foreground'
             }`}
           />
-
-          {/* BPM & Meter Label */}
           <div className="flex items-center gap-1 font-mono font-bold text-foreground">
-            <span className="text-[11px] text-amber-500">♩</span>
+            <span className="text-[11px] text-amber-500">♩=</span>
             <span>{bpm}</span>
             <span className="text-muted-foreground text-[10px] hidden xs:inline">
               {timeSignature.name}
             </span>
           </div>
 
-          {/* Live Beat Dots (Mini in Header) */}
           <div className="hidden md:flex items-center gap-1 ml-0.5">
             {Array.from({ length: Math.min(timeSignature.beatsPerBar, 8) }).map((_, idx) => {
               const active = isPlaying && currentBeat === idx;
@@ -343,7 +305,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
             </div>
             <div>
               <div className="flex items-center gap-1.5 text-sm font-bold">
-                Visual Metronome &amp; Iqa’
+                Visual Metronome &amp; Iqa‘ (إيقاع)
                 <Badge variant="secondary" className="px-1.5 py-0 font-mono text-[9px]">
                   Tone.js Sync
                 </Badge>
@@ -376,12 +338,14 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
               </div>
               <div className="absolute bottom-1 h-0.5 w-32 border-b border-dashed border-muted-foreground/30" />
             </div>
+
             <div className="flex w-full flex-wrap items-center justify-center gap-2">
               {Array.from({ length: timeSignature.beatsPerBar }).map((_, idx) => {
                 const active = isPlaying && currentBeat === idx;
                 const isDown = timeSignature.downbeats.includes(idx);
                 const isSecondary = timeSignature.secondaryAccents.includes(idx);
                 const syllable = timeSignature.beatSyllables?.[idx] || (isDown ? 'Dum' : 'Tak');
+
                 return (
                   <div key={idx} className="flex flex-col items-center gap-1">
                     <div
@@ -437,7 +401,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
                   <span className="text-xs font-semibold text-muted-foreground">BPM</span>
                 </div>
                 <div className="text-[11px] font-medium text-amber-500 dark:text-amber-400">
-                  {tempoInfo.term} · <span className="font-arabic">{tempoInfo.ar}</span>
+                  {tempoInfo.term} — <span className="font-arabic">{tempoInfo.ar}</span>
                 </div>
               </div>
               <div className="flex items-center gap-1 font-mono">
@@ -454,6 +418,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
                 ))}
               </div>
             </div>
+
             <input
               type="range"
               min="30"
@@ -463,13 +428,14 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
               aria-label="Tempo in beats per minute"
               className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-muted accent-amber-500"
             />
+
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
               {[
                 [60, '60 Thaqil'],
                 [84, '84 Andante'],
                 [108, '108 Moderato'],
                 [132, '132 Darij'],
-                [160, '160 Sari’'],
+                [160, '160 Sari‘']
               ].map(([tempo, label]) => (
                 <button
                   key={tempo}
@@ -487,12 +453,13 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                 <Drum className="h-3.5 w-3.5 text-amber-500" />
-                Time Signature &amp; Iqa’ Meter
+                Time Signature &amp; Iqa‘ Meter
               </span>
               <span className="font-mono text-[11px] font-bold text-amber-500">
                 {timeSignature.name} ({timeSignature.arabicTransliteration})
               </span>
             </div>
+
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
               {TIME_SIGNATURE_PRESETS.map((preset) => {
                 const selected = timeSignature.id === preset.id;
@@ -532,7 +499,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
               </span>
               <span className="text-right text-[11px] text-muted-foreground">
                 {soundType === 'dum-tak'
-                  ? 'Dum-Tak (دوم / تك)'
+                  ? 'Dum-Tak (دُم - تك)'
                   : soundType === 'woodblock'
                   ? 'Woodblock (خشبي)'
                   : soundType === 'digital'
@@ -540,6 +507,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
                   : 'Silent (Visual Only)'}
               </span>
             </div>
+
             <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
               {([
                 ['dum-tak', 'Dum-Tak'],
@@ -562,6 +530,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
                 </button>
               ))}
             </div>
+
             {soundType !== 'silent' && (
               <div className="flex items-center gap-3 pt-1">
                 <button

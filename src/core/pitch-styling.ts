@@ -4,7 +4,7 @@ import { ArabicPitch, MicrotonalAccidental } from './pitch';
 
 export type AccidentalCategory = 
   | 'neutral-flat'   // Half-flat / quarter-tone flat (𝄳)
-  | 'neutral-sharp'  // Half-sharp / quarter-tone sharp (𝄵)
+  | 'neutral-sharp'  // Half-sharp / quarter-tone sharp (𝄲)
   | 'natural'        // Natural (♮)
   | 'flat'           // Standard flat / double flat (♭, 𝄫)
   | 'sharp';         // Standard sharp / double sharp (♯, 𝄪)
@@ -28,7 +28,7 @@ export function getAccidentalCategory(accidental: MicrotonalAccidental): Acciden
   switch (accidental) {
     case '𝄳':
       return 'neutral-flat';
-    case '𝄵':
+    case '𝄲':
       return 'neutral-sharp';
     case '♭':
     case '𝄫':
@@ -43,10 +43,10 @@ export function getAccidentalCategory(accidental: MicrotonalAccidental): Acciden
 }
 
 /**
- * Checks whether an accidental is microtonal (quarter-tone: 𝄳 or 𝄵).
+ * Checks whether an accidental is microtonal (quarter-tone: 𝄳 or 𝄲).
  */
 export function isMicrotonalAccidental(accidental: MicrotonalAccidental): boolean {
-  return accidental === '𝄳' || accidental === '𝄵';
+  return accidental === '𝄳' || accidental === '𝄲';
 }
 
 /**
@@ -58,8 +58,8 @@ export function getAccidentalCategoryLabel(
 ): string {
   const labels: Record<AccidentalCategory, { en: string; ar: string }> = {
     'neutral-flat': { en: 'Half-Flat (𝄳)', ar: 'نصف بيمول (𝄳)' },
-    'neutral-sharp': { en: 'Half-Sharp (𝄵)', ar: 'نصف دييز (𝄵)' },
-    'natural': { en: 'Natural (♮)', ar: 'طبيعي (♮)' },
+    'neutral-sharp': { en: 'Half-Sharp (𝄲)', ar: 'نصف دييز (𝄲)' },
+    'natural': { en: 'Natural (♮)', ar: 'بِكار (♮)' },
     'flat': { en: 'Flat (♭)', ar: 'بيمول (♭)' },
     'sharp': { en: 'Sharp (♯)', ar: 'دييز (♯)' }
   };
@@ -298,7 +298,7 @@ export function getPitchThemeClasses(
 
 /**
  * Returns violin fingerboard color class based on finger ergonomics AND accidental microtonality.
- * If the pitch is a quarter-tone (Half-Flat 𝄳 or Half-Sharp 𝄵), it receives the unified amber/orange highlight.
+ * If the pitch is a quarter-tone (Half-Flat 𝄳 or Half-Sharp 𝄲), it receives the unified amber/orange highlight.
  * Open strings (0) retain emerald, and numbered fingers 1-4 retain their positions unless microtonally altered.
  */
 export function getViolinNoteColorClass(
@@ -306,7 +306,6 @@ export function getViolinNoteColorClass(
   accidental: MicrotonalAccidental
 ): string {
   const category = getAccidentalCategory(accidental);
-
   if (category === 'neutral-flat') {
     return 'bg-amber-500 text-slate-950 border-amber-200 ring-4 ring-amber-400/60 font-black shadow-lg';
   }
@@ -317,7 +316,6 @@ export function getViolinNoteColorClass(
   if (finger === 0) {
     return 'bg-emerald-500 text-slate-950 border-emerald-300 ring-2 ring-emerald-400/40';
   }
-
   switch (finger) {
     case 1:
       return 'bg-sky-500 text-slate-950 border-sky-300 ring-2 ring-sky-400/30';
@@ -335,7 +333,6 @@ export function getViolinNoteColorClass(
 /**
  * Formats a pitch string with enlarged accidental symbols for better readability.
  * Natural marks (♮) are always hidden.
- *
  * @param pitch - The ArabicPitch to format
  * @param options - Optional configuration
  * @param options.size - Size multiplier for accidentals: 'large' (1.4x) or 'xl' (1.6x)
@@ -353,8 +350,7 @@ export function formatPitchWithLargeAccidental(
   const displayString = pitch.toDisplayString();
   
   // Extract diatonic base and accidental
-  const accidentalMatch = displayString.match(/([𝄳𝄵♯♭𝄫𝄪])/);
-  
+  const accidentalMatch = displayString.match(/([𝄫♭𝄳𝄲♯𝄪])/);
   if (accidentalMatch) {
     const accidental = accidentalMatch[1];
     const baseNote = displayString.replace(accidental, '');
@@ -368,7 +364,6 @@ export function formatPitchWithLargeAccidental(
 /**
  * Formats a pitch string with enlarged accidental symbols for better readability.
  * Natural marks (♮) are always hidden.
- *
  * @param pitch - The ArabicPitch to format
  * @param options - Optional configuration
  * @param options.size - Size multiplier for accidentals: 'large' (1.4x) or 'xl' (1.6x)
@@ -386,12 +381,11 @@ export function formatPitchWithLargeAccidentalReact(
   const displayString = pitch.toDisplayString();
   
   // Extract diatonic base and accidental
-  const accidentalMatch = displayString.match(/([𝄳𝄵♯♭𝄫𝄪])/);
-  
+  const accidentalMatch = displayString.match(/([𝄫♭𝄳𝄲♯𝄪])/);
   if (accidentalMatch) {
     const accidental = accidentalMatch[1];
     const baseNote = displayString.replace(accidental, '');
-    return React.createElement(React.Fragment, null,
+    return React.createElement(React.Fragment, null, 
       baseNote,
       React.createElement('span', { className: accidentalClass }, accidental)
     );

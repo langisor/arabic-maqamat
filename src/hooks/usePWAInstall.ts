@@ -76,6 +76,7 @@ export function usePWAInstall() {
       const handleControllerChange = () => {
         setIsServiceWorkerReady(true);
       };
+
       navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
       return () => {

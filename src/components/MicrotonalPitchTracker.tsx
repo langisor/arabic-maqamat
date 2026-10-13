@@ -19,13 +19,10 @@ import {
   Volume2,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
-  Trophy,
-  Sliders,
-  Target,
-  RefreshCw,
   Compass,
   Music,
+  Target,
+  Trophy,
 } from 'lucide-react';
 
 interface Props {
@@ -41,35 +38,28 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   onXpGain,
   className = '',
 }) => {
-  // Mic & Audio Engine state
   const [isListening, setIsListening] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   const [referenceA4, setReferenceA4] = useState<number>(440);
   const [noiseThreshold, setNoiseThreshold] = useState<number>(0.015);
   const [inputLevelDb, setInputLevelDb] = useState<number>(-100);
 
-  // Pitch tracking results
   const [currentDetection, setCurrentDetection] = useState<PitchDetectionResult | null>(null);
-  const [pitchHistory, setPitchHistory] = useState<{ note: string; cents: number; inTune: boolean }[]>([]);
 
-  // Target Lock & Training Mode
   const [trackingMode, setTrackingMode] = useState<'free' | 'target'>('free');
   const [targetPitch, setTargetPitch] = useState<ArabicPitch>(() => currentMaqam.getScale()[0]);
   const [inTuneStreakSeconds, setInTuneStreakSeconds] = useState<number>(0);
   const [bestStreakSeconds, setBestStreakSeconds] = useState<number>(0);
   const [dronePlaying, setDronePlaying] = useState<boolean>(false);
 
-  // Audio nodes and refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const detectorRef = useRef<MicrotonalPitchDetector | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const lastInTuneTimeRef = useRef<number>(0);
   const streakTimerRef = useRef<number | null>(null);
 
-  // Initialize or update detector reference
   useEffect(() => {
     detectorRef.current = new MicrotonalPitchDetector(44100, 2048, {
       referenceA4,
@@ -78,20 +68,12 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
     });
   }, [referenceA4, noiseThreshold]);
 
-  // Update target pitch when Maqam changes
   useEffect(() => {
     const scale = currentMaqam.getScale();
     if (scale.length > 0) {
       setTargetPitch(scale[0]);
     }
   }, [currentMaqam]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopMicrophone();
-    };
-  }, []);
 
   const stopMicrophone = useCallback(() => {
     if (animationFrameRef.current !== null) {
@@ -115,13 +97,18 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
     setInputLevelDb(-100);
   }, [dronePlaying]);
 
+  useEffect(() => {
+    return () => {
+      stopMicrophone();
+    };
+  }, [stopMicrophone]);
+
   const startMicrophone = async () => {
     setMicError(null);
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error('Microphone access is not supported by this browser context. Ensure HTTPS or localhost is active.');
       }
-
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -129,14 +116,12 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
           noiseSuppression: false,
         },
       });
-
       mediaStreamRef.current = stream;
 
       await MicrotonalAudioEngine.startAudioContext();
       const audioCtx = MicrotonalAudioEngine.getAudioContext();
       audioContextRef.current = audioCtx;
 
-      // Update detector with actual sample rate
       detectorRef.current = new MicrotonalPitchDetector(audioCtx.sampleRate, 2048, {
         referenceA4,
         volumeThresholdRms: noiseThreshold,
@@ -164,7 +149,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
     if (!analyser || !detector) return;
 
     const timeDomainBuffer = new Float32Array(analyser.fftSize);
-
     let streakCounter = 0;
     let lastTime = performance.now();
 
@@ -179,14 +163,12 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
         setCurrentDetection(detection);
         setInputLevelDb(detection.volumeDb);
 
-        // Check in-tune streak
         const matchesTarget = trackingMode === 'free' || detection.closestPitch.equals(targetPitch);
         if (detection.inTune && matchesTarget) {
           streakCounter += dt;
           setInTuneStreakSeconds(Math.round(streakCounter * 10) / 10);
           setBestStreakSeconds((prev) => Math.max(prev, Math.round(streakCounter * 10) / 10));
 
-          // Award XP milestone & unlock intonation badge
           if (streakCounter >= 3.0 && Math.floor(streakCounter) !== Math.floor(streakCounter - dt)) {
             if (onXpGain) onXpGain(15);
             const currentStats = TrainingStorage.getStats();
@@ -198,7 +180,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
           setInTuneStreakSeconds(Math.round(streakCounter * 10) / 10);
         }
 
-        // Draw waveform
         drawWaveform(timeDomainBuffer, detection.inTune);
       } else {
         setInputLevelDb(-100);
@@ -225,15 +206,14 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
 
     ctx.lineWidth = inTune ? 2.5 : 1.5;
     ctx.strokeStyle = inTune ? '#10b981' : isListening ? '#f59e0b' : '#64748b';
-    ctx.beginPath();
 
+    ctx.beginPath();
     const sliceWidth = width / buffer.length;
     let x = 0;
 
     for (let i = 0; i < buffer.length; i += 4) {
       const v = buffer[i] * 0.9;
       const y = (height / 2) + (v * height) / 2;
-
       if (i === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -241,7 +221,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       }
       x += sliceWidth * 4;
     }
-
     ctx.stroke();
   };
 
@@ -264,7 +243,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   const detectionPitch = currentDetection?.closestPitch;
   const pitchTheme = detectionPitch ? getPitchThemeClasses(detectionPitch, 'card') : null;
 
-  // Cents needle position: -25 to +25 mapped to 0% to 100%
   const cents = currentDetection ? currentDetection.centsDeviation : 0;
   const needlePercent = Math.max(0, Math.min(100, ((cents + 25) / 50) * 100));
 
@@ -278,11 +256,8 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                 Acoustic Microphone Sensor
               </Badge>
               <Badge variant="outline" className="text-xs font-mono border-emerald-500/30 text-emerald-400">
-                24-EDO Quarter-Tone Precision (±25¢)
+                24-EDO Quarter-Tone Precision (دوزان ٢٤ ربع صوت)
               </Badge>
-              <span className="text-xs text-muted-foreground font-arabic">
-                مقياس دقة ربع التون عبر المايكروفون
-              </span>
             </div>
             <CardTitle className="text-xl font-bold flex items-center gap-2">
               <Compass className="w-5 h-5 text-amber-400" />
@@ -292,7 +267,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
               Sing or play your violin, oud, or nay into the microphone. Instantly tracks your acoustic frequency, identifies quarter-tones, and verifies intonation within Maqam {currentMaqam.name}.
             </CardDescription>
           </div>
-
           <div className="flex items-center gap-2 flex-wrap">
             <Button
               onClick={isListening ? stopMicrophone : startMicrophone}
@@ -316,7 +290,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
             </Button>
           </div>
         </div>
-
         {micError && (
           <div className="mt-3">
             <AsyncFeedback
@@ -328,11 +301,8 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
           </div>
         )}
       </CardHeader>
-
       <CardContent className="pt-5 space-y-6">
-        {/* Main Intonation Meter & Hero Pitch Display */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Left Column: Hero Detected Pitch Display */}
           <div className={`lg:col-span-5 p-5 rounded-2xl bg-muted/30 dark:bg-slate-900 border transition-all flex flex-col justify-between relative overflow-hidden ${
             pitchTheme ? pitchTheme.border : 'border-border'
           }`}>
@@ -365,11 +335,9 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                       {currentDetection.closestPitch.octave}
                     </span>
                   </div>
-
                   <div className="text-sm font-arabic font-bold text-foreground">
-                    {currentDetection.closestPitch.toScientificString()} • {currentDetection.closestPitch.accidental === '𝄳' ? 'نصف بيمول (سيكاه)' : currentDetection.closestPitch.accidental === '𝄵' ? 'نصف دييز' : 'طبيعي'}
+                    {currentDetection.closestPitch.toScientificString()} — {currentDetection.closestPitch.accidental === '𝄳' ? 'سيكاه (نصف بيمول)' : currentDetection.closestPitch.accidental === '♭' ? 'بيمول' : 'طبيعي'}
                   </div>
-
                   <div className="flex items-center justify-center gap-2 pt-1 font-mono text-xs">
                     <span className="text-muted-foreground">{currentDetection.frequency} Hz</span>
                     <span className="text-muted-foreground">•</span>
@@ -389,7 +357,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Status & Maqam Role Pill */}
             <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Scale Membership:</span>
               {currentDetection ? (
@@ -410,7 +377,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Right Column: Intonation Dial & Gauge */}
           <div className="lg:col-span-7 p-5 rounded-2xl bg-muted/20 dark:bg-slate-900/60 border border-border flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
@@ -429,26 +395,21 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                           : 'text-sky-400'
                       }`}
                     >
-                      {currentDetection.centsDeviation > 0 ? `+${currentDetection.centsDeviation}` : currentDetection.centsDeviation} ¢
+                      {currentDetection.centsDeviation > 0 ? `+${currentDetection.centsDeviation}` : currentDetection.centsDeviation}¢
                     </span>
                   ) : (
-                    '0.0 ¢'
+                    '0.0¢'
                   )}
                 </span>
               </div>
 
-              {/* Linear Precision Cents Gauge */}
               <div className="relative pt-6 pb-2">
-                {/* Safe zone highlight (±7 cents) */}
                 <div className="h-4 bg-muted/60 dark:bg-slate-950 rounded-full relative overflow-hidden border border-border/80">
-                  {/* Central in-tune zone (centered at 50%, width 28% for ±7 cents) */}
                   <div
                     className="absolute top-0 bottom-0 bg-emerald-500/25 border-x border-emerald-500/40"
                     style={{ left: `${((25 - 7) / 50) * 100}%`, width: `${(14 / 50) * 100}%` }}
                     title="In-tune tolerance zone (±7 cents)"
                   />
-
-                  {/* Dynamic Needle Indicator */}
                   {currentDetection && (
                     <div
                       className={`absolute top-0 bottom-0 w-2.5 -ml-1 rounded-full transition-all duration-75 shadow-md ${
@@ -462,11 +423,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                     />
                   )}
                 </div>
-
-                {/* Center marker line */}
                 <div className="absolute top-4 bottom-2 left-1/2 -ml-px w-0.5 bg-foreground/30 pointer-events-none" />
-
-                {/* Tick marks and labels */}
                 <div className="flex justify-between text-[10px] text-muted-foreground font-mono mt-2 px-1">
                   <span>-25¢ (Flat)</span>
                   <span>-15¢</span>
@@ -476,7 +433,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Status Banner */}
               <div
                 className={`mt-4 p-3 rounded-xl border text-center transition-all flex items-center justify-center gap-2 ${
                   currentDetection
@@ -492,17 +448,17 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                   currentDetection.inTune ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span className="font-bold text-sm">مضبوط تماماً • In Tune ({currentDetection.centsDeviation} ¢)</span>
+                      <span className="font-bold text-sm">مضبوط ✓ In Tune ({currentDetection.centsDeviation}¢)</span>
                     </>
                   ) : currentDetection.status === 'sharp' ? (
                     <>
                       <AlertCircle className="w-4 h-4 text-amber-400" />
-                      <span className="font-bold text-sm">مرتفع قليلاً (Sharp) • انزل بالأصبع قليلاً (+{currentDetection.centsDeviation} ¢)</span>
+                      <span className="font-bold text-sm">عالي (Sharp) — انزل بالإصبع قليلاً (+{currentDetection.centsDeviation}¢)</span>
                     </>
                   ) : (
                     <>
                       <AlertCircle className="w-4 h-4 text-sky-400" />
-                      <span className="font-bold text-sm">منخفض قليلاً (Flat) • ارفع بالأصبع قليلاً ({currentDetection.centsDeviation} ¢)</span>
+                      <span className="font-bold text-sm">هابط (Flat) — ارفع الإصبع قليلاً ({currentDetection.centsDeviation}¢)</span>
                     </>
                   )
                 ) : (
@@ -511,7 +467,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Waveform Canvas & Calibration */}
             <div className="mt-4 pt-3 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="w-full sm:w-1/2">
                 <div className="text-[10px] text-muted-foreground font-semibold mb-1 flex items-center justify-between">
@@ -526,7 +481,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                 />
               </div>
 
-              {/* Reference Tone & Drone Controls */}
               <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <Button
                   variant="outline"
@@ -545,7 +499,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Maqam Scale Intonation Strip */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
             <span className="flex items-center gap-1.5">
@@ -556,14 +509,12 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
               Sing or play each degree across the scale
             </span>
           </div>
-
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
             {scalePitches.map((p, idx) => {
               const isDetected = currentDetection?.closestPitch.equals(p);
               const isInTuneMatch = isDetected && currentDetection?.inTune;
               const isTarget = trackingMode === 'target' && targetPitch.equals(p);
               const theme = getPitchThemeClasses(p, 'card', { isSounding: isDetected });
-
               return (
                 <button
                   type="button"
@@ -589,10 +540,9 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                     {idx === 0 ? (
                       <span className="text-[9px] font-bold text-amber-400">قرار</span>
                     ) : p.equals(currentMaqam.getGhammaz()) ? (
-                      <span className="text-[9px] font-bold text-indigo-400">غمّاز</span>
+                      <span className="text-[9px] font-bold text-indigo-400">غماز</span>
                     ) : null}
                   </div>
-
                   <div className="my-1">
                     <div className="font-mono text-base font-black text-foreground">
                       {p.toDisplayString()}
@@ -601,11 +551,9 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                       {p.toScientificString()}
                     </div>
                   </div>
-
                   <div className="text-[10px] font-mono text-muted-foreground/80 border-t border-border/40 pt-1 w-full">
                     {Math.round(p.toFrequency(referenceA4))} Hz
                   </div>
-
                   {isDetected && currentDetection && (
                     <div
                       className={`absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full font-bold text-[9px] ${
@@ -623,9 +571,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Intonation Practice & Calibration Bar */}
         <div className="p-4 rounded-xl bg-muted/30 dark:bg-slate-900 border border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          {/* Practice Mode Selector */}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-muted-foreground">Tracker Mode:</span>
             <div className="flex items-center gap-1 bg-card border border-border p-1 rounded-lg">
@@ -636,7 +582,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                   trackingMode === 'free' ? 'bg-amber-500 text-slate-950' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Free Tracking (حر)
+                Free Tracking (تتبع حر)
               </button>
               <button
                 type="button"
@@ -645,12 +591,11 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                   trackingMode === 'target' ? 'bg-amber-500 text-slate-950' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Target Hold (تثبيت النغمة)
+                Target Hold (تثبيت الهدف)
               </button>
             </div>
           </div>
 
-          {/* Intonation Hold Counter */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 font-mono">
               <Trophy className="w-4 h-4 text-amber-400" />
@@ -660,7 +605,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Calibration Selector */}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-muted-foreground">Calibration A4:</span>
             <div className="flex items-center gap-1">

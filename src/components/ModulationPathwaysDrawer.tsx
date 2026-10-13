@@ -23,10 +23,7 @@ import {
   Layers,
   ChevronRight,
   Compass,
-  ArrowUpDown,
-  Music,
-  HelpCircle,
-  TrendingUp,
+  Package,
 } from "lucide-react"
 import { Maqam, MaqamatCatalogue } from "../theory/maqam"
 import {
@@ -53,10 +50,10 @@ const RELATION_FILTERS: {
   arabic: string
 }[] = [
   { id: "all", label: "All Pathways", arabic: "جميع المسارات" },
-  { id: "same-family", label: "Same Family", arabic: "نفس الفصيلة" },
+  { id: "same-family", label: "Same Family", arabic: "نفس العائلة" },
   { id: "ghammaz-pivot", label: "Ghammaz Pivots", arabic: "محاور الغماز" },
   { id: "shared-jins", label: "Shared Ajnas", arabic: "أجناس مشتركة" },
-  { id: "relative-family", label: "Related Families", arabic: "فصائل متقاربة" },
+  { id: "relative-family", label: "Related Families", arabic: "عائلات قريبة" },
   { id: "tonic-shift", label: "Parallel Tonic", arabic: "على نفس القرار" },
 ]
 
@@ -69,24 +66,20 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
 }) => {
   const { language } = useLanguage()
   const isArabic = language === "ar"
-
   const [filterRelation, setFilterRelation] = useState<"all" | ModulationRelation>("all")
   const [selectedPathwayId, setSelectedPathwayId] = useState<string | null>(null)
   const [playingPathwayId, setPlayingPathwayId] = useState<string | null>(null)
   const [activeNoteIdx, setActiveNoteIdx] = useState<number | null>(null)
 
-  // Compute available pathways from current active Maqam
   const pathways = useMemo(() => {
     return ModulationPathwayEngine.findPathwaysForMaqam(currentMaqam)
   }, [currentMaqam])
 
-  // Filtered list
   const filteredPathways = useMemo(() => {
     if (filterRelation === "all") return pathways
     return pathways.filter((p) => p.relation === filterRelation)
   }, [pathways, filterRelation])
 
-  // Active pathway detail
   const activePathway = useMemo(() => {
     if (!filteredPathways.length) return null
     if (selectedPathwayId) {
@@ -96,7 +89,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
     return filteredPathways[0]
   }, [filteredPathways, selectedPathwayId])
 
-  // Stop playback on unmount or drawer close
   const stopAudio = () => {
     MicrotonalAudioEngine.stopSequence("modulation-pathway-playback")
     setPlayingPathwayId(null)
@@ -108,11 +100,8 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
       stopAudio()
       return
     }
-
     stopAudio()
     setPlayingPathwayId(pathway.id)
-
-    // Audition transition bridge notes sequence
     MicrotonalAudioEngine.playSequence(
       pathway.transitionNotes,
       480,
@@ -145,7 +134,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
       onOpenChange(val)
     }}>
       <DrawerContent className="max-h-[92vh] h-[92vh] w-full max-w-none flex flex-col justify-between overflow-hidden bg-slate-950 p-0 text-slate-100 border-t border-amber-800/40 shadow-2xl">
-        {/* Drawer Header */}
         <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 bg-slate-950/95 backdrop-blur-md z-10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
@@ -155,7 +143,7 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
               <DrawerTitle className="text-lg sm:text-xl font-bold flex items-center gap-2 text-white">
                 <span>Modulation Pathways &amp; Pivot Ajnas</span>
                 <span className="font-arabic text-amber-400 text-sm font-semibold">
-                  (مسارات التحويل والمحاور النغمية)
+                  (مسارات التحويل والانتقال المقامي)
                 </span>
               </DrawerTitle>
               <DrawerDescription className="text-xs text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
@@ -165,17 +153,15 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                 <span>•</span>
                 <span>Tonic: <strong className="text-emerald-300 font-mono">{formatPitchWithLargeAccidentalReact(currentMaqam.getTonic(), { size: 'large' })}</strong></span>
                 <span>•</span>
-                <span>Ghammaz Pivot: <strong className="text-sky-300 font-mono">{formatPitchWithLargeAccidentalReact(currentMaqam.getGhammaz(), { size: 'large' })}</strong></span>
+                <span>Ghammaz: <strong className="text-sky-300 font-mono">{formatPitchWithLargeAccidentalReact(currentMaqam.getGhammaz(), { size: 'large' })}</strong></span>
               </DrawerDescription>
             </div>
           </div>
-
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="hidden sm:inline-flex items-center gap-1 text-xs px-2.5 py-1 border-amber-500/50 bg-amber-950/40 text-amber-300">
               <Sparkles className="h-3 w-3" />
               <span>{pathways.length} Idiomatic Pathways Found</span>
             </Badge>
-
             <Button
               variant="ghost"
               size="sm"
@@ -191,7 +177,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
           </div>
         </div>
 
-        {/* Filter Navigation Bar */}
         <div className="border-b border-slate-800/80 px-6 py-2.5 bg-slate-900/60 flex items-center gap-2 overflow-x-auto shrink-0 scrollbar-none">
           <span className="text-xs font-semibold text-slate-400 shrink-0 flex items-center gap-1.5 mr-1">
             <Compass className="h-3.5 w-3.5 text-amber-400" />
@@ -221,7 +206,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
           })}
         </div>
 
-        {/* Content Body: Split Master-Detail Layout */}
         <div className="flex-1 overflow-y-auto px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
           {/* Left Column: Pathways List (5 cols) */}
           <div className="lg:col-span-5 space-y-3 overflow-y-auto pr-1">
@@ -229,7 +213,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
               <span>Suggested Target Maqamat ({filteredPathways.length})</span>
               <span>Sorted by Harmonic Affinity</span>
             </div>
-
             {filteredPathways.length === 0 ? (
               <div className="p-8 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 text-slate-400">
                 <GitFork className="h-8 w-8 mx-auto text-slate-600 mb-2" />
@@ -239,8 +222,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
             ) : (
               filteredPathways.map((pathway) => {
                 const isSelected = activePathway?.id === pathway.id
-                const isPlaying = playingPathwayId === pathway.id
-
                 return (
                   <div
                     key={pathway.id}
@@ -263,7 +244,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                             {pathway.targetMaqam.arabicName}
                           </span>
                         </div>
-
                         <div className="flex flex-wrap items-center gap-1.5 mt-1">
                           <Badge
                             variant="outline"
@@ -279,18 +259,15 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                           >
                             {pathway.relation.replace("-", " ")}
                           </Badge>
-
-                          <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
-                            {pathway.technique}
+                          <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-mono">
+                            {pathway.category === "1_Ornamental" ? "Cat 1: Ornamental" : pathway.category === "2_Internal" ? "Cat 2: Internal" : "Cat 3: Full Shift"}
                           </Badge>
-
                           <span className="text-[11px] text-slate-400">
                             Family: <strong className="text-slate-200">{pathway.targetMaqam.family}</strong>
                           </span>
                         </div>
                       </div>
 
-                      {/* Affinity Score Circle */}
                       <div className="flex flex-col items-end shrink-0">
                         <span className="text-[10px] uppercase font-mono text-slate-400">Affinity</span>
                         <span className="text-sm font-black font-mono text-amber-300">
@@ -299,7 +276,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                       </div>
                     </div>
 
-                    {/* Pivot summary */}
                     <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-300">
                       <div className="flex items-center gap-1.5">
                         <span className="text-amber-400 font-semibold">Pivot:</span>
@@ -307,10 +283,9 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                           {pathway.pivotPoint.pitchName} ({pathway.pivotPoint.role})
                         </span>
                         <span className="text-slate-400 text-[11px]">
-                          → {pathway.bridgeJins.definition.name}
+                          via {pathway.bridgeJins.definition.name}
                         </span>
                       </div>
-
                       <ChevronRight className={`h-4 w-4 transition-transform ${isSelected ? "text-amber-400 translate-x-1" : "text-slate-600"}`} />
                     </div>
                   </div>
@@ -323,7 +298,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
           <div className="lg:col-span-7">
             {activePathway ? (
               <div className="space-y-5 bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-xl">
-                {/* Header & Controls */}
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
                   <div>
                     <div className="flex items-center gap-2">
@@ -331,21 +305,19 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                         {activePathway.technique} Modulation
                       </Badge>
                       <Badge variant="secondary" className="text-xs">
-                        {activePathway.relation.replace("-", " ")}
+                        {activePathway.category === "1_Ornamental" ? "Category 1: Ornamental" : activePathway.category === "2_Internal" ? "Category 2: Internal Jins-to-Jins" : "Category 3: Full Maqam Change"}
                       </Badge>
                     </div>
-
                     <h3 className="text-xl font-bold text-white mt-1.5 flex items-center gap-2">
                       <span>{currentMaqam.name}</span>
                       <ArrowRight className="h-5 w-5 text-amber-400 shrink-0" />
                       <span className="text-amber-300">{activePathway.targetMaqam.name}</span>
                     </h3>
                     <p className="text-xs text-slate-400 font-arabic mt-0.5">
-                      الانتقال اللحني من {currentMaqam.arabicName || currentMaqam.name} إلى {activePathway.targetMaqam.arabicName || activePathway.targetMaqam.name}
+                      مسار التحويل من {currentMaqam.arabicName || currentMaqam.name} إلى {activePathway.targetMaqam.arabicName || activePathway.targetMaqam.name}
                     </p>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2">
                     <Button
                       variant={playingPathwayId === activePathway.id ? "destructive" : "default"}
@@ -361,11 +333,10 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                       ) : (
                         <>
                           <Play className="h-3.5 w-3.5 fill-current" />
-                          <span>Audition Bridge (عزف الانتقال)</span>
+                          <span>Audition Bridge (عزف الجسر اللحني)</span>
                         </>
                       )}
                     </Button>
-
                     <Button
                       variant="outline"
                       size="sm"
@@ -380,44 +351,39 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
 
                 {/* Pivot Point & Bridge Jins Card */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Pivot Point Card */}
                   <div className="rounded-xl border border-sky-900/40 bg-sky-950/20 p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
                         <Compass className="h-3.5 w-3.5" />
-                        <span>Pivot Point (محور التحويل)</span>
+                        <span>Pivot Point (النقطة المحورية)</span>
                       </span>
                       <Badge variant="outline" className="border-sky-500/60 text-sky-200 font-mono text-[11px]">
                         Degree #{activePathway.pivotPoint.scaleDegree} ({activePathway.pivotPoint.role})
                       </Badge>
                     </div>
-
                     <div className="flex items-baseline gap-2 pt-1">
                       <span className="text-2xl font-black font-mono text-white">
                         {activePathway.pivotPoint.pitchName}
                       </span>
                       <span className="text-xs text-sky-400 font-arabic">
-                        نغمة المحور
+                        محور التحول
                       </span>
                     </div>
-
                     <p className="text-xs text-slate-300 leading-relaxed">
                       {isArabic ? activePathway.pivotPoint.arabicDescription : activePathway.pivotPoint.description}
                     </p>
                   </div>
 
-                  {/* Bridge Jins Card */}
                   <div className="rounded-xl border border-amber-900/40 bg-amber-950/20 p-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                         <Layers className="h-3.5 w-3.5" />
-                        <span>Bridge Jins (جنس التحويل)</span>
+                        <span>Bridge Jins (جنس الجسر)</span>
                       </span>
                       <Badge variant="outline" className="border-amber-500/60 text-amber-200 text-[11px]">
                         {activePathway.bridgeJins.definition.type}
                       </Badge>
                     </div>
-
                     <div className="flex items-baseline gap-2 pt-1">
                       <span className="text-2xl font-black text-white">
                         {activePathway.bridgeJins.definition.name}
@@ -426,7 +392,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                         ({activePathway.bridgeJins.definition.arabicName})
                       </span>
                     </div>
-
                     <p className="text-xs text-slate-300 leading-relaxed">
                       Built on <strong>{formatPitchWithLargeAccidentalReact(activePathway.bridgeJins.root, { size: 'large' })}</strong> ({activePathway.bridgeJins.definition.description})
                     </p>
@@ -438,19 +403,17 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                       <Volume2 className="h-4 w-4 text-amber-400" />
-                      <span>Melodic Transition Sequence (سلسلة النغمات الانتقالية)</span>
+                      <span>Melodic Transition Sequence (الجملة الانتقالية)</span>
                     </span>
                     <span className="text-[11px] text-slate-400">
                       Click note to audition single pitch
                     </span>
                   </div>
-
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     {activePathway.transitionNotes.map((pitch, idx) => {
                       const isSounding = activeNoteIdx === idx
                       const isPivot = pitch.equals(activePathway.pivotPoint.pitch)
                       const theme = getPitchThemeClasses(pitch, "card", { isSounding })
-
                       return (
                         <button
                           key={idx}
@@ -483,11 +446,9 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                       Theoretical Rationale &amp; Classical Tradition
                     </h4>
                   </div>
-
                   <p className="text-xs text-slate-300 leading-relaxed">
                     {isArabic ? activePathway.arabicRationale : activePathway.rationale}
                   </p>
-
                   <div className="pt-2 border-t border-slate-900 text-[11px] text-slate-400 flex items-start gap-2">
                     <Sparkles className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
                     <span>{activePathway.historicalContext}</span>
@@ -499,7 +460,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                     Comparative Scale Framework
                   </span>
-
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-24 text-slate-400 shrink-0 font-medium">{currentMaqam.name}:</span>
@@ -518,7 +478,6 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                         ))}
                       </div>
                     </div>
-
                     <div className="flex items-center gap-2">
                       <span className="w-24 text-amber-300 shrink-0 font-semibold">{activePathway.targetMaqam.name}:</span>
                       <div className="flex flex-wrap gap-1 font-mono">
@@ -543,13 +502,11 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
           </div>
         </div>
 
-        {/* Drawer Footer */}
         <div className="border-t border-slate-800 px-6 py-3.5 bg-slate-950 flex flex-row items-center justify-between sticky bottom-0 z-10 shrink-0">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span>Classical Ajnas-Based Modulation Model (علم الانتقال والتنجيس)</span>
+            <span>Three-Tier Modulation Categories &amp; Abu Shumays Network Pathways (مسارات الانتقال)</span>
           </div>
-
           <Button
             variant="outline"
             size="sm"
