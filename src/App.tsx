@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
+import { formatPitchWithLargeAccidentalReact } from "./core/pitch-styling"
 import {
   MicrotonalAudioEngine,
   type TimbreType,
@@ -397,8 +398,7 @@ export default function App() {
                 title="Reset to natural tonic"
               >
                 <span>
-                  Tonic: {tonic.toScientificString()}
-                  {tonic.octave}
+                  Tonic: {formatPitchWithLargeAccidentalReact(tonic, { size: 'large' })}
                 </span>
                 <span className="text-muted-foreground hover:text-foreground">
                   ✕

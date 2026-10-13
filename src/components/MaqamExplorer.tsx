@@ -9,7 +9,7 @@ import {
   type DiatonicBase,
   type MicrotonalAccidental,
 } from "../core/pitch"
-import { getPitchThemeClasses } from "../core/pitch-styling"
+import { getPitchThemeClasses, formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
 import { ArabicNoteSpine } from "../core/note-spine"
 import {
   MicrotonalAudioEngine,
@@ -551,8 +551,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 <p className="mt-1 text-xs text-slate-400">
                   Root:{" "}
                   <strong className="text-amber-300">
-                    {currentMaqam.lowerJins.root.toScientificString()}
-                    {currentMaqam.lowerJins.root.octave}
+                    {formatPitchWithLargeAccidentalReact(currentMaqam.lowerJins.root, { size: 'large' })}
                   </strong>{" "}
                   (
                   {ArabicNoteSpine.resolveDegreeName(
@@ -573,8 +572,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
                 <span className="text-slate-400">Tonic (قرار):</span>
                 <span className="font-bold text-emerald-400">
-                  {tonic.toScientificString()}
-                  {tonic.octave}
+                  {formatPitchWithLargeAccidentalReact(tonic, { size: 'large' })}
                 </span>
               </div>
             </div>
@@ -600,8 +598,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                   <MaqamTermTooltip term="ghammaz" showIcon={false}>
                     Ghammaz (غمّاز)
                   </MaqamTermTooltip>
-                  : {ghammaz.toScientificString()}
-                  {ghammaz.octave}
+                  : {formatPitchWithLargeAccidentalReact(ghammaz, { size: 'large' })}
                 </h4>
                 <p className="mt-1 text-xs text-slate-400">
                   {currentMaqam.connection === "Ittisal"
@@ -638,8 +635,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 <p className="mt-1 text-xs text-slate-400">
                   Root:{" "}
                   <strong className="text-purple-300">
-                    {currentMaqam.upperJins.root.toScientificString()}
-                    {currentMaqam.upperJins.root.octave}
+                    {formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.root, { size: 'large' })}
                   </strong>{" "}
                   (
                   {ArabicNoteSpine.resolveDegreeName(
@@ -662,8 +658,8 @@ export const MaqamExplorer: React.FC<Props> = ({
                 <span className="font-bold text-purple-400">
                   {currentMaqam.extraPitches[
                     currentMaqam.extraPitches.length - 1
-                  ]?.toScientificString() ||
-                    currentMaqam.upperJins.getTopPitch().toScientificString()}
+                  ] ? formatPitchWithLargeAccidentalReact(currentMaqam.extraPitches[currentMaqam.extraPitches.length - 1], { size: 'large' })
+                    : formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.getTopPitch(), { size: 'large' })}
                 </span>
               </div>
             </div>
@@ -695,8 +691,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                       <p className="mt-1 text-xs text-slate-400">
                         Root:{" "}
                         <strong className="text-purple-300">
-                          {jins.jins.root.toScientificString()}
-                          {jins.jins.root.octave}
+                          {formatPitchWithLargeAccidentalReact(jins.jins.root, { size: 'large' })}
                         </strong>{" "}
                         (
                         {ArabicNoteSpine.resolveDegreeName(jins.jins.root)}
@@ -827,7 +822,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                   >
                     <div className="flex items-center gap-1">
                       <span className="font-mono text-sm sm:text-base font-bold">
-                        {pitch.toScientificString()}
+                        {formatPitchWithLargeAccidentalReact(pitch, { size: 'large' })}
                       </span>
                       {isTonic && (
                         <span className="rounded bg-emerald-500 px-1 text-[9px] font-bold text-slate-950">
@@ -976,8 +971,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                           {note.transliteration}
                         </div>
                         <div className="font-mono text-[10px] text-amber-300/80">
-                          {note.pitch.toScientificString()}
-                          {note.pitch.octave}
+                          {formatPitchWithLargeAccidentalReact(note.pitch, { size: 'large' })}
                         </div>
                         <div className="mt-0.5 font-mono text-[9px] text-slate-400">
                           {stepDelta === 0
@@ -1086,8 +1080,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </span>
                         <div className="flex items-center justify-end gap-1.5">
                           <span className="font-mono text-lg font-bold text-white">
-                            {candidatePitch.toScientificString()}
-                            {candidatePitch.octave}
+                            {formatPitchWithLargeAccidentalReact(candidatePitch, { size: 'large' })}
                           </span>
                           <span className="font-mono text-xs text-amber-300">
                             ({candidatePitch.toFrequency().toFixed(1)} Hz)
@@ -1141,8 +1134,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                           : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600 hover:text-white"
                           }`}
                       >
-                        {qp.toScientificString()}
-                        {qp.octave}
+                        {formatPitchWithLargeAccidentalReact(qp, { size: 'large' })}
                       </button>
                     ))}
                   </div>

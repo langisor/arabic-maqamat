@@ -199,3 +199,16 @@
 :lang(ar) {
   font-family: 'Noto Naskh Arabic', 'Amiri', Georgia, serif;
 }
+
+/* Accidental symbols with larger font size for better readability */
+.accidental-large {
+  font-size: 1.4em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.accidental-xl {
+  font-size: 1.6em;
+  line-height: 1;
+  vertical-align: middle;
+}

@@ -37,6 +37,7 @@ import {
 } from "../theory/maqam"
 import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
 import { useLanguage } from "../state/language"
+import { formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
 
 interface PresetTemplate {
   name: string
@@ -475,8 +476,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-cyan-200">Ghammaz Pivot (الغمّاز):</span>
                   <Badge variant="secondary" className="font-mono text-cyan-300">
-                    {ghammazPitch.toScientificString()}
-                    {ghammazPitch.octave}
+                    {formatPitchWithLargeAccidentalReact(ghammazPitch, { size: 'large' })}
                   </Badge>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1">
@@ -503,7 +503,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                   Upper Jins Root Pitch:
                 </label>
                 <div className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-xs font-mono font-bold text-emerald-300 flex items-center justify-between">
-                  <span>{upperRoot.toScientificString()}{upperRoot.octave}</span>
+                  <span>{formatPitchWithLargeAccidentalReact(upperRoot, { size: 'large' })}</span>
                   <span className="text-[10px] text-slate-400 font-normal">
                     {upperRoot.toFrequency().toFixed(1)} Hz
                   </span>
@@ -576,7 +576,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 </h4>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Family: <strong className="text-amber-300">{familyMnemonic}</strong> • Tonic:{" "}
-                  <strong className="text-white">{activeTonic.toScientificString()}{activeTonic.octave}</strong> • Connection:{" "}
+                  <strong className="text-white">{formatPitchWithLargeAccidentalReact(activeTonic, { size: 'large' })}</strong> • Connection:{" "}
                   <strong className="text-cyan-300">{connectionType}</strong>
                 </p>
               </div>
@@ -637,7 +637,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                     }`}
                   >
                     <div className="flex items-center gap-1 font-mono font-bold text-xs">
-                      <span>{p.toScientificString()}{p.octave}</span>
+                      <span>{formatPitchWithLargeAccidentalReact(p, { size: 'large' })}</span>
                     </div>
 
                     <div className="text-[10px] text-muted-foreground mt-0.5">

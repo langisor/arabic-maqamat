@@ -36,7 +36,7 @@ import {
 } from "../theory/modulation-pathways"
 import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
 import { ArabicPitch } from "../core/pitch"
-import { getPitchThemeClasses } from "../core/pitch-styling"
+import { getPitchThemeClasses, formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
 import { useLanguage } from "../state/language"
 
 interface ModulationPathwaysDrawerProps {
@@ -163,9 +163,9 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                 <span>•</span>
                 <span>Family: <strong className="text-amber-300">{currentMaqam.family}</strong></span>
                 <span>•</span>
-                <span>Tonic: <strong className="text-emerald-300 font-mono">{currentMaqam.getTonic().toScientificString()}</strong></span>
+                <span>Tonic: <strong className="text-emerald-300 font-mono">{formatPitchWithLargeAccidentalReact(currentMaqam.getTonic(), { size: 'large' })}</strong></span>
                 <span>•</span>
-                <span>Ghammaz Pivot: <strong className="text-sky-300 font-mono">{currentMaqam.getGhammaz().toScientificString()}</strong></span>
+                <span>Ghammaz Pivot: <strong className="text-sky-300 font-mono">{formatPitchWithLargeAccidentalReact(currentMaqam.getGhammaz(), { size: 'large' })}</strong></span>
               </DrawerDescription>
             </div>
           </div>
@@ -428,7 +428,7 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                     </div>
 
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      Built on <strong>{activePathway.bridgeJins.root.toScientificString()}</strong> ({activePathway.bridgeJins.definition.description})
+                      Built on <strong>{formatPitchWithLargeAccidentalReact(activePathway.bridgeJins.root, { size: 'large' })}</strong> ({activePathway.bridgeJins.definition.description})
                     </p>
                   </div>
                 </div>
@@ -464,7 +464,7 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                             #{idx + 1}
                           </span>
                           <span className="text-sm font-bold font-mono my-0.5">
-                            {pitch.toScientificString()}
+                            {formatPitchWithLargeAccidentalReact(pitch, { size: 'large' })}
                           </span>
                           <span className="text-[9px] font-serif opacity-90">
                             {isPivot ? "★ Pivot" : `deg`}
@@ -513,7 +513,7 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                                 : "bg-slate-800 text-slate-300"
                             }`}
                           >
-                            {p.toScientificString()}
+                            {formatPitchWithLargeAccidentalReact(p, { size: 'large' })}
                           </span>
                         ))}
                       </div>
@@ -531,7 +531,7 @@ export const ModulationPathwaysDrawer: React.FC<ModulationPathwaysDrawerProps> =
                                 : "bg-slate-800 text-slate-300"
                             }`}
                           >
-                            {p.toScientificString()}
+                            {formatPitchWithLargeAccidentalReact(p, { size: 'large' })}
                           </span>
                         ))}
                       </div>

@@ -16,6 +16,7 @@ import {
   MoveHorizontal,
   Music,
 } from 'lucide-react';
+import { getAccidentalCategory } from '../core/pitch-styling';
 
 export type AccidentalNaming = 'sharps' | 'flats' | 'arabic';
 export type PlayMode = 'bow' | 'pizzicato';
@@ -628,17 +629,59 @@ export const ViolinFingerboard: React.FC<Props> = ({
   };
 
   // Format label based on accidental naming preference
-  const getNoteDisplayLabel = (n: BoardNote): string => {
+  const getNoteDisplayLabel = (n: BoardNote): React.ReactNode => {
+    const accidentalClass = 'accidental-xl';
+    
     if (n.isQuarterTone) {
-      return n.noteKey.replace('d', '𝄳');
+      // Quarter-tone notes: replace 'd' with 𝄳 and wrap it
+      const baseNote = n.noteKey.replace('d', '');
+      return (
+        <>
+          {baseNote}
+          <span className={accidentalClass}>𝄳</span>
+        </>
+      );
     }
+    
     if (namingMode === 'flats') {
-      return n.flatName;
+      // Remove natural marks and wrap accidental
+      const accidentalMatch = n.flatName.match(/([A-G])([♭𝄫]?)([0-9])/);
+      if (accidentalMatch) {
+        const [, base, accidental, octave] = accidentalMatch;
+        if (accidental) {
+          return (
+            <>
+              {base}
+              <span className={accidentalClass}>{accidental}</span>
+              {octave}
+            </>
+          );
+        }
+        return n.flatName.replace('♮', '');
+      }
+      return n.flatName.replace('♮', '');
     }
+    
     if (namingMode === 'arabic') {
       return n.arabicShort;
     }
-    return n.sharpName;
+    
+    // Sharps mode: remove natural marks and wrap accidental
+    const accidentalMatch = n.sharpName.match(/([A-G])([♯𝄪]?)([0-9])/);
+    if (accidentalMatch) {
+      const [, base, accidental, octave] = accidentalMatch;
+      if (accidental) {
+        return (
+          <>
+            {base}
+            <span className={accidentalClass}>{accidental}</span>
+            {octave}
+          </>
+        );
+      }
+      return n.sharpName.replace('♮', '');
+    }
+    return n.sharpName.replace('♮', '');
   };
 
   // Active playing pitch for ripple animation

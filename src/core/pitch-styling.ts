@@ -1,4 +1,5 @@
 // src/core/pitch-styling.ts
+import React, { type ReactNode } from 'react';
 import { ArabicPitch, MicrotonalAccidental } from './pitch';
 
 export type AccidentalCategory = 
@@ -329,4 +330,73 @@ export function getViolinNoteColorClass(
     default:
       return 'bg-slate-600 text-slate-100';
   }
+}
+
+/**
+ * Formats a pitch string with enlarged accidental symbols for better readability.
+ * Natural marks (♮) are always hidden.
+ *
+ * @param pitch - The ArabicPitch to format
+ * @param options - Optional configuration
+ * @param options.size - Size multiplier for accidentals: 'large' (1.4x) or 'xl' (1.6x)
+ * @param options.showOctave - Whether to include the octave number
+ * @returns HTML string with span-wrapped accidental for styling
+ */
+export function formatPitchWithLargeAccidental(
+  pitch: ArabicPitch,
+  options: { size?: 'large' | 'xl'; showOctave?: boolean } = {}
+): string {
+  const { size = 'large', showOctave = true } = options;
+  const accidentalClass = size === 'xl' ? 'accidental-xl' : 'accidental-large';
+  
+  // toDisplayString already hides natural marks
+  const displayString = pitch.toDisplayString();
+  
+  // Extract diatonic base and accidental
+  const accidentalMatch = displayString.match(/([𝄳𝄵♯♭𝄫𝄪])/);
+  
+  if (accidentalMatch) {
+    const accidental = accidentalMatch[1];
+    const baseNote = displayString.replace(accidental, '');
+    return `${baseNote}<span class="${accidentalClass}">${accidental}</span>`;
+  }
+  
+  // No accidental (natural), just return the base note
+  return displayString;
+}
+
+/**
+ * Formats a pitch string with enlarged accidental symbols for better readability.
+ * Natural marks (♮) are always hidden.
+ *
+ * @param pitch - The ArabicPitch to format
+ * @param options - Optional configuration
+ * @param options.size - Size multiplier for accidentals: 'large' (1.4x) or 'xl' (1.6x)
+ * @param options.showOctave - Whether to include the octave number
+ * @returns HTML string with span-wrapped accidental for styling
+ */
+export function formatPitchWithLargeAccidentalReact(
+  pitch: ArabicPitch,
+  options: { size?: 'large' | 'xl'; showOctave?: boolean } = {}
+): ReactNode {
+  const { size = 'large', showOctave = true } = options;
+  const accidentalClass = size === 'xl' ? 'accidental-xl' : 'accidental-large';
+  
+  // toDisplayString already hides natural marks
+  const displayString = pitch.toDisplayString();
+  
+  // Extract diatonic base and accidental
+  const accidentalMatch = displayString.match(/([𝄳𝄵♯♭𝄫𝄪])/);
+  
+  if (accidentalMatch) {
+    const accidental = accidentalMatch[1];
+    const baseNote = displayString.replace(accidental, '');
+    return React.createElement(React.Fragment, null,
+      baseNote,
+      React.createElement('span', { className: accidentalClass }, accidental)
+    );
+  }
+  
+  // No accidental (natural), just return the base note
+  return displayString;
 }
