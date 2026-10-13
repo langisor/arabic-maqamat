@@ -1,110 +1,126 @@
 // src/components/MaqamNetworkGraph.tsx
-import React, { useState, useMemo } from 'react';
-import { Maqam, ModulationNode, NetworkPathway } from '../theory/maqam';
-import { ArabicPitch } from '../core/pitch';
-import { getPitchThemeClasses, formatPitchWithLargeAccidentalReact } from '../core/pitch-styling';
-import { AjnasLibrary } from '../theory/jins';
-import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+import React, { useState, useMemo } from "react"
+import { Maqam, ModulationNode, NetworkPathway } from "../theory/maqam"
+import { ArabicPitch } from "../core/pitch"
+import { formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
+import { AjnasLibrary } from "../theory/jins"
+import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./ui/card"
+import { Badge } from "./ui/badge"
+import { Button } from "./ui/button"
 import {
   Network,
   GitFork,
   Volume2,
-  Sparkles,
   Info,
   Play,
-  CheckCircle2,
   ArrowRight,
   Package,
-  Layers,
-  Compass,
-} from 'lucide-react';
+} from "lucide-react"
 
 interface MaqamNetworkGraphProps {
-  maqam: Maqam;
-  timbre?: TimbreType;
-  onSelectNode?: (node: ModulationNode) => void;
-  className?: string;
+  maqam: Maqam
+  timbre?: TimbreType
+  onSelectNode?: (node: ModulationNode) => void
+  className?: string
 }
 
 export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
   maqam,
-  timbre = 'violin',
+  timbre = "violin",
   onSelectNode,
-  className = '',
+  className = "",
 }) => {
-  const [selectedNodeDegree, setSelectedNodeDegree] = useState<number>(1);
-  const [frequencyFilter, setFrequencyFilter] = useState<'all' | 'common' | 'uncommon' | 'rare'>('all');
-  const [activePlayingId, setActivePlayingId] = useState<string | null>(null);
+  const [selectedNodeDegree, setSelectedNodeDegree] = useState<number>(1)
+  const [frequencyFilter, setFrequencyFilter] = useState<
+    "all" | "common" | "uncommon" | "rare"
+  >("all")
+  const [, setActivePlayingId] = useState<string | null>(null)
 
-  const network = maqam.network;
+  const network = maqam.network
 
   // Filtered nodes based on frequency
   const filteredNodes = useMemo(() => {
-    if (!network) return [];
-    if (frequencyFilter === 'all') return network.nodes;
-    return network.nodes.filter(n => n.frequency === frequencyFilter);
-  }, [network, frequencyFilter]);
+    if (!network) return []
+    if (frequencyFilter === "all") return network.nodes
+    return network.nodes.filter((n) => n.frequency === frequencyFilter)
+  }, [network, frequencyFilter])
 
   // Active selected node
   const activeNode = useMemo(() => {
-    if (!network || network.nodes.length === 0) return null;
+    if (filteredNodes.length === 0) return null
     return (
-      network.nodes.find(n => n.scaleDegree === selectedNodeDegree) ||
-      network.nodes[0]
-    );
-  }, [network, selectedNodeDegree]);
+      filteredNodes.find((n) => n.scaleDegree === selectedNodeDegree) ||
+      filteredNodes[0]
+    )
+  }, [filteredNodes, selectedNodeDegree])
 
   // Outgoing and incoming pathways for active node
   const nodePathways = useMemo(() => {
-    if (!network || !activeNode) return { outgoing: [], incoming: [] };
-    const outgoing = network.pathways.filter(p => p.fromDegree === activeNode.scaleDegree);
-    const incoming = network.pathways.filter(p => p.toDegree === activeNode.scaleDegree);
-    return { outgoing, incoming };
-  }, [network, activeNode]);
+    if (!network || !activeNode) return { outgoing: [], incoming: [] }
+    const outgoing = network.pathways.filter(
+      (p) => p.fromDegree === activeNode.scaleDegree
+    )
+    const incoming = network.pathways.filter(
+      (p) => p.toDegree === activeNode.scaleDegree
+    )
+    return { outgoing, incoming }
+  }, [network, activeNode])
 
   // Resolve jins definition and baggage notes for active node
   const activeJinsDef = useMemo(() => {
-    if (!activeNode) return null;
-    return AjnasLibrary.findById(activeNode.jinsId) || null;
-  }, [activeNode]);
+    if (!activeNode) return null
+    return AjnasLibrary.findById(activeNode.jinsId) || null
+  }, [activeNode])
 
   const baggageNotes = useMemo(() => {
-    if (!activeNode || !activeJinsDef || !activeJinsDef.baggageIntervals) return [];
-    const rootQt = activeNode.root.toQuarterToneIndex();
+    if (!activeNode || !activeJinsDef || !activeJinsDef.baggageIntervals)
+      return []
+    const rootQt = activeNode.root.toQuarterToneIndex()
     return [...activeJinsDef.baggageIntervals]
       .sort((a, b) => a - b)
-      .map(offset => ArabicPitch.fromQuarterToneIndex(rootQt + offset));
-  }, [activeNode, activeJinsDef]);
+      .map((offset) => ArabicPitch.fromQuarterToneIndex(rootQt + offset))
+  }, [activeNode, activeJinsDef])
 
   // Audio Playback
-  const handlePlayNodeJins = (node: ModulationNode, includeBaggage: boolean = false) => {
-    const def = AjnasLibrary.findById(node.jinsId);
+  const handlePlayNodeJins = (
+    node: ModulationNode,
+    includeBaggage: boolean = false
+  ) => {
+    const def = AjnasLibrary.findById(node.jinsId)
     if (!def) {
-      MicrotonalAudioEngine.playPitch(node.root, 1.0, timbre);
-      return;
+      MicrotonalAudioEngine.playPitch(node.root, 1.0, timbre)
+      return
     }
-    const root = node.root;
-    const pitches: ArabicPitch[] = [];
-    
-    if (includeBaggage && def.baggageIntervals && def.baggageIntervals.length > 0) {
-      const rootQt = root.toQuarterToneIndex();
+    const root = node.root
+    const pitches: ArabicPitch[] = []
+
+    if (
+      includeBaggage &&
+      def.baggageIntervals &&
+      def.baggageIntervals.length > 0
+    ) {
+      const rootQt = root.toQuarterToneIndex()
       const baggage = [...def.baggageIntervals]
         .sort((a, b) => a - b)
-        .map(offset => ArabicPitch.fromQuarterToneIndex(rootQt + offset));
-      pitches.push(...baggage);
+        .map((offset) => ArabicPitch.fromQuarterToneIndex(rootQt + offset))
+      pitches.push(...baggage)
     }
 
-    pitches.push(root);
-    let currentQt = root.toQuarterToneIndex();
+    pitches.push(root)
+    let currentQt = root.toQuarterToneIndex()
     for (const step of def.intervals) {
-      currentQt += step;
-      pitches.push(ArabicPitch.fromQuarterToneIndex(currentQt));
+      currentQt += step
+      pitches.push(ArabicPitch.fromQuarterToneIndex(currentQt))
     }
 
-    setActivePlayingId(`${node.jinsId}-${node.scaleDegree}`);
+    setActivePlayingId(`${node.jinsId}-${node.scaleDegree}`)
     MicrotonalAudioEngine.playSequence(
       pitches,
       400,
@@ -112,18 +128,20 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
       undefined,
       () => setActivePlayingId(null),
       undefined,
-      'network-jins-preview'
-    );
-  };
+      "network-jins-preview"
+    )
+  }
 
   const handlePlayPathway = (path: NetworkPathway) => {
-    if (!network) return;
-    const fromNode = network.nodes.find(n => n.scaleDegree === path.fromDegree);
-    const toNode = network.nodes.find(n => n.scaleDegree === path.toDegree);
-    if (!fromNode || !toNode) return;
+    if (!network) return
+    const fromNode = network.nodes.find(
+      (n) => n.scaleDegree === path.fromDegree
+    )
+    const toNode = network.nodes.find((n) => n.scaleDegree === path.toDegree)
+    if (!fromNode || !toNode) return
 
-    const pitches = [fromNode.root, toNode.root];
-    setActivePlayingId(`pathway-${path.fromDegree}-${path.toDegree}`);
+    const pitches = [fromNode.root, toNode.root]
+    setActivePlayingId(`pathway-${path.fromDegree}-${path.toDegree}`)
     MicrotonalAudioEngine.playSequence(
       pitches,
       600,
@@ -131,85 +149,102 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
       undefined,
       () => setActivePlayingId(null),
       undefined,
-      'network-pathway-preview'
-    );
-  };
+      "network-pathway-preview"
+    )
+  }
 
   // SVG Layout dimensions
-  const SVG_WIDTH = 760;
-  const SVG_HEIGHT = 380;
-  const CENTER_X = SVG_WIDTH / 2;
-  const CENTER_Y = SVG_HEIGHT / 2;
-  const RADIUS_X = 280;
-  const RADIUS_Y = 135;
+  const SVG_WIDTH = 760
+  const SVG_HEIGHT = 380
+  const CENTER_X = SVG_WIDTH / 2
+  const CENTER_Y = SVG_HEIGHT / 2
+  const RADIUS_X = 280
+  const RADIUS_Y = 135
 
   // Node positions mapped in an ellipse or hub-and-spoke layout
   const nodePositions = useMemo(() => {
-    if (!network || network.nodes.length === 0) return new Map();
-    const map = new Map<number, { x: number; y: number; node: ModulationNode }>();
-    const total = network.nodes.length;
-    
+    if (filteredNodes.length === 0) return new Map()
+    const map = new Map<
+      number,
+      { x: number; y: number; node: ModulationNode }
+    >()
+    const total = filteredNodes.length
+
     // Sort nodes by scale degree
-    const sorted = [...network.nodes].sort((a, b) => a.scaleDegree - b.scaleDegree);
-    
+    const sorted = [...filteredNodes].sort(
+      (a, b) => a.scaleDegree - b.scaleDegree
+    )
+
     sorted.forEach((node, idx) => {
       // Scale degree 1 at bottom-center or left
-      const angle = (idx / total) * 2 * Math.PI - Math.PI / 2;
-      const x = CENTER_X + RADIUS_X * Math.cos(angle);
-      const y = CENTER_Y + RADIUS_Y * Math.sin(angle);
-      map.set(node.scaleDegree, { x, y, node });
-    });
-    return map;
-  }, [network]);
+      const angle = (idx / total) * 2 * Math.PI - Math.PI / 2
+      const x = CENTER_X + RADIUS_X * Math.cos(angle)
+      const y = CENTER_Y + RADIUS_Y * Math.sin(angle)
+      map.set(node.scaleDegree, { x, y, node })
+    })
+    return map
+  }, [filteredNodes, CENTER_X, CENTER_Y])
 
   if (!network || network.nodes.length === 0) {
     return (
-      <Card className={`bg-slate-900 border-slate-800 ${className}`}>
+      <Card className={`border-slate-800 bg-slate-900 ${className}`}>
         <CardContent className="p-8 text-center text-slate-400">
-          <Network className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-          <p className="font-semibold text-white">Network topology not yet defined for {maqam.name}.</p>
-          <p className="text-xs text-slate-500 mt-1">
-            Networks based on Sami Abu Shumays' "Maqam Analysis: A Primer" are available for Maqam Rast, Bayati, Hijaz, Nahawand, Sikah, and Saba.
+          <Network className="mx-auto mb-2 h-10 w-10 text-slate-600" />
+          <p className="font-semibold text-white">
+            Network topology not yet defined for {maqam.name}.
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Networks based on Sami Abu Shumays' "Maqam Analysis: A Primer" are
+            available for Maqam Rast, Bayati, Hijaz, Nahawand, Sikah, and Saba.
           </p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
-    <Card className={`bg-slate-900/90 border-slate-800 shadow-xl overflow-hidden ${className}`}>
+    <Card
+      className={`overflow-hidden border-slate-800 bg-slate-900/90 shadow-xl ${className}`}
+    >
       <CardHeader className="border-b border-slate-800/80 pb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] uppercase tracking-widest font-bold text-amber-400">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-[11px] font-bold tracking-widest text-amber-400 uppercase">
                 Maqam as Graph &amp; Small-World Network
               </span>
-              <Badge variant="secondary" className="font-mono text-[10px] bg-amber-500/10 text-amber-300 border-amber-500/30">
+              <Badge
+                variant="secondary"
+                className="border-amber-500/30 bg-amber-500/10 font-mono text-[10px] text-amber-300"
+              >
                 Abu Shumays Model
               </Badge>
             </div>
-            <CardTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-xl font-bold text-white sm:text-2xl">
               <Network className="h-5 w-5 text-amber-400" />
               <span>{maqam.name} Ajnas Network Graph</span>
             </CardTitle>
-            <CardDescription className="text-xs text-slate-300 mt-0.5">
-              Visualizes the maqam not as a static linear scale, but as an interconnected network of ajnas with directed pathways, baggage notes, and modular pivot hubs.
+            <CardDescription className="mt-0.5 text-xs text-slate-300">
+              Visualizes the maqam not as a static linear scale, but as an
+              interconnected network of ajnas with directed pathways, baggage
+              notes, and modular pivot hubs.
             </CardDescription>
           </div>
 
           {/* Frequency Filter Pills */}
-          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs self-start sm:self-auto">
-            <span className="text-[11px] text-slate-400 px-2 font-medium">Filter:</span>
-            {(['all', 'common', 'uncommon', 'rare'] as const).map(f => (
+          <div className="flex items-center gap-1.5 self-start rounded-xl border border-slate-800 bg-slate-950 p-1 text-xs sm:self-auto">
+            <span className="px-2 text-[11px] font-medium text-slate-400">
+              Filter:
+            </span>
+            {(["all", "common", "uncommon", "rare"] as const).map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFrequencyFilter(f)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer capitalize ${
+                className={`cursor-pointer rounded-lg px-2.5 py-1 text-xs font-medium capitalize transition ${
                   frequencyFilter === f
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
-                    : 'text-slate-400 hover:text-white'
+                    ? "bg-amber-500 font-bold text-slate-950 shadow-xs"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 {f}
@@ -219,12 +254,12 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6 space-y-6">
+      <CardContent className="space-y-6 pt-6">
         {/* Network Diagram Viewport */}
-        <div className="relative rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-inner overflow-hidden">
+        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-inner">
           <svg
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-            className="w-full h-auto max-h-[380px] select-none"
+            className="h-auto max-h-95 w-full select-none"
           >
             <defs>
               {/* Arrowhead markers */}
@@ -270,29 +305,46 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
             </defs>
 
             {/* Background ambient network lines */}
-            <circle cx={CENTER_X} cy={CENTER_Y} r={RADIUS_Y} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="4 4" />
-            <ellipse cx={CENTER_X} cy={CENTER_Y} rx={RADIUS_X} ry={RADIUS_Y} fill="none" stroke="rgba(245,158,11,0.05)" strokeWidth="1.5" />
+            <circle
+              cx={CENTER_X}
+              cy={CENTER_Y}
+              r={RADIUS_Y}
+              fill="none"
+              stroke="rgba(255,255,255,0.03)"
+              strokeWidth="1"
+              strokeDasharray="4 4"
+            />
+            <ellipse
+              cx={CENTER_X}
+              cy={CENTER_Y}
+              rx={RADIUS_X}
+              ry={RADIUS_Y}
+              fill="none"
+              stroke="rgba(245,158,11,0.05)"
+              strokeWidth="1.5"
+            />
 
             {/* Pathways / Edges */}
             {network.pathways.map((path, idx) => {
-              const fromPos = nodePositions.get(path.fromDegree);
-              const toPos = nodePositions.get(path.toDegree);
-              if (!fromPos || !toPos) return null;
+              const fromPos = nodePositions.get(path.fromDegree)
+              const toPos = nodePositions.get(path.toDegree)
+              if (!fromPos || !toPos) return null
 
               const isPathActive =
                 activeNode &&
-                (activeNode.scaleDegree === path.fromDegree || activeNode.scaleDegree === path.toDegree);
+                (activeNode.scaleDegree === path.fromDegree ||
+                  activeNode.scaleDegree === path.toDegree)
 
               const strokeColor =
-                path.frequency === 'common'
-                  ? '#10b981'
-                  : path.frequency === 'uncommon'
-                  ? '#38bdf8'
-                  : '#f59e0b';
+                path.frequency === "common"
+                  ? "#10b981"
+                  : path.frequency === "uncommon"
+                    ? "#38bdf8"
+                    : "#f59e0b"
 
-              const strokeWidth = isPathActive ? 2.5 : 1.2;
-              const opacity = isPathActive ? 0.9 : 0.35;
-              const marker = `url(#arrow-${path.frequency})`;
+              const strokeWidth = isPathActive ? 2.5 : 1.2
+              const opacity = isPathActive ? 0.9 : 0.35
+              const marker = `url(#arrow-${path.frequency})`
 
               return (
                 <g key={`path-${idx}`}>
@@ -304,37 +356,41 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                     stroke={strokeColor}
                     strokeWidth={strokeWidth}
                     strokeOpacity={opacity}
-                    strokeDasharray={path.technique === 'Infisal' ? '5 3' : 'none'}
+                    strokeDasharray={
+                      path.technique === "Infisal" ? "5 3" : "none"
+                    }
                     markerEnd={marker}
                     className="transition-all duration-200"
                   />
                 </g>
-              );
+              )
             })}
 
             {/* Nodes */}
-            {network.nodes.map((node) => {
-              const pos = nodePositions.get(node.scaleDegree);
-              if (!pos) return null;
+            {filteredNodes.map((node) => {
+              const pos = nodePositions.get(node.scaleDegree)
+              if (!pos) return null
 
-              const isSelected = activeNode?.scaleDegree === node.scaleDegree;
-              const isRoot = node.scaleDegree === 1;
-              const isGhammaz = node.root.equals(maqam.getGhammaz());
-              const theme = getPitchThemeClasses(node.root, 'solid');
-
+              const isSelected = activeNode?.scaleDegree === node.scaleDegree
+              const isRoot = node.scaleDegree === 1
+              const isGhammaz = node.root.equals(maqam.getGhammaz())
               return (
                 <g
                   key={`node-${node.jinsId}-${node.scaleDegree}`}
                   transform={`translate(${pos.x}, ${pos.y})`}
                   onClick={() => {
-                    setSelectedNodeDegree(node.scaleDegree);
-                    onSelectNode?.(node);
+                    setSelectedNodeDegree(node.scaleDegree)
+                    onSelectNode?.(node)
                   }}
-                  className="cursor-pointer group"
+                  className="group cursor-pointer"
                 >
                   {/* Glow circle for active/selected */}
                   {isSelected && (
-                    <circle r="36" fill="url(#nodeGlow)" className="animate-pulse" />
+                    <circle
+                      r="36"
+                      fill="url(#nodeGlow)"
+                      className="animate-pulse"
+                    />
                   )}
 
                   {/* Outer circle */}
@@ -342,21 +398,21 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                     r={isSelected ? 26 : 22}
                     fill={
                       isSelected
-                        ? '#f59e0b'
+                        ? "#f59e0b"
                         : isRoot
-                        ? '#059669'
-                        : isGhammaz
-                        ? '#0284c7'
-                        : '#1e293b'
+                          ? "#059669"
+                          : isGhammaz
+                            ? "#0284c7"
+                            : "#1e293b"
                     }
                     stroke={
                       isSelected
-                        ? '#fef08a'
+                        ? "#fef08a"
                         : isRoot
-                        ? '#34d399'
-                        : isGhammaz
-                        ? '#38bdf8'
-                        : '#475569'
+                          ? "#34d399"
+                          : isGhammaz
+                            ? "#38bdf8"
+                            : "#475569"
                     }
                     strokeWidth={isSelected ? 3 : 2}
                     className="transition-all duration-200 group-hover:scale-110"
@@ -365,10 +421,12 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                   {/* Scale Degree Number */}
                   <text
                     x="0"
-                    y="-4"
+                    y="-9"
                     textAnchor="middle"
-                    fill={isSelected || isRoot || isGhammaz ? '#0f172a' : '#f8fafc'}
-                    fontSize="11"
+                    fill={
+                      isSelected || isRoot || isGhammaz ? "#0f172a" : "#f8fafc"
+                    }
+                    fontSize="10"
                     fontWeight="bold"
                     fontFamily="monospace"
                   >
@@ -378,10 +436,12 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                   {/* Note Name */}
                   <text
                     x="0"
-                    y="10"
+                    y="6"
                     textAnchor="middle"
-                    fill={isSelected || isRoot || isGhammaz ? '#0f172a' : '#cbd5e1'}
-                    fontSize="10"
+                    fill={
+                      isSelected || isRoot || isGhammaz ? "#0f172a" : "#cbd5e1"
+                    }
+                    fontSize="9"
                     fontWeight="black"
                     fontFamily="monospace"
                   >
@@ -391,40 +451,40 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                   {/* Label under node */}
                   <text
                     x="0"
-                    y={isSelected ? 38 : 34}
+                    y={isSelected ? 44 : 40}
                     textAnchor="middle"
-                    fill={isSelected ? '#f59e0b' : '#94a3b8'}
-                    fontSize="10"
+                    fill={isSelected ? "#f59e0b" : "#94a3b8"}
+                    fontSize="9"
                     fontWeight="semibold"
                     className="select-none"
                   >
                     {node.jinsName}
                   </text>
                 </g>
-              );
+              )
             })}
           </svg>
 
           {/* Graph Legend Overlay */}
-          <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-xs p-2.5 rounded-xl border border-slate-800 text-[11px] text-slate-300 flex flex-wrap gap-x-4 gap-y-1">
+          <div className="absolute bottom-3 left-3 flex flex-wrap gap-x-4 gap-y-1 rounded-xl border border-slate-800 bg-slate-900/90 p-2.5 text-[11px] text-slate-300 backdrop-blur-xs">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
               <span>Degree 1 (Root Qarar)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-sky-500" />
               <span>Ghammaz Pivot Hub</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
               <span>Selected Node</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-emerald-500 inline-block" />
+              <span className="inline-block h-0.5 w-4 bg-emerald-500" />
               <span>Common Pathway</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-sky-400 inline-block border-t border-dashed" />
+              <span className="inline-block h-0.5 w-4 border-t border-dashed bg-sky-400" />
               <span>Infisal (Disjunct)</span>
             </div>
           </div>
@@ -432,42 +492,51 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
 
         {/* Selected Node Deep-Dive Inspector */}
         {activeNode && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* 1. Node Info & Jins Details */}
-            <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+            <div className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                  <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">
                     Node Focus (Degree {activeNode.scaleDegree})
                   </span>
-                  <Badge variant="outline" className={`text-[10px] ${
-                    activeNode.frequency === 'common'
-                      ? 'border-emerald-500/50 text-emerald-300'
-                      : activeNode.frequency === 'uncommon'
-                      ? 'border-sky-500/50 text-sky-300'
-                      : 'border-amber-500/50 text-amber-300'
-                  }`}>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] ${
+                      activeNode.frequency === "common"
+                        ? "border-emerald-500/50 text-emerald-300"
+                        : activeNode.frequency === "uncommon"
+                          ? "border-sky-500/50 text-sky-300"
+                          : "border-amber-500/50 text-amber-300"
+                    }`}
+                  >
                     {activeNode.frequency}
                   </Badge>
                 </div>
-                <h4 className="text-lg font-bold text-white mt-1">
+                <h4 className="mt-1 text-lg font-bold text-white">
                   {activeNode.jinsName} ({activeNode.arabicName})
                 </h4>
-                <div className="text-xs text-slate-300 mt-1 font-mono">
-                  Root Pitch: <strong className="text-amber-300">{formatPitchWithLargeAccidentalReact(activeNode.root, { size: 'large' })}</strong> ({activeNode.root.toFrequency().toFixed(1)} Hz)
+                <div className="mt-1 font-mono text-xs text-slate-300">
+                  Root Pitch:{" "}
+                  <strong className="text-amber-300">
+                    {formatPitchWithLargeAccidentalReact(activeNode.root, {
+                      size: "large",
+                    })}
+                  </strong>{" "}
+                  ({activeNode.root.toFrequency().toFixed(1)} Hz)
                 </div>
-                <p className="text-xs text-slate-400 mt-2">
+                <p className="mt-2 text-xs text-slate-400">
                   {activeNode.roleDescription || activeJinsDef?.description}
                 </p>
               </div>
 
               {/* Action buttons */}
-              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-900">
+              <div className="mt-4 flex items-center gap-2 border-t border-slate-900 pt-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handlePlayNodeJins(activeNode, false)}
-                  className="gap-1.5 text-xs flex-1 cursor-pointer"
+                  className="flex-1 cursor-pointer gap-1.5 text-xs"
                 >
                   <Volume2 className="h-3.5 w-3.5 text-amber-400" />
                   <span>Play Jins</span>
@@ -477,7 +546,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                     variant="amber"
                     size="sm"
                     onClick={() => handlePlayNodeJins(activeNode, true)}
-                    className="gap-1.5 text-xs flex-1 cursor-pointer font-bold"
+                    className="flex-1 cursor-pointer gap-1.5 text-xs font-bold"
                   >
                     <Package className="h-3.5 w-3.5" />
                     <span>+ Baggage</span>
@@ -487,92 +556,118 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
             </div>
 
             {/* 2. Jins Baggage Notes (أمتعة الجنس) */}
-            <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+            <div className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-purple-400 uppercase">
                     <Package className="h-3.5 w-3.5 text-purple-400" />
                     <span>Jins Baggage (أمتعة الجنس)</span>
                   </span>
-                  <Badge variant="outline" className="text-[10px] border-purple-500/40 text-purple-300">
-                    {baggageNotes.length > 0 ? `${baggageNotes.length} Notes Below Root` : 'No Baggage'}
+                  <Badge
+                    variant="outline"
+                    className="border-purple-500/40 text-[10px] text-purple-300"
+                  >
+                    {baggageNotes.length > 0
+                      ? `${baggageNotes.length} Notes Below Root`
+                      : "No Baggage"}
                   </Badge>
                 </div>
 
                 {baggageNotes.length > 0 ? (
                   <div className="mt-2 space-y-2">
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {activeJinsDef?.baggageDescription || 'Consistent notes below the tonic that belong inherently to this Jins character.'}
+                    <p className="text-xs leading-relaxed text-slate-300">
+                      {activeJinsDef?.baggageDescription ||
+                        "Consistent notes below the tonic that belong inherently to this Jins character."}
                     </p>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {baggageNotes.map((bp, idx) => (
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => MicrotonalAudioEngine.playPitch(bp, 0.8, timbre)}
-                          className="px-2.5 py-1 rounded-lg bg-purple-950/40 border border-purple-700/60 text-purple-200 font-mono text-xs font-bold hover:bg-purple-900/60 transition cursor-pointer flex items-center gap-1"
+                          onClick={() =>
+                            MicrotonalAudioEngine.playPitch(bp, 0.8, timbre)
+                          }
+                          className="flex cursor-pointer items-center gap-1 rounded-lg border border-purple-700/60 bg-purple-950/40 px-2.5 py-1 font-mono text-xs font-bold text-purple-200 transition hover:bg-purple-900/60"
                           title="Click to audition baggage note below tonic"
                         >
-                          <span>{formatPitchWithLargeAccidentalReact(bp, { size: 'large' })}</span>
-                          <span className="text-[10px] text-purple-400 opacity-75">↓</span>
+                          <span>
+                            {formatPitchWithLargeAccidentalReact(bp, {
+                              size: "large",
+                            })}
+                          </span>
+                          <span className="text-[10px] text-purple-400 opacity-75">
+                            ↓
+                          </span>
                         </button>
                       ))}
                     </div>
                   </div>
                 ) : (
                   <div className="mt-3 text-xs text-slate-500 italic">
-                    This Jins does not carry traditional baggage notes below the tonic. It functions strictly from the tonic root upwards.
+                    This Jins does not carry traditional baggage notes below the
+                    tonic. It functions strictly from the tonic root upwards.
                   </div>
                 )}
               </div>
 
-              <div className="mt-3 pt-2 border-t border-slate-900 text-[11px] text-slate-500">
-                Abu Shumays: Baggage notes define lower approach and cadential descent.
+              <div className="mt-3 border-t border-slate-900 pt-2 text-[11px] text-slate-500">
+                Abu Shumays: Baggage notes define lower approach and cadential
+                descent.
               </div>
             </div>
 
             {/* 3. Permissible Network Connections from this Node */}
-            <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+            <div className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-emerald-400 uppercase">
                     <GitFork className="h-3.5 w-3.5 text-emerald-400" />
                     <span>Pathways ({nodePathways.outgoing.length})</span>
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">From Deg {activeNode.scaleDegree}</span>
+                  <span className="font-mono text-[10px] text-slate-500">
+                    From Deg {activeNode.scaleDegree}
+                  </span>
                 </div>
 
-                <div className="mt-2 space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                <div className="mt-2 max-h-36 space-y-1.5 overflow-y-auto pr-1">
                   {nodePathways.outgoing.map((path, idx) => {
-                    const toNode = network.nodes.find(n => n.scaleDegree === path.toDegree);
+                    const toNode = network.nodes.find(
+                      (n) => n.scaleDegree === path.toDegree
+                    )
                     return (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs"
+                        className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-1.5 text-xs"
                       >
                         <div className="flex items-center gap-1.5 truncate">
-                          <span className="font-mono font-bold text-amber-300">Deg {path.toDegree}</span>
-                          <ArrowRight className="h-3 w-3 text-slate-500 shrink-0" />
-                          <span className="truncate text-slate-300">{toNode?.jinsName || `Deg ${path.toDegree}`}</span>
+                          <span className="font-mono font-bold text-amber-300">
+                            Deg {path.toDegree}
+                          </span>
+                          <ArrowRight className="h-3 w-3 shrink-0 text-slate-500" />
+                          <span className="truncate text-slate-300">
+                            {toNode?.jinsName || `Deg ${path.toDegree}`}
+                          </span>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon-xs"
                           onClick={() => handlePlayPathway(path)}
                           title="Audition 2-note pathway transition"
-                          className="h-6 w-6 text-emerald-400 hover:text-emerald-300 cursor-pointer"
+                          className="h-6 w-6 cursor-pointer text-emerald-400 hover:text-emerald-300"
                         >
                           <Play className="h-3 w-3 fill-current" />
                         </Button>
                       </div>
-                    );
+                    )
                   })}
                 </div>
               </div>
 
-              <div className="mt-3 pt-2 border-t border-slate-900 text-[11px] text-slate-400 flex items-center justify-between">
+              <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-2 text-[11px] text-slate-400">
                 <span>Network Hubs: Degrees 1 &amp; 4/5</span>
-                <span className="text-amber-400">Click graph nodes to explore</span>
+                <span className="text-amber-400">
+                  Click graph nodes to explore
+                </span>
               </div>
             </div>
           </div>
@@ -580,14 +675,18 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
 
         {/* Small-World Theory Note */}
         {network.clusteringNotes && (
-          <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-200/90 flex items-start gap-2.5">
-            <Info className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5 text-xs text-amber-200/90">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p className="leading-relaxed">
-              <strong>Small-World Network Properties:</strong> {network.clusteringNotes} In classical maqam performance, artists traverse between these specific nodes rather than wandering across a continuous spectrum, ensuring both coherent identity and rich expressive freedom.
+              <strong>Small-World Network Properties:</strong>{" "}
+              {network.clusteringNotes} In classical maqam performance, artists
+              traverse between these specific nodes rather than wandering across
+              a continuous spectrum, ensuring both coherent identity and rich
+              expressive freedom.
             </p>
           </div>
         )}
       </CardContent>
     </Card>
-  );
-};
+  )
+}
