@@ -68,10 +68,10 @@ const MAQAM_FACTS_DATA: FactSection[] = [
     highlighted: true,
     sampleMaqamId: "bayati",
     content: [
-      "Key concept from Sami Abu Shumays: Ajnas include consistent notes BELOW the tonic that are integral to the jins character.",
-      "In Jins Bayati on D, baggage notes include C-natural (Rast) and B-half-flat (Iraq) below the tonic.",
-      "In Jins Rast on C, baggage notes include Iraq (B-half-flat 3), Ushayran (A3), and Yakah (G3).",
-      "Baggage notes explain why certain descents feel natural and define the preparatory contour of cadences (Qaflat)."
+      "Jins baggage represents notes outside a jins's core pitches using signed quarter-tone offsets.",
+      "Negative offsets are anchored below the root; positive offsets are anchored above the top pitch.",
+      "The model displays baggage notes with the core jins so their pitch and register can be compared.",
+      "Baggage notes can inform melodic approaches and cadential motion."
     ],
   },
   {

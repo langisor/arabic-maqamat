@@ -24,9 +24,8 @@ export interface JinsDefinition {
   readonly defaultRoot: ArabicPitch;
   readonly tonicCharacteristic: string;
   /**
-   * "Jins Baggage" (أمتعة الجنس) - consistent notes BELOW the tonic that are part of the jins character.
-   * Negative values represent quarter-tone offsets from the tonic.
-   * e.g., Bayati on D4: [-4, -7] = C-natural (D - 4 qt), B-half-flat (D - 7 qt)
+   * Signed quarter-tone offsets for notes outside the core jins.
+   * Negative values are measured below the root/tonic; positive values are measured above the top pitch.
    * From Sami Abu Shumays' "Maqam Analysis: A Primer"
    */
   readonly baggageIntervals?: readonly number[];
@@ -86,7 +85,7 @@ export class Jins {
   }
 
   /**
-   * Get just the baggage notes below the tonic (in ascending order).
+   * Get all baggage notes, with negative offsets anchored at the root and positive offsets at the top pitch.
    * From Abu Shumays' "Maqam Analysis: A Primer".
    */
   public getBaggageNotes(): ArabicPitch[] {
@@ -94,19 +93,22 @@ export class Jins {
       return [];
     }
     const rootQt = this.root.toQuarterToneIndex();
-    // Sort intervals ascending (most negative first) to get lowest pitch first
-    const sortedIntervals = [...this.definition.baggageIntervals].sort((a, b) => a - b);
-    return sortedIntervals.map(offset => ArabicPitch.fromQuarterToneIndex(rootQt + offset));
+    const topQt = this.getTopPitch().toQuarterToneIndex();
+    return this.definition.baggageIntervals
+      .map(offset => {
+        const anchorQt = offset < 0 ? rootQt : offset > 0 ? topQt : rootQt;
+        return ArabicPitch.fromQuarterToneIndex(anchorQt + offset);
+      })
+      .sort((a, b) => a.toQuarterToneIndex() - b.toQuarterToneIndex());
   }
 
   /**
-   * Get full jins scale including baggage notes below the tonic.
-   * Returns pitches in ascending order from lowest baggage note to highest jins note.
+   * Get the extended jins scale, with baggage pitches and core pitches in ascending order.
    */
   public getPitchesWithBaggage(): ArabicPitch[] {
-    const baggage = this.getBaggageNotes();
-    const mainPitches = this.getPitches();
-    return [...baggage, ...mainPitches];
+    return [...this.getBaggageNotes(), ...this.getPitches()].sort(
+      (a, b) => a.toQuarterToneIndex() - b.toQuarterToneIndex()
+    );
   }
 
   public getTopPitch(): ArabicPitch {
@@ -152,8 +154,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('E', '𝄳', 4),
     tonicCharacteristic: 'Neutral 3rd root with distinctive augmented 2nd step to F♯',
-    baggageIntervals: [-2],
-    baggageDescription: 'Baggage below E𝄳4 includes D♯4 leading tone.'
+    baggageIntervals: [-1, 4, 6],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly SIKAH: JinsDefinition = {
@@ -167,8 +169,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('E', '𝄳', 4),
     tonicCharacteristic: 'Rooted directly on quarter-tone neutral 3rd',
-    baggageIntervals: [-7, -3],
-    baggageDescription: 'Baggage notes below E𝄳4 include Dukah (D4) and Rast (C4).'
+    baggageIntervals: [-7, -3, -1, 2],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   // ==========================================
@@ -186,8 +188,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('D', '♮', 4),
     tonicCharacteristic: 'Deeply expressive, reflective, bittersweet foundation',
-    baggageIntervals: [-7, -4],
-    baggageDescription: 'Baggage notes below D4 include Rast (C4) and Iraq (B𝄳3).'
+    baggageIntervals: [-7, -4, 4, 6],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly HIJAZ: JinsDefinition = {
@@ -201,8 +203,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('D', '♮', 4),
     tonicCharacteristic: 'Mystical, theatrical, yearning with augmented 2nd stretch',
-    baggageIntervals: [-6, -4],
-    baggageDescription: 'Baggage notes below D4 include C4 and B♭3.'
+    baggageIntervals: [-7, -4, 4, 6],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly HIJAZ_MURASSAA: JinsDefinition = {
@@ -216,8 +218,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('D', '♮', 4),
     tonicCharacteristic: 'Dramatic Hijaz inflection with lowered 5th degree in modulation',
-    baggageIntervals: [-6, -4, -1],
-    baggageDescription: 'Baggage notes below D4 include C4, C♯4 leading tone, and B♭3.'
+    baggageIntervals: [-4, -2],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly KURD: JinsDefinition = {
@@ -231,8 +233,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('D', '♮', 4),
     tonicCharacteristic: 'Somber, gentle Phrygian intimacy',
-    baggageIntervals: [-8, -4],
-    baggageDescription: 'Baggage notes below D4 include C4 and B♭3.'
+    baggageIntervals: [-4, 4, 6],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly LAMI: JinsDefinition = {
@@ -246,8 +248,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('D', '♮', 4),
     tonicCharacteristic: 'Melancholic Iraqi modal flavor with semitone opening',
-    baggageIntervals: [-8, -4],
-    baggageDescription: 'Baggage notes below D4 include C4 and B♭3.'
+    baggageIntervals: [4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly UPPER_AJAM: JinsDefinition = {
@@ -261,8 +263,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('G', '♮', 4),
     tonicCharacteristic: 'Ghammaz on G4, tonic at upper octave C5',
-    baggageIntervals: [-2],
-    baggageDescription: 'Baggage includes F4 below ghammaz G4.'
+    baggageIntervals: [-4, 4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly UPPER_RAST: JinsDefinition = {
@@ -276,8 +278,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('G', '♮', 4),
     tonicCharacteristic: 'Ghammaz on G4, tonic at upper octave C5',
-    baggageIntervals: [-2],
-    baggageDescription: 'Baggage includes F4 below ghammaz G4.'
+    baggageIntervals: [-4, 4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   // ==========================================
@@ -295,8 +297,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Triumphant, bright, open Western major affinity',
-    baggageIntervals: [-8, -2],
-    baggageDescription: 'Baggage notes below C4 include leading tone B♮3 and G3.'
+    baggageIntervals: [-8, -2, 4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly AJAM_MURASSAA: JinsDefinition = {
@@ -310,8 +312,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('F', '♮', 4),
     tonicCharacteristic: 'Lydian bright pentachord with raised 4th degree',
-    baggageIntervals: [-2],
-    baggageDescription: 'Baggage below F4 includes E4 leading tone.'
+    baggageIntervals: [-2, 4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly ATHAR_KURD: JinsDefinition = {
@@ -325,8 +327,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Intense tension combining Phrygian and augmented second colors',
-    baggageIntervals: [-4, -2],
-    baggageDescription: 'Baggage below C4 includes B♮3 leading tone and A♭3.'
+    baggageIntervals: [-6, -2, 2],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly JIHARKAH: JinsDefinition = {
@@ -340,8 +342,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('F', '♮', 4),
     tonicCharacteristic: 'Gentle, open modal quality with subtle neutral inflections',
-    baggageIntervals: [-7, -3],
-    baggageDescription: 'Baggage below F4 includes D4 and E𝄳4.'
+    baggageIntervals: [-6, -3],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly NAHAWAND: JinsDefinition = {
@@ -355,8 +357,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Melancholic, elegant, harmonic clarity spanning C to G',
-    baggageIntervals: [-6, -2],
-    baggageDescription: 'Baggage notes below C4 include leading tone B♮3 and A♭3.'
+    baggageIntervals: [-8, -6, -2, 2],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly NIKRIZ: JinsDefinition = {
@@ -370,8 +372,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Virtuosic, dramatic tension on 4th scale degree (F♯)',
-    baggageIntervals: [-4, -2],
-    baggageDescription: 'Baggage notes below C4 include B♮3 leading tone and A3.'
+    baggageIntervals: [-8, -2, 2, 4, 6],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
   public static readonly NAWA_ATHAR_NIKRIZ = AjnasLibrary.NIKRIZ;
 
@@ -386,8 +388,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Grounding, noble, majestic foundation spanning C to G',
-    baggageIntervals: [-10, -6, -3],
-    baggageDescription: 'Baggage notes below C4 include Yakah (G3), Ushayran (A3), and Iraq (B𝄳3).'
+    baggageIntervals: [-6, -3, 2, 4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly SAZKAR: JinsDefinition = {
@@ -401,8 +403,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Intriguing augmented step from C to D♯ resolving to neutral 3rd E𝄳',
-    baggageIntervals: [-3],
-    baggageDescription: 'Baggage below C4 includes B𝄳3 (Iraq).'
+    baggageIntervals: [-3, 4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   // ==========================================
@@ -420,8 +422,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Intense, dramatic with characteristic diminished 3rd inflection',
-    baggageIntervals: [-2, -6],
-    baggageDescription: 'Baggage features leading tone B♮3 and A♭3.'
+    baggageIntervals: [2],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly MUKHALIF_SHARQI: JinsDefinition = {
@@ -435,8 +437,6 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('E', '𝄳', 4),
     tonicCharacteristic: 'Somber, intimate Iraqi and Gulf modal inflection',
-    baggageIntervals: [-3],
-    baggageDescription: 'Baggage below E𝄳4 includes Dukah (D4).'
   };
 
   public static readonly NAHAWAND_MURASSAA: JinsDefinition = {
@@ -450,8 +450,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('C', '♮', 4),
     tonicCharacteristic: 'Dark, chromatic Nahawand color with tritone / diminished 5th',
-    baggageIntervals: [-2],
-    baggageDescription: 'Baggage below C4 includes B♮3 leading tone.'
+    baggageIntervals: [-2, 6],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly SABA: JinsDefinition = {
@@ -465,8 +465,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('D', '♮', 4),
     tonicCharacteristic: 'Heart-wrenching grief, ultra-compressed span',
-    baggageIntervals: [-10, -7, -4],
-    baggageDescription: 'Baggage notes below D4 include C4, B𝄳3, and A3.'
+    baggageIntervals: [-7, -4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly SABA_DALANSHIN: JinsDefinition = {
@@ -480,8 +480,8 @@ export class AjnasLibrary {
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch('C', '♮', 5),
     tonicCharacteristic: 'Upper octave Saba inflection resolving to C',
-    baggageIntervals: [-2, -4, -5],
-    baggageDescription: 'Baggage below C5 includes B𝄳4, A4, and G♯4.'
+    baggageIntervals: [-2, 4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly SABA_ZAMZAM: JinsDefinition = {
@@ -495,8 +495,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch('D', '♮', 4),
     tonicCharacteristic: 'Somber, introspective without quarter-tone microtones',
-    baggageIntervals: [-2],
-    baggageDescription: 'Baggage below D4 includes C4.'
+    baggageIntervals: [-4],
+    baggageDescription: 'Baggage intervals use negative offsets below the root and positive offsets above the top pitch.'
   };
 
   public static readonly SIKAH_BALADI: JinsDefinition = {

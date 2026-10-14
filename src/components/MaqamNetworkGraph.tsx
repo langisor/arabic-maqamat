@@ -1,9 +1,8 @@
 // src/components/MaqamNetworkGraph.tsx
 import React, { useState, useMemo } from "react"
 import { Maqam, ModulationNode, NetworkPathway } from "../theory/maqam"
-import { ArabicPitch } from "../core/pitch"
 import { formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
-import { AjnasLibrary } from "../theory/jins"
+import { AjnasLibrary, Jins } from "../theory/jins"
 import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
 import {
   Card,
@@ -79,14 +78,17 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
     return AjnasLibrary.findById(activeNode.jinsId) || null
   }, [activeNode])
 
-  const baggageNotes = useMemo(() => {
-    if (!activeNode || !activeJinsDef || !activeJinsDef.baggageIntervals)
-      return []
-    const rootQt = activeNode.root.toQuarterToneIndex()
-    return [...activeJinsDef.baggageIntervals]
-      .sort((a, b) => a - b)
-      .map((offset) => ArabicPitch.fromQuarterToneIndex(rootQt + offset))
-  }, [activeNode, activeJinsDef])
+  const activeJins = useMemo(
+    () => activeNode && activeJinsDef
+      ? new Jins(activeJinsDef, activeNode.root)
+      : null,
+    [activeNode, activeJinsDef]
+  )
+
+  const baggageNotes = useMemo(
+    () => activeJins?.getBaggageNotes() ?? [],
+    [activeJins]
+  )
 
   // Audio Playback
   const handlePlayNodeJins = (
@@ -99,26 +101,10 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
       return
     }
     const root = node.root
-    const pitches: ArabicPitch[] = []
-
-    if (
-      includeBaggage &&
-      def.baggageIntervals &&
-      def.baggageIntervals.length > 0
-    ) {
-      const rootQt = root.toQuarterToneIndex()
-      const baggage = [...def.baggageIntervals]
-        .sort((a, b) => a - b)
-        .map((offset) => ArabicPitch.fromQuarterToneIndex(rootQt + offset))
-      pitches.push(...baggage)
-    }
-
-    pitches.push(root)
-    let currentQt = root.toQuarterToneIndex()
-    for (const step of def.intervals) {
-      currentQt += step
-      pitches.push(ArabicPitch.fromQuarterToneIndex(currentQt))
-    }
+    const jins = new Jins(def, root)
+    const pitches = includeBaggage
+      ? jins.getPitchesWithBaggage()
+      : jins.getPitches()
 
     setActivePlayingId(`${node.jinsId}-${node.scaleDegree}`)
     MicrotonalAudioEngine.playSequence(
@@ -568,7 +554,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                     className="border-purple-500/40 text-[10px] text-purple-300"
                   >
                     {baggageNotes.length > 0
-                      ? `${baggageNotes.length} Notes Below Root`
+                      ? `${baggageNotes.length} Outside Core`
                       : "No Baggage"}
                   </Badge>
                 </div>
@@ -577,7 +563,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                   <div className="mt-2 space-y-2">
                     <p className="text-xs leading-relaxed text-slate-300">
                       {activeJinsDef?.baggageDescription ||
-                        "Consistent notes below the tonic that belong inherently to this Jins character."}
+                        "Baggage notes are signed offsets below the root or above the jins top pitch."}
                     </p>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {baggageNotes.map((bp, idx) => (
@@ -588,7 +574,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                             MicrotonalAudioEngine.playPitch(bp, 0.8, timbre)
                           }
                           className="flex cursor-pointer items-center gap-1 rounded-lg border border-purple-700/60 bg-purple-950/40 px-2.5 py-1 font-mono text-xs font-bold text-purple-200 transition hover:bg-purple-900/60"
-                          title="Click to audition baggage note below tonic"
+                          title="Click to audition baggage note"
                         >
                           <span>
                             {formatPitchWithLargeAccidentalReact(bp, {
@@ -596,7 +582,11 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                             })}
                           </span>
                           <span className="text-[10px] text-purple-400 opacity-75">
-                            ↓
+                            {activeNode &&
+                            activeJins &&
+                            bp.toQuarterToneIndex() > activeJins.getTopPitch().toQuarterToneIndex()
+                              ? "↑"
+                              : "↓"}
                           </span>
                         </button>
                       ))}
@@ -604,15 +594,14 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                   </div>
                 ) : (
                   <div className="mt-3 text-xs text-slate-500 italic">
-                    This Jins does not carry traditional baggage notes below the
-                    tonic. It functions strictly from the tonic root upwards.
+                    This Jins has no baggage intervals defined in this model.
                   </div>
                 )}
               </div>
 
               <div className="mt-3 border-t border-slate-900 pt-2 text-[11px] text-slate-500">
-                Abu Shumays: Baggage notes define lower approach and cadential
-                descent.
+                Signed baggage offsets may extend below the root or above the
+                top pitch.
               </div>
             </div>
 

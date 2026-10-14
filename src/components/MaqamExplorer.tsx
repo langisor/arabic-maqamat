@@ -389,8 +389,21 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {baggageNotes.map((bp, i) => (
-                            <span key={i} className="px-1.5 py-0.5 rounded bg-purple-950/40 border border-purple-800/60 font-mono text-[10px] text-purple-200">
+                            <span
+                              key={i}
+                              title={
+                                bp.toQuarterToneIndex() >
+                                currentMaqam.lowerJins.getTopPitch().toQuarterToneIndex()
+                                  ? "Above lower jins top pitch"
+                                  : "Below lower jins root"
+                              }
+                              className="px-1.5 py-0.5 rounded bg-purple-950/40 border border-purple-800/60 font-mono text-[10px] text-purple-200"
+                            >
                               {formatPitchWithLargeAccidentalReact(bp, { size: 'large' })}
+                              {bp.toQuarterToneIndex() >
+                              currentMaqam.lowerJins.getTopPitch().toQuarterToneIndex()
+                                ? " ↑"
+                                : " ↓"}
                             </span>
                           ))}
                         </div>

@@ -640,7 +640,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                     <strong className="text-amber-200">Neutral Quarter-Tone Placement:</strong> Finger is placed halfway between the semitone and whole-tone marks (approximately 50 cents sharp from the flat).
                   </li>
                   <li>
-                    <strong className="text-amber-200">Baggage Fingerings:</strong> Baggage notes (notes below tonic) are played on the lower strings (e.g., G string for Rast on C, playing Yakah G3 and Rast baggage).
+                    <strong className="text-amber-200">Baggage Fingerings:</strong> Baggage notes outside the core jins may fall below the tonic or above its top pitch; choose a string and position suited to the note&apos;s register.
                   </li>
                 </ul>
               </div>

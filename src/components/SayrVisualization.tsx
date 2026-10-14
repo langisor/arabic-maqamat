@@ -634,7 +634,7 @@ function SayrDiagram({
                 Jins Baggage Notes (أمتعة الجنس):
               </span>
               <p className="text-slate-300 leading-relaxed">
-                Consistent notes below the tonic that belong inherently to this maqam's lower jins character:{" "}
+                Baggage notes outside the lower jins core (below its root or above its top pitch):{" "}
                 <span className="font-mono text-purple-300 font-bold">
                   {model.baggagePitches.map(p => p.toString()).join(", ")}
                 </span>

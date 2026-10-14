@@ -51,7 +51,7 @@ const maqamTerms: Record<string, MaqamTerm> = {
   },
   "baggage": {
     term: "Jins Baggage (أمتعة الجنس)",
-    definition: "Notes below the tonic that belong inherently to the character of a jins, shaping melodic approaches and descent.",
+    definition: "Notes outside the core jins, represented as signed offsets below the root or above the top pitch.",
     arabic: "أمتعة الجنس"
   },
   "network": {

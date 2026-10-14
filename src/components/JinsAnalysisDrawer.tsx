@@ -50,7 +50,7 @@ export const JinsAnalysisDrawer: React.FC<JinsAnalysisDrawerProps> = ({
                 </span>
               </SheetTitle>
               <SheetDescription className="text-[11px] text-slate-400">
-                Interactive SVG staff &amp; notes below tonic (Sami Abu Shumays model)
+                Interactive SVG staff showing baggage below the root and above the jins top pitch
               </SheetDescription>
             </div>
           </div>

@@ -124,6 +124,18 @@ export function JinsAnalysisTool({
     return jinsInstance.getBaggageNotes();
   }, [jinsInstance]);
 
+  const topPitch = useMemo(() => jinsInstance.getTopPitch(), [jinsInstance]);
+  const rootQt = currentRoot.toQuarterToneIndex();
+  const topQt = topPitch.toQuarterToneIndex();
+  const lowerBaggagePitches = useMemo(
+    () => baggagePitches.filter((pitch) => pitch.toQuarterToneIndex() < rootQt),
+    [baggagePitches, rootQt]
+  );
+  const upperBaggagePitches = useMemo(
+    () => baggagePitches.filter((pitch) => pitch.toQuarterToneIndex() > topQt),
+    [baggagePitches, topQt]
+  );
+
   const corePitches = useMemo(() => {
     return jinsInstance.getPitches();
   }, [jinsInstance]);
@@ -219,8 +231,7 @@ export function JinsAnalysisTool({
   // 1. Play Baggage Only
   const handlePlayBaggageOnly = () => {
     if (baggagePitches.length === 0) return;
-    // Play ascending baggage and resolve on tonic
-    const sequence = [...baggagePitches, currentRoot];
+    const sequence = [...lowerBaggagePitches, currentRoot, ...upperBaggagePitches];
     playPitchList(sequence, 'baggage');
   };
 
@@ -248,14 +259,12 @@ export function JinsAnalysisTool({
     phrase.push(secondDegree);
     phrase.push(currentRoot);
 
-    if (baggagePitches.length > 0) {
-      // Dip down to lowest or primary baggage note
-      for (let i = baggagePitches.length - 1; i >= 0; i--) {
-        phrase.push(baggagePitches[i]);
+    if (lowerBaggagePitches.length > 0) {
+      for (let i = lowerBaggagePitches.length - 1; i >= 0; i--) {
+        phrase.push(lowerBaggagePitches[i]);
       }
-      // Re-ascend back through baggage
-      if (baggagePitches.length > 1) {
-        phrase.push(baggagePitches[baggagePitches.length - 1]);
+      if (lowerBaggagePitches.length > 1) {
+        phrase.push(lowerBaggagePitches[lowerBaggagePitches.length - 1]);
       }
     }
     // Resolute cadence landing on tonic
@@ -272,44 +281,53 @@ export function JinsAnalysisTool({
 
     const totalNotes = baggagePitches.length + corePitches.length;
     const availableWidth = rightMargin - leftMargin;
-    const spacing = Math.min(68, Math.max(48, availableWidth / Math.max(totalNotes, 6)));
+    const spacing = Math.min(68, Math.max(48, (availableWidth - 32) / Math.max(totalNotes, 6)));
 
     let currentX = leftMargin;
 
-    // 1. Baggage notes (ascending from lowest to just below root)
-    baggagePitches.forEach((pitch, idx) => {
-      const { step, y } = calculateStaffY(pitch);
-      const qtDiff = pitch.diffQuarterTones(currentRoot);
-      const centsDiff = pitch.diffCents(currentRoot);
-      const spineInfo = ArabicNoteSpine.findByPitch(pitch);
+    const appendBaggageGroup = (
+      pitches: ArabicPitch[],
+      anchor: ArabicPitch,
+      label: 'Sub' | 'Above'
+    ) => {
+      pitches.forEach((pitch, idx) => {
+        const { step, y } = calculateStaffY(pitch);
+        const qtDiff = anchor.diffQuarterTones(pitch);
+        const centsDiff = anchor.diffCents(pitch);
+        const degreeLabel = label === 'Sub'
+          ? `Sub-${pitches.length - idx}`
+          : `Above+${idx + 1}`;
+        const spineInfo = ArabicNoteSpine.findByPitch(pitch);
 
-      data.push({
-        pitch,
-        stepOffset: step,
-        staffY: y,
-        staffX: currentX,
-        isBaggage: true,
-        isTonic: false,
-        offsetCents: centsDiff,
-        offsetQuarterTones: qtDiff,
-        arabicName: spineInfo?.arabicName || pitch.toDisplayString(),
-        roleLabel: `Baggage Note ${idx + 1} (${centsDiff}¢)`,
-        degreeLabel: `Sub-${baggagePitches.length - idx}`,
+        data.push({
+          pitch,
+          stepOffset: step,
+          staffY: y,
+          staffX: currentX,
+          isBaggage: true,
+          isTonic: false,
+          offsetCents: centsDiff,
+          offsetQuarterTones: qtDiff,
+          arabicName: spineInfo?.arabicName || pitch.toDisplayString(),
+          roleLabel: `Baggage Note ${degreeLabel} (${centsDiff}¢)`,
+          degreeLabel,
+        });
+
+        currentX += spacing;
       });
+    };
 
-      currentX += spacing;
-    });
+    appendBaggageGroup(lowerBaggagePitches, currentRoot, 'Sub');
 
-    // Separator gap before tonic for visual clarity
-    if (baggagePitches.length > 0) {
+    if (lowerBaggagePitches.length > 0) {
       currentX += 16;
     }
 
-    // 2. Core pitches (tonic upwards)
+    // Core pitches (tonic upwards)
     corePitches.forEach((pitch, idx) => {
       const { step, y } = calculateStaffY(pitch);
-      const qtDiff = pitch.diffQuarterTones(currentRoot);
-      const centsDiff = pitch.diffCents(currentRoot);
+      const qtDiff = currentRoot.diffQuarterTones(pitch);
+      const centsDiff = currentRoot.diffCents(pitch);
       const spineInfo = ArabicNoteSpine.findByPitch(pitch);
       const isTonic = idx === 0;
 
@@ -330,22 +348,29 @@ export function JinsAnalysisTool({
       currentX += spacing;
     });
 
-    return data;
-  }, [baggagePitches, corePitches, currentRoot]);
+    if (upperBaggagePitches.length > 0) {
+      currentX += 16;
+    }
+    appendBaggageGroup(upperBaggagePitches, topPitch, 'Above');
 
-  // Baggage bounding metrics for SVG brackets
-  const baggageBoundary = useMemo(() => {
-    const baggageNotes = staffNotesData.filter((n) => n.isBaggage);
-    if (baggageNotes.length === 0) return null;
-    const startX = baggageNotes[0].staffX;
-    const endX = baggageNotes[baggageNotes.length - 1].staffX;
-    return {
-      startX,
-      endX,
-      width: endX - startX,
-      centerX: (startX + endX) / 2,
+    return data;
+  }, [baggagePitches, corePitches, currentRoot, lowerBaggagePitches, upperBaggagePitches, topPitch]);
+
+  const baggageBoundaries = useMemo(() => {
+    const boundaryFor = (label: string, pitches: ArabicPitch[]) => {
+      const notes = staffNotesData.filter((note) =>
+        pitches.some((pitch) => pitch.equals(note.pitch))
+      );
+      if (notes.length === 0) return null;
+      const startX = notes[0].staffX;
+      const endX = notes[notes.length - 1].staffX;
+      return { label, startX, endX, width: endX - startX, centerX: (startX + endX) / 2 };
     };
-  }, [staffNotesData]);
+    return [
+      boundaryFor('Below tonic', lowerBaggagePitches),
+      boundaryFor('Above top pitch', upperBaggagePitches),
+    ].filter((boundary) => boundary !== null);
+  }, [staffNotesData, lowerBaggagePitches, upperBaggagePitches]);
 
   const coreBoundary = useMemo(() => {
     const coreNotes = staffNotesData.filter((n) => !n.isBaggage);
@@ -399,7 +424,7 @@ export function JinsAnalysisTool({
                   </Badge>
                 </div>
                 <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                  Explore ajnas categorized by size (3-note, 4-note, 5-note, and undefined size) alongside essential <strong className="text-purple-300">baggage notes (أمتعة الجنس)</strong> below the tonic.
+                  Explore ajnas by size alongside baggage notes (أمتعة الجنس): negative offsets fall below the tonic, while positive offsets extend above the jins top pitch.
                 </p>
               </div>
             </div>
@@ -541,7 +566,7 @@ export function JinsAnalysisTool({
                 </CardTitle>
               </div>
               <CardDescription className="text-xs text-slate-400 mt-1">
-                Hover or click any notehead on the staff to audition microtonal 24-EDO intonation. Baggage notes (below tonic) are highlighted in vibrant violet.
+                Hover or click any notehead to audition its 24-EDO pitch. Baggage notes below the tonic and above the jins top pitch are highlighted in violet.
               </CardDescription>
             </div>
 
@@ -745,14 +770,12 @@ export function JinsAnalysisTool({
                 />
               </g>
 
-              {/* Baggage Region Highlight Backdrop & Bracket */}
-              {baggageBoundary && (
-                <g>
-                  {/* Subtle purple background halo */}
+              {baggageBoundaries.map((boundary) => (
+                <g key={boundary.label}>
                   <rect
-                    x={baggageBoundary.startX - 32}
+                    x={boundary.startX - 32}
                     y={22}
-                    width={baggageBoundary.width + 64}
+                    width={boundary.width + 64}
                     height={205}
                     rx="8"
                     fill="#a855f7"
@@ -761,22 +784,20 @@ export function JinsAnalysisTool({
                     strokeWidth="1"
                     strokeDasharray="4 4"
                   />
-
-                  {/* Underneath Bracket for Baggage */}
                   <path
-                    d={`M ${baggageBoundary.startX - 14} 228 
-                        L ${baggageBoundary.startX - 14} 236 
-                        L ${baggageBoundary.centerX - 10} 236 
-                        L ${baggageBoundary.centerX} 242 
-                        L ${baggageBoundary.centerX + 10} 236 
-                        L ${baggageBoundary.endX + 14} 236 
-                        L ${baggageBoundary.endX + 14} 228`}
+                    d={`M ${boundary.startX - 14} 228
+                        L ${boundary.startX - 14} 236
+                        L ${boundary.centerX - 10} 236
+                        L ${boundary.centerX} 242
+                        L ${boundary.centerX + 10} 236
+                        L ${boundary.endX + 14} 236
+                        L ${boundary.endX + 14} 228`}
                     fill="none"
                     stroke="#c084fc"
                     strokeWidth="1.8"
                   />
                   <text
-                    x={baggageBoundary.centerX}
+                    x={boundary.centerX}
                     y={255}
                     textAnchor="middle"
                     fill="#e9d5ff"
@@ -784,10 +805,10 @@ export function JinsAnalysisTool({
                     fontWeight="bold"
                     letterSpacing="0.05em"
                   >
-                    Baggage (أمتعة الجنس) • Notes Below Tonic
+                    Baggage • {boundary.label}
                   </text>
                 </g>
-              )}
+              ))}
 
               {/* Core Jins Region Highlight Bracket */}
               {coreBoundary && (
@@ -1078,7 +1099,9 @@ export function JinsAnalysisTool({
                       {hoveredNote.isTonic
                         ? 'Tonic Anchor'
                         : hoveredNote.isBaggage
-                        ? 'Baggage (Below Tonic)'
+                        ? hoveredNote.degreeLabel.startsWith('Sub-')
+                          ? 'Baggage (Below Tonic)'
+                          : 'Baggage (Above Top Pitch)'
                         : 'Jins Core Step'}
                     </Badge>
                   </div>
@@ -1156,7 +1179,7 @@ export function JinsAnalysisTool({
             <CardContent className="p-4 space-y-3 text-xs leading-relaxed text-slate-300">
               <p>
                 {selectedDef.baggageDescription ||
-                  `In ${selectedDef.name}, melodic phrases and descending cadences consistently incorporate lower notes that frame the tonic.`}
+                  `In ${selectedDef.name}, baggage notes are offsets outside the core jins: negative values are below the root, while positive values are above the top pitch.`}
               </p>
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 font-mono text-[11px]">
                 <div className="flex justify-between text-slate-400">
@@ -1184,20 +1207,22 @@ export function JinsAnalysisTool({
             <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
               <span>Baggage Notes for {selectedDef.name} on {currentRoot.toString()}:</span>
               <span className="text-purple-400 font-mono text-[11px]">
-                {baggagePitches.length} note{baggagePitches.length > 1 ? 's' : ''} below tonic
+                {baggagePitches.length} note{baggagePitches.length > 1 ? 's' : ''} outside the core
               </span>
             </div>
 
             {baggagePitches.length === 0 ? (
               <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 text-center text-xs text-slate-400">
-                This jins does not possess standard baggage notes in classical practice. Its root acts as an absolute floor.
+                This jins has no baggage intervals defined in this model.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {baggagePitches.map((pitch, idx) => {
+                {baggagePitches.map((pitch) => {
                   const spineInfo = ArabicNoteSpine.findByPitch(pitch);
-                  const centsDiff = pitch.diffCents(currentRoot);
-                  const qtDiff = pitch.diffQuarterTones(currentRoot);
+                  const isBelowRoot = pitch.toQuarterToneIndex() < rootQt;
+                  const anchor = isBelowRoot ? currentRoot : topPitch;
+                  const centsDiff = anchor.diffCents(pitch);
+                  const qtDiff = anchor.diffQuarterTones(pitch);
 
                   return (
                     <div
@@ -1217,7 +1242,7 @@ export function JinsAnalysisTool({
                               </span>
                             </div>
                             <div className="text-[10px] text-slate-400">
-                              Baggage Degree -{baggagePitches.length - idx}
+                              {qtDiff < 0 ? `Below root ${qtDiff} qt` : `Above top +${qtDiff} qt`}
                             </div>
                           </div>
                         </div>
@@ -1277,21 +1302,21 @@ export function JinsAnalysisTool({
               <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 space-y-2">
                 <h4 className="font-bold text-purple-300 text-sm">1. Cadential Preparation (القفلة)</h4>
                 <p>
-                  In Maqam Bayati (rooted on D4), a cadence that lands directly on D from above sounds incomplete. The sayr requires dipping down into <strong className="text-white">C4 (Rast)</strong> and <strong className="text-white">B𝄳3 (Iraq)</strong>, creating a parabolic swing that launches up into the tonic.
+                  Negative baggage offsets are anchored below the tonic and can shape melodic approaches and cadences. Positive offsets, when present, are measured above the jins top pitch rather than the tonic.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 space-y-2">
-                <h4 className="font-bold text-purple-300 text-sm">2. Modal Identity Disambiguation</h4>
+                <h4 className="font-bold text-purple-300 text-sm">2. Signed Pitch Extensions</h4>
                 <p>
-                  Maqam Kurd (D - E♭ - F - G) and Maqam Bayati (D - E𝄳 - F - G) both cadence on D, but Kurd&apos;s baggage includes B♭3 while Bayati strictly requires B𝄳3. The baggage notes ensure listener recognition before the tonic is even struck.
+                  The signed offsets describe two distinct anchors: negative values from the root and positive values from the top of the core jins. This keeps baggage pitch placement consistent when the core interval span changes.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 space-y-2">
-                <h4 className="font-bold text-purple-300 text-sm">3. Lower Register Extensions</h4>
+                <h4 className="font-bold text-purple-300 text-sm">3. Core and Baggage Together</h4>
                 <p>
-                  In Maqam Rast (tonic C4), the baggage notes are Yakah (G3), Ushayran (A3), and Iraq (B𝄳3). These notes form an identical lower Rast trichord, grounding the maqam in majestic low acoustic resonance.
+                  The extended pitch sequence combines baggage with the core pitches in ascending order. The staff and playback preserve the distinction between below-root and above-top baggage.
                 </p>
               </div>
 
@@ -1317,7 +1342,7 @@ export function JinsAnalysisTool({
                   <span>Baggage Comparison: {selectedDef.name} vs. {comparisonDef.name}</span>
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-400">
-                  Compare how two different ajnas utilize notes below the root on the same tonic ({currentRoot.toString()}).
+                  Compare how two ajnas use baggage offsets outside their core pitches on the same root ({currentRoot.toString()}).
                 </CardDescription>
               </div>
 
@@ -1355,7 +1380,7 @@ export function JinsAnalysisTool({
                     : 'None'}
                 </div>
                 <div className="text-xs text-slate-300">
-                  <strong>Interval offsets:</strong>{' '}
+                  <strong>Signed offsets:</strong>{' '}
                   {selectedDef.baggageIntervals?.join(' , ') || 'None'} qt
                 </div>
                 <p className="text-[11px] text-slate-400 italic">
@@ -1379,7 +1404,7 @@ export function JinsAnalysisTool({
                     : 'None'}
                 </div>
                 <div className="text-xs text-slate-300">
-                  <strong>Interval offsets:</strong>{' '}
+                  <strong>Signed offsets:</strong>{' '}
                   {comparisonDef.baggageIntervals?.join(' , ') || 'None'} qt
                 </div>
                 <p className="text-[11px] text-slate-400 italic">
