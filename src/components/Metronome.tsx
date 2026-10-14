@@ -287,7 +287,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
 
       <PopoverContent
         align="end"
-        className="flex w-[min(calc(100vw-1rem),42rem)] max-h-[calc(100dvh-1rem)] flex-col gap-0 overflow-hidden rounded-xl border border-border bg-popover p-0 text-popover-foreground shadow-lg"
+        className="flex w-[min(calc(100vw-1rem),42rem)] max-h-[calc(100dvh-1rem)] flex-col gap-0 overflow-hidden rounded-xl border border-border  p-0  shadow-lg"
       >
         {playbackError && (
           <AsyncFeedback
@@ -392,7 +392,8 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
               TAP
             </Button>
           </div>
-
+ 
+ {/* Tempo */}
           <section className="space-y-3 rounded-xl border border-border bg-muted/30 p-3 dark:bg-slate-900/60">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -426,7 +427,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
               value={bpm}
               onChange={(event) => handleBpmChange(Number(event.target.value))}
               aria-label="Tempo in beats per minute"
-              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-muted accent-amber-500"
+              className="h-2 w-full cursor-pointer  rounded-lg bg-muted accent-amber-500"
             />
 
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
@@ -448,7 +449,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
               ))}
             </div>
           </section>
-
+              {/* Time Signature */}
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
