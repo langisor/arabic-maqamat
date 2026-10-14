@@ -3,10 +3,8 @@ import React, { useState, useMemo } from "react"
 import {
   Drawer,
   DrawerContent,
-  DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerFooter,
 } from "./ui/drawer"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -23,9 +21,8 @@ import {
   Layers,
   ChevronRight,
   Compass,
-  Package,
 } from "lucide-react"
-import { Maqam, MaqamatCatalogue } from "../theory/maqam"
+import { Maqam } from "../theory/maqam"
 import {
   ModulationPathwayEngine,
   ModulationPathway,

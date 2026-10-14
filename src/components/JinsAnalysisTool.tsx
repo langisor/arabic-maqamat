@@ -1,30 +1,21 @@
 // src/components/JinsAnalysisTool.tsx
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { ArabicPitch, DiatonicBase, MicrotonalAccidental } from '../core/pitch';
-import { Jins, JinsDefinition, AjnasLibrary, JinsType } from '../theory/jins';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { ArabicPitch, DiatonicBase } from '../core/pitch';
+import { Jins, JinsDefinition, AjnasLibrary } from '../theory/jins';
 import { ArabicNoteSpine } from '../core/note-spine';
 import { MicrotonalAudioEngine, TimbreType } from '../audio/microtonal-audio';
-import { useLanguage } from '../state/language';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Slider } from './ui/slider';
 import {
   Package,
-  Music,
   Play,
   Square,
   Radio,
-  Sliders,
-  ChevronRight,
-  Info,
-  Layers,
   ArrowUpDown,
   BookOpen,
   Volume2,
   Sparkles,
-  CheckCircle2,
-  HelpCircle,
   X,
   Compass,
 } from 'lucide-react';
@@ -105,8 +96,6 @@ export function JinsAnalysisTool({
   isCompact = false,
   onClose,
 }: JinsAnalysisToolProps) {
-  const { language } = useLanguage();
-
   // Selected Jins & Root
   const allDefinitions = useMemo(() => AjnasLibrary.getAllDefinitions(), []);
   const [selectedJinsId, setSelectedJinsId] = useState<string>(initialJinsId);
@@ -148,8 +137,6 @@ export function JinsAnalysisTool({
   const [activePlaybackSequence, setActivePlaybackSequence] = useState<string | null>(null);
   const [activeSoundingPitch, setActiveSoundingPitch] = useState<ArabicPitch | null>(null);
   const [isDroneOn, setIsDroneOn] = useState<boolean>(false);
-  const [currentTimbre, setCurrentTimbre] = useState<TimbreType>(timbre);
-  const [tempoBpm, setTempoBpm] = useState<number>(90);
   const [hoveredNote, setHoveredNote] = useState<NoteDisplayData | null>(null);
 
   // Filters & Tabs
@@ -157,13 +144,7 @@ export function JinsAnalysisTool({
   const [activeViewTab, setActiveViewTab] = useState<'staff' | 'theory' | 'compare'>('staff');
   const [comparisonJinsId, setComparisonJinsId] = useState<string>('saba');
 
-  // Sync external timbre
-  useEffect(() => {
-    setCurrentTimbre(timbre);
-  }, [timbre]);
-
   const handleTimbreSelect = (t: TimbreType) => {
-    setCurrentTimbre(t);
     onTimbreChange?.(t);
   };
 
@@ -192,12 +173,12 @@ export function JinsAnalysisTool({
   const handlePlayNote = useCallback(
     (pitch: ArabicPitch) => {
       setActiveSoundingPitch(pitch);
-      MicrotonalAudioEngine.playPitch(pitch, 1.0, currentTimbre, 0.85);
+      MicrotonalAudioEngine.playPitch(pitch, 1.0, timbre, 0.85);
       setTimeout(() => {
         setActiveSoundingPitch(null);
       }, 700);
     },
-    [currentTimbre]
+    [timbre]
   );
 
   // Play Sequence Helper
@@ -211,7 +192,7 @@ export function JinsAnalysisTool({
       MicrotonalAudioEngine.playSequence(
         pitches,
         durationPerNoteMs,
-        currentTimbre,
+        timbre,
         (stepIndex: number) => {
           if (pitches[stepIndex]) {
             setActiveSoundingPitch(pitches[stepIndex]);
@@ -225,7 +206,7 @@ export function JinsAnalysisTool({
         'jins-analysis'
       );
     },
-    [activePlaybackSequence, currentTimbre]
+    [activePlaybackSequence, timbre]
   );
 
   // Stop playback
@@ -286,9 +267,6 @@ export function JinsAnalysisTool({
   // Staff SVG note data generation
   const staffNotesData = useMemo<NoteDisplayData[]>(() => {
     const data: NoteDisplayData[] = [];
-    const rootQt = currentRoot.toQuarterToneIndex();
-
-    const staffWidth = 780;
     const leftMargin = 105;
     const rightMargin = 730;
 
@@ -648,7 +626,7 @@ export function JinsAnalysisTool({
                     key={tVal}
                     onClick={() => handleTimbreSelect(tVal)}
                     className={`px-1.5 sm:px-2 py-0.5 rounded-lg capitalize font-medium text-[11px] sm:text-xs transition-all cursor-pointer ${
-                      currentTimbre === tVal
+                      timbre === tVal
                         ? 'bg-purple-600/30 text-purple-200 border border-purple-500/30'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}

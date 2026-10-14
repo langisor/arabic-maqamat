@@ -41,7 +41,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   const [isListening, setIsListening] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   const [referenceA4, setReferenceA4] = useState<number>(440);
-  const [noiseThreshold, setNoiseThreshold] = useState<number>(0.015);
+  const [noiseThreshold] = useState<number>(0.015);
   const [inputLevelDb, setInputLevelDb] = useState<number>(-100);
 
   const [currentDetection, setCurrentDetection] = useState<PitchDetectionResult | null>(null);
@@ -67,13 +67,6 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       inTuneCentsTolerance: 7.0,
     });
   }, [referenceA4, noiseThreshold]);
-
-  useEffect(() => {
-    const scale = currentMaqam.getScale();
-    if (scale.length > 0) {
-      setTargetPitch(scale[0]);
-    }
-  }, [currentMaqam]);
 
   const stopMicrophone = useCallback(() => {
     if (animationFrameRef.current !== null) {
@@ -150,9 +143,12 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
 
     const timeDomainBuffer = new Float32Array(analyser.fftSize);
     let streakCounter = 0;
-    let lastTime = performance.now();
+    let lastTime = 0;
 
     const loop = (currentTime: number) => {
+      if (lastTime === 0) {
+        lastTime = currentTime;
+      }
       const dt = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
 

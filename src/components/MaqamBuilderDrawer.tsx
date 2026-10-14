@@ -31,7 +31,6 @@ import {
   MaqamScaleStructure,
 } from "../theory/maqam"
 import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
-import { useLanguage } from "../state/language"
 import { formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
 
 interface PresetTemplate {
@@ -140,7 +139,6 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
   onSelectMaqam,
   timbre = "violin",
 }) => {
-  const { t } = useLanguage()
   const allAjnas = useMemo(() => AjnasLibrary.getAllDefinitions(), [])
 
   // State
@@ -154,7 +152,10 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
   const [activeAuditionIndex, setActiveAuditionIndex] = useState<number | null>(null)
   const [isDroneActive, setIsDroneActive] = useState<boolean>(false)
 
-  const activeTonic = TONIC_CHOICES[selectedTonicIndex]?.pitch ?? new ArabicPitch("C", "♮", 4)
+  const activeTonic = useMemo(
+    () => TONIC_CHOICES[selectedTonicIndex]?.pitch ?? new ArabicPitch("C", "♮", 4),
+    [selectedTonicIndex],
+  )
 
   const lowerDef = useMemo(() => {
     return AjnasLibrary.findById(lowerJinsId) ?? AjnasLibrary.RAST

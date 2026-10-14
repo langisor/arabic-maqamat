@@ -3,7 +3,6 @@ import React, { useState } from "react"
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetDescription,
 } from "./ui/sheet"
@@ -29,7 +28,6 @@ import {
   ChevronRight,
   Globe,
   GitFork,
-  Network,
   Package,
 } from "lucide-react"
 import { ValidLab } from "../state/workspace-state"

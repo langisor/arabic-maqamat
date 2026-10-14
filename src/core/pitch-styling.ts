@@ -341,16 +341,16 @@ export function getViolinNoteColorClass(
  */
 export function formatPitchWithLargeAccidental(
   pitch: ArabicPitch,
-  options: { size?: 'large' | 'xl'; showOctave?: boolean } = {}
+  options: { size?: 'large' | 'xl' } = {}
 ): string {
-  const { size = 'large', showOctave = true } = options;
+  const { size = 'large' } = options;
   const accidentalClass = size === 'xl' ? 'accidental-xl' : 'accidental-large';
-  
+
   // toDisplayString already hides natural marks
   const displayString = pitch.toDisplayString();
-  
+
   // Extract diatonic base and accidental
-  const accidentalMatch = displayString.match(/([𝄫♭𝄳𝄲♯𝄪])/);
+  const accidentalMatch = displayString.match(/([𝄫♭𝄳𝄲♯𝄪])/u);
   if (accidentalMatch) {
     const accidental = accidentalMatch[1];
     const baseNote = displayString.replace(accidental, '');
@@ -372,16 +372,16 @@ export function formatPitchWithLargeAccidental(
  */
 export function formatPitchWithLargeAccidentalReact(
   pitch: ArabicPitch,
-  options: { size?: 'large' | 'xl'; showOctave?: boolean } = {}
+  options: { size?: 'large' | 'xl' } = {}
 ): ReactNode {
-  const { size = 'large', showOctave = true } = options;
+  const { size = 'large' } = options;
   const accidentalClass = size === 'xl' ? 'accidental-xl' : 'accidental-large';
-  
+
   // toDisplayString already hides natural marks
   const displayString = pitch.toDisplayString();
-  
+
   // Extract diatonic base and accidental
-  const accidentalMatch = displayString.match(/([𝄫♭𝄳𝄲♯𝄪])/);
+  const accidentalMatch = displayString.match(/([𝄫♭𝄳𝄲♯𝄪])/u);
   if (accidentalMatch) {
     const accidental = accidentalMatch[1];
     const baseNote = displayString.replace(accidental, '');

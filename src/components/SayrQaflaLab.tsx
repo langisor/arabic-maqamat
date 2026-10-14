@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Slider } from './ui/slider';
-import { Play, Square, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Zap, BookOpen, Compass, GitFork, Sparkles } from 'lucide-react';
+import { Play, Square, CheckCircle, AlertTriangle, ArrowRight, RefreshCw, Zap, BookOpen, Compass, GitFork } from 'lucide-react';
 import { SayrVisualizationDialog } from './SayrVisualizationDialog';
 import { ModulationPathwaysDrawer } from './ModulationPathwaysDrawer';
 import { useLanguage } from '../state/language';

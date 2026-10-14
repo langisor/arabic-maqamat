@@ -62,7 +62,7 @@ export const Metronome: React.FC<MetronomeProps> = ({ className = '' }) => {
     MetronomeAudioEngine.setTimeSignature(timeSignature);
     MetronomeAudioEngine.setSoundType(soundType);
     MetronomeAudioEngine.setVolume(volume / 100);
-  }, []);
+  }, [bpm, soundType, timeSignature, volume]);
 
   useEffect(() => {
     const unsubBeat = MetronomeAudioEngine.subscribeBeat((info) => {

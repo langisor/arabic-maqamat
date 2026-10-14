@@ -3,7 +3,6 @@ import React, { useState } from "react"
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetDescription,
 } from "./ui/sheet"
@@ -12,7 +11,6 @@ import { Badge } from "./ui/badge"
 import {
   Compass,
   X,
-  Volume2,
   Play,
   Square,
   Sparkles,
@@ -65,6 +63,7 @@ export const SayrVisualizationDialog: React.FC<SayrVisualizationDialogProps> = (
 }) => {
   const [isPlayingSayr, setIsPlayingSayr] = useState(false)
   const [activeStopIndex, setActiveStopIndex] = useState<number | null>(null)
+  void activeStopIndex
 
   const trajectoryInfo = TRAJECTORY_BADGES[maqam.sayrDirection] || TRAJECTORY_BADGES.ascending
   const TrajectoryIcon = trajectoryInfo.icon

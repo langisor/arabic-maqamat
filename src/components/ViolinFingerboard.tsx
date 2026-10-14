@@ -18,8 +18,6 @@ import {
   SlidersHorizontal,
   Info,
   Volume2,
-  Sparkles,
-  ArrowRight,
   X,
   ArrowUpDown,
   Rows,

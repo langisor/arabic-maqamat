@@ -8,24 +8,20 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isInstalled, setIsInstalled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+  });
+  const [isIOS] = useState(() => {
+    if (typeof navigator === 'undefined') return false;
+    return /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  });
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [isServiceWorkerReady, setIsServiceWorkerReady] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
-    // Detect standalone mode (already installed or running as PWA)
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    setIsInstalled(isStandalone);
-
-    // Detect iOS devices
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
-    setIsIOS(isIOSDevice);
-
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);

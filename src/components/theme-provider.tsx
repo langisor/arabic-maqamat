@@ -73,6 +73,15 @@ export function ThemeProvider({
   )
 
   React.useEffect(() => {
+    if (disableTransitionOnChange) {
+      const root = document.documentElement
+      const originalTransition = root.style.transition
+      root.style.transition = "none"
+      requestAnimationFrame(() => {
+        root.style.transition = originalTransition
+      })
+    }
+
     applyTheme(theme)
     if (theme !== "system") {
       return undefined
@@ -85,7 +94,7 @@ export function ThemeProvider({
     return () => {
       mediaQuery.removeEventListener("change", handleChange)
     }
-  }, [theme, applyTheme])
+  }, [theme, applyTheme, disableTransitionOnChange])
 
   const value = React.useMemo(
     () => ({

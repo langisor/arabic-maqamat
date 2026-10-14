@@ -138,15 +138,6 @@ export const MaqamExplorer: React.FC<Props> = ({
     })
   }
 
-  const setCustomTonicDirect = (qp: ArabicPitch) => {
-    setCustomDiatonicState(qp.diatonic)
-    setCustomAccidentalState(qp.accidental)
-    setCustomOctaveState(qp.octave)
-    updateWorkspaceDraft("explorer", {
-      customTonic: { diatonic: qp.diatonic, accidental: qp.accidental, octave: qp.octave },
-    })
-  }
-
   const spineNotes = ArabicNoteSpine.getSpine()
 
   // Determine base original template for current maqam id
@@ -167,7 +158,7 @@ export const MaqamExplorer: React.FC<Props> = ({
     customOctave
   )
   const candidateDeltaQt = originalTonic.diffQuarterTones(candidatePitch)
-  const candidateCents = candidateDeltaQt * 50
+  void candidateDeltaQt
 
   const handleTransposeToPitch = (targetPitch: ArabicPitch) => {
     const transposed = baseMaqam.transpose(targetPitch)

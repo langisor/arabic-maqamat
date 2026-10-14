@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Maqam, MaqamatCatalogue } from './theory/maqam';
 import { ArabicPitch } from './core/pitch';
 import { MicrotonalAudioEngine, TimbreType } from './audio/microtonal-audio';
 import { AudioTransport } from './audio/audio-transport';
-import { ValidLab, getWorkspaceState, updateWorkspaceGlobal } from './state/workspace-state';
+import { ValidLab } from './state/workspace-state';
 import { LanguageProvider, useLanguage } from './state/language';
 import { ThemeProvider } from './components/theme-provider';
 
@@ -31,8 +31,6 @@ import { JinsAnalysisDrawer } from './components/JinsAnalysisDrawer';
 import { ThemeToggle } from './components/ThemeToggle';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { Button } from './components/ui/button';
-import { Badge } from './components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './components/ui/card';
 
 // Icons
 import {
@@ -42,23 +40,15 @@ import {
   Network,
   Mic,
   BookOpen,
-  Sparkles,
-  Radio,
-  Sliders,
-  Play,
-  Square,
-  Wand2,
   GitFork,
-  ChevronRight,
-  HelpCircle,
   Package,
+  Radio,
 } from 'lucide-react';
 
 function StudioContent() {
-  const { t, language, setLanguage } = useLanguage();
+  const { language, setLanguage } = useLanguage();
 
   // State
-  const [allMaqamat, setAllMaqamat] = useState<Maqam[]>(() => MaqamatCatalogue.getAll());
   const [currentMaqam, setCurrentMaqam] = useState<Maqam>(() => {
     return MaqamatCatalogue.getById('rast') || MaqamatCatalogue.getAll()[0];
   });
