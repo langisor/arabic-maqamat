@@ -354,7 +354,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                   <span>Lower Jins (جنس الأصل)</span>
                 </span>
                 <Badge variant="outline" className="text-[10px] text-amber-300 border-amber-500/30">
-                  {lowerDef.type}
+                  {lowerDef.sizeLabel || lowerDef.type}
                 </Badge>
               </div>
 
@@ -386,7 +386,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 >
                   {allAjnas.map((j) => (
                     <option key={j.id} value={j.id}>
-                      {j.name} ({j.arabicName}) — {j.type}
+                      {j.name} ({j.arabicName}) — {j.sizeLabel || j.type}
                     </option>
                   ))}
                 </select>
@@ -459,7 +459,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                   <span>Upper Jins (جنس الفرع)</span>
                 </span>
                 <Badge variant="outline" className="text-[10px] text-emerald-300 border-emerald-500/30">
-                  {upperDef.type}
+                  {upperDef.sizeLabel || upperDef.type}
                 </Badge>
               </div>
 
@@ -486,7 +486,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 >
                   {allAjnas.map((j) => (
                     <option key={j.id} value={j.id}>
-                      {j.name} ({j.arabicName}) — {j.type}
+                      {j.name} ({j.arabicName}) — {j.sizeLabel || j.type}
                     </option>
                   ))}
                 </select>

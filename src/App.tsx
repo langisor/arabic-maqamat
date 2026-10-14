@@ -132,6 +132,17 @@ function StudioContent() {
     [isDroneActive, currentMaqam]
   );
 
+  // Select a Maqam Family from the drop list
+  const handleSelectFamily = useCallback(
+    (familyKey: string) => {
+      const target = MaqamatCatalogue.getRepresentativeMaqamForFamily(familyKey);
+      if (target) {
+        handleSelectMaqam(target);
+      }
+    },
+    [handleSelectMaqam]
+  );
+
   // Navigation tabs
   const navTabs: { id: ValidLab; label: string; arabic: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'explorer', label: 'Maqam Explorer', arabic: 'مستكشف المقامات', icon: Layers },
@@ -262,6 +273,8 @@ function StudioContent() {
         isDroneActive={isDroneActive}
         transportStatus={transportStatus}
         onNavigate={setActiveLab}
+        onSelectFamily={handleSelectFamily}
+        onSelectMaqam={handleSelectMaqam}
       />
 
       {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}

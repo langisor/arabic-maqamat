@@ -298,7 +298,7 @@ export class MaqamatCatalogue {
    */
   public static buildRast(): Maqam {
     const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch('C', '♮', 4));
-    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch('G', '♮', 4));
+    const upper = new Jins(AjnasLibrary.UPPER_RAST, new ArabicPitch('G', '♮', 4));
 
     const rastNetwork: MaqamNetwork = {
       nodes: [
@@ -329,7 +329,7 @@ export class MaqamatCatalogue {
       arabicName: 'مقام راست',
       family: 'Rast',
       lowerJins: lower,
-      connection: 'Infisal',
+      connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
       alternateUpperAjnas: [
@@ -426,7 +426,7 @@ export class MaqamatCatalogue {
    */
   public static buildMuhayyar(): Maqam {
     const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch('D', '♮', 4));
-    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch('G', '♮', 4));
+    const upper = new Jins(AjnasLibrary.UPPER_RAST, new ArabicPitch('G', '♮', 4));
 
     const muhayyarNetwork: MaqamNetwork = {
       nodes: [
@@ -544,7 +544,7 @@ export class MaqamatCatalogue {
       arabicName: 'مقام نهاوند',
       family: 'Nahawand',
       lowerJins: lower,
-      connection: 'Infisal',
+      connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('G', '♮', 4),
       alternateUpperAjnas: [
@@ -574,7 +574,7 @@ export class MaqamatCatalogue {
       arabicName: 'مقام فَرَحْفَزا',
       family: 'Nahawand',
       lowerJins: lower,
-      connection: 'Infisal',
+      connection: 'Ittisal',
       upperJins: upper,
       ghammaz: new ArabicPitch('D', '♮', 5),
       alternateUpperAjnas: [
@@ -640,7 +640,7 @@ export class MaqamatCatalogue {
    */
   public static buildAjam(): Maqam {
     const lower = new Jins(AjnasLibrary.AJAM, new ArabicPitch('B', '♭', 3));
-    const upper = new Jins(AjnasLibrary.AJAM, new ArabicPitch('F', '♮', 4));
+    const upper = new Jins(AjnasLibrary.UPPER_AJAM, new ArabicPitch('F', '♮', 4));
 
     const ajamNetwork: MaqamNetwork = {
       nodes: [
@@ -685,7 +685,7 @@ export class MaqamatCatalogue {
    */
   public static buildSikah(): Maqam {
     const lower = new Jins(AjnasLibrary.SIKAH, new ArabicPitch('E', '𝄳', 4));
-    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch('G', '♮', 4));
+    const upper = new Jins(AjnasLibrary.UPPER_RAST, new ArabicPitch('G', '♮', 4));
 
     const sikahNetwork: MaqamNetwork = {
       nodes: [
@@ -843,6 +843,39 @@ export class MaqamatCatalogue {
 
   public static getById(id: string): Maqam | undefined {
     return this.findById(id);
+  }
+
+  public static getFamiliesList(): { key: MaqamFamilyMnemonic; englishName: string; arabicName: string; defaultMaqamId: string }[] {
+    return [
+      { key: 'Rast', englishName: 'Rast', arabicName: 'عائلة الراست', defaultMaqamId: 'rast' },
+      { key: 'Bayati', englishName: 'Bayati', arabicName: 'عائلة البياتي', defaultMaqamId: 'bayati' },
+      { key: 'Sikah', englishName: 'Sikah', arabicName: 'عائلة السيكاه', defaultMaqamId: 'sikah' },
+      { key: 'Hijaz', englishName: 'Hijaz', arabicName: 'عائلة الحجاز', defaultMaqamId: 'hijaz' },
+      { key: 'Nahawand', englishName: 'Nahawand', arabicName: 'عائلة النهاوند', defaultMaqamId: 'nahawand' },
+      { key: 'Kurd', englishName: 'Kurd', arabicName: 'عائلة الكرد', defaultMaqamId: 'kurd' },
+      { key: '‘Ajam', englishName: '‘Ajam', arabicName: 'عائلة العجم', defaultMaqamId: 'ajam' },
+      { key: 'صنع', englishName: 'Saba', arabicName: 'عائلة الصبا', defaultMaqamId: 'saba' },
+    ];
+  }
+
+  public static getMaqamatByFamily(family: MaqamFamilyMnemonic | string): Maqam[] {
+    return this.getAllMaqamat().filter(m => m.family === family || (family === 'Saba' && m.family === 'صنع'));
+  }
+
+  public static getRepresentativeMaqamForFamily(family: MaqamFamilyMnemonic | string): Maqam {
+    switch (family) {
+      case 'Rast': return this.buildRast();
+      case 'Bayati': return this.buildBayati();
+      case 'Sikah': return this.buildSikah();
+      case 'Hijaz': return this.buildHijaz();
+      case 'Nahawand': return this.buildNahawand();
+      case 'Kurd': return this.buildKurd();
+      case '‘Ajam':
+      case 'Ajam': return this.buildAjam();
+      case 'صنع':
+      case 'Saba': return this.buildSaba();
+      default: return this.buildRast();
+    }
   }
 
   /**

@@ -342,7 +342,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </span>
                       </MaqamTermTooltip>
                       <Badge variant="default" className="text-[10px]">
-                        {currentMaqam.lowerJins.definition.type}
+                        {currentMaqam.lowerJins.definition.sizeLabel || currentMaqam.lowerJins.definition.type}
                       </Badge>
                     </div>
                     <h4 className="mt-1 text-lg font-bold text-white">
@@ -454,7 +454,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </span>
                       </MaqamTermTooltip>
                       <Badge variant="default" className="text-[10px]">
-                        {currentMaqam.upperJins.definition.type}
+                        {currentMaqam.upperJins.definition.sizeLabel || currentMaqam.upperJins.definition.type}
                       </Badge>
                     </div>
                     <h4 className="mt-1 text-lg font-bold text-white">

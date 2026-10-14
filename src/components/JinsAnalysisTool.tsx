@@ -140,7 +140,7 @@ export function JinsAnalysisTool({
   const [hoveredNote, setHoveredNote] = useState<NoteDisplayData | null>(null);
 
   // Filters & Tabs
-  const [jinsFilter, setJinsFilter] = useState<'all' | 'tetrachord' | 'trichord' | 'pentachord'>('all');
+  const [jinsFilter, setJinsFilter] = useState<'all' | 'trichord' | 'tetrachord' | 'pentachord' | 'undefined'>('all');
   const [activeViewTab, setActiveViewTab] = useState<'staff' | 'theory' | 'compare'>('staff');
   const [comparisonJinsId, setComparisonJinsId] = useState<string>('saba');
 
@@ -372,6 +372,7 @@ export function JinsAnalysisTool({
   // Filtered ajnas list
   const filteredAjnas = useMemo(() => {
     if (jinsFilter === 'all') return allDefinitions;
+    if (jinsFilter === 'undefined') return allDefinitions.filter((d) => d.type === 'UndefinedSize');
     return allDefinitions.filter((d) => d.type.toLowerCase() === jinsFilter);
   }, [allDefinitions, jinsFilter]);
 
@@ -394,12 +395,11 @@ export function JinsAnalysisTool({
                     </span>
                   </h2>
                   <Badge variant="outline" className="border-purple-400/40 text-purple-300 text-[10px]">
-                    Sami Abu Shumays Model
+                    Maqam World 24-EDO Model
                   </Badge>
                 </div>
                 <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                  Explore the essential <strong className="text-purple-300">baggage notes (أمتعة الجنس)</strong> below
-                  the tonic that define melodic identity, descending cadences, and modal warmth in 24-EDO Arabic theory.
+                  Explore ajnas categorized by size (3-note, 4-note, 5-note, and undefined size) alongside essential <strong className="text-purple-300">baggage notes (أمتعة الجنس)</strong> below the tonic.
                 </p>
               </div>
             </div>
@@ -424,17 +424,23 @@ export function JinsAnalysisTool({
         {/* Jins Selector Carousel / Filter Bar */}
         <div className="mt-5 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none w-full sm:w-auto">
-            {(['all', 'tetrachord', 'trichord', 'pentachord'] as const).map((filter) => (
+            {([
+              { id: 'all', label: `All (${allDefinitions.length})` },
+              { id: 'trichord', label: '3-note (Trichords)' },
+              { id: 'tetrachord', label: '4-note (Tetrachords)' },
+              { id: 'pentachord', label: '5-note (Pentachords)' },
+              { id: 'undefined', label: '(undefined size)' }
+            ] as const).map(({ id, label }) => (
               <button
-                key={filter}
-                onClick={() => setJinsFilter(filter)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
-                  jinsFilter === filter
+                key={id}
+                onClick={() => setJinsFilter(id)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  jinsFilter === id
                     ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/30'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                 }`}
               >
-                {filter === 'all' ? 'All Ajnas' : `${filter}s`}
+                {label}
               </button>
             ))}
           </div>
@@ -503,7 +509,7 @@ export function JinsAnalysisTool({
                     isSelected ? 'bg-purple-800/60 text-purple-200' : 'bg-slate-800 text-slate-400'
                   }`}
                 >
-                  {def.type}
+                  {def.sizeLabel || def.type}
                 </Badge>
                 {baggageCount > 0 ? (
                   <span className="text-purple-400 font-mono">
@@ -808,7 +814,7 @@ export function JinsAnalysisTool({
                     fontWeight="bold"
                     letterSpacing="0.05em"
                   >
-                    Core Jins Structure ({selectedDef.type})
+                    Core Jins Structure ({selectedDef.sizeLabel || selectedDef.type})
                   </text>
                 </g>
               )}
@@ -1154,8 +1160,8 @@ export function JinsAnalysisTool({
               </p>
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 font-mono text-[11px]">
                 <div className="flex justify-between text-slate-400">
-                  <span>Jins Type:</span>
-                  <span className="text-white font-semibold">{selectedDef.type}</span>
+                  <span>Size Category:</span>
+                  <span className="text-white font-semibold">{selectedDef.sizeLabel || selectedDef.type}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Core Intervals:</span>
