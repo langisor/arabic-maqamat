@@ -101,7 +101,7 @@ export class AudioTransport {
   }
 
   public static startSession(scope: string, activity: string): TransportSession {
-    this.stopScope(scope);
+    this.stopAll();
     const record: SessionRecord = {
       id: this.nextSessionId++,
       scope,

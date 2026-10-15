@@ -280,6 +280,7 @@ export class MetronomeAudioEngine {
 
     if (!session.isActive()) return;
 
+    this.masterGain?.gain.setValueAtTime(this.volume, Tone.now());
     this.isPlaying = true;
     this.currentBeatIndex = 0;
     this.nextBeatAudioTime = audioTime ?? Tone.now() + 0.05;
@@ -296,6 +297,7 @@ export class MetronomeAudioEngine {
   }
 
   private static stopInternal(): void {
+    this.masterGain?.gain.setValueAtTime(0, Tone.now());
     if (!this.isPlaying && this.timerId === null) return;
     this.isPlaying = false;
     if (this.timerId !== null) {

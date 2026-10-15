@@ -59,6 +59,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   const detectorRef = useRef<MicrotonalPitchDetector | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streakTimerRef = useRef<number | null>(null);
+  const dronePitchRef = useRef<ArabicPitch | null>(null);
 
   useEffect(() => {
     detectorRef.current = new MicrotonalPitchDetector(44100, 2048, {
@@ -81,14 +82,15 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
-    if (dronePlaying) {
-      MicrotonalAudioEngine.stopSequence('intonation-drone');
+    if (dronePitchRef.current) {
+      MicrotonalAudioEngine.toggleDrone(dronePitchRef.current, false);
+      dronePitchRef.current = null;
       setDronePlaying(false);
     }
     setIsListening(false);
     setCurrentDetection(null);
     setInputLevelDb(-100);
-  }, [dronePlaying]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -222,11 +224,15 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
 
   const toggleDrone = () => {
     if (dronePlaying) {
-      MicrotonalAudioEngine.stopSequence('intonation-drone');
+      if (dronePitchRef.current) {
+        MicrotonalAudioEngine.toggleDrone(dronePitchRef.current, false);
+        dronePitchRef.current = null;
+      }
       setDronePlaying(false);
     } else {
       const pitchToPlay = trackingMode === 'target' ? targetPitch : currentDetection?.closestPitch ?? targetPitch;
-      MicrotonalAudioEngine.playPitch(pitchToPlay, 60.0, timbre, 0.7);
+      dronePitchRef.current = pitchToPlay;
+      MicrotonalAudioEngine.toggleDrone(pitchToPlay, true);
       setDronePlaying(true);
     }
   };

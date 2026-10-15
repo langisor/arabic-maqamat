@@ -218,20 +218,19 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = 'violin',
     velocity: number = 0.7
   ): void {
+    AudioTransport.stopAll();
     this.requestAudioContext();
     const freq = pitch.toFrequency(this.referenceA4);
     const now = Tone.now();
 
     try {
-      if (timbre === 'violin' && this.violinSynth) {
-        this.violinSynth.triggerAttackRelease(freq, durationSeconds, now, Math.min(1, velocity * 0.9));
-      } else if (timbre === 'oud' && this.oudSynth) {
-        this.oudSynth.triggerAttackRelease(freq, durationSeconds, now, Math.min(1, velocity * 1.1));
-      } else if (timbre === 'kanun' && this.kanunSynth) {
-        this.kanunSynth.triggerAttackRelease(freq, durationSeconds, now, Math.min(1, velocity * 1.0));
-      } else if (this.violinSynth) {
-        this.violinSynth.triggerAttackRelease(freq, durationSeconds, now, velocity);
-      }
+      this.triggerFrequency(
+        freq,
+        durationSeconds,
+        timbre,
+        this.scaleVelocity(timbre, velocity),
+        now
+      );
     } catch {
       // In case Tone context was interrupted
     }
@@ -246,19 +245,35 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = 'violin',
     velocity: number = 0.7
   ): void {
+    AudioTransport.stopAll();
     this.requestAudioContext();
     const now = Tone.now();
     try {
-      if (timbre === 'violin' && this.violinSynth) {
-        this.violinSynth.triggerAttackRelease(freq, durationSeconds, now, velocity);
-      } else if (timbre === 'oud' && this.oudSynth) {
-        this.oudSynth.triggerAttackRelease(freq, durationSeconds, now, velocity);
-      } else if (this.kanunSynth) {
-        this.kanunSynth.triggerAttackRelease(freq, durationSeconds, now, velocity);
-      }
+      this.triggerFrequency(freq, durationSeconds, timbre, velocity, now);
     } catch {
       // Fallback safe
     }
+  }
+
+  private static triggerFrequency(
+    frequency: number,
+    durationSeconds: number,
+    timbre: TimbreType,
+    velocity: number,
+    audioTime: number
+  ): void {
+    const synth = timbre === 'oud'
+      ? this.oudSynth
+      : timbre === 'kanun'
+        ? this.kanunSynth
+        : this.violinSynth;
+    synth?.triggerAttackRelease(frequency, durationSeconds, audioTime, velocity);
+  }
+
+  private static scaleVelocity(timbre: TimbreType, velocity: number): number {
+    if (timbre === 'violin') return Math.min(1, velocity * 0.9);
+    if (timbre === 'oud') return Math.min(1, velocity * 1.1);
+    return Math.min(1, velocity);
   }
 
   /**
@@ -300,7 +315,13 @@ export class MicrotonalAudioEngine {
       Tone.getDraw().schedule(() => {
         if (!session.isActive()) return;
         voices.frequencies.push(pitch.toFrequency(this.referenceA4));
-        this.playPitch(pitch, intervalSeconds * 0.92, timbre, 0.75);
+        this.triggerFrequency(
+          pitch.toFrequency(this.referenceA4),
+          intervalSeconds * 0.92,
+          timbre,
+          this.scaleVelocity(timbre, 0.75),
+          Tone.now()
+        );
         if (onStepChange) onStepChange(index);
       }, stepTime);
     });
@@ -358,7 +379,13 @@ export class MicrotonalAudioEngine {
       Tone.getDraw().schedule(() => {
         if (!session.isActive()) return;
         voices.frequencies.push(note.pitch.toFrequency(this.referenceA4));
-        this.playPitch(note.pitch, noteDurationSec * 0.92, timbre, 0.75);
+        this.triggerFrequency(
+          note.pitch.toFrequency(this.referenceA4),
+          noteDurationSec * 0.92,
+          timbre,
+          this.scaleVelocity(timbre, 0.75),
+          Tone.now()
+        );
         if (onStepChange) onStepChange(index);
       }, stepTime);
       accumulatedSeconds += noteDurationSec;
@@ -484,6 +511,7 @@ export class MicrotonalAudioEngine {
     } catch {
       // The audio context may have been interrupted.
     }
+    this.disposeDrone();
   }
 }
 
