@@ -40,7 +40,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const [includeBassCourse, setIncludeBassCourse] = useState(true)
   const [reverseCourses, setReverseCourses] = useState(false)
   const [highlightMaqam, setHighlightMaqam] = useState(true)
-  const [activePitch, setActivePitch] = useState<string | null>(null)
+  const [activePitch, setActivePitch] = useState<string | number | null>(null)
   const [isPlayingScale, setIsPlayingScale] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
@@ -56,10 +56,11 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const displayedCourses = reverseCourses
     ? [...visibleCourses].reverse()
     : visibleCourses
+  const maqamScale = currentMaqam.getScale()
   const maqamPitchClasses = new Set(
-    currentMaqam
-      .getScale()
-      .map((pitch) => ((pitch.toQuarterToneIndex() % 24) + 24) % 24)
+    maqamScale.map(
+      (pitch) => ((pitch.toQuarterToneIndex() % 24) + 24) % 24
+    )
   )
   const tonicPitchClass =
     ((currentMaqam.getTonic().toQuarterToneIndex() % 24) + 24) % 24
@@ -73,7 +74,9 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     const pitchClass = ((pitch.toQuarterToneIndex() % 24) + 24) % 24
     const isTonic = pitchClass === tonicPitchClass
     const isMaqamNote = maqamPitchClasses.has(pitchClass)
-    const isActive = activePitch === `${course.id}-${position}`
+    const isActive =
+      activePitch === `${course.id}-${position}` ||
+      activePitch === pitch.toQuarterToneIndex()
     const originalCourseNumber =
       OUD_COURSES.findIndex(({ id }) => id === course.id) + 1
     const highlightClass =
@@ -176,7 +179,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
         "oud",
         (index) => {
           if (index < 0) setActivePitch(null)
-          else setActivePitch(`scale-${index}`)
+          else setActivePitch(maqamScale[index].toQuarterToneIndex())
         },
         () => setIsPlayingScale(false),
         undefined,

@@ -21,16 +21,19 @@ export function SessionBar({
   onSelectFamily,
   onSelectMaqam,
 }: Props) {
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
   const tonic = maqam.getTonic()
   const ghammaz = maqam.getGhammaz()
   const scale = maqam.getScale().map((pitch) => pitch.toScientificString()).join("  ")
 
   const families = MaqamatCatalogue.getFamiliesList()
-
-  // Match current maqam's family to the key in families list
-  const currentFamilyKey =
-    (maqam.family as string) === "صنع" || (maqam.family as string) === "Saba" ? "صنع" : maqam.family
+  const currentFamilyKey = maqam.family
+  const familyMembers = currentFamilyKey
+    ? MaqamatCatalogue.getMaqamatByFamily(currentFamilyKey)
+    : []
+  const maqamOptions = familyMembers.some(({ id }) => id === maqam.id)
+    ? familyMembers
+    : [maqam, ...familyMembers]
 
   const handleFamilyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedKey = e.target.value
@@ -40,6 +43,11 @@ export function SessionBar({
       const rep = MaqamatCatalogue.getRepresentativeMaqamForFamily(selectedKey)
       onSelectMaqam(rep)
     }
+  }
+
+  const handleMaqamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedMaqam = maqamOptions.find(({ id }) => id === e.target.value)
+    if (selectedMaqam) onSelectMaqam?.(selectedMaqam)
   }
 
   return (
@@ -64,23 +72,24 @@ export function SessionBar({
               )}
             </div>
 
-            {/* Maqam Family Selecting Drop List */}
-            <div className="flex items-center gap-1.5 pl-2 border-l border-border/80">
+            <div className="flex items-center gap-1.5 border-l border-border/80 pl-2">
               <label
                 htmlFor="maqam-family-select"
-                className="text-[10px] font-semibold uppercase text-muted-foreground flex items-center gap-1 shrink-0"
+                className="flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase text-muted-foreground"
               >
                 <Layers className="h-3 w-3 text-amber-500" aria-hidden="true" />
-                <span className="hidden sm:inline">{language === "ar" ? "العائلة:" : "Family:"}</span>
+                <span className="hidden sm:inline">{t("selectMaqamFamily")}</span>
               </label>
               <select
                 id="maqam-family-select"
                 value={currentFamilyKey}
                 onChange={handleFamilyChange}
+                aria-label={t("selectMaqamFamily")}
                 className="h-7 cursor-pointer rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs font-semibold text-slate-100 shadow-xs transition-colors hover:border-amber-500/50 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 style={{ colorScheme: "dark" }}
-                title={language === "ar" ? "اختر عائلة المقامات" : "Select Maqam Family"}
+                title={t("selectMaqamFamily")}
               >
+                <option value="None">{t("independentMaqamat")}</option>
                 {families.map((fam) => (
                   <option
                     key={fam.key}
@@ -89,6 +98,37 @@ export function SessionBar({
                     style={{ backgroundColor: "#0f172a", color: "#f1f5f9" }}
                   >
                     {fam.englishName} ({fam.arabicName})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5 border-l border-border/80 pl-2">
+              <label
+                htmlFor="maqam-select"
+                className="flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase text-muted-foreground"
+              >
+                <Music2 className="h-3 w-3 text-amber-500" aria-hidden="true" />
+                <span className="hidden sm:inline">{t("selectMaqam")}</span>
+              </label>
+              <select
+                id="maqam-select"
+                value={maqam.id}
+                onChange={handleMaqamChange}
+                aria-label={t("selectMaqam")}
+                disabled={maqamOptions.length === 0 || !onSelectMaqam}
+                className="h-7 max-w-40 cursor-pointer rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs font-semibold text-slate-100 shadow-xs transition-colors hover:border-amber-500/50 focus:ring-1 focus:ring-amber-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ colorScheme: "dark" }}
+                title={t("selectMaqam")}
+              >
+                {maqamOptions.map((option) => (
+                  <option
+                    key={option.id}
+                    value={option.id}
+                    className="bg-slate-900 text-slate-100"
+                    style={{ backgroundColor: "#0f172a", color: "#f1f5f9" }}
+                  >
+                    {option.name}
+                    {option.arabicName ? ` (${option.arabicName})` : ""}
                   </option>
                 ))}
               </select>

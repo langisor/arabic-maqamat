@@ -11,7 +11,7 @@ export type ModulationRelation =
   | 'same-family'      // Same family (shares lower root jins, e.g. Rast -> Suznak / Nairuz / Mahur)
   | 'ghammaz-pivot'    // Modulation launched at the Ghammaz dominant (e.g. at G4: Bayati -> Hijaz / Nahawand)
   | 'shared-jins'      // Common upper or lower jins at identical or shifted root
-  | 'relative-family'  // Adjacent or historically coupled family (e.g. Rast & Bayati, Bayati & Saba, Nahawand & Kurd)
+  | 'relative-family'  // Adjacent or historically coupled maqamat (e.g. Rast & Bayati, Bayati & Saba, Nahawand & Kurd)
   | 'tonic-shift';     // Shift to parallel tonic with different root jins (e.g. Rast on C -> Nahawand on C / Nikriz on C)
 
 export type ModulationTechnique =

@@ -57,7 +57,7 @@ const MAQAM_FACTS_DATA: FactSection[] = [
       "The root jins (جنس الأصل) defines the maqam family, anchoring its emotional ethos and tonal foundation.",
       "The ghammaz (الغمّاز) is the secondary focal note, serving as a melodic pivot and modulation gateway, typically on the 4th, 5th, or 3rd degree.",
       "The sayr (السير) governs the temporal melodic trajectory dictating whether melodies ascend from the tonic, undulate around the ghammaz, or descend from the octave.",
-      "Traditional maqamat are classified into 8 primary families by their lower jins using the classical mnemonic: صنع بسحرك."
+      "MaqamWorld groups maqamat into eight families by shared root jins: ‘Ajam, Bayati, Hijaz, Kurd, Nahawand, Nikriz, Rast, and Sikah. Saba is listed outside a family."
     ],
   },
   {
@@ -91,18 +91,13 @@ const MAQAM_FACTS_DATA: FactSection[] = [
   {
     id: "family-system",
     title: "The 8 Classical Families (العائلات المقامية الثماني)",
-    arabicTitle: "عائلات صنع بسحرك",
+    arabicTitle: "العائلات المقامية الثماني",
     icon: Layers,
     sampleMaqamId: "bayati",
     content: [
-      "ص = Saba (صبا): Heart-wrenching microtonal compression with lower 400¢ span.",
-      "ن = Nahawand (نهاوند): Natural minor tetrachord (whole-half-whole), elegant and harmonic.",
-      "ع = ‘Ajam (عجم): Major pentachord (700¢ span) with celebratory Western affinity.",
-      "ب = Bayati (بياتي): Quintessential Arabic sound with neutral second degree (Dukah to Sikah half-flat).",
-      "س = Sikah (سيكاه): Meditative trichord rooted directly on neutral quarter-tone 3rd (E𝄳).",
-      "ح = Hijaz (حجاز): Dramatic and mystical, featuring the characteristic augmented second (300¢ step).",
-      "ر = Rast (راست): Stately, noble 'King of Maqamat' with neutral 3rd and 7th degrees.",
-      "ك = Kurd (كرد): Tender Phrygian tetrachord starting with a half-step."
+      "Families share the same first (root) jins, while branch maqamat use different upper ajnas.",
+      "The eight families are ‘Ajam, Bayati, Hijaz, Kurd, Nahawand, Nikriz, Rast, and Sikah.",
+      "MaqamWorld lists Saba among maqamat that do not share their first jins with another maqam and are therefore outside a family."
     ],
   },
   {
@@ -171,6 +166,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
 
   const allMaqamat = MaqamatCatalogue.getAllMaqamat()
   const families = Object.values(MaqamatCatalogue.FAMILIES)
+  const independentMaqamat = MaqamatCatalogue.getMaqamatByFamily("None")
 
   const handleAuditionSample = (maqamId?: string) => {
     if (!maqamId) return
@@ -221,7 +217,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                   </span>
                 </DrawerTitle>
                 <DrawerDescription className="text-xs text-slate-400">
-                  Comprehensive reference for classical Arabic modal music theory, jins baggage, network pathways, and the 8 families mnemonic (صنع بسحرك)
+                  Reference for classical Arabic modal music theory, jins baggage, network pathways, and root-jins family classification
                 </DrawerDescription>
               </div>
             </div>
@@ -246,7 +242,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                     The 8 Fundamental Families
                   </span>
                   <Badge variant="secondary" className="font-arabic text-[11px] font-bold bg-amber-500/20 text-amber-300">
-                    صنع بسحرك
+                    حسب الجنس الأصل
                   </Badge>
                 </div>
                 <h3 className="mt-1 text-lg font-extrabold text-white">
@@ -254,11 +250,11 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                 </h3>
               </div>
               <p className="max-w-md text-xs text-slate-300">
-                The classical mnemonic{" "}
+                The family system{" "}
                 <span className="font-serif text-sm font-bold text-amber-300">
-                  "صنع بسحرك"
+                  groups maqamat by shared root jins
                 </span>{" "}
-                categorizes modal systems by their root lower Jins. Click any card to select its archetype Maqam in the studio:
+                in MaqamWorld. Click a card to select a representative maqam:
               </p>
             </div>
 
@@ -325,6 +321,25 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                 )
               })}
             </div>
+            {independentMaqamat.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-amber-800/30 pt-3">
+                <span className="text-xs font-semibold text-slate-300">
+                  Maqamat outside a family:
+                </span>
+                {independentMaqamat.map((independentMaqam) => (
+                  <Button
+                    key={independentMaqam.id}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLoadMaqam(independentMaqam.id)}
+                    className="h-7 border-amber-500/30 text-xs text-amber-200 hover:bg-amber-500/10"
+                  >
+                    {independentMaqam.name}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
 
           <Accordion

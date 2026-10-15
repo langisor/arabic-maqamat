@@ -5,7 +5,7 @@ import { Jins, AjnasLibrary, type JinsDefinition } from "./jins"
 export type MaqamConnection = "Ittisal" | "Infisal" | "Tadakhul"
 
 export type MaqamFamilyMnemonic =
-  "Saba" | "Nahawand" | "‘Ajam" | "Bayati" | "Sikah" | "Hijaz" | "Rast" | "Kurd"
+  "Nikriz" | "Nahawand" | "‘Ajam" | "Bayati" | "Sikah" | "Hijaz" | "Rast" | "Kurd"
 
 export interface AlternateJinsBranch {
   readonly jins: Jins
@@ -240,25 +240,10 @@ export class Maqam {
 }
 
 /**
- * Registry of The 8 Families (صنع بسحرك) and core Maqamat
+ * Registry of the eight root-jins families and core Maqamat.
  */
 export class MaqamatCatalogue {
   public static readonly FAMILIES: Record<MaqamFamilyMnemonic, MaqamFamily> = {
-    Saba: {
-      mnemonic: "Saba",
-      arabicLetter: "ص",
-      arabicName: "عائلة الصبا",
-      rootJinsDef: AjnasLibrary.SABA,
-      description:
-        "Defined by narrow 400-cent lower Jins Saba with yearning path",
-    },
-    Nahawand: {
-      mnemonic: "Nahawand",
-      arabicLetter: "ن",
-      arabicName: "عائلة النهاوند",
-      rootJinsDef: AjnasLibrary.NAHAWAND,
-      description: "Minor-third based family with natural minor qualities",
-    },
     "‘Ajam": {
       mnemonic: "‘Ajam",
       arabicLetter: "ع",
@@ -274,19 +259,33 @@ export class MaqamatCatalogue {
       rootJinsDef: AjnasLibrary.BAYATI,
       description: "Beloved folk and classical family with neutral 2nd",
     },
-    Sikah: {
-      mnemonic: "Sikah",
-      arabicLetter: "س",
-      arabicName: "عائلة السيكاه",
-      rootJinsDef: AjnasLibrary.SIKAH,
-      description: "Rooted directly on neutral third (E𝄳)",
-    },
     Hijaz: {
       mnemonic: "Hijaz",
       arabicLetter: "ح",
       arabicName: "عائلة الحجاز",
       rootJinsDef: AjnasLibrary.HIJAZ,
       description: "Harmonic and dramatic colors with augmented 2nd",
+    },
+    Kurd: {
+      mnemonic: "Kurd",
+      arabicLetter: "ك",
+      arabicName: "عائلة الكرد",
+      rootJinsDef: AjnasLibrary.KURD,
+      description: "Grounded Phrygian flavored modal family",
+    },
+    Nahawand: {
+      mnemonic: "Nahawand",
+      arabicLetter: "ن",
+      arabicName: "عائلة النهاوند",
+      rootJinsDef: AjnasLibrary.NAHAWAND,
+      description: "Minor-third based family with natural minor qualities",
+    },
+    Nikriz: {
+      mnemonic: "Nikriz",
+      arabicLetter: "ن",
+      arabicName: "عائلة النكريز",
+      rootJinsDef: AjnasLibrary.NIKRIZ,
+      description: "Rooted in the augmented-second Jins Nikriz",
     },
     Rast: {
       mnemonic: "Rast",
@@ -295,12 +294,12 @@ export class MaqamatCatalogue {
       rootJinsDef: AjnasLibrary.RAST,
       description: 'The foundational "mother scale" of Arabic music',
     },
-    Kurd: {
-      mnemonic: "Kurd",
-      arabicLetter: "ك",
-      arabicName: "عائلة الكرد",
-      rootJinsDef: AjnasLibrary.KURD,
-      description: "Grounded Phrygian flavored modal family",
+    Sikah: {
+      mnemonic: "Sikah",
+      arabicLetter: "س",
+      arabicName: "عائلة السيكاه",
+      rootJinsDef: AjnasLibrary.SIKAH,
+      description: "Rooted directly on neutral third (E𝄳)",
     },
   }
 
@@ -1499,7 +1498,7 @@ export class MaqamatCatalogue {
       id: "nikriz",
       name: "Maqam Nikriz",
       arabicName: "مقام نكريز",
-      family: "Nahawand",
+      family: "Nikriz",
       lowerJins: lower,
       connection: "Ittisal",
       upperJins: upper,
@@ -1605,7 +1604,7 @@ export class MaqamatCatalogue {
       id: "saba",
       name: "Maqam Saba",
       arabicName: "مقام صبا",
-      family: "Saba",
+      family: "None",
       lowerJins: lower,
       connection: "Tadakhul",
       upperJins: upper,
@@ -1675,10 +1674,10 @@ export class MaqamatCatalogue {
   }[] {
     return [
       {
-        key: "Rast",
-        englishName: "Rast",
-        arabicName: "عائلة الراست",
-        defaultMaqamId: "rast",
+        key: "‘Ajam",
+        englishName: "‘Ajam",
+        arabicName: "عائلة العجم",
+        defaultMaqamId: "ajam",
       },
       {
         key: "Bayati",
@@ -1687,22 +1686,10 @@ export class MaqamatCatalogue {
         defaultMaqamId: "bayati",
       },
       {
-        key: "Sikah",
-        englishName: "Sikah",
-        arabicName: "عائلة السيكاه",
-        defaultMaqamId: "sikah",
-      },
-      {
         key: "Hijaz",
         englishName: "Hijaz",
         arabicName: "عائلة الحجاز",
         defaultMaqamId: "hijaz",
-      },
-      {
-        key: "Nahawand",
-        englishName: "Nahawand",
-        arabicName: "عائلة النهاوند",
-        defaultMaqamId: "nahawand",
       },
       {
         key: "Kurd",
@@ -1711,16 +1698,28 @@ export class MaqamatCatalogue {
         defaultMaqamId: "kurd",
       },
       {
-        key: "‘Ajam",
-        englishName: "‘Ajam",
-        arabicName: "عائلة العجم",
-        defaultMaqamId: "ajam",
+        key: "Nahawand",
+        englishName: "Nahawand",
+        arabicName: "عائلة النهاوند",
+        defaultMaqamId: "nahawand",
       },
       {
-        key: "Saba",
-        englishName: "Saba",
-        arabicName: "عائلة الصبا",
-        defaultMaqamId: "saba",
+        key: "Nikriz",
+        englishName: "Nikriz",
+        arabicName: "عائلة النكريز",
+        defaultMaqamId: "nikriz",
+      },
+      {
+        key: "Rast",
+        englishName: "Rast",
+        arabicName: "عائلة الراست",
+        defaultMaqamId: "rast",
+      },
+      {
+        key: "Sikah",
+        englishName: "Sikah",
+        arabicName: "عائلة السيكاه",
+        defaultMaqamId: "sikah",
       },
     ]
   }
@@ -1728,9 +1727,7 @@ export class MaqamatCatalogue {
   public static getMaqamatByFamily(
     family: MaqamFamilyMnemonic | string
   ): Maqam[] {
-    return this.getAllMaqamat().filter(
-      (m) => m.family === family || (family === "Saba" && m.family === "Saba")
-    )
+    return this.getAllMaqamat().filter((maqam) => maqam.family === family)
   }
 
   public static getRepresentativeMaqamForFamily(
@@ -1749,11 +1746,14 @@ export class MaqamatCatalogue {
         return this.buildNahawand()
       case "Kurd":
         return this.buildKurd()
+      case "Nikriz":
+        return this.buildNikriz()
       case "‘Ajam":
       case "Ajam":
         return this.buildAjam()
       case "صنع":
       case "Saba":
+      case "None":
         return this.buildSaba()
       default:
         return this.buildRast()

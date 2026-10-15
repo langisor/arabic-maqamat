@@ -35,7 +35,7 @@ const maqamFacts: FactSection[] = [
       "The root jins defines the family, while the melodic course or sayr is shaped by the movement between ajnas and their pivots.",
       "The root jins is the first jins in the scale and it anchors the maqam's character.",
       "The ghammaz is the most important secondary emphasis, usually the note most often used as a pivot or modulation point.",
-      "Traditional maqamat are grouped into families by shared root jins: Rast, Bayati, Hijaz, Nahawand, Kurd, Saba, Ajam, and Sikah (صنع بسحرك)."
+      "MaqamWorld groups maqamat into eight families by shared root jins: ‘Ajam, Bayati, Hijaz, Kurd, Nahawand, Nikriz, Rast, and Sikah. Saba is listed among maqamat outside a family."
     ]
   },
   {
@@ -63,12 +63,12 @@ const maqamFacts: FactSection[] = [
   },
   {
     id: "family-system",
-    title: "The 8 Maqam Families (صنع بسحرك)",
+    title: "The 8 Maqam Families",
     icon: Layers,
     content: [
-      "The classical mnemonic 'صنع بسحرك' categorizes modal systems by their root lower Jins.",
-      "Each family shares the same root jins but differs in upper ajnas, ghammaz, and sayr patterns.",
-      "Understanding the family system helps predict melodic behavior and modulation possibilities."
+      "Families are based on sharing the same first (root) jins, which has the largest role in defining a maqam's character.",
+      "Branch maqamat in a family use different upper ajnas while sharing the family root jins.",
+      "Maqamat that do not share their root jins with others, including Saba, are not part of a family."
     ]
   },
   {

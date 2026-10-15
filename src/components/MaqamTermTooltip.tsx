@@ -71,7 +71,7 @@ const maqamTerms: Record<string, MaqamTerm> = {
   },
   "family": {
     term: "Maqam Family (عائلة المقام)",
-    definition: "Maqamat grouped by shared root jins. The 8 families are: Rast, Bayati, Hijaz, Nahawand, Kurd, Saba, Ajam, and Sikah (صنع بسحرك).",
+    definition: "Maqamat grouped by shared root jins. MaqamWorld lists the eight families as ‘Ajam, Bayati, Hijaz, Kurd, Nahawand, Nikriz, Rast, and Sikah; Saba is outside a family.",
     arabic: "عائلة المقام"
   },
   "ittisal": {

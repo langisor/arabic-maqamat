@@ -210,7 +210,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
     return `مقام ${lowerDef.arabicName} ${upperDef.arabicName}`
   }, [customArabicName, lowerDef.arabicName, upperDef.arabicName])
 
-  const familyMnemonic: MaqamFamilyMnemonic = useMemo(() => {
+  const familyMnemonic: MaqamScaleStructure["family"] = useMemo(() => {
     switch (lowerDef.id) {
       case "rast":
         return "Rast"
@@ -222,8 +222,10 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
         return "Nahawand"
       case "kurd":
         return "Kurd"
+      case "nikriz":
+        return "Nikriz"
       case "saba":
-        return "Saba"
+        return "None"
       case "sikah":
         return "Sikah"
       case "ajam":
