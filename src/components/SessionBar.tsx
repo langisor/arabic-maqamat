@@ -1,9 +1,8 @@
-import { ArrowRight, Music2, Radio, Layers } from "lucide-react"
+import {  Music2, Radio, Layers } from "lucide-react"
 import { MaqamatCatalogue, type Maqam } from "../theory/maqam"
 import type { AudioTransportStatus } from "../audio/audio-transport"
 import type { ValidLab } from "../state/workspace-state"
 import { useLanguage } from "../state/language"
-import { Button } from "./ui/button"
 
 interface Props {
   maqam: Maqam
@@ -18,7 +17,7 @@ export function SessionBar({
   maqam,
   isDroneActive,
   transportStatus,
-  onNavigate,
+
   onSelectFamily,
   onSelectMaqam,
 }: Props) {
@@ -126,24 +125,7 @@ export function SessionBar({
                   ? t("audioReady")
                   : t("audioIdle")}
           </span>
-          <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={() => onNavigate("explorer")}>
-            {t("explore")}
-            <ArrowRight className="h-3 w-3 rtl:rotate-180" aria-hidden="true" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-purple-300 hover:text-purple-200"
-            onClick={() => onNavigate("jins-analysis")}
-          >
-            Ajnas
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onNavigate("training")}>
-            {t("practice")}
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => onNavigate("score")}>
-            {t("score")}
-          </Button>
+
         </div>
       </div>
     </section>
