@@ -3,7 +3,7 @@ import * as Tone from 'tone';
 import { ArabicPitch } from '../core/pitch';
 import { AudioTransport, type TransportSession } from './audio-transport';
 
-export type TimbreType = 'violin' | 'oud' | 'kanun';
+export type TimbreType = 'violin' | 'oud';
 
 export class MicrotonalAudioEngine {
   private static isInitialized = false;
@@ -20,8 +20,6 @@ export class MicrotonalAudioEngine {
   private static violinVibrato: Tone.Vibrato | null = null;
   private static oudSynth: Tone.PolySynth | null = null;
   private static oudFilter: Tone.Filter | null = null;
-  private static kanunSynth: Tone.PolySynth | null = null;
-  private static kanunFilter: Tone.Filter | null = null;
 
   // Drone Nodes
   private static droneOsc1: Tone.Oscillator | null = null;
@@ -108,30 +106,7 @@ export class MicrotonalAudioEngine {
     }).connect(this.oudFilter);
     this.oudSynth.volume.value = 0;
 
-    // 5. Kanun (Arabian 78-string Zither) Model:
-    // Crisp nylon/gut pluck with bright singing metallic/nylon overtone and longer sustain.
-    this.kanunFilter = new Tone.Filter({
-      frequency: 4400,
-      type: 'lowpass',
-      rolloff: -12,
-      Q: 1.4
-    }).connect(this.masterReverb);
-
-    this.kanunSynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'pulse',
-        width: 0.28
-      },
-      envelope: {
-        attack: 0.002,
-        decay: 1.4,
-        sustain: 0.06,
-        release: 0.45
-      }
-    }).connect(this.kanunFilter);
-    this.kanunSynth.volume.value = -3;
-
-    // 6. Qarar Drone Subsystem (Root drone for Taqsim & Wasla)
+    // 5. Qarar Drone Subsystem (Root drone for Taqsim & Wasla)
     this.droneGain = new Tone.Gain(0).connect(this.masterReverb);
     this.droneChorus = new Tone.Chorus({
       frequency: 0.4,
@@ -262,11 +237,7 @@ export class MicrotonalAudioEngine {
     velocity: number,
     audioTime: number
   ): void {
-    const synth = timbre === 'oud'
-      ? this.oudSynth
-      : timbre === 'kanun'
-        ? this.kanunSynth
-        : this.violinSynth;
+    const synth = timbre === 'oud' ? this.oudSynth : this.violinSynth;
     synth?.triggerAttackRelease(frequency, durationSeconds, audioTime, velocity);
   }
 
@@ -484,11 +455,7 @@ export class MicrotonalAudioEngine {
 
   private static releaseSequenceVoices(voices: { timbre: TimbreType; frequencies: number[] }): void {
     if (voices.frequencies.length === 0) return;
-    const synth = voices.timbre === 'oud' 
-      ? this.oudSynth 
-      : voices.timbre === 'kanun' 
-        ? this.kanunSynth 
-        : this.violinSynth;
+    const synth = voices.timbre === 'oud' ? this.oudSynth : this.violinSynth;
     try {
       synth?.triggerRelease(voices.frequencies, Tone.now());
     } catch {
@@ -507,7 +474,6 @@ export class MicrotonalAudioEngine {
     try {
       this.violinSynth?.releaseAll();
       this.oudSynth?.releaseAll();
-      this.kanunSynth?.releaseAll();
     } catch {
       // The audio context may have been interrupted.
     }

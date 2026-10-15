@@ -23,6 +23,7 @@ import {
   Rows,
   Columns,
 } from 'lucide-react';
+import { useLanguage } from '../state/language';
 
 export type ViolinTuningPreset = 'standard' | 'arabic' | 'western';
 
@@ -41,6 +42,90 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   onTuningChange,
   onPitchSelect,
 }) => {
+  const { language } = useLanguage();
+  const ui = language === 'ar'
+    ? {
+        title: 'لوحة أصابع الكمان',
+        subtitle: 'مواضع أصابع ميكروتونية بنظام ٢٤ درجة، وأمتعة الأجناس، وضبط الكمان العربي التقليدي (صول - ري - صول - ري).',
+        tuning: 'الضبط',
+        arabicTuning: 'عربي (صول-ري-صول-ري)',
+        westernTuning: 'غربي (صول-ري-لا-مي)',
+        position: 'الموضع',
+        auto: 'تلقائي',
+        reverseStrings: 'عكس ترتيب الأوتار',
+        reversed: 'معكوس',
+        horizontal: 'أفقي',
+        vertical: 'عمودي',
+        hideTips: 'إخفاء الإرشادات',
+        showTips: 'إرشادات العزف',
+        mode: 'الوضع',
+        standard: 'قياسي',
+        reversedMode: 'معكوس',
+        tonic: 'القرار',
+        ghammaz: 'الغمّاز',
+        baggage: 'الأمتعة',
+        scale: 'السلم',
+        swipe: 'اسحب أفقياً أو اختر العرض العمودي',
+        nutOpen: 'العظمة (مفتوح)',
+        semitone: 'نصف بُعد',
+        wholeTone: 'بُعد كامل (الموضع الأول)',
+        neutralThird: 'الثالثة المحايدة',
+        majorThird: 'الثالثة الكبيرة',
+        perfectFourth: 'الرابعة التامة',
+        tritone: 'ثلاثة أبعاد',
+        perfectFifth: 'الخامسة التامة',
+        playPitch: 'اعزف النغمة',
+        finger: 'الإصبع',
+        string: 'الوتر',
+        maqamDegree: 'درجة المقام',
+        guidelines: 'إرشادات أداء الكمان العربي',
+        arabicTuningTip: 'الضبط العربي (صول-ري-صول-ري): يوفّر خفض الوترين الثالث والرابع رنيناً متآلفاً لمقامي الراست والبياتي.',
+        quarterToneTip: 'موضع ربع الصوت المحايد: يوضع الإصبع بين علامة نصف البعد والبُعد الكامل، بفارق يقارب ٥٠ سنتاً.',
+        baggageTip: 'أصابع الأمتعة: قد تقع نغمات الأمتعة خارج الجنس الأساسي أسفل القرار أو أعلى نغماته؛ اختر الوتر والموضع الملائمين.',
+        activePosition: 'الموضع والانتقالات',
+        autoDescription: 'الوضع التلقائي: يحسب أصابع الموضع الأول الأكثر ملاءمة مع الاستفادة من الأوتار المطلقة وتقليل الانتقالات.',
+      }
+    : {
+        title: 'Violin Fingerboard',
+        subtitle: '24-EDO microtonal finger placements, jins baggage, and traditional Arabic violin tuning (G-D-G-D)',
+        tuning: 'Tuning:',
+        arabicTuning: 'Arabic (G-D-G-D)',
+        westernTuning: 'Western (G-D-A-E)',
+        position: 'Position:',
+        auto: 'Auto',
+        reverseStrings: 'Reverse Strings',
+        reversed: 'Rev',
+        horizontal: 'Horizontal',
+        vertical: 'Vertical',
+        hideTips: 'Hide Tips',
+        showTips: 'Pedagogy Tips',
+        mode: 'Mode',
+        standard: 'Standard',
+        reversedMode: 'Reversed',
+        tonic: 'Tonic',
+        ghammaz: 'Ghammaz',
+        baggage: 'Baggage',
+        scale: 'Scale',
+        swipe: 'Swipe horizontally or select Vertical for upright view',
+        nutOpen: 'Nut (Open)',
+        semitone: '½-tone',
+        wholeTone: 'Whole tone (1st)',
+        neutralThird: 'Neutral 3rd',
+        majorThird: 'Maj 3rd',
+        perfectFourth: 'Perf 4th',
+        tritone: 'Tritone',
+        perfectFifth: 'Perf 5th',
+        playPitch: 'Play Pitch',
+        finger: 'Finger',
+        string: 'String',
+        maqamDegree: 'Maqam Degree',
+        guidelines: 'Arabic Violin Pedagogical Guidelines',
+        arabicTuningTip: 'Arabic Tuning (G-D-G-D): Re-tuning the A string down to G4 and E string down to D5 provides rich sympathetic resonance for Rast and Bayati.',
+        quarterToneTip: 'Neutral Quarter-Tone Placement: Place the finger halfway between the semitone and whole-tone marks (approximately 50 cents sharp from the flat).',
+        baggageTip: 'Baggage Fingerings: Baggage notes outside the core jins may fall below the tonic or above its top pitch; choose a string and position suited to the register.',
+        activePosition: 'Active Position & Shifts',
+        autoDescription: 'Auto Mode: Computes ergonomic first-position fingering with useful open strings and minimal shifts.',
+      };
   const [selectedPosition, setSelectedPosition] = useState<ViolinPositionMode>('auto');
   const [activePlayedPitch, setActivePlayedPitch] = useState<string | null>(null);
   const [selectedPlacement, setSelectedPlacement] = useState<ViolinFingerPlacement | null>(null);
@@ -52,17 +137,17 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const tuningStrings: { name: ViolinStringName; label: string; arabicLabel: string; rootPitch: ArabicPitch }[] = useMemo(() => {
     if (tuning === 'arabic') {
       return [
-        { name: 'G', label: 'G3 (Sol)', arabicLabel: 'يكاه · صول', rootPitch: new ArabicPitch('G', '♮', 3) },
-        { name: 'D', label: 'D4 (Re)', arabicLabel: 'دوكاه · ري', rootPitch: new ArabicPitch('D', '♮', 4) },
-        { name: 'A', label: 'G4 (Nawa)', arabicLabel: 'نوى · صول', rootPitch: new ArabicPitch('G', '♮', 4) },
-        { name: 'E', label: 'D5 (Muhayyar)', arabicLabel: 'محير · ري', rootPitch: new ArabicPitch('D', '♮', 5) },
+        { name: 'G', label: 'G3', arabicLabel: 'يكاه · صول', rootPitch: new ArabicPitch('G', '♮', 3) },
+        { name: 'D', label: 'D4', arabicLabel: 'دوكاه · ري', rootPitch: new ArabicPitch('D', '♮', 4) },
+        { name: 'A', label: 'G4', arabicLabel: 'نوى · صول', rootPitch: new ArabicPitch('G', '♮', 4) },
+        { name: 'E', label: 'D5', arabicLabel: 'محير · ري', rootPitch: new ArabicPitch('D', '♮', 5) },
       ];
     }
     return [
-      { name: 'G', label: 'G3 (Sol)', arabicLabel: 'يكاه · صول', rootPitch: new ArabicPitch('G', '♮', 3) },
-      { name: 'D', label: 'D4 (Re)', arabicLabel: 'دوكاه · ري', rootPitch: new ArabicPitch('D', '♮', 4) },
-      { name: 'A', label: 'A4 (La)', arabicLabel: 'حسيني · لا', rootPitch: new ArabicPitch('A', '♮', 4) },
-      { name: 'E', label: 'E5 (Mi)', arabicLabel: 'جواب · مي', rootPitch: new ArabicPitch('E', '♮', 5) },
+      { name: 'G', label: 'G3', arabicLabel: 'يكاه · صول', rootPitch: new ArabicPitch('G', '♮', 3) },
+      { name: 'D', label: 'D4', arabicLabel: 'دوكاه · ري', rootPitch: new ArabicPitch('D', '♮', 4) },
+      { name: 'A', label: 'A4', arabicLabel: 'حسيني · لا', rootPitch: new ArabicPitch('A', '♮', 4) },
+      { name: 'E', label: 'E5', arabicLabel: 'جواب · مي', rootPitch: new ArabicPitch('E', '♮', 5) },
     ];
   }, [tuning]);
 
@@ -115,26 +200,26 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div
+      className="space-y-4 sm:space-y-6"
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
+    >
       {/* Header & Controls - Fully Responsive */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800">
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
             <Music className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
-            <span>Violin Fingerboard Studio</span>
-            <span className="font-arabic text-xs sm:text-sm text-amber-400/90 font-normal">
-              لوحة أصابع الكمان
-            </span>
+            <span>{ui.title}</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1 leading-relaxed">
-            24-EDO microtonal finger placements, jins baggage, and traditional Arabic violin tuning (G-D-G-D)
+            {ui.subtitle}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           {/* Tuning Preset Selector */}
           <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs w-full sm:w-auto justify-between sm:justify-start">
-            <span className="text-slate-400 px-1.5 sm:px-2 font-medium text-[11px] sm:text-xs">Tuning:</span>
+            <span className="text-slate-400 px-1.5 sm:px-2 font-medium text-[11px] sm:text-xs">{ui.tuning}</span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => onTuningChange?.('arabic')}
@@ -144,7 +229,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Arabic (G-D-G-D)
+                {ui.arabicTuning}
               </button>
               <button
                 onClick={() => onTuningChange?.('western')}
@@ -154,14 +239,14 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Western (G-D-A-E)
+                {ui.westernTuning}
               </button>
             </div>
           </div>
 
           {/* Position Selector */}
           <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-            <span className="text-slate-400 px-1.5 sm:px-2 font-medium text-[11px] sm:text-xs">Pos:</span>
+            <span className="text-slate-400 px-1.5 sm:px-2 font-medium text-[11px] sm:text-xs">{ui.position}</span>
             {(['auto', 1, 2, 3, 4] as ViolinPositionMode[]).map((pos) => (
               <button
                 key={pos}
@@ -172,7 +257,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {pos === 'auto' ? 'Auto' : `${pos}st`}
+                {pos === 'auto' ? ui.auto : language === 'ar' ? `${pos}` : `${pos}st`}
               </button>
             ))}
           </div>
@@ -187,13 +272,13 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-xs'
                 : 'border-slate-800 bg-slate-950 text-slate-300 hover:text-white hover:bg-slate-900'
             }`}
-            title="Reverse String Order (e.g. G-D-G-D vs D-G-D-G or G-D-A-E vs E-A-D-G)"
+            title={ui.reverseStrings}
           >
             <ArrowUpDown className="w-3.5 h-3.5 mr-1 text-amber-400" />
-            <span>Reverse Strings</span>
+            <span>{ui.reverseStrings}</span>
             {isReversedStrings && (
               <span className="font-mono text-[10px] text-amber-300 bg-amber-500/30 px-1 py-0.2 rounded ml-1">
-                Rev
+                {ui.reversed}
               </span>
             )}
           </Button>
@@ -208,10 +293,10 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                   ? 'bg-amber-500 text-slate-950 shadow-sm font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="Horizontal Fingerboard View"
+              title={ui.horizontal}
             >
               <Rows className="w-3 h-3" />
-              <span>Horizontal</span>
+              <span>{ui.horizontal}</span>
             </button>
             <button
               type="button"
@@ -221,10 +306,10 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                   ? 'bg-amber-500 text-slate-950 shadow-sm font-bold'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="Vertical Fingerboard View (Upright violin neck)"
+              title={ui.vertical}
             >
               <Columns className="w-3 h-3" />
-              <span>Vertical</span>
+              <span>{ui.vertical}</span>
             </button>
           </div>
 
@@ -235,7 +320,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             className="text-xs text-slate-400 hover:text-slate-200 ml-auto lg:ml-0 h-8"
           >
             <Info className="w-3.5 h-3.5 mr-1" />
-            {showPedagogicalTips ? 'Hide Tips' : 'Pedagogy Tips'}
+            {showPedagogicalTips ? ui.hideTips : ui.showTips}
           </Button>
         </div>
       </div>
@@ -246,14 +331,15 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
             <div>
               <CardTitle className="text-sm sm:text-base text-slate-200 flex items-center gap-2">
-                <span>Maqam {currentMaqam.name}</span>
-                <span className="font-arabic text-amber-400 text-xs sm:text-sm">{currentMaqam.arabicName}</span>
+                <span>
+                  {language === 'ar' ? currentMaqam.arabicName : `Maqam ${currentMaqam.name}`}
+                </span>
                 <Badge variant="secondary" className="text-[10px] font-mono capitalize">
-                  {orientation} Mode • {isReversedStrings ? 'Reversed' : 'Standard'}
+                  {ui.mode}: {orientation === 'horizontal' ? ui.horizontal : ui.vertical} · {isReversedStrings ? ui.reversedMode : ui.standard}
                 </Badge>
               </CardTitle>
               <CardDescription className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
-                Tonic: <span className="text-amber-300 font-semibold">{tonic.toString()}</span> • Ghammaz:{' '}
+                {ui.tonic}: <span className="text-amber-300 font-semibold">{tonic.toString()}</span> • {ui.ghammaz}:{' '}
                 <span className="text-emerald-300 font-semibold">{ghammaz.toString()}</span> • Baggage:{' '}
                 <span className="text-purple-300 font-semibold">
                   {baggageNotes.map((n) => n.toString()).join(', ') || 'None'}
@@ -264,16 +350,16 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             {/* Responsive Color Legend */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
               <span className="flex items-center gap-1 text-amber-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 border border-amber-200 inline-block" /> Tonic
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 border border-amber-200 inline-block" /> {ui.tonic}
               </span>
               <span className="flex items-center gap-1 text-emerald-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-200 inline-block" /> Ghammaz
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-200 inline-block" /> {ui.ghammaz}
               </span>
               <span className="flex items-center gap-1 text-purple-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 border border-purple-200 inline-block" /> Baggage
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500 border border-purple-200 inline-block" /> {ui.baggage}
               </span>
               <span className="flex items-center gap-1 text-sky-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-500 border border-sky-200 inline-block" /> Scale
+              <span className="w-2.5 h-2.5 rounded-full bg-sky-500 border border-sky-200 inline-block" /> {ui.scale}
               </span>
             </div>
           </div>
@@ -287,9 +373,8 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               <div className="flex md:hidden items-center justify-between text-[11px] text-amber-300/90 bg-amber-950/30 border border-amber-500/25 px-3 py-1.5 rounded-xl mb-3">
                 <span className="flex items-center gap-1.5">
                   <span>↔</span>
-                  <span>Swipe horizontally or tap Vertical button for upright view</span>
+                  <span>{ui.swipe}</span>
                 </span>
-                <span className="font-arabic text-[10px] text-amber-400/80">اسحب للمسارات</span>
               </div>
 
               {/* Fingerboard Neck Container with smooth touch scrolling */}
@@ -316,10 +401,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                           {/* String Header */}
                           <div className="w-20 sm:w-24 shrink-0 flex flex-col items-start pr-1 sm:pr-2 z-20">
                             <span className="text-[11px] sm:text-xs font-bold text-amber-300 truncate w-full">
-                              {str.label}
-                            </span>
-                            <span className="text-[9px] sm:text-[10px] text-slate-400 font-arabic">
-                              {str.arabicLabel}
+                              {language === 'ar' ? str.arabicLabel : str.label}
                             </span>
                           </div>
 
@@ -409,14 +491,14 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
                   {/* Fret labels along bottom */}
                   <div className="flex justify-between items-center text-[9px] sm:text-[10px] text-stone-500 border-t border-stone-800 pt-2.5 mt-2 px-16 sm:px-20 overflow-hidden">
-                    <span>Nut (Open)</span>
-                    <span>½-tone</span>
-                    <span>Whole tone (1st)</span>
-                    <span>Neutral 3rd</span>
-                    <span>Maj 3rd</span>
-                    <span>Perf 4th</span>
-                    <span>Tritone</span>
-                    <span>Perf 5th</span>
+                    <span>{ui.nutOpen}</span>
+                    <span>{ui.semitone}</span>
+                    <span>{ui.wholeTone}</span>
+                    <span>{ui.neutralThird}</span>
+                    <span>{ui.majorThird}</span>
+                    <span>{ui.perfectFourth}</span>
+                    <span>{ui.tritone}</span>
+                    <span>{ui.perfectFifth}</span>
                   </div>
                 </div>
               </div>
@@ -434,10 +516,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 {displayedStrings.map((str) => (
                   <div key={str.name} className="flex flex-col items-center">
                     <span className="text-xs sm:text-sm font-bold text-amber-300">
-                      {str.label}
-                    </span>
-                    <span className="text-[10px] sm:text-xs text-slate-400 font-arabic">
-                      {str.arabicLabel}
+                      {language === 'ar' ? str.arabicLabel : str.label}
                     </span>
                   </div>
                 ))}
@@ -447,7 +526,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               <div className="relative z-10 w-full pr-12 sm:pr-14 mb-4">
                 <div className="h-2.5 bg-stone-200 rounded-sm shadow-md w-full relative">
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] sm:text-[10px] font-bold text-stone-400 tracking-wider">
-                    NUT (عظمة المشط)
+                    {language === 'ar' ? 'عظمة المشط' : 'Nut'}
                   </div>
                 </div>
               </div>
@@ -458,13 +537,13 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 <div className="flex-1 grid grid-cols-4 gap-2 sm:gap-4 relative h-full">
                   {/* Background subtle fret markers across strings */}
                   {[
-                    { label: '½-tone', top: 14 },
-                    { label: '1st (Whole)', top: 26 },
-                    { label: 'Neut 3rd', top: 38 },
-                    { label: 'Maj 3rd', top: 48 },
-                    { label: 'Perf 4th', top: 60 },
-                    { label: 'Tritone', top: 72 },
-                    { label: 'Perf 5th', top: 84 },
+                    { label: ui.semitone, top: 14 },
+                    { label: ui.wholeTone, top: 26 },
+                    { label: ui.neutralThird, top: 38 },
+                    { label: ui.majorThird, top: 48 },
+                    { label: ui.perfectFourth, top: 60 },
+                    { label: ui.tritone, top: 72 },
+                    { label: ui.perfectFifth, top: 84 },
                   ].map((guide) => (
                     <div
                       key={guide.label}
@@ -562,14 +641,14 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
                 {/* Right rail fret/interval markers for vertical orientation */}
                 <div className="w-12 sm:w-14 border-l border-stone-800 flex flex-col justify-between text-[9px] sm:text-[10px] text-stone-500 pl-1.5 sm:pl-2 select-none py-1">
-                  <span className="text-stone-400 font-semibold">Nut (0)</span>
-                  <span>½-tone</span>
-                  <span className="text-amber-400/80 font-medium">1st pos</span>
-                  <span>Neut 3rd</span>
-                  <span>Maj 3rd</span>
-                  <span className="text-amber-400/80 font-medium">4th</span>
-                  <span>Tritone</span>
-                  <span className="text-amber-400/80 font-medium">5th</span>
+                  <span className="text-stone-400 font-semibold">{ui.nutOpen}</span>
+                  <span>{ui.semitone}</span>
+                  <span className="text-amber-400/80 font-medium">{ui.wholeTone}</span>
+                  <span>{ui.neutralThird}</span>
+                  <span>{ui.majorThird}</span>
+                  <span className="text-amber-400/80 font-medium">{ui.perfectFourth}</span>
+                  <span>{ui.tritone}</span>
+                  <span className="text-amber-400/80 font-medium">{ui.perfectFifth}</span>
                 </div>
               </div>
             </div>
@@ -585,20 +664,21 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-white">
-                      Finger {selectedPlacement.finger} on String {selectedPlacement.string}
+                    {ui.finger} {selectedPlacement.finger} · {ui.string} {selectedPlacement.string}
                     </span>
                     <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-300">
                       {tonic.equals(selectedPlacement.pitch)
-                        ? 'Tonic (قرار)'
+                        ? language === 'ar' ? 'القرار' : 'Tonic'
                         : ghammaz.equals(selectedPlacement.pitch)
-                        ? 'Ghammaz (غمّاز)'
+                        ? language === 'ar' ? 'الغمّاز' : 'Ghammaz'
                         : baggageNotes.some((b) => b.equals(selectedPlacement.pitch))
-                        ? 'Baggage (أمتعة)'
-                        : 'Maqam Degree'}
+                        ? language === 'ar' ? 'الأمتعة' : 'Baggage'
+                        : ui.maqamDegree}
                     </Badge>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    {selectedPlacement.noteAnnotation} • {selectedPlacement.pitch.toFrequency().toFixed(1)} Hz
+                    {language === 'en' ? `${selectedPlacement.noteAnnotation} · ` : ''}
+                    {selectedPlacement.pitch.toFrequency().toFixed(1)} Hz
                   </p>
                 </div>
               </div>
@@ -611,7 +691,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                   className="h-7 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
                 >
                   <Volume2 className="w-3 h-3 mr-1" />
-                  Play Pitch
+                  {ui.playPitch}
                 </Button>
                 <Button
                   variant="ghost"
@@ -630,34 +710,37 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             <div className="mt-4 sm:mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 bg-slate-900/80 p-3.5 sm:p-4 rounded-xl border border-slate-800">
               <div>
                 <h4 className="text-[11px] sm:text-xs font-bold text-amber-300 uppercase tracking-wider mb-1.5 sm:mb-2 flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5" /> Arabic Violin Pedagogical Guidelines
+                  <Info className="w-3.5 h-3.5" /> {ui.guidelines}
                 </h4>
                 <ul className="text-[11px] sm:text-xs text-slate-300 space-y-1 sm:space-y-1.5 list-disc list-inside leading-relaxed">
                   <li>
-                    <strong className="text-amber-200">Arabic Tuning (G-D-G-D):</strong> Re-tuning the A string down to G4 and E string down to D5 provides rich sympathetic resonance for Rast and Bayati.
+                    {ui.arabicTuningTip}
                   </li>
                   <li>
-                    <strong className="text-amber-200">Neutral Quarter-Tone Placement:</strong> Finger is placed halfway between the semitone and whole-tone marks (approximately 50 cents sharp from the flat).
+                    {ui.quarterToneTip}
                   </li>
                   <li>
-                    <strong className="text-amber-200">Baggage Fingerings:</strong> Baggage notes outside the core jins may fall below the tonic or above its top pitch; choose a string and position suited to the note&apos;s register.
+                    {ui.baggageTip}
                   </li>
                 </ul>
               </div>
 
               <div>
                 <h4 className="text-[11px] sm:text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1.5 sm:mb-2 flex items-center gap-1.5">
-                  <SlidersHorizontal className="w-3.5 h-3.5" /> Active Position &amp; Shifts
+                  <SlidersHorizontal className="w-3.5 h-3.5" /> {ui.activePosition}
                 </h4>
                 <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
                   {selectedPosition === 'auto'
-                    ? 'Auto Mode: Computes the most ergonomic, standard 1st position fingering with optimal open strings and minimal shifts.'
-                    : ViolinErgonomicsEngine.POSITION_INFO[selectedPosition as ViolinPositionNumber]?.description}
+                    ? ui.autoDescription
+                    : language === 'ar'
+                      ? `الموضع ${selectedPosition}: يوسّع مجال العزف على الرقبة مع الحفاظ على وضع اليد المناسب.`
+                      : ViolinErgonomicsEngine.POSITION_INFO[selectedPosition as ViolinPositionNumber]?.description}
                 </p>
                 <div className="mt-2 text-[10px] sm:text-[11px] text-slate-400">
                   {selectedPosition !== 'auto' && (
                     <span>
-                      Tradition: {ViolinErgonomicsEngine.POSITION_INFO[selectedPosition as ViolinPositionNumber]?.arabicTraditionRole}
+                      {language === 'ar' ? 'الأسلوب التقليدي: ' : 'Tradition: '}
+                      {language === 'ar' ? `استخدم الموضع ${selectedPosition} بما يناسب مدى النغمة.` : ViolinErgonomicsEngine.POSITION_INFO[selectedPosition as ViolinPositionNumber]?.arabicTraditionRole}
                     </span>
                   )}
                 </div>

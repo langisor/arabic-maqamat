@@ -10,8 +10,7 @@ export const WORKSPACE_STORAGE_KEY = 'arabic_maqamat_workspace_v1';
 export type ValidLab = 
   | 'explorer' 
   | 'transposition' 
-  | 'violin' 
-  | 'oud'
+  | 'instrument'
   | 'sayr' 
   | 'score' 
   | 'tuning' 
@@ -22,8 +21,7 @@ export type ValidLab =
 export const VALID_LABS: readonly ValidLab[] = [
   'explorer',
   'transposition',
-  'violin',
-  'oud',
+  'instrument',
   'sayr',
   'score',
   'tuning',
@@ -187,11 +185,14 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
       }
     }
     // Active lab validation
-    if (g.activeLab && VALID_LABS.includes(g.activeLab as ValidLab)) {
-      result.global.activeLab = g.activeLab as ValidLab;
+    const persistedLab = g.activeLab as string | undefined;
+    if (persistedLab === 'violin' || persistedLab === 'oud') {
+      result.global.activeLab = 'instrument';
+    } else if (persistedLab && VALID_LABS.includes(persistedLab as ValidLab)) {
+      result.global.activeLab = persistedLab as ValidLab;
     }
     // Timbre validation
-    if (g.timbre === 'violin' || g.timbre === 'oud' || g.timbre === 'kanun') {
+    if (g.timbre === 'violin' || g.timbre === 'oud') {
       result.global.timbre = g.timbre;
     }
     // Audio settings validation
@@ -415,7 +416,9 @@ export function parseNavigationFromUrl(searchString?: string): UrlNavigationPara
   const result: UrlNavigationParams = {};
 
   const labParam = params.get('lab') || params.get('tab');
-  if (labParam && VALID_LABS.includes(labParam as ValidLab)) {
+  if (labParam === 'violin' || labParam === 'oud') {
+    result.lab = 'instrument';
+  } else if (labParam && VALID_LABS.includes(labParam as ValidLab)) {
     result.lab = labParam as ValidLab;
   }
 

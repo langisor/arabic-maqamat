@@ -652,7 +652,7 @@ export function JinsAnalysisTool({
 
               {/* Timbre Switcher */}
               <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs ml-auto lg:ml-0">
-                {(['violin', 'oud', 'kanun'] as TimbreType[]).map((tVal) => (
+                {(['violin', 'oud'] as TimbreType[]).map((tVal) => (
                   <button
                     key={tVal}
                     onClick={() => handleTimbreSelect(tVal)}

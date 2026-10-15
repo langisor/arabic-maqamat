@@ -40,8 +40,8 @@ export const OUD_COURSES: readonly OudCourse[] = [
   {
     id: "course-5",
     label: "5th course",
-    arabicLabel: "يكاه",
-    openPitch: new ArabicPitch("G", "♮", 2),
+    arabicLabel: "فا",
+    openPitch: new ArabicPitch("F", "♮", 2),
     thickness: "2.8px",
   },
   {

@@ -68,7 +68,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onSystemTuningChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
 
   const labsList: {
     id: ValidLab
@@ -89,15 +89,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       icon: ArrowLeftRight,
     },
     {
-      id: "violin",
-      title: "Violin Fingerboard Studio",
-      arabic: "لوحة أصابع الكمان",
-      icon: Music,
-    },
-    {
-      id: "oud",
-      title: "Oud Studio",
-      arabic: "استوديو العود",
+      id: "instrument",
+      title: "Instrument Studio",
+      arabic: "استوديو الآلات",
       icon: Music,
     },
     {
@@ -160,12 +154,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         title="Main Menu & Tools"
       >
         <Menu className="h-4 w-4 text-amber-400" />
-        <span className="hidden text-xs font-semibold sm:inline">Menu</span>
         <span
-          className="font-arabic hidden text-[11px] text-amber-400/90 lg:inline"
-          dir="rtl"
+          className={`hidden text-xs font-semibold sm:inline ${language === "ar" ? "font-arabic" : ""}`}
         >
-          القائمة
+          {language === "ar" ? "القائمة" : "Menu"}
         </span>
       </Button>
 
@@ -186,13 +178,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </div>
               <div>
                 <SheetTitle className="flex items-center gap-2 text-base font-bold text-white">
-                  <span>Arabic Maqamat Studio</span>
+                  <span>{language === "ar" ? "استوديو المقامات العربية" : "Arabic Maqamat Studio"}</span>
                   <Badge variant="secondary" className="text-[10px] font-bold">
                     v2.6
                   </Badge>
                 </SheetTitle>
                 <SheetDescription className="text-xs text-slate-400">
-                  Main Navigation, Tools, Networks &amp; Tuning Presets
+                  {language === "ar"
+                    ? "التنقل والأدوات والشبكات وإعدادات الضبط"
+                    : "Main Navigation, Tools, Networks & Tuning Presets"}
                 </SheetDescription>
               </div>
             </div>
@@ -211,7 +205,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             {/* Quick Drawers & Modals Actions */}
             <div className="space-y-2.5">
               <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">
-                Creative Tools &amp; Drawers
+                {language === "ar" ? "الأدوات الإبداعية" : "Creative Tools & Drawers"}
               </span>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {/* Maqam Builder Drawer Button */}
@@ -225,10 +219,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   </div>
                   <div>
                     <div className="text-xs font-bold text-white group-hover:text-amber-200">
-                      Maqam Builder
-                    </div>
-                    <div className="font-arabic text-[10px] text-slate-400">
-                      معمارية المقامات
+                      {language === "ar" ? "بناء المقام" : "Maqam Builder"}
                     </div>
                   </div>
                 </button>
@@ -244,10 +235,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   </div>
                   <div>
                     <div className="text-xs font-bold text-white group-hover:text-indigo-200">
-                      Maqam Facts &amp; Theory
-                    </div>
-                    <div className="font-arabic text-[10px] text-slate-400">
-                      حقائق ونظرية المقامات
+                      {language === "ar" ? "حقائق ونظرية المقامات" : "Maqam Facts & Theory"}
                     </div>
                   </div>
                 </button>
@@ -264,10 +252,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-white group-hover:text-sky-200">
-                        Sayr Trajectory
-                      </div>
-                      <div className="font-arabic text-[10px] text-slate-400">
-                        المسار اللحني والسير
+                        {language === "ar" ? "مسار السير اللحني" : "Sayr Trajectory"}
                       </div>
                     </div>
                   </button>
@@ -285,10 +270,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-white group-hover:text-emerald-200">
-                        Modulation Pathways
-                      </div>
-                      <div className="font-arabic text-[10px] text-slate-400">
-                        مسارات التحويل والانتقال
+                        {language === "ar" ? "مسارات التحويل المقامي" : "Modulation Pathways"}
                       </div>
                     </div>
                   </button>
@@ -306,10 +288,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-white group-hover:text-purple-200">
-                        Jins Baggage Sidebar
-                      </div>
-                      <div className="font-arabic text-[10px] text-slate-400">
-                        أمتعة الأجناس والنوتة الموسيقية
+                        {language === "ar" ? "أمتعة الأجناس" : "Jins Baggage Sidebar"}
                       </div>
                     </div>
                   </button>
@@ -322,7 +301,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-xs font-bold text-white">
                   <SlidersHorizontal className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Violin Tuning Presets (دوزان الكمان)</span>
+                  <span>{language === "ar" ? "إعدادات ضبط الكمان" : "Violin Tuning Presets"}</span>
                 </span>
                 <Badge
                   variant="outline"
@@ -333,8 +312,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   }
                 >
                   {violinTuning === "western"
-                    ? "Western (G-D-A-E)"
-                    : "Arabic (G-D-G-D)"}
+                    ? language === "ar" ? "غربي (G-D-A-E)" : "Western (G-D-A-E)"
+                    : language === "ar" ? "عربي (G-D-G-D)" : "Arabic (G-D-G-D)"}
                 </Badge>
               </div>
 
@@ -349,16 +328,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span>Arabic Tuning</span>
+                    <span>{language === "ar" ? "الضبط العربي" : "Arabic Tuning"}</span>
                     {violinTuning === "arabic" && (
                       <CheckCircle2 className="h-3.5 w-3.5 text-amber-400" />
                     )}
                   </div>
                   <div className="mt-0.5 font-mono text-[11px] text-amber-300/90">
                     G3 · D4 · G4 · D5
-                  </div>
-                  <div className="font-arabic mt-1 text-[9px] text-slate-400">
-                    يكاه - دوكاه - نوى - محير
                   </div>
                 </button>
 
@@ -372,7 +348,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span>Western Tuning</span>
+                    <span>{language === "ar" ? "الضبط الغربي" : "Western Tuning"}</span>
                     {violinTuning === "western" && (
                       <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400" />
                     )}
@@ -380,16 +356,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   <div className="mt-0.5 font-mono text-[11px] text-indigo-300/90">
                     G3 · D4 · A4 · E5
                   </div>
-                  <div className="font-arabic mt-1 text-[9px] text-slate-400">
-                    صل - ري - لا - مي
-                  </div>
                 </button>
               </div>
 
               {onSystemTuningChange && (
                 <div className="flex items-center justify-between border-t border-slate-800/80 pt-2 text-xs">
                   <span className="font-medium text-slate-300">
-                    Tuning System:
+                    {language === "ar" ? "نظام الضبط:" : "Tuning System:"}
                   </span>
                   <div className="flex rounded-lg border border-slate-800 bg-slate-950 p-0.5 font-mono text-[10px]">
                     <button
@@ -401,7 +374,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
-                      24-EDO (Quarter-Tones)
+                      {language === "ar" ? "٢٤ درجة (أرباع الصوت)" : "24-EDO (Quarter-Tones)"}
                     </button>
                     <button
                       type="button"
@@ -412,7 +385,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
-                      12-TET (Western Only)
+                      {language === "ar" ? "١٢ نغمة (غربي)" : "12-TET (Western Only)"}
                     </button>
                   </div>
                 </div>
@@ -422,7 +395,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             {/* Studio Navigation Labs List */}
             <div className="space-y-2">
               <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-                Studio Labs &amp; Modules
+                {language === "ar" ? "استوديوهات وأدوات" : "Studio Labs & Modules"}
               </span>
               <div className="space-y-1">
                 {labsList.map((lab) => {
@@ -444,9 +417,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           className={`h-4 w-4 ${isActive ? "text-amber-400" : "text-slate-400"}`}
                         />
                         <div>
-                          <div className="text-xs">{lab.title}</div>
-                          <div className="text-muted-foreground font-arabic text-[10px]">
-                            {lab.arabic}
+                          <div
+                            className={`text-xs ${language === "ar" ? "font-arabic" : ""}`}
+                          >
+                            {language === "ar" ? lab.arabic : lab.title}
                           </div>
                         </div>
                       </div>
@@ -455,7 +429,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           variant="default"
                           className="bg-amber-500 text-[9px] font-bold text-slate-950"
                         >
-                          Active
+                          {language === "ar" ? "نشط" : "Active"}
                         </Badge>
                       ) : (
                         <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
@@ -469,7 +443,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             {/* Audio Settings & Preferences Shortcuts */}
             <div className="space-y-2 border-t border-slate-800 pt-2">
               <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-                Audio DSP &amp; Instrument Timbre
+                {language === "ar" ? "معالجة الصوت والآلات" : "Audio DSP & Instrument Timbre"}
               </span>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -479,7 +453,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   className="flex-1 cursor-pointer gap-1.5 border-slate-700 bg-slate-900 text-xs text-slate-200 hover:text-white"
                 >
                   <Settings2 className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Tone.js DSP Audio Settings</span>
+                  <span>{language === "ar" ? "إعدادات صوت Tone.js" : "Tone.js DSP Audio Settings"}</span>
                 </Button>
                 <Button
                   variant={isDroneActive ? "default" : "outline"}
@@ -490,15 +464,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   <Radio
                     className={`h-3.5 w-3.5 ${isDroneActive ? "animate-pulse text-amber-300" : ""}`}
                   />
-                  <span>{isDroneActive ? "Drone On" : "Tonic Drone"}</span>
+                  <span>{isDroneActive
+                    ? language === "ar" ? "الدمدمة تعمل" : "Drone On"
+                    : language === "ar" ? "دمدمة القرار" : "Tonic Drone"}</span>
                 </Button>
               </div>
 
               {/* Timbre Switcher */}
               <div className="flex items-center justify-between pt-2 text-xs">
-                <span className="text-slate-400">Instrument Model:</span>
+                <span className="text-slate-400">{t("instrumentModel")}:</span>
                 <div className="flex rounded-lg border border-slate-800 bg-slate-900 p-0.5">
-                  {(["violin", "oud", "kanun"] as TimbreType[]).map((tVal) => (
+                  {(["violin", "oud"] as TimbreType[]).map((tVal) => (
                     <button
                       key={tVal}
                       type="button"
@@ -509,7 +485,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                           : "text-slate-400 hover:text-white"
                       }`}
                     >
-                      {tVal}
+                      {tVal === "violin" ? t("instrumentViolin") : t("instrumentOud")}
                     </button>
                   ))}
                 </div>
@@ -521,7 +497,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950 p-4 text-xs text-slate-400">
             <div className="flex items-center gap-2">
               <Globe className="h-3.5 w-3.5 text-amber-400" />
-              <span>Language:</span>
+              <span>{language === "ar" ? "اللغة:" : "Language:"}</span>
               <div className="flex rounded-md border border-slate-800 p-0.5">
                 <button
                   type="button"

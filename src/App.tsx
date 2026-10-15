@@ -16,10 +16,7 @@ import { ThemeProvider } from "./components/theme-provider"
 import { MainMenu } from "./components/MainMenu"
 import { SessionBar } from "./components/SessionBar"
 import { MaqamExplorer } from "./components/MaqamExplorer"
-import {
-  ViolinFingerboard,
-  ViolinTuningPreset,
-} from "./components/ViolinFingerboard"
+import { ViolinTuningPreset } from "./components/ViolinFingerboard"
 import { SayrQaflaLab } from "./components/SayrQaflaLab"
 import { MaqamNetworkGraph } from "./components/MaqamNetworkGraph"
 import { MicrotonalPitchTracker } from "./components/MicrotonalPitchTracker"
@@ -31,7 +28,7 @@ import { SayrVisualizationDialog } from "./components/SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./components/ModulationPathwaysDrawer"
 import { JinsAnalysisTool } from "./components/JinsAnalysisTool"
 import { JinsAnalysisDrawer } from "./components/JinsAnalysisDrawer"
-import { OudStudio } from "./features/oud/OudStudio"
+import { InstrumentStudio } from "./features/instruments/InstrumentStudio"
 import { ThemeToggle } from "./components/ThemeToggle"
 import { PWAInstallButton } from "./components/PWAInstallButton"
 import { Button } from "./components/ui/button"
@@ -50,7 +47,7 @@ import {
 } from "lucide-react"
 
 function StudioContent() {
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
 
   // State
   const [currentMaqam, setCurrentMaqam] = useState<Maqam>(() => {
@@ -58,6 +55,7 @@ function StudioContent() {
   })
   const [activeLab, setActiveLab] = useState<ValidLab>("explorer")
   const [timbre, setTimbre] = useState<TimbreType>("violin")
+  const [selectedInstrument, setSelectedInstrument] = useState<TimbreType>("violin")
   const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>("arabic")
   const [isDroneActive, setIsDroneActive] = useState<boolean>(false)
   const [isPlayingScale, setIsPlayingScale] = useState<boolean>(false)
@@ -77,6 +75,11 @@ function StudioContent() {
   const [transportStatus, setTransportStatus] = useState(() =>
     AudioTransport.getStatus()
   )
+
+  const handleSelectInstrument = useCallback((instrument: TimbreType) => {
+    setSelectedInstrument(instrument)
+    setTimbre(instrument)
+  }, [])
 
   useEffect(() => {
     const unsubscribe = AudioTransport.subscribe((status) => {
@@ -172,15 +175,9 @@ function StudioContent() {
       icon: Package,
     },
     {
-      id: "violin",
-      label: "Violin Studio",
-      arabic: "لوحة أصابع الكمان",
-      icon: Music,
-    },
-    {
-      id: "oud",
-      label: "Oud Studio",
-      arabic: "استوديو العود",
+      id: "instrument",
+      label: "Instrument Studio",
+      arabic: "استوديو الآلات",
       icon: Music,
     },
     {
@@ -222,7 +219,7 @@ function StudioContent() {
               violinTuning={violinTuning}
               onViolinTuningChange={setViolinTuning}
               timbre={timbre}
-              onTimbreChange={setTimbre}
+              onTimbreChange={handleSelectInstrument}
               isDroneActive={isDroneActive}
               onToggleDrone={() => handleToggleDrone()}
               onOpenMaqamBuilder={() => setIsBuilderOpen(true)}
@@ -241,13 +238,13 @@ function StudioContent() {
               </div>
               <div className="min-w-0">
                 <h1 className="flex items-center gap-1.5 truncate text-xs font-bold tracking-tight text-white sm:text-base">
-                  <span>Arabic Maqamat</span>
-                  <span className="font-arabic hidden text-xs font-normal text-amber-400/90 md:inline">
-                    الاستوديو المقامي الشامل
+                  <span>{t("brandName")}</span>
+                  <span className="hidden text-xs font-normal text-amber-400/90 md:inline">
+                    {t("brandTagline")}
                   </span>
                 </h1>
                 <p className="hidden truncate text-[10px] text-slate-400 sm:block">
-                  24-EDO Microtonal Theory • Jins Baggage • Network Pathways
+                  {t("brandDescription")}
                 </p>
               </div>
             </div>
@@ -269,14 +266,14 @@ function StudioContent() {
               }`}
               title={
                 isDroneActive
-                  ? "Stop drone on tonic"
-                  : `Start tonic drone (${currentMaqam.getTonic().toString()})`
+                  ? `${t("stopAudio")} · ${t("drone")}`
+                  : `${t("drone")} · ${currentMaqam.getTonic().toString()}`
               }
             >
               <Radio
                 className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${isDroneActive ? "text-slate-950" : "text-amber-400"}`}
               />
-              <span className="xs:inline hidden">Drone:</span>
+              <span className="xs:inline hidden">{t("drone")}:</span>
               <span className="font-mono font-bold">
                 {currentMaqam.getTonic().toString()}
               </span>
@@ -284,17 +281,17 @@ function StudioContent() {
 
             {/* Timbre Switcher (large screens) */}
             <div className="hidden items-center rounded-xl border border-slate-800 bg-slate-900 p-0.5 text-xs lg:flex">
-              {(["violin", "oud", "kanun"] as TimbreType[]).map((tVal) => (
+              {(["violin", "oud"] as TimbreType[]).map((tVal) => (
                 <button
                   key={tVal}
-                  onClick={() => setTimbre(tVal)}
+                  onClick={() => handleSelectInstrument(tVal)}
                   className={`rounded-lg px-2.5 py-1 font-medium capitalize transition-all ${
                     timbre === tVal
                       ? "border border-amber-500/30 bg-amber-500/20 text-amber-300"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  {tVal}
+                  {tVal === "violin" ? t("instrumentViolin") : t("instrumentOud")}
                 </button>
               ))}
             </div>
@@ -312,7 +309,7 @@ function StudioContent() {
               size="sm"
               onClick={() => setLanguage(language === "en" ? "ar" : "en")}
               className="h-7 px-1.5 text-[11px] text-slate-400 hover:text-white sm:h-8 sm:px-2 sm:text-xs"
-              title="Toggle English / العربية"
+              title={t("language")}
             >
               {language === "en" ? "عربي" : "EN"}
             </Button>
@@ -345,7 +342,6 @@ function StudioContent() {
               const Icon = tab.icon
               const isActive = activeLab === tab.id
               const primaryLabel = language === "ar" ? tab.arabic : tab.label
-              const secondaryLabel = language === "ar" ? tab.label : tab.arabic
               return (
                 <button
                   key={tab.id}
@@ -355,7 +351,7 @@ function StudioContent() {
                       ? "bg-amber-500 font-bold text-slate-950 shadow-md shadow-amber-500/20"
                       : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 active:scale-95"
                   }`}
-                  title={`${tab.label} (${tab.arabic})`}
+                  title={primaryLabel}
                 >
                   <Icon
                     className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`}
@@ -364,11 +360,6 @@ function StudioContent() {
                     className={language === "ar" ? "font-arabic text-xs" : ""}
                   >
                     {primaryLabel}
-                  </span>
-                  <span
-                    className={`font-arabic hidden text-[10px] lg:inline ${isActive ? "text-slate-900/80" : "text-slate-500"}`}
-                  >
-                    {secondaryLabel}
                   </span>
                 </button>
               )
@@ -406,16 +397,16 @@ function StudioContent() {
           />
         )}
 
-        {activeLab === "violin" && (
-          <ViolinFingerboard
+        {activeLab === "instrument" && (
+          <InstrumentStudio
             currentMaqam={currentMaqam}
+            instrument={selectedInstrument}
+            onInstrumentChange={handleSelectInstrument}
             timbre={timbre}
             tuning={violinTuning}
             onTuningChange={setViolinTuning}
           />
         )}
-
-        {activeLab === "oud" && <OudStudio currentMaqam={currentMaqam} />}
 
         {activeLab === "sayr" && (
           <SayrQaflaLab
@@ -544,13 +535,7 @@ function StudioContent() {
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 px-6 py-4 text-center text-xs text-slate-500">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 sm:flex-row">
-          <span>
-            Arabic Maqamat &amp; 24-EDO Microtonal Violin Studio • Grounded in
-            Sami Abu Shumays&apos; theoretical research
-          </span>
-          <span className="font-arabic text-amber-500/80">
-            صنع بسحرك — راست · بياتي · سيكاه · حجاز · نهاوند · كرد · عجم · صبا
-          </span>
+          <span>{t("instrumentStudioFooter")}</span>
         </div>
       </footer>
     </div>
