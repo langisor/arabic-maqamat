@@ -77,11 +77,17 @@ export function SessionBar({
                 id="maqam-family-select"
                 value={currentFamilyKey}
                 onChange={handleFamilyChange}
-                className="h-7 text-xs font-semibold rounded-md border border-input bg-background/90 px-2 py-0.5 text-foreground shadow-xs focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-amber-500/50 transition-colors cursor-pointer"
+                className="h-7 cursor-pointer rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 text-xs font-semibold text-slate-100 shadow-xs transition-colors hover:border-amber-500/50 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                style={{ colorScheme: "dark" }}
                 title={language === "ar" ? "اختر عائلة المقامات" : "Select Maqam Family"}
               >
                 {families.map((fam) => (
-                  <option key={fam.key} value={fam.key} className="bg-popover text-popover-foreground">
+                  <option
+                    key={fam.key}
+                    value={fam.key}
+                    className="bg-slate-900 text-slate-100"
+                    style={{ backgroundColor: "#0f172a", color: "#f1f5f9" }}
+                  >
                     {fam.englishName} ({fam.arabicName})
                   </option>
                 ))}

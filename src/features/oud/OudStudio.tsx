@@ -37,6 +37,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const [tuning, setTuning] = useState<OudTuning>("arabic")
   const [orientation, setOrientation] =
     useState<FingerboardOrientation>("horizontal")
+  const [includeBassCourse, setIncludeBassCourse] = useState(true)
   const [reverseCourses, setReverseCourses] = useState(false)
   const [highlightMaqam, setHighlightMaqam] = useState(true)
   const [activePitch, setActivePitch] = useState<string | null>(null)
@@ -49,7 +50,12 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     openPitch:
       tuning === "high" ? course.openPitch.transpose(10) : course.openPitch,
   }))
-  const displayedCourses = reverseCourses ? [...courses].reverse() : courses
+  const visibleCourses = includeBassCourse
+    ? courses
+    : courses.filter((course) => course.id !== "course-6")
+  const displayedCourses = reverseCourses
+    ? [...visibleCourses].reverse()
+    : visibleCourses
   const maqamPitchClasses = new Set(
     currentMaqam
       .getScale()
@@ -251,7 +257,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
           <div>
             <CardTitle className="flex items-center gap-2 text-base text-amber-50">
               <Volume2 className="h-4 w-4 text-amber-400" aria-hidden="true" />
-              {t("oudCourses")}
+              {t(displayedCourses.length === 5 ? "oudFiveCourses" : "oudCourses")}
             </CardTitle>
             <CardDescription className="mt-1 text-amber-100/60">
               {t(tuning === "arabic" ? "oudArabicTuning" : "oudHighTuning")} ·{" "}
@@ -261,6 +267,16 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-pressed={includeBassCourse}
+              onClick={() => setIncludeBassCourse((included) => !included)}
+              className="h-9 border-amber-100/15 bg-black/20 text-xs text-amber-100 hover:bg-amber-900/40 hover:text-white"
+            >
+              {t(includeBassCourse ? "oudRemoveBassCourse" : "oudAddBassCourse")}
+            </Button>
             <div
               role="group"
               className="flex items-center gap-1 rounded-xl border border-amber-100/10 bg-black/20 p-1"
@@ -420,10 +436,15 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                           style={{ height: course.thickness }}
                         />
                       </div>
-                      <span className="absolute left-[-3.4rem] z-20 w-12 truncate text-[10px] font-semibold text-amber-100/80">
-                        {language === "ar"
-                          ? `${t("oudCourse")} ${OUD_COURSES.findIndex(({ id }) => id === course.id) + 1}`
-                          : course.label}
+                      <span className="absolute left-[-3.4rem] z-20 flex w-12 flex-col text-[10px] font-semibold leading-tight text-amber-100/80">
+                        <span className="block truncate">
+                          {language === "ar"
+                            ? `${t("oudCourse")} ${OUD_COURSES.findIndex(({ id }) => id === course.id) + 1}`
+                            : course.label}
+                        </span>
+                        <span className="font-mono text-[9px] text-amber-200">
+                          {course.openPitch.toDisplayString()}
+                        </span>
                       </span>
                       <div className="relative z-10 ml-4 flex">
                         {Array.from(
@@ -460,12 +481,12 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                       key={course.id}
                       className="relative flex w-20 shrink-0 flex-col items-center gap-1"
                     >
-                      <span className="z-10 min-h-8 text-center text-[10px] font-semibold text-amber-100/80">
+                      <span className="z-10 min-h-8 text-center text-[10px] font-semibold leading-tight text-amber-100/80">
                         {language === "ar"
                           ? `${t("oudCourse")} ${OUD_COURSES.findIndex(({ id }) => id === course.id) + 1}`
                           : course.label}
-                        <span className="block text-[9px] font-normal text-amber-100/55">
-                          {course.openPitch.toString()}
+                        <span className="block font-mono text-[9px] font-normal text-amber-200">
+                          {course.openPitch.toDisplayString()}
                         </span>
                       </span>
                       <span
