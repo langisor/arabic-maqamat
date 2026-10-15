@@ -12,6 +12,7 @@ interface JinsAnalysisDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   timbre?: TimbreType
+  onTimbreChange: (timbre: TimbreType) => void
   initialJinsId?: string
   initialRoot?: ArabicPitch
 }
@@ -20,6 +21,7 @@ export const JinsAnalysisDrawer: React.FC<JinsAnalysisDrawerProps> = ({
   open,
   onOpenChange,
   timbre = "violin",
+  onTimbreChange,
   initialJinsId = "bayati",
   initialRoot,
 }) => {
@@ -66,6 +68,7 @@ export const JinsAnalysisDrawer: React.FC<JinsAnalysisDrawerProps> = ({
           initialJinsId={initialJinsId}
           initialRoot={initialRoot}
           timbre={timbre}
+          onTimbreChange={onTimbreChange}
           isCompact={true}
           onClose={() => onOpenChange(false)}
         />

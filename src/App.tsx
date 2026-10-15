@@ -527,6 +527,7 @@ function StudioContent() {
         open={isJinsAnalysisDrawerOpen}
         onOpenChange={setIsJinsAnalysisDrawerOpen}
         timbre={timbre}
+        onTimbreChange={setTimbre}
         initialJinsId={currentMaqam.lowerJins.definition.id}
         initialRoot={currentMaqam.getTonic()}
       />
