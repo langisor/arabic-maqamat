@@ -248,17 +248,7 @@ function StudioContent() {
 
           {/* Quick Controls & Tools - Responsive */}
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            {/* Quick Jins Baggage Tool Sidebar Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsJinsAnalysisDrawerOpen(true)}
-              className="hidden h-8 cursor-pointer gap-1.5 rounded-xl border-purple-500/40 px-2.5 text-xs text-purple-300 hover:bg-purple-950/40 hover:text-purple-200 md:flex"
-              title="Open Jins Analysis Tool (Baggage & Staff)"
-            >
-              <Package className="h-3.5 w-3.5 text-purple-400" />
-              <span>Baggage Tool</span>
-            </Button>
+
 
             {/* Drone Toggle Button */}
             <Button
