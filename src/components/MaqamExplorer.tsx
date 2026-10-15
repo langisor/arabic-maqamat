@@ -1,21 +1,24 @@
 // src/components/MaqamExplorer.tsx
 import React, { useState } from "react"
-import {
-  Maqam,
-  MaqamatCatalogue,
-} from "../theory/maqam"
+import { Maqam, MaqamatCatalogue } from "../theory/maqam"
 import {
   ArabicPitch,
   type DiatonicBase,
   type MicrotonalAccidental,
 } from "../core/pitch"
-import { getPitchThemeClasses, formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
+import {
+  getPitchThemeClasses,
+  formatPitchWithLargeAccidentalReact,
+} from "../core/pitch-styling"
 import { ArabicNoteSpine } from "../core/note-spine"
 import {
   MicrotonalAudioEngine,
   type TimbreType,
 } from "../audio/microtonal-audio"
-import { getWorkspaceState, updateWorkspaceDraft } from "../state/workspace-state"
+import {
+  getWorkspaceState,
+  updateWorkspaceDraft,
+} from "../state/workspace-state"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import {
@@ -75,8 +78,11 @@ export const MaqamExplorer: React.FC<Props> = ({
   onOpenJinsAnalysis,
 }) => {
   const [showSayrDialogLocal, setShowSayrDialogLocal] = useState(false)
-  const [showModulationDrawerLocal, setShowModulationDrawerLocal] = useState(false)
-  const [explorerTab, setExplorerTab] = useState<'structure' | 'network'>('structure')
+  const [showModulationDrawerLocal, setShowModulationDrawerLocal] =
+    useState(false)
+  const [explorerTab, setExplorerTab] = useState<"structure" | "network">(
+    "structure"
+  )
 
   const handleOpenSayr = () => {
     if (onOpenSayrVisualization) {
@@ -120,21 +126,33 @@ export const MaqamExplorer: React.FC<Props> = ({
   const setCustomDiatonic = (d: DiatonicBase) => {
     setCustomDiatonicState(d)
     updateWorkspaceDraft("explorer", {
-      customTonic: { diatonic: d, accidental: customAccidental, octave: customOctave },
+      customTonic: {
+        diatonic: d,
+        accidental: customAccidental,
+        octave: customOctave,
+      },
     })
   }
 
   const setCustomAccidental = (a: MicrotonalAccidental) => {
     setCustomAccidentalState(a)
     updateWorkspaceDraft("explorer", {
-      customTonic: { diatonic: customDiatonic, accidental: a, octave: customOctave },
+      customTonic: {
+        diatonic: customDiatonic,
+        accidental: a,
+        octave: customOctave,
+      },
     })
   }
 
   const setCustomOctave = (oct: number) => {
     setCustomOctaveState(oct)
     updateWorkspaceDraft("explorer", {
-      customTonic: { diatonic: customDiatonic, accidental: customAccidental, octave: oct },
+      customTonic: {
+        diatonic: customDiatonic,
+        accidental: customAccidental,
+        octave: oct,
+      },
     })
   }
 
@@ -177,7 +195,7 @@ export const MaqamExplorer: React.FC<Props> = ({
   return (
     <div className="space-y-6">
       {/* Quick Studio Tools Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/60 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/60 p-3.5 shadow-xs">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-amber-400" />
           <span className="text-xs font-semibold text-slate-300">
@@ -190,7 +208,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               variant="outline"
               size="sm"
               onClick={onOpenMaqamBuilder}
-              className="gap-1.5 border-slate-700 bg-slate-900 text-slate-200 hover:text-white cursor-pointer"
+              className="cursor-pointer gap-1.5 border-slate-700 bg-slate-900 text-slate-200 hover:text-white"
             >
               <Wand2 className="h-3.5 w-3.5 text-amber-400" />
               <span>Maqam Builder</span>
@@ -200,7 +218,7 @@ export const MaqamExplorer: React.FC<Props> = ({
             variant="outline"
             size="sm"
             onClick={handleOpenModulation}
-            className="gap-1.5 border-emerald-700/60 bg-emerald-950/40 text-emerald-300 hover:text-white hover:border-emerald-500 cursor-pointer"
+            className="cursor-pointer gap-1.5 border-emerald-700/60 bg-emerald-950/40 text-emerald-300 hover:border-emerald-500 hover:text-white"
           >
             <GitFork className="h-3.5 w-3.5 text-emerald-400" />
             <span>Modulation Pathways</span>
@@ -209,7 +227,7 @@ export const MaqamExplorer: React.FC<Props> = ({
             variant="outline"
             size="sm"
             onClick={handleOpenSayr}
-            className="gap-1.5 border-sky-700/60 bg-sky-950/40 text-sky-300 hover:text-white hover:border-sky-500 cursor-pointer"
+            className="cursor-pointer gap-1.5 border-sky-700/60 bg-sky-950/40 text-sky-300 hover:border-sky-500 hover:text-white"
           >
             <Compass className="h-3.5 w-3.5 text-sky-400" />
             <span>Sayr Trajectory</span>
@@ -219,7 +237,7 @@ export const MaqamExplorer: React.FC<Props> = ({
 
       {/* Selected Maqam Inspector & Playback Controls */}
       <Card className="border-slate-800/90 bg-slate-900/90 shadow-xl">
-        <CardHeader className="border-b border-border/60 pb-5">
+        <CardHeader className="border-border/60 border-b pb-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-3">
@@ -234,7 +252,9 @@ export const MaqamExplorer: React.FC<Props> = ({
                   </span>
                 )}
                 <MaqamTermTooltip term="family" showIcon={false}>
-                  <Badge variant="secondary">Family: {currentMaqam.family}</Badge>
+                  <Badge variant="secondary">
+                    Family: {currentMaqam.family}
+                  </Badge>
                 </MaqamTermTooltip>
                 {isTransposed && (
                   <Badge
@@ -259,7 +279,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                 onClick={() =>
                   isPlayingScale ? onStopScale() : onPlayScale(scalePitches)
                 }
-                className="gap-2 font-bold cursor-pointer"
+                className="cursor-pointer gap-2 font-bold"
               >
                 {isPlayingScale ? (
                   <Square className="fill-current" />
@@ -271,7 +291,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               <Button
                 variant={isDroneActive ? "default" : "outline"}
                 onClick={() => onToggleDrone(tonic)}
-                className="gap-2 cursor-pointer"
+                className="cursor-pointer gap-2"
               >
                 <Radio className={isDroneActive ? "animate-pulse" : ""} />
                 {isDroneActive ? "Drone Active" : "Qarar Drone"}
@@ -281,7 +301,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                   variant="outline"
                   size="default"
                   onClick={handleResetTransposition}
-                  className="gap-1.5 cursor-pointer"
+                  className="cursor-pointer gap-1.5"
                   title={`Reset to original ${baseMaqam.name}`}
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -292,16 +312,18 @@ export const MaqamExplorer: React.FC<Props> = ({
           </div>
 
           {/* Toggle between Structural View and Network Graph View */}
-          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-800">
-            <span className="text-xs font-semibold text-slate-400">View Mode:</span>
+          <div className="mt-4 flex items-center gap-2 border-t border-slate-800 pt-3">
+            <span className="text-xs font-semibold text-slate-400">
+              View Mode:
+            </span>
             <div className="flex rounded-xl border border-slate-800 bg-slate-950 p-1">
               <button
                 type="button"
-                onClick={() => setExplorerTab('structure')}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
-                  explorerTab === 'structure'
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
-                    : 'text-slate-400 hover:text-white'
+                onClick={() => setExplorerTab("structure")}
+                className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition ${
+                  explorerTab === "structure"
+                    ? "bg-amber-500 font-bold text-slate-950 shadow-xs"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -309,11 +331,11 @@ export const MaqamExplorer: React.FC<Props> = ({
               </button>
               <button
                 type="button"
-                onClick={() => setExplorerTab('network')}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
-                  explorerTab === 'network'
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
-                    : 'text-slate-400 hover:text-white'
+                onClick={() => setExplorerTab("network")}
+                className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition ${
+                  explorerTab === "network"
+                    ? "bg-amber-500 font-bold text-slate-950 shadow-xs"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 <Network className="h-3.5 w-3.5" />
@@ -324,7 +346,7 @@ export const MaqamExplorer: React.FC<Props> = ({
         </CardHeader>
 
         <CardContent className="space-y-6 pt-6">
-          {explorerTab === 'network' ? (
+          {explorerTab === "network" ? (
             /* Network Graph View */
             <MaqamNetworkGraph maqam={currentMaqam} timbre={timbre} />
           ) : (
@@ -342,7 +364,8 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </span>
                       </MaqamTermTooltip>
                       <Badge variant="default" className="text-[10px]">
-                        {currentMaqam.lowerJins.definition.sizeLabel || currentMaqam.lowerJins.definition.type}
+                        {currentMaqam.lowerJins.definition.sizeLabel ||
+                          currentMaqam.lowerJins.definition.type}
                       </Badge>
                     </div>
                     <h4 className="mt-1 text-lg font-bold text-white">
@@ -351,7 +374,10 @@ export const MaqamExplorer: React.FC<Props> = ({
                     <p className="mt-1 text-xs text-slate-400">
                       Root:{" "}
                       <strong className="text-amber-300">
-                        {formatPitchWithLargeAccidentalReact(currentMaqam.lowerJins.root, { size: 'large' })}
+                        {formatPitchWithLargeAccidentalReact(
+                          currentMaqam.lowerJins.root,
+                          { size: "large" }
+                        )}
                       </strong>{" "}
                       (
                       {ArabicNoteSpine.resolveDegreeName(
@@ -362,7 +388,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                     <div className="mt-2 flex items-center gap-1.5 font-mono text-xs text-slate-300">
                       <span className="text-slate-500">Steps (qt):</span>
                       <span className="font-semibold text-amber-300">
-                        [{currentMaqam.lowerJins.definition.intervals.join(" - ")}]
+                        [
+                        {currentMaqam.lowerJins.definition.intervals.join(
+                          " - "
+                        )}
+                        ]
                       </span>
                       <span className="text-[11px] text-slate-500">
                         ({currentMaqam.lowerJins.getTotalSpanCents()}¢)
@@ -371,8 +401,8 @@ export const MaqamExplorer: React.FC<Props> = ({
 
                     {/* Baggage notes chip if available */}
                     {baggageNotes.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-slate-900">
-                        <div className="text-[11px] text-purple-300 flex items-center justify-between font-semibold">
+                      <div className="mt-3 border-t border-slate-900 pt-2">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-purple-300">
                           <div className="flex items-center gap-1">
                             <Package className="h-3 w-3 text-purple-400" />
                             <span>Jins Baggage Notes (أمتعة الجنس):</span>
@@ -381,27 +411,33 @@ export const MaqamExplorer: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={onOpenJinsAnalysis}
-                              className="text-[10px] text-purple-400 hover:text-purple-200 underline cursor-pointer"
+                              className="cursor-pointer text-[10px] text-purple-400 underline hover:text-purple-200"
                             >
                               Staff Analysis &rarr;
                             </button>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-1 mt-1">
+                        <div className="mt-1 flex flex-wrap gap-1">
                           {baggageNotes.map((bp, i) => (
                             <span
                               key={i}
                               title={
                                 bp.toQuarterToneIndex() >
-                                currentMaqam.lowerJins.getTopPitch().toQuarterToneIndex()
+                                currentMaqam.lowerJins
+                                  .getTopPitch()
+                                  .toQuarterToneIndex()
                                   ? "Above lower jins top pitch"
                                   : "Below lower jins root"
                               }
-                              className="px-1.5 py-0.5 rounded bg-purple-950/40 border border-purple-800/60 font-mono text-[10px] text-purple-200"
+                              className="rounded border border-purple-800/60 bg-purple-950/40 px-1.5 py-0.5 font-mono text-[10px] text-purple-200"
                             >
-                              {formatPitchWithLargeAccidentalReact(bp, { size: 'large' })}
+                              {formatPitchWithLargeAccidentalReact(bp, {
+                                size: "large",
+                              })}
                               {bp.toQuarterToneIndex() >
-                              currentMaqam.lowerJins.getTopPitch().toQuarterToneIndex()
+                              currentMaqam.lowerJins
+                                .getTopPitch()
+                                .toQuarterToneIndex()
                                 ? " ↑"
                                 : " ↓"}
                             </span>
@@ -413,7 +449,9 @@ export const MaqamExplorer: React.FC<Props> = ({
                   <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-xs">
                     <span className="text-slate-400">Tonic (قرار):</span>
                     <span className="font-bold text-emerald-400">
-                      {formatPitchWithLargeAccidentalReact(tonic, { size: 'large' })}
+                      {formatPitchWithLargeAccidentalReact(tonic, {
+                        size: "large",
+                      })}
                     </span>
                   </div>
                 </div>
@@ -439,7 +477,10 @@ export const MaqamExplorer: React.FC<Props> = ({
                       <MaqamTermTooltip term="ghammaz" showIcon={false}>
                         Ghammaz (الغمّاز)
                       </MaqamTermTooltip>
-                      : {formatPitchWithLargeAccidentalReact(ghammaz, { size: 'large' })}
+                      :{" "}
+                      {formatPitchWithLargeAccidentalReact(ghammaz, {
+                        size: "large",
+                      })}
                     </h4>
                     <p className="mt-1 text-xs text-slate-400">
                       {currentMaqam.connection === "Ittisal"
@@ -467,7 +508,8 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </span>
                       </MaqamTermTooltip>
                       <Badge variant="default" className="text-[10px]">
-                        {currentMaqam.upperJins.definition.sizeLabel || currentMaqam.upperJins.definition.type}
+                        {currentMaqam.upperJins.definition.sizeLabel ||
+                          currentMaqam.upperJins.definition.type}
                       </Badge>
                     </div>
                     <h4 className="mt-1 text-lg font-bold text-white">
@@ -476,7 +518,10 @@ export const MaqamExplorer: React.FC<Props> = ({
                     <p className="mt-1 text-xs text-slate-400">
                       Root:{" "}
                       <strong className="text-purple-300">
-                        {formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.root, { size: 'large' })}
+                        {formatPitchWithLargeAccidentalReact(
+                          currentMaqam.upperJins.root,
+                          { size: "large" }
+                        )}
                       </strong>{" "}
                       (
                       {ArabicNoteSpine.resolveDegreeName(
@@ -487,7 +532,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                     <div className="mt-2 flex items-center gap-1.5 font-mono text-xs text-slate-300">
                       <span className="text-slate-500">Steps (qt):</span>
                       <span className="font-semibold text-purple-300">
-                        [{currentMaqam.upperJins.definition.intervals.join(" - ")}]
+                        [
+                        {currentMaqam.upperJins.definition.intervals.join(
+                          " - "
+                        )}
+                        ]
                       </span>
                       <span className="text-[11px] text-slate-500">
                         ({currentMaqam.upperJins.getTotalSpanCents()}¢)
@@ -499,8 +548,17 @@ export const MaqamExplorer: React.FC<Props> = ({
                     <span className="font-bold text-purple-400">
                       {currentMaqam.extraPitches[
                         currentMaqam.extraPitches.length - 1
-                      ] ? formatPitchWithLargeAccidentalReact(currentMaqam.extraPitches[currentMaqam.extraPitches.length - 1], { size: 'large' })
-                        : formatPitchWithLargeAccidentalReact(currentMaqam.upperJins.getTopPitch(), { size: 'large' })}
+                      ]
+                        ? formatPitchWithLargeAccidentalReact(
+                            currentMaqam.extraPitches[
+                              currentMaqam.extraPitches.length - 1
+                            ],
+                            { size: "large" }
+                          )
+                        : formatPitchWithLargeAccidentalReact(
+                            currentMaqam.upperJins.getTopPitch(),
+                            { size: "large" }
+                          )}
                     </span>
                   </div>
                 </div>
@@ -509,10 +567,10 @@ export const MaqamExplorer: React.FC<Props> = ({
               {/* Show alternate upper jins if available */}
               {currentMaqam.alternateUpperAjnas.length > 0 && (
                 <Card className="border-slate-800 bg-slate-950/60 p-4">
-                  <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-2">
+                  <span className="mb-2 block text-xs font-semibold tracking-wider text-slate-300 uppercase">
                     Alternate Upper Ajnas (فروع نغمية بديلة)
                   </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {currentMaqam.alternateUpperAjnas.map((jins, idx) => (
                       <div
                         key={idx}
@@ -529,10 +587,15 @@ export const MaqamExplorer: React.FC<Props> = ({
                         <p className="mt-1 text-xs text-slate-400">
                           Root:{" "}
                           <strong className="text-purple-300">
-                            {formatPitchWithLargeAccidentalReact(jins.jins.root, { size: 'large' })}
+                            {formatPitchWithLargeAccidentalReact(
+                              jins.jins.root,
+                              { size: "large" }
+                            )}
                           </strong>
                         </p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">{jins.description}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          {jins.description}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -549,7 +612,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                     Click note to audition
                   </span>
                 </div>
-                <div className="grid grid-cols-4 gap-1.5 sm:gap-2 sm:grid-cols-4 lg:grid-cols-8">
+                <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-4 sm:gap-2 lg:grid-cols-8">
                   {scalePitches.map((pitch, idx) => {
                     const isTonic = pitch.equals(tonic)
                     const isGhammaz = pitch.equals(ghammaz)
@@ -560,16 +623,19 @@ export const MaqamExplorer: React.FC<Props> = ({
                         onClick={() =>
                           MicrotonalAudioEngine.playPitch(pitch, 0.7, timbre)
                         }
-                        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border p-2 sm:p-2.5 transition hover:scale-105 ${isTonic
-                          ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-md ring-1 ring-emerald-500/30"
-                          : isGhammaz
-                            ? "border-sky-500/50 bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/30"
-                            : pitchTheme.combined
-                          }`}
+                        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border p-2 transition hover:scale-105 sm:p-2.5 ${
+                          isTonic
+                            ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-md ring-1 ring-emerald-500/30"
+                            : isGhammaz
+                              ? "border-sky-500/50 bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/30"
+                              : pitchTheme.combined
+                        }`}
                       >
                         <div className="flex items-center gap-1">
-                          <span className="font-mono text-sm sm:text-base font-bold">
-                            {formatPitchWithLargeAccidentalReact(pitch, { size: 'large' })}
+                          <span className="font-mono text-sm font-bold sm:text-base">
+                            {formatPitchWithLargeAccidentalReact(pitch, {
+                              size: "large",
+                            })}
                           </span>
                           {isTonic && (
                             <span className="rounded bg-emerald-500 px-1 text-[9px] font-bold text-slate-950">
@@ -586,7 +652,8 @@ export const MaqamExplorer: React.FC<Props> = ({
                           {pitch.toFrequency().toFixed(1)} Hz
                         </span>
                         <span className="text-[9px] text-slate-500">
-                          {ArabicNoteSpine.findByPitch(pitch)?.transliteration || ""}
+                          {ArabicNoteSpine.findByPitch(pitch)
+                            ?.transliteration || ""}
                         </span>
                       </button>
                     )
@@ -597,7 +664,7 @@ export const MaqamExplorer: React.FC<Props> = ({
           )}
 
           {/* Dynamic Transposition Hub */}
-          <div className="border-t border-border/60 pt-6">
+          <div className="border-border/60 border-t pt-6">
             <Tabs
               value={transpositionTab}
               onValueChange={setTranspositionTab}
@@ -625,7 +692,8 @@ export const MaqamExplorer: React.FC<Props> = ({
                     Transpose {baseMaqam.name} to Any Target Tonic
                   </h3>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    Preserves exact microtonal interval architecture, Ghammaz pivot relationship, and violin ergonomics.
+                    Preserves exact microtonal interval architecture, Ghammaz
+                    pivot relationship, and violin ergonomics.
                   </p>
                 </div>
                 <TabsList>
@@ -647,22 +715,47 @@ export const MaqamExplorer: React.FC<Props> = ({
                 </div>
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
                   {[
-                    { pitch: originalTonic, title: `${baseMaqam.name} (Original)`, arabicTitle: "الأصل", noteName: originalTonic.toScientificString() },
-                    { pitch: originalTonic.transpose(4), title: `On 2nd Degree`, arabicTitle: "على الدرجة الثانية", noteName: originalTonic.transpose(4).toScientificString() },
-                    { pitch: ghammaz, title: `On Ghammaz (${ghammaz.toScientificString()})`, arabicTitle: "على الغمّاز", noteName: ghammaz.toScientificString() },
-                    { pitch: originalTonic.transpose(24), title: `Octave Apex (Jawab)`, arabicTitle: "الجواب", noteName: originalTonic.transpose(24).toScientificString() }
+                    {
+                      pitch: originalTonic,
+                      title: `${baseMaqam.name} (Original)`,
+                      arabicTitle: "الأصل",
+                      noteName: originalTonic.toScientificString(),
+                    },
+                    {
+                      pitch: originalTonic.transpose(4),
+                      title: `On 2nd Degree`,
+                      arabicTitle: "على الدرجة الثانية",
+                      noteName: originalTonic.transpose(4).toScientificString(),
+                    },
+                    {
+                      pitch: ghammaz,
+                      title: `On Ghammaz (${ghammaz.toScientificString()})`,
+                      arabicTitle: "على الغمّاز",
+                      noteName: ghammaz.toScientificString(),
+                    },
+                    {
+                      pitch: originalTonic.transpose(24),
+                      title: `Octave Apex (Jawab)`,
+                      arabicTitle: "الجواب",
+                      noteName: originalTonic
+                        .transpose(24)
+                        .toScientificString(),
+                    },
                   ].map((item) => {
                     const isCurrent = tonic.equals(item.pitch)
-                    const stepDeltaQt = originalTonic.diffQuarterTones(item.pitch)
+                    const stepDeltaQt = originalTonic.diffQuarterTones(
+                      item.pitch
+                    )
                     const stepCents = stepDeltaQt * 50
                     return (
                       <button
                         key={item.title}
                         onClick={() => handleTransposeToPitch(item.pitch)}
-                        className={`group flex cursor-pointer flex-col justify-between rounded-xl border p-3 text-left transition ${isCurrent
-                          ? "border-amber-400 bg-amber-500/20 text-white shadow-md ring-2 ring-amber-400/40"
-                          : "border-slate-800 bg-slate-950/70 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80 hover:text-white"
-                          }`}
+                        className={`group flex cursor-pointer flex-col justify-between rounded-xl border p-3 text-left transition ${
+                          isCurrent
+                            ? "border-amber-400 bg-amber-500/20 text-white shadow-md ring-2 ring-amber-400/40"
+                            : "border-slate-800 bg-slate-950/70 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80 hover:text-white"
+                        }`}
                       >
                         <div className="flex w-full items-baseline justify-between">
                           <span className="text-xs font-bold text-white transition group-hover:text-amber-300">
@@ -677,7 +770,9 @@ export const MaqamExplorer: React.FC<Props> = ({
                             Target: {item.noteName}
                           </span>
                           <span className="font-mono text-[10px] text-slate-400">
-                            {stepDeltaQt === 0 ? "Original" : `${stepDeltaQt > 0 ? "+" : ""}${stepCents}¢`}
+                            {stepDeltaQt === 0
+                              ? "Original"
+                              : `${stepDeltaQt > 0 ? "+" : ""}${stepCents}¢`}
                           </span>
                         </div>
                       </button>
@@ -702,10 +797,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                       <button
                         key={note.transliteration}
                         onClick={() => handleTransposeToPitch(note.pitch)}
-                        className={`cursor-pointer rounded-xl border p-2 text-center text-xs transition ${isCurrent
-                          ? "border-amber-400 bg-amber-500 font-bold text-slate-950 shadow-md ring-2 ring-amber-400/40"
-                          : "border-slate-800/80 bg-slate-950/60 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80 hover:text-white"
-                          }`}
+                        className={`cursor-pointer rounded-xl border p-2 text-center text-xs transition ${
+                          isCurrent
+                            ? "border-amber-400 bg-amber-500 font-bold text-slate-950 shadow-md ring-2 ring-amber-400/40"
+                            : "border-slate-800/80 bg-slate-950/60 text-slate-300 hover:border-amber-500/40 hover:bg-slate-800/80 hover:text-white"
+                        }`}
                       >
                         <div className="font-serif text-xs font-bold">
                           {note.arabicName}
@@ -714,10 +810,14 @@ export const MaqamExplorer: React.FC<Props> = ({
                           {note.transliteration}
                         </div>
                         <div className="font-mono text-[10px] text-amber-300/80">
-                          {formatPitchWithLargeAccidentalReact(note.pitch, { size: 'large' })}
+                          {formatPitchWithLargeAccidentalReact(note.pitch, {
+                            size: "large",
+                          })}
                         </div>
                         <div className="mt-0.5 font-mono text-[9px] text-slate-400">
-                          {stepDelta === 0 ? "0¢" : `${stepDelta > 0 ? "+" : ""}${stepDelta * 50}¢`}
+                          {stepDelta === 0
+                            ? "0¢"
+                            : `${stepDelta > 0 ? "+" : ""}${stepDelta * 50}¢`}
                         </div>
                       </button>
                     )
@@ -750,10 +850,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                             <button
                               key={d}
                               onClick={() => setCustomDiatonic(d)}
-                              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded font-mono text-xs font-bold transition ${customDiatonic === d
-                                ? "bg-amber-500 text-slate-950 shadow"
-                                : "text-slate-400 hover:text-white"
-                                }`}
+                              className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded font-mono text-xs font-bold transition ${
+                                customDiatonic === d
+                                  ? "bg-amber-500 text-slate-950 shadow"
+                                  : "text-slate-400 hover:text-white"
+                              }`}
                             >
                               {d}
                             </button>
@@ -780,10 +881,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                               key={item.acc}
                               onClick={() => setCustomAccidental(item.acc)}
                               title={item.label}
-                              className={`flex h-8 cursor-pointer items-center justify-center rounded px-2.5 text-xs font-bold transition ${customAccidental === item.acc
-                                ? "bg-amber-500 text-slate-950 shadow"
-                                : "text-slate-400 hover:text-white"
-                                }`}
+                              className={`flex h-8 cursor-pointer items-center justify-center rounded px-2.5 text-xs font-bold transition ${
+                                customAccidental === item.acc
+                                  ? "bg-amber-500 text-slate-950 shadow"
+                                  : "text-slate-400 hover:text-white"
+                              }`}
                             >
                               {item.acc}
                             </button>
@@ -801,10 +903,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                             <button
                               key={oct}
                               onClick={() => setCustomOctave(oct)}
-                              className={`flex h-8 cursor-pointer items-center justify-center rounded px-3 font-mono text-xs font-bold transition ${customOctave === oct
-                                ? "bg-amber-500 text-slate-950 shadow"
-                                : "text-slate-400 hover:text-white"
-                                }`}
+                              className={`flex h-8 cursor-pointer items-center justify-center rounded px-3 font-mono text-xs font-bold transition ${
+                                customOctave === oct
+                                  ? "bg-amber-500 text-slate-950 shadow"
+                                  : "text-slate-400 hover:text-white"
+                              }`}
                             >
                               Oct {oct}
                             </button>
@@ -820,7 +923,10 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </span>
                         <div className="flex items-center justify-end gap-1.5">
                           <span className="font-mono text-lg font-bold text-white">
-                            {formatPitchWithLargeAccidentalReact(candidatePitch, { size: 'large' })}
+                            {formatPitchWithLargeAccidentalReact(
+                              candidatePitch,
+                              { size: "large" }
+                            )}
                           </span>
                           <span className="font-mono text-xs text-amber-300">
                             ({candidatePitch.toFrequency().toFixed(1)} Hz)
@@ -830,10 +936,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                       <Button
                         variant="default"
                         onClick={() => handleTransposeToPitch(candidatePitch)}
-                        className="gap-2 cursor-pointer"
+                        className="cursor-pointer gap-2"
                       >
                         <SlidersHorizontal className="h-4 w-4" />
-                        Transpose to {candidatePitch.toScientificString()}{candidatePitch.octave}
+                        Transpose to {candidatePitch.toScientificString()}
+                        {candidatePitch.octave}
                       </Button>
                     </div>
                   </div>
