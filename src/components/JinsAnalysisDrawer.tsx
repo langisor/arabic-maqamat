@@ -1,56 +1,53 @@
 // src/components/JinsAnalysisDrawer.tsx
-import React from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetDescription,
-} from './ui/sheet';
-import { JinsAnalysisTool } from './JinsAnalysisTool';
-import { TimbreType } from '../audio/microtonal-audio';
-import { ArabicPitch } from '../core/pitch';
-import { Package, X } from 'lucide-react';
-import { Button } from './ui/button';
-import { useLanguage } from '../state/language';
+import React from "react"
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "./ui/sheet"
+import { JinsAnalysisTool } from "./JinsAnalysisTool"
+import { TimbreType } from "../audio/microtonal-audio"
+import { ArabicPitch } from "../core/pitch"
+import { Package, X } from "lucide-react"
+import { Button } from "./ui/button"
+import { useLanguage } from "../state/language"
 
 interface JinsAnalysisDrawerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  timbre?: TimbreType;
-  initialJinsId?: string;
-  initialRoot?: ArabicPitch;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  timbre?: TimbreType
+  initialJinsId?: string
+  initialRoot?: ArabicPitch
 }
 
 export const JinsAnalysisDrawer: React.FC<JinsAnalysisDrawerProps> = ({
   open,
   onOpenChange,
-  timbre = 'violin',
-  initialJinsId = 'bayati',
+  timbre = "violin",
+  initialJinsId = "bayati",
   initialRoot,
 }) => {
-  const { language } = useLanguage();
+  const { language } = useLanguage()
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side={language === 'ar' ? 'left' : 'right'}
-        className="w-[min(94vw,900px)] max-w-none max-h-dvh overflow-y-auto bg-slate-950 p-4 sm:p-6 text-slate-100 border-l border-slate-800 shadow-2xl scrollbar-thin"
+        side={language === "ar" ? "left" : "right"}
+        className="w-[min(94vw,1200px)] max-h-dvh scrollbar-thin overflow-y-auto border-l border-slate-800 bg-slate-950 p-4 text-slate-100 
+        shadow-2xl sm:p-6"
         showCloseButton={false}
       >
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
+        <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="w-full flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-purple-500/30 bg-purple-500/20 text-purple-400">
               <Package className="h-4 w-4" />
             </div>
             <div>
-              <SheetTitle className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+              <SheetTitle className="flex items-center gap-2 text-sm font-bold text-white sm:text-base">
                 <span>Jins Analysis Sidebar</span>
-                <span className="font-arabic text-purple-400 text-xs">
+                <span className="font-arabic text-xs text-purple-400">
                   أمتعة الأجناس الموسيقية
                 </span>
               </SheetTitle>
               <SheetDescription className="text-[11px] text-slate-400">
-                Interactive SVG staff showing baggage below the root and above the jins top pitch
+                Interactive SVG staff showing baggage below the root and above
+                the jins top pitch
               </SheetDescription>
             </div>
           </div>
@@ -74,5 +71,5 @@ export const JinsAnalysisDrawer: React.FC<JinsAnalysisDrawerProps> = ({
         />
       </SheetContent>
     </Sheet>
-  );
-};
+  )
+}
