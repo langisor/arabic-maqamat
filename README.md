@@ -27,6 +27,7 @@ The studio navigation opens these labs:
 - **Maqam & 8 Families:** browse the maqam catalogue, family information, scale structure, and tonic.
 - **Transposition Lab:** transpose a maqam to a target tonic while retaining its interval structure.
 - **Violin Fingerboard:** explore scale and custom-sequence fingerings.
+- **Oud Studio:** play six paired Arabic-tuned courses across quarter-tone positions and audition the selected maqam.
 - **Sayr & Qafla:** inspect melodic trajectories, modulation, and cadential phrases.
 - **Score & MusicXML:** render notation, inspect or copy MusicXML, and download exports.
 - **24-EDO Tuning:** inspect quarter-tone pitch positions and note relationships.
@@ -87,6 +88,10 @@ This check covers XML escaping, pitch/duration round trips, validation, and cata
 src/
   App.tsx                       App shell, lab navigation, global maqam/audio state
   main.tsx                      React root, theme and language providers
+  features/
+    oud/
+      OudStudio.tsx             Oud instrument UI and maqam playback
+      oud-instrument.ts         Arabic oud course tuning and pitch positions
   audio/
     audio-transport.ts          Shared audio readiness, sessions, timers, cancellation
     microtonal-audio.ts         Tone.js instruments, notes, sequences, drones
@@ -127,7 +132,7 @@ Lab selection and maqam selection are synchronized with the URL query string. Fo
 /?lab=training&maqam=rast
 ```
 
-The supported lab IDs are `explorer`, `transposition`, `violin`, `sayr`, `score`, `tuning`, `detector`, and `training`. The maqam parameter is checked against the catalogue before use. Browser back/forward navigation restores valid lab and maqam selections.
+The supported lab IDs are `explorer`, `transposition`, `violin`, `oud`, `sayr`, `score`, `tuning`, `detector`, and `training`. The maqam parameter is checked against the catalogue before use. Browser back/forward navigation restores valid lab and maqam selections.
 
 Keep music-theory calculations in `core/`, `theory/`, `score/`, `audio/`, or `violin/` modules where practical. Lab components should focus on UI and coordinate shared operations through props or the shared state/engine modules.
 
@@ -199,7 +204,7 @@ Generated files under `dist/` and `dev-dist/` are build/service-worker output an
 
 ### Add a lab
 
-1. Create a focused component under `src/components/` and use shared UI primitives.
+1. Create a focused component under `src/components/` or a dedicated module under `src/features/` and use shared UI primitives.
 2. Add its `ValidLab` ID to `src/state/workspace-state.ts` (`ValidLab` and `VALID_LABS`).
 3. Add the navigation item and render branch in `src/App.tsx`.
 4. Persist only user preferences/drafts through `updateWorkspaceDraft`; use serializable values.

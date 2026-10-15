@@ -95,6 +95,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       icon: Music,
     },
     {
+      id: "oud",
+      title: "Oud Studio",
+      arabic: "استوديو العود",
+      icon: Music,
+    },
+    {
       id: "sayr",
       title: "Sayr & Qafla Lab",
       arabic: "مختبر السير والقفلة",

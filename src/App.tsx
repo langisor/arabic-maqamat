@@ -31,6 +31,7 @@ import { SayrVisualizationDialog } from "./components/SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./components/ModulationPathwaysDrawer"
 import { JinsAnalysisTool } from "./components/JinsAnalysisTool"
 import { JinsAnalysisDrawer } from "./components/JinsAnalysisDrawer"
+import { OudStudio } from "./features/oud/OudStudio"
 import { ThemeToggle } from "./components/ThemeToggle"
 import { PWAInstallButton } from "./components/PWAInstallButton"
 import { Button } from "./components/ui/button"
@@ -174,6 +175,12 @@ function StudioContent() {
       id: "violin",
       label: "Violin Studio",
       arabic: "لوحة أصابع الكمان",
+      icon: Music,
+    },
+    {
+      id: "oud",
+      label: "Oud Studio",
+      arabic: "استوديو العود",
       icon: Music,
     },
     {
@@ -407,6 +414,8 @@ function StudioContent() {
             onTuningChange={setViolinTuning}
           />
         )}
+
+        {activeLab === "oud" && <OudStudio currentMaqam={currentMaqam} />}
 
         {activeLab === "sayr" && (
           <SayrQaflaLab

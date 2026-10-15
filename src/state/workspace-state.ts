@@ -11,6 +11,7 @@ export type ValidLab =
   | 'explorer' 
   | 'transposition' 
   | 'violin' 
+  | 'oud'
   | 'sayr' 
   | 'score' 
   | 'tuning' 
@@ -22,6 +23,7 @@ export const VALID_LABS: readonly ValidLab[] = [
   'explorer',
   'transposition',
   'violin',
+  'oud',
   'sayr',
   'score',
   'tuning',
