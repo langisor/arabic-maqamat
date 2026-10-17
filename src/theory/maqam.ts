@@ -32,6 +32,172 @@ export interface MaqamIndexEntry {
   readonly verified?: boolean
 }
 
+const AJNAS_AJAM: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.AJAM, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.UPPER_AJAM,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+]
+
+const AJNAS_BAYATI: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.BAYATI, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.UPPER_AJAM,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+]
+
+const AJNAS_HIJAZ: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+  { definition: AjnasLibrary.RAST, connection: "Infisal", direction: "asc" },
+]
+
+const AJNAS_KURD: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.KURD, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+  { definition: AjnasLibrary.AJAM, connection: "Ittisal", direction: "asc" },
+]
+
+const AJNAS_NAHAWAND: JinsDefWithDirection[] = [
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.KURD, connection: "Infisal", direction: "asc" },
+  { definition: AjnasLibrary.HIJAZ, connection: "Infisal", direction: "desc" },
+]
+
+const AJNAS_NIKRIZ: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.NIKRIZ, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+  { definition: AjnasLibrary.RAST, connection: "Infisal", direction: "asc" },
+]
+
+const AJNAS_RAST: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.UPPER_RAST,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "desc" },
+]
+
+const AJNAS_SABA: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.SABA, connection: "Tadakhul", direction: "asc" },
+  { definition: AjnasLibrary.HIJAZ, connection: "Tadakhul", direction: "asc" },
+  { definition: AjnasLibrary.AJAM, connection: "Infisal", direction: "desc" },
+]
+
+const AJNAS_SIKAH: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.UPPER_RAST,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "desc" },
+]
+
+const AJNAS_HIJAZKAR: JinsDefWithDirection[] = [
+  {
+    definition: AjnasLibrary.HIJAZKAR,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "desc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Infisal",
+    direction: "asc",
+  },
+]
+
+const AJNAS_JIHARKAH: JinsDefWithDirection[] = [
+  {
+    definition: AjnasLibrary.JIHARKAH,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.AJAM, connection: "Ittisal", direction: "desc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Infisal",
+    direction: "asc",
+  },
+]
+
+const AJNAS_LAMI: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.LAMI, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.UPPER_RAST,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.KURD, connection: "Infisal", direction: "desc" },
+]
+
+const AJNAS_MUSTAAR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.MUSTAAR, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "desc" },
+  {
+    definition: AjnasLibrary.UPPER_RAST,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+]
+
+const AJNAS_SIKAH_BALADI: JinsDefWithDirection[] = [
+  {
+    definition: AjnasLibrary.SIKAH_BALADI,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "desc" },
+  {
+    definition: AjnasLibrary.UPPER_RAST,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+]
+
+const AJNAS_SAZKAR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.SAZKAR, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "desc" },
+  {
+    definition: AjnasLibrary.UPPER_RAST,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+]
+
 export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
   {
     id: "ajam",
@@ -39,49 +205,15 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "‘Ajam",
     templateId: "ajam",
     sourceSlug: "ajam",
-    ajnas: [
-      {
-        definition: AjnasLibrary.AJAM,
-        connection: "Ittisal",
-        direction: "asc",
-      },
-      {
-        definition: AjnasLibrary.UPPER_AJAM,
-        connection: "Ittisal",
-        direction: "asc",
-      },
-      {
-        definition: AjnasLibrary.NAHAWAND,
-        connection: "Ittisal",
-        direction: "desc",
-      },
-    ],
-    
+    ajnas: AJNAS_AJAM,
   },
-
   {
     id: "ajam-ushayran",
     name: "‘Ajam ‘Ushayran",
     family: "‘Ajam",
     templateId: "ajam",
     sourceSlug: "ajam_ushayran",
-    ajnas: [
-      {
-        definition: AjnasLibrary.AJAM,
-        connection: "Ittisal",
-        direction: "asc",
-      },
-      {
-        definition: AjnasLibrary.UPPER_AJAM,
-        connection: "Ittisal",
-        direction: "asc",
-      },
-      {
-        definition: AjnasLibrary.NAHAWAND,
-        connection: "Ittisal",
-        direction: "desc",
-      },
-    ],
+    ajnas: AJNAS_AJAM,
     verified: true,
   },
   {
@@ -90,60 +222,48 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Kurd",
     templateId: "kurd",
     sourceSlug: "athar_kurd",
-    ajnas: [
-      {
-        definition: AjnasLibrary.KURD,
-        connection: "Ittisal",
-        direction: "asc",
-      },
-      {
-        definition: AjnasLibrary.NAHAWAND,
-        connection: "Ittisal",
-        direction: "desc",
-      },
-      {
-        definition: AjnasLibrary.AJAM,
-        connection: "Ittisal",
-        direction: "asc",
-      },
-    ],
+    ajnas: AJNAS_KURD,
     verified: true,
   },
-
   {
-    id: "awj-iraq", // TODO: .../awj_iraq.php
+    id: "awj-iraq",
     name: "Awj ‘Iraq",
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "awj_iraq",
+    ajnas: AJNAS_SIKAH,
   },
   {
-    id: "bastanikar", // Todo: .../bastanikar.php
+    id: "bastanikar",
     name: "Bastanikar",
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "bastanikar",
+    ajnas: AJNAS_SIKAH,
   },
   {
-    id: "bayati", // Todo: .../bayati.php
+    id: "bayati",
     name: "Bayati",
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "bayati",
+    ajnas: AJNAS_BAYATI,
   },
   {
-    id: "bayati-shuri", // Todo: .../bayati_shuri.php
+    id: "bayati-shuri",
     name: "Bayati Shuri",
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "bayati_shuri",
+    ajnas: AJNAS_BAYATI,
   },
   {
-    id: "dalanshin", // Todo: .../dalanshin.php
+    id: "dalanshin",
     name: "Dalanshin",
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "dalanshin",
+    ajnas: AJNAS_BAYATI,
   },
   {
     id: "farahfaza",
@@ -151,6 +271,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Nahawand",
     templateId: "farahfaza",
     sourceSlug: "nahawand",
+    ajnas: AJNAS_NAHAWAND,
   },
   {
     id: "hijaz",
@@ -158,6 +279,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "hijaz",
+    ajnas: AJNAS_HIJAZ,
   },
   {
     id: "hijazkar",
@@ -165,6 +287,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "hijazkar",
+    ajnas: AJNAS_HIJAZKAR,
   },
   {
     id: "hijazkar-kurd",
@@ -172,6 +295,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "hijazkar_kurd",
+    ajnas: AJNAS_HIJAZKAR,
   },
   {
     id: "husayni",
@@ -179,6 +303,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "husayni",
+    ajnas: AJNAS_BAYATI,
   },
   {
     id: "huzam",
@@ -186,6 +311,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "huzam",
+    ajnas: AJNAS_SIKAH,
   },
   {
     id: "iraq",
@@ -193,6 +319,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "iraq",
+    ajnas: AJNAS_SIKAH,
   },
   {
     id: "jiharkah",
@@ -200,6 +327,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "None",
     templateId: "ajam",
     sourceSlug: "jiharkah",
+    ajnas: AJNAS_JIHARKAH,
   },
   {
     id: "kirdan",
@@ -207,6 +335,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Rast",
     templateId: "rast",
     sourceSlug: "kirdan",
+    ajnas: AJNAS_RAST,
   },
   {
     id: "kurd",
@@ -214,6 +343,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Kurd",
     templateId: "kurd",
     sourceSlug: "kurd",
+    ajnas: AJNAS_KURD,
   },
   {
     id: "lami",
@@ -221,6 +351,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "None",
     templateId: "rast",
     sourceSlug: "lami",
+    ajnas: AJNAS_LAMI,
   },
   {
     id: "mahur",
@@ -228,6 +359,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Rast",
     templateId: "rast",
     sourceSlug: "mahur",
+    ajnas: AJNAS_RAST,
   },
   {
     id: "muhayyar",
@@ -235,6 +367,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Bayati",
     templateId: "muhayyar",
     sourceSlug: "bayati",
+    ajnas: AJNAS_BAYATI,
   },
   {
     id: "mustaar",
@@ -242,6 +375,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "mustaar",
+    ajnas: AJNAS_MUSTAAR,
   },
   {
     id: "nahawand",
@@ -249,13 +383,15 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Nahawand",
     templateId: "nahawand",
     sourceSlug: "nahawand",
+    ajnas: AJNAS_NAHAWAND,
   },
   {
-    id: "nahawand-murassaa", // .../nahawand_murassaa.php
+    id: "nahawand-murassaa",
     name: "Nahawand Murassa‘",
     family: "Nahawand",
     templateId: "nahawand",
     sourceSlug: "nahawand_murassaa",
+    ajnas: AJNAS_NAHAWAND,
   },
   {
     id: "nairuz",
@@ -263,6 +399,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "nairuz",
+    ajnas: AJNAS_BAYATI,
   },
   {
     id: "nawa-athar",
@@ -270,6 +407,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Nikriz",
     templateId: "nikriz",
     sourceSlug: "nawa_athar",
+    ajnas: AJNAS_NIKRIZ,
   },
   {
     id: "nikriz",
@@ -277,6 +415,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Nikriz",
     templateId: "nikriz",
     sourceSlug: "nikriz",
+    ajnas: AJNAS_NIKRIZ,
   },
   {
     id: "rahat-al-arwah",
@@ -284,6 +423,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "huzam",
+    ajnas: AJNAS_SIKAH,
   },
   {
     id: "rast",
@@ -291,6 +431,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Rast",
     templateId: "rast",
     sourceSlug: "rast",
+    ajnas: AJNAS_RAST,
   },
   {
     id: "saba",
@@ -298,6 +439,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "None",
     templateId: "saba",
     sourceSlug: "saba",
+    ajnas: AJNAS_SABA,
   },
   {
     id: "saba-zamzam",
@@ -305,6 +447,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "None",
     templateId: "saba",
     sourceSlug: "saba_zamzam",
+    ajnas: AJNAS_SABA,
   },
   {
     id: "sazkar",
@@ -312,13 +455,15 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Rast",
     templateId: "rast",
     sourceSlug: "kirdan",
+    ajnas: AJNAS_SAZKAR,
   },
   {
-    id: "shadd-araban", // https://www.maqamworld.com/en/maqam/hijazkar.php
+    id: "shadd-araban",
     name: "Shadd ‘Araban",
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "hijazkar",
+    ajnas: AJNAS_HIJAZKAR,
   },
   {
     id: "shahnaz",
@@ -326,6 +471,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "hijazkar",
+    ajnas: AJNAS_HIJAZ,
   },
   {
     id: "shawq-afza",
@@ -333,6 +479,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "shawq_afza",
+    ajnas: AJNAS_BAYATI,
   },
   {
     id: "sikah",
@@ -340,6 +487,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "sikah",
+    ajnas: AJNAS_SIKAH,
   },
   {
     id: "sikah-baladi",
@@ -347,6 +495,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "None",
     templateId: "sikah",
     sourceSlug: "sikah_baladi",
+    ajnas: AJNAS_SIKAH_BALADI,
   },
   {
     id: "suzdalara",
@@ -354,13 +503,15 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "suzdalara",
+    ajnas: AJNAS_HIJAZ,
   },
   {
-    id: "suzidil", // https://www.maqamworld.com/en/maqam/hijazkar.php
+    id: "suzidil",
     name: "Suzidil",
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "hijazkar",
+    ajnas: AJNAS_HIJAZ,
   },
   {
     id: "suznak",
@@ -368,6 +519,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Rast",
     templateId: "rast",
     sourceSlug: "suznak",
+    ajnas: AJNAS_RAST,
   },
   {
     id: "ushaq-masri",
@@ -375,6 +527,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "ushaq_masri",
+    ajnas: AJNAS_BAYATI,
   },
   {
     id: "yakah",
@@ -382,6 +535,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Rast",
     templateId: "rast",
     sourceSlug: "nairuz",
+    ajnas: AJNAS_RAST,
   },
   {
     id: "zanjaran",
@@ -389,6 +543,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Hijaz",
     templateId: "hijaz",
     sourceSlug: "zanjaran",
+    ajnas: AJNAS_HIJAZ,
   },
 ]
 
