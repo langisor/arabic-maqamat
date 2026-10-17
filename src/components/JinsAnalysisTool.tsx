@@ -765,6 +765,7 @@ export function JinsAnalysisTool({
             </span>
           </div>
 
+          {/* Todo: separate to new component named 'SVGStaff' */}
           {/* THE INTERACTIVE SVG STAFF */}
           <div className="relative touch-pan-x scrollbar-thin overflow-x-auto rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-950 to-slate-900 p-2 shadow-inner sm:p-5">
             <svg

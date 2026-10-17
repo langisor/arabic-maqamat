@@ -47,6 +47,7 @@ import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { MaqamNetworkGraph } from "./MaqamNetworkGraph"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
 
+// TODO: import SVGStaff
 interface Props {
   currentMaqam: Maqam
   onSelectMaqam: (maqam: Maqam) => void
@@ -310,7 +311,7 @@ export const MaqamExplorer: React.FC<Props> = ({
               )}
             </div>
           </div>
-
+          {/* Todo: add a new Tab named 'SVG Staff' that contains updated maqam.ts entries */}
           {/* Toggle between Structural View and Network Graph View */}
           <div className="mt-4 flex items-center gap-2 border-t border-slate-800 pt-3">
             <span className="text-xs font-semibold text-slate-400">
