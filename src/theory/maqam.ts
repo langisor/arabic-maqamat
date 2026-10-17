@@ -7,9 +7,59 @@ export type MaqamConnection = "Ittisal" | "Infisal" | "Tadakhul"
 export type MaqamFamilyMnemonic =
   "Nikriz" | "Nahawand" | "‘Ajam" | "Bayati" | "Sikah" | "Hijaz" | "Rast" | "Kurd"
 
- /**
-  * TODO: Integrate these 
-  */
+export interface MaqamIndexEntry {
+  readonly id: string
+  readonly name: string
+  readonly family: MaqamFamilyMnemonic | "None"
+  readonly templateId: string
+  readonly sourceSlug: string
+}
+
+export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
+  { id: "ajam", name: "‘Ajam", family: "‘Ajam", templateId: "ajam", sourceSlug: "ajam" },
+  { id: "ajam-ushayran", name: "‘Ajam ‘Ushayran", family: "‘Ajam", templateId: "ajam", sourceSlug: "ajam_ushayran" },
+  { id: "athar-kurd", name: "Athar Kurd", family: "Kurd", templateId: "kurd", sourceSlug: "athar_kurd" },
+  { id: "awj-iraq", name: "Awj ‘Iraq", family: "Sikah", templateId: "sikah", sourceSlug: "awj_iraq" },
+  { id: "bastanikar", name: "Bastanikar", family: "Sikah", templateId: "sikah", sourceSlug: "bastanikar" },
+  { id: "bayati", name: "Bayati", family: "Bayati", templateId: "bayati", sourceSlug: "bayati" },
+  { id: "bayati-shuri", name: "Bayati Shuri", family: "Bayati", templateId: "bayati", sourceSlug: "bayati_shuri" },
+  { id: "dalanshin", name: "Dalanshin", family: "Bayati", templateId: "bayati", sourceSlug: "dalanshin" },
+  { id: "farahfaza", name: "Farahfaza", family: "Nahawand", templateId: "farahfaza", sourceSlug: "nahawand" },
+  { id: "hijaz", name: "Hijaz", family: "Hijaz", templateId: "hijaz", sourceSlug: "hijaz" },
+  { id: "hijazkar", name: "Hijazkar", family: "Hijaz", templateId: "hijaz", sourceSlug: "hijazkar" },
+  { id: "hijazkar-kurd", name: "Hijazkar Kurd", family: "Hijaz", templateId: "hijaz", sourceSlug: "hijazkar_kurd" },
+  { id: "husayni", name: "Husayni", family: "Bayati", templateId: "bayati", sourceSlug: "husayni" },
+  { id: "huzam", name: "Huzam", family: "Sikah", templateId: "sikah", sourceSlug: "huzam" },
+  { id: "iraq", name: "‘Iraq", family: "Sikah", templateId: "sikah", sourceSlug: "iraq" },
+  { id: "jiharkah", name: "Jiharkah", family: "None", templateId: "ajam", sourceSlug: "jiharkah" },
+  { id: "kirdan", name: "Kirdan", family: "Rast", templateId: "rast", sourceSlug: "kirdan" },
+  { id: "kurd", name: "Kurd", family: "Kurd", templateId: "kurd", sourceSlug: "kurd" },
+  { id: "lami", name: "Lami", family: "None", templateId: "rast", sourceSlug: "lami" },
+  { id: "mahur", name: "Mahur", family: "Rast", templateId: "rast", sourceSlug: "mahur" },
+  { id: "muhayyar", name: "Muhayyar", family: "Bayati", templateId: "muhayyar", sourceSlug: "bayati" },
+  { id: "mustaar", name: "Musta‘ar", family: "Sikah", templateId: "sikah", sourceSlug: "mustaar" },
+  { id: "nahawand", name: "Nahawand", family: "Nahawand", templateId: "nahawand", sourceSlug: "nahawand" },
+  { id: "nahawand-murassaa", name: "Nahawand Murassa‘", family: "Nahawand", templateId: "nahawand", sourceSlug: "nahawand_murassaa" },
+  { id: "nairuz", name: "Nairuz", family: "Bayati", templateId: "bayati", sourceSlug: "nairuz" },
+  { id: "nawa-athar", name: "Nawa Athar", family: "Nikriz", templateId: "nikriz", sourceSlug: "nawa_athar" },
+  { id: "nikriz", name: "Nikriz", family: "Nikriz", templateId: "nikriz", sourceSlug: "nikriz" },
+  { id: "rahat-al-arwah", name: "Rahat al-Arwah", family: "Sikah", templateId: "sikah", sourceSlug: "huzam" },
+  { id: "rast", name: "Rast", family: "Rast", templateId: "rast", sourceSlug: "rast" },
+  { id: "saba", name: "Saba", family: "None", templateId: "saba", sourceSlug: "saba" },
+  { id: "saba-zamzam", name: "Saba Zamzam", family: "None", templateId: "saba", sourceSlug: "saba_zamzam" },
+  { id: "sazkar", name: "Sazkar", family: "Rast", templateId: "rast", sourceSlug: "kirdan" },
+  { id: "shadd-araban", name: "Shadd ‘Araban", family: "Hijaz", templateId: "hijaz", sourceSlug: "hijazkar" },
+  { id: "shahnaz", name: "Shahnaz", family: "Hijaz", templateId: "hijaz", sourceSlug: "hijazkar" },
+  { id: "shawq-afza", name: "Shawq Afza", family: "Bayati", templateId: "bayati", sourceSlug: "shawq_afza" },
+  { id: "sikah", name: "Sikah", family: "Sikah", templateId: "sikah", sourceSlug: "sikah" },
+  { id: "sikah-baladi", name: "Sikah Baladi", family: "None", templateId: "sikah", sourceSlug: "sikah_baladi" },
+  { id: "suzdalara", name: "Suzdalara", family: "Hijaz", templateId: "hijaz", sourceSlug: "suzdalara" },
+  { id: "suzidil", name: "Suzidil", family: "Hijaz", templateId: "hijaz", sourceSlug: "hijazkar" },
+  { id: "suznak", name: "Suznak", family: "Rast", templateId: "rast", sourceSlug: "suznak" },
+  { id: "ushaq-masri", name: "‘Ushaq Masri", family: "Bayati", templateId: "bayati", sourceSlug: "ushaq_masri" },
+  { id: "yakah", name: "Yakah", family: "Rast", templateId: "rast", sourceSlug: "nairuz" },
+  { id: "zanjaran", name: "Zanjaran", family: "Hijaz", templateId: "hijaz", sourceSlug: "zanjaran" },
+]
 
 
 export interface AlternateJinsBranch {
@@ -1644,19 +1694,42 @@ export class MaqamatCatalogue {
   }
 
   public static getAllMaqamat(): Maqam[] {
-    return [
-      this.buildRast(),
-      this.buildBayati(),
-      this.buildMuhayyar(),
-      this.buildHijaz(),
-      this.buildNahawand(),
-      this.buildFarahfaza(),
-      this.buildKurd(),
-      this.buildAjam(),
-      this.buildSikah(),
-      this.buildNikriz(),
-      this.buildSaba(),
-    ]
+    const templates = new Map(
+      [
+        this.buildRast(),
+        this.buildBayati(),
+        this.buildMuhayyar(),
+        this.buildHijaz(),
+        this.buildNahawand(),
+        this.buildFarahfaza(),
+        this.buildKurd(),
+        this.buildAjam(),
+        this.buildSikah(),
+        this.buildNikriz(),
+        this.buildSaba(),
+      ].map((maqam) => [maqam.id, maqam])
+    )
+
+    return MAQAM_INDEX.map((entry) => {
+      const template = templates.get(entry.templateId)
+      if (!template) {
+        throw new Error(
+          `Missing maqam template "${entry.templateId}" for index entry "${entry.id}".`
+        )
+      }
+      if (entry.id === template.id) return template
+
+      return new Maqam({
+        id: entry.id,
+        name: `Maqam ${entry.name}`,
+        family: entry.family,
+        lowerJins: template.lowerJins,
+        connection: template.connection,
+        upperJins: template.upperJins,
+        ghammaz: template.ghammaz,
+        description: `Index entry for ${entry.name}. Its current scale structure uses the ${template.name} template pending a dedicated source-specific model.`,
+      })
+    })
   }
 
   public static getAll(): Maqam[] {
