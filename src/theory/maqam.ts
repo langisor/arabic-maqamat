@@ -1740,10 +1740,10 @@ export class MaqamatCatalogue {
    * Constructs Maqam Ajam
    */
   public static buildAjam(): Maqam {
-    const lower = new Jins(AjnasLibrary.AJAM, new ArabicPitch("B", "♭", 3))
+    const lower = new Jins(AjnasLibrary.AJAM, new ArabicPitch("C", "♮", 4))
     const upper = new Jins(
       AjnasLibrary.UPPER_AJAM,
-      new ArabicPitch("F", "♮", 4)
+      new ArabicPitch("G", "♮", 4)
     )
 
     const ajamNetwork: MaqamNetwork = {
@@ -1753,17 +1753,17 @@ export class MaqamatCatalogue {
           jinsName: "Jins Ajam",
           arabicName: "عجم",
           scaleDegree: 1,
-          root: new ArabicPitch("B", "♭", 3),
+          root: new ArabicPitch("C", "♮", 4),
           connections: [5, 8],
           frequency: "common",
-          roleDescription: "Root Jins on B♭3",
+          roleDescription: "Root Jins on C4",
         },
         {
           jinsId: "ajam",
           jinsName: "Jins Ajam (Upper)",
           arabicName: "عجم علوي",
           scaleDegree: 5,
-          root: new ArabicPitch("F", "♮", 4),
+          root: new ArabicPitch("G", "♮", 4),
           connections: [1, 8],
           frequency: "common",
           roleDescription: "Upper Ajam on 5th",
@@ -1783,7 +1783,7 @@ export class MaqamatCatalogue {
           jinsName: "Jins Ajam (Octave)",
           arabicName: "عجم الجواب",
           scaleDegree: 8,
-          root: new ArabicPitch("B", "♭", 4),
+          root: new ArabicPitch("C", "♮", 5),
           connections: [5],
           frequency: "common",
           roleDescription: "Octave peak",
@@ -1829,17 +1829,17 @@ export class MaqamatCatalogue {
       lowerJins: lower,
       connection: "Ittisal",
       upperJins: upper,
-      ghammaz: new ArabicPitch("F", "♮", 4),
+      ghammaz: new ArabicPitch("G", "♮", 4),
       alternateUpperAjnas: [
         {
           jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("C", "♮", 5)),
           role: "upper_alternate",
           description:
-            "Upper Nahawand on C5 (frequently visited in Egyptian Ajam sayr)",
+            "Nahawand descending from C5 to the ghammaz G4 in Egyptian Ajam sayr",
         },
       ],
       sayrDirection: "ascending",
-      extraPitches: [new ArabicPitch("B", "♭", 4)],
+      extraPitches: [new ArabicPitch("C", "♮", 5)],
       network: ajamNetwork,
       description:
         "The principal maqam in the 'Ajam family (also called Egyptian 'Ajam). It begins with root jins 'Ajam on the tonic and often continues with upper 'Ajam or Nahawand.",

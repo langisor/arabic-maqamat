@@ -46,7 +46,7 @@ import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { MaqamNetworkGraph } from "./MaqamNetworkGraph"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
-import { SVGStaff } from "./JinsAnalysisTool"
+import { SVGStaff } from "./SVGStaff"
 
 interface Props {
   currentMaqam: Maqam
@@ -199,6 +199,22 @@ export const MaqamExplorer: React.FC<Props> = ({
   const baggageNotes = currentMaqam.lowerJins.getBaggageNotes()
 
   const maqamStaffNotes = useMemo(() => {
+    const diatonicOrder: Record<DiatonicBase, number> = {
+      C: 0,
+      D: 1,
+      E: 2,
+      F: 3,
+      G: 4,
+      A: 5,
+      B: 6,
+    }
+    const tonicDiatonicPosition =
+      tonic.octave * 7 + diatonicOrder[tonic.diatonic]
+    const degreeForPitch = (pitch: ArabicPitch) =>
+      pitch.octave * 7 +
+      diatonicOrder[pitch.diatonic] -
+      tonicDiatonicPosition +
+      1
     const notes: {
       pitch: ArabicPitch
       isTonic: boolean
@@ -215,8 +231,9 @@ export const MaqamExplorer: React.FC<Props> = ({
       sectionLabel: string,
       direction: "ascending" | "descending"
     ) => {
-      pitches.forEach((pitch, index) => {
+      pitches.forEach((pitch) => {
         const spineInfo = ArabicNoteSpine.findByPitch(pitch)
+        const degree = degreeForPitch(pitch)
         notes.push({
           pitch,
           isTonic: pitch.equals(tonic),
@@ -225,7 +242,7 @@ export const MaqamExplorer: React.FC<Props> = ({
           offsetQuarterTones: tonic.diffQuarterTones(pitch),
           arabicName: spineInfo?.arabicName || pitch.toDisplayString(),
           roleLabel: `${sectionLabel} (${direction})`,
-          degreeLabel: `${direction === "ascending" ? "↑" : "↓"}${index + 1}`,
+          degreeLabel: `${direction === "ascending" ? "↑" : "↓"}${degree}`,
           sectionLabel,
         })
       })
@@ -237,37 +254,63 @@ export const MaqamExplorer: React.FC<Props> = ({
     const upperPitchesAfterPivot = sharesPivot
       ? upperPitches.slice(1)
       : upperPitches
-    const ascendingCore = [...lowerPitches, ...upperPitchesAfterPivot]
-
     appendSection(
       lowerPitches,
-      `Ascending Jins ${currentMaqam.lowerJins.definition.name}`,
+      `Jins ${currentMaqam.lowerJins.definition.name}`,
       "ascending"
     )
     appendSection(
       upperPitchesAfterPivot,
-      `Ascending Jins ${currentMaqam.upperJins.definition.name}`,
+      `Jins ${currentMaqam.upperJins.definition.name}`,
       "ascending"
     )
 
-    const extensionPitches = scalePitches.slice(ascendingCore.length)
+    const ascendingTop = upperPitches.at(-1) ?? lowerPitches.at(-1) ?? tonic
+    const ascendingTopOffset = tonic.diffQuarterTones(ascendingTop)
+    const extensionPitches = scalePitches
+      .filter((pitch) => tonic.diffQuarterTones(pitch) > ascendingTopOffset)
+      .sort(
+        (left, right) =>
+          tonic.diffQuarterTones(left) - tonic.diffQuarterTones(right)
+      )
     if (extensionPitches.length > 0) {
       appendSection(extensionPitches, "Ascending extension", "ascending")
     }
 
-    for (const branch of currentMaqam.alternateUpperAjnas) {
+    const descendingBranch = currentMaqam.alternateUpperAjnas.find((branch) => {
+      const connectionGap =
+        tonic.diffQuarterTones(branch.jins.root) - ascendingTopOffset
+      return connectionGap >= 0 && connectionGap <= 4
+    })
+    let descentEndpoint = currentMaqam.getGhammaz()
+    if (descendingBranch) {
+      const descendingPitches = [descendingBranch.jins.root]
+      for (const interval of descendingBranch.jins.definition.intervals) {
+        const nextPitch = descendingPitches.at(-1)!.transpose(-interval)
+        descendingPitches.push(nextPitch)
+        if (nextPitch.equals(currentMaqam.getGhammaz())) break
+      }
       appendSection(
-        [...branch.jins.getPitches()].reverse(),
-        `Descending Jins ${branch.jins.definition.name}`,
+        descendingPitches,
+        `Jins ${descendingBranch.jins.definition.name}`,
         "descending"
       )
+      descentEndpoint = descendingPitches.at(-1) ?? descentEndpoint
     }
 
-    appendSection(
-      scalePitches.slice(0, -1).reverse(),
-      "Descending Maqam",
-      "descending"
-    )
+    const descentEndpointOffset = tonic.diffQuarterTones(descentEndpoint)
+    const descendingMaqamPitches = scalePitches
+      .filter((pitch) => {
+        const offset = tonic.diffQuarterTones(pitch)
+        return offset >= 0 && offset < descentEndpointOffset
+      })
+      .sort(
+        (left, right) =>
+          tonic.diffQuarterTones(right) - tonic.diffQuarterTones(left)
+      )
+    if (descendingMaqamPitches.length > 0) {
+      appendSection(descendingMaqamPitches, "Maqam", "descending")
+    }
 
     return notes
   }, [currentMaqam, scalePitches, tonic])
