@@ -34,14 +34,14 @@ The studio navigation opens these labs:
 - **Jins Classifier:** analyze a pitch phrase against the available ajnas.
 - **Practice & Training:** build and quiz scales, practice pitch recognition and sight-reading, and record takes for playback and comparison. Takes persist in browser IndexedDB and can be renamed, downloaded, and deleted.
 
-The app also provides synthesized violin, oud, and kanun timbres, drone and metronome controls, theme and language selection, shareable lab/maqam URLs, an always-visible session summary, and installable PWA support. Shared async feedback patterns expose loading, status, and recoverable errors.
+The app also provides a synthesized violin, a sample-based Oud, and kanun timbres, drone and metronome controls, theme and language selection, shareable lab/maqam URLs, an always-visible session summary, and installable PWA support. Shared async feedback patterns expose loading, status, and recoverable errors.
 
 ## Technology
 
 - React 19 and TypeScript 6
 - Vite 8 and Tailwind CSS 4
 - shadcn-style UI components backed by Base UI
-- Tone.js for synthesized audio and transport
+- Tone.js for sampled and synthesized audio and transport
 - OpenSheetMusicDisplay for sheet rendering
 - vite-plugin-pwa / Workbox for the service worker and web app manifest
 
@@ -166,7 +166,7 @@ When changing stored schemas, validate untrusted data, keep storage versions exp
 
 ## Audio and transport
 
-`MicrotonalAudioEngine` in `src/audio/microtonal-audio.ts` owns the Tone.js synthesizers, DSP chain, drone, and sequence playback. `MetronomeAudioEngine` owns metronome scheduling. Audio contexts may begin suspended until the user interacts with the page.
+`MicrotonalAudioEngine` in `src/audio/microtonal-audio.ts` owns the Tone.js instruments, DSP chain, drone, and sequence playback. The Oud sampler repitches the MP3 recordings in `public/samples/oud/` to support the full 24-EDO pitch range. `MetronomeAudioEngine` owns metronome scheduling. Audio contexts may begin suspended until the user interacts with the page.
 
 `AudioTransport` is the shared owner of named sessions and their timers/cancellation callbacks. Use unique, descriptive scopes for playback features. Finish a session when playback completes; stop its scope when playback is interrupted; register cancellation cleanup for resources such as MediaRecorder or microphone tracks. Avoid independent timers that can outlive a lab or continue after a maqam change.
 
@@ -189,7 +189,7 @@ The notation layer represents microtonal alteration in quarter-tone steps. Confi
 
 ## PWA and offline behavior
 
-Vite PWA configuration is in `vite.config.ts`. A service worker is generated during builds and enabled in development. The manifest and selected static assets are precached; Google Fonts stylesheets and font files use runtime caching. The app can be installed where supported and can load cached assets offline after a successful online visit. External fonts may not be available until cached. Browser audio synthesis itself does not require downloaded audio samples.
+Vite PWA configuration is in `vite.config.ts`. A service worker is generated during builds and enabled in development. The manifest and selected static assets, including the Oud samples, are precached; Google Fonts stylesheets and font files use runtime caching. The app can be installed where supported and can load cached assets offline after a successful online visit. External fonts may not be available until cached.
 
 Generated files under `dist/` and `dev-dist/` are build/service-worker output and should not be edited as source.
 

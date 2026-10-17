@@ -18,7 +18,8 @@ export class MicrotonalAudioEngine {
   private static violinSynth: Tone.PolySynth | null = null;
   private static violinFilter: Tone.Filter | null = null;
   private static violinVibrato: Tone.Vibrato | null = null;
-  private static oudSynth: Tone.PolySynth | null = null;
+  private static oudSampler: Tone.Sampler | null = null;
+  private static oudSamplerReady: Promise<void> | null = null;
   private static oudFilter: Tone.Filter | null = null;
 
   // Drone Nodes
@@ -86,25 +87,35 @@ export class MicrotonalAudioEngine {
     // 4. Acoustic Oud Model:
     // Plucked pear-shaped lute with wooden body resonance, fast percussive transient,
     // and rapid filter decay.
-    this.oudFilter = new Tone.Filter({
+    const oudFilter = new Tone.Filter({
       frequency: 2900,
       type: 'lowpass',
       rolloff: -12,
       Q: 1.2
     }).connect(this.masterReverb);
+    this.oudFilter = oudFilter;
 
-    this.oudSynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'triangle8' // rich warm acoustic harmonics
-      },
-      envelope: {
-        attack: 0.004, // snappy risha / plectrum pluck
-        decay: 0.85,   // wooden bowl resonance
-        sustain: 0.02,
-        release: 0.35
-      }
-    }).connect(this.oudFilter);
-    this.oudSynth.volume.value = 0;
+    this.oudSamplerReady = new Promise<void>((resolve, reject) => {
+      this.oudSampler = new Tone.Sampler({
+        urls: {
+          A2: "A2.mp3",
+          B2: "B2.mp3",
+          C4: "C4.mp3",
+          D4: "D4.mp3",
+          E4: "E4.mp3",
+          Eb4: "Eb4.mp3",
+          G2: "G2.mp3",
+          G3: "G3.mp3",
+        },
+        baseUrl: `${import.meta.env.BASE_URL}samples/oud/`,
+        attack: 0.004,
+        release: 0.35,
+        onload: resolve,
+        onerror: reject,
+      }).connect(oudFilter);
+      this.oudSampler.volume.value = 0;
+    });
+    void this.oudSamplerReady.catch(() => {});
 
     // 5. Qarar Drone Subsystem (Root drone for Taqsim & Wasla)
     this.droneGain = new Tone.Gain(0).connect(this.masterReverb);
@@ -135,7 +146,12 @@ export class MicrotonalAudioEngine {
     }
     return AudioTransport.ensureAudioContext(() =>
       Tone.context.state === 'running' ? Promise.resolve() : Tone.start()
-    , () => Tone.context.state === 'running');
+    , () => Tone.context.state === 'running').then(() => {
+      if (!this.oudSamplerReady) {
+        throw new Error("Oud sampler was not initialized.");
+      }
+      return this.oudSamplerReady;
+    });
   }
 
   private static requestAudioContext(): void {
@@ -237,8 +253,8 @@ export class MicrotonalAudioEngine {
     velocity: number,
     audioTime: number
   ): void {
-    const synth = timbre === 'oud' ? this.oudSynth : this.violinSynth;
-    synth?.triggerAttackRelease(frequency, durationSeconds, audioTime, velocity);
+    const instrument = timbre === 'oud' ? this.oudSampler : this.violinSynth;
+    instrument?.triggerAttackRelease(frequency, durationSeconds, audioTime, velocity);
   }
 
   private static scaleVelocity(timbre: TimbreType, velocity: number): number {
@@ -455,9 +471,9 @@ export class MicrotonalAudioEngine {
 
   private static releaseSequenceVoices(voices: { timbre: TimbreType; frequencies: number[] }): void {
     if (voices.frequencies.length === 0) return;
-    const synth = voices.timbre === 'oud' ? this.oudSynth : this.violinSynth;
+    const instrument = voices.timbre === 'oud' ? this.oudSampler : this.violinSynth;
     try {
-      synth?.triggerRelease(voices.frequencies, Tone.now());
+      instrument?.triggerRelease(voices.frequencies, Tone.now());
     } catch {
       // The audio context may have been interrupted.
     }
@@ -473,7 +489,7 @@ export class MicrotonalAudioEngine {
   public static stopAllPlayback(): void {
     try {
       this.violinSynth?.releaseAll();
-      this.oudSynth?.releaseAll();
+      this.oudSampler?.releaseAll();
     } catch {
       // The audio context may have been interrupted.
     }
