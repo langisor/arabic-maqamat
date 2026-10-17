@@ -111,35 +111,35 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
   },
 
   {
-    id: "awj-iraq", // .../awj_iraq.php
+    id: "awj-iraq", // TODO: .../awj_iraq.php
     name: "Awj ‘Iraq",
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "awj_iraq",
   },
   {
-    id: "bastanikar", // .../bastanikar.php
+    id: "bastanikar", // Todo: .../bastanikar.php
     name: "Bastanikar",
     family: "Sikah",
     templateId: "sikah",
     sourceSlug: "bastanikar",
   },
   {
-    id: "bayati", // .../bayati.php
+    id: "bayati", // Todo: .../bayati.php
     name: "Bayati",
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "bayati",
   },
   {
-    id: "bayati-shuri", // .../bayati_shuri.php
+    id: "bayati-shuri", // Todo: .../bayati_shuri.php
     name: "Bayati Shuri",
     family: "Bayati",
     templateId: "bayati",
     sourceSlug: "bayati_shuri",
   },
   {
-    id: "dalanshin",
+    id: "dalanshin", // Todo: .../dalanshin.php
     name: "Dalanshin",
     family: "Bayati",
     templateId: "bayati",
