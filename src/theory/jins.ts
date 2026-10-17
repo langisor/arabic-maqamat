@@ -225,6 +225,7 @@ export class AjnasLibrary {
     baggageIntervals: [-7, -3, -1, 2],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   // ==========================================
@@ -337,6 +338,7 @@ export class AjnasLibrary {
     baggageIntervals: [-4, 4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   // ==========================================
@@ -375,6 +377,7 @@ export class AjnasLibrary {
     baggageIntervals: [-2, 4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly ATHAR_KURD: JinsDefinition = {
@@ -488,6 +491,7 @@ export class AjnasLibrary {
     baggageIntervals: [-3, 4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
   public static readonly LAMI: JinsDefinition = {
     id: "lami",
@@ -525,6 +529,7 @@ export class AjnasLibrary {
       "Jins Hijazkar has no ghammaz, and therefore no defined size. Its melody is centered around its tonic, notated here on C. Jins Hijazkar occurs on the octave of Maqam Hijazkar.",
     baggageIntervals: [2],
     baggageDescription: "One baggage note above the top pitch (F5)",
+    verified: true,
   }
 
   public static readonly MUKHALIF_SHARQI: JinsDefinition = {
@@ -535,10 +540,11 @@ export class AjnasLibrary {
     sizeLabel: "(undefined size)",
     intervals: [3, 2], // E𝄳 to F (3), F to G♭ (2)
     description:
-      "Undefined size jins with no ghammaz. Variation of Jins Sikah with lowered 3rd degree (G♭); tonic on E𝄳.",
+      "Jins Mukhalif Sharqi has no ghammaz, and therefore no defined size. It is notated here with its tonic on E𝄳. Jins Mukhalif Sharqi is not part of any maqam scale and usually occurs as a modulation from Jins Sikah.",
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch("E", "𝄳", 4),
     tonicCharacteristic: "Somber, intimate Iraqi and Gulf modal inflection",
+    verified: true,
   }
 
   public static readonly NAHAWAND_MURASSAA: JinsDefinition = {
@@ -584,15 +590,15 @@ export class AjnasLibrary {
     arabicName: "صبا دلنشين",
     type: "UndefinedSize",
     sizeLabel: "(undefined size)",
-    intervals: [2, 6, 2], // C to D♭ (2), D♭ to E (6), E to F (2)
+    intervals: [3, 3, 2, 6, 2], //
     description:
-      "Undefined size jins with no ghammaz. Special version of Jins Saba with its tonic on the 3rd degree (C); occurs at octave of Maqam Rast.",
+      "Jins Saba Dalanshin is a special case of Jins Saba which has no ghammaz, and therefore no defined size. Its melody is centered around its tonic, notated here on C. The intervals above the tonic are more or less identical to Jins Hijaz. The note that is 2 degrees below the tonic (in this case A) is a secondary tonic.Jins Saba Dalanshin occurs on the octave of Maqam Rast, which in this case becomes known as Maqam Dalanshin. It also occurs on the 5th degree of Maqam Shawq Afza.",
     hasQuarterTones: true,
-    defaultRoot: new ArabicPitch("C", "♮", 5),
-    tonicCharacteristic: "Upper octave Saba inflection resolving to C",
-    baggageIntervals: [-2, 4],
-    baggageDescription:
-      "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    defaultRoot: new ArabicPitch("A", "♮", 4),
+    tonicCharacteristic: "Upper octave Saba inflection resolving to F5",
+    baggageIntervals: [-2, -4],
+    baggageDescription: "Only two negative baggage notes below tonic",
+    verified: true,
   }
 
   public static readonly SABA_ZAMZAM: JinsDefinition = {
@@ -601,9 +607,9 @@ export class AjnasLibrary {
     arabicName: "صبا زمزم",
     type: "UndefinedSize",
     sizeLabel: "(undefined size)",
-    intervals: [2, 4, 2], // D to E♭ (2), E♭ to F (4), F to G♭ (2)
+    intervals: [2, 4, 2, 6, 2], // D to E♭ (2), E♭ to F (4), F to G♭ (2)
     description:
-      "Undefined / ambiguous size jins (tonic on D, ghammaz on F or B♭). Similar to Jins Saba but with minor 2nd (E♭) instead of neutral 2nd.",
+      "Jins Saba Zamzam (like Jins Saba) has an ambiguous size. It is notated here with its tonic on D and two ghammaz possibilities: the 3rd degree (notated on F) or the 6th degree (notated on B♭). Jins Saba Zamzam is the first jins in Maqam Saba Zamzam.",
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("D", "♮", 4),
     tonicCharacteristic:
@@ -611,6 +617,7 @@ export class AjnasLibrary {
     baggageIntervals: [-4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly SIKAH_BALADI: JinsDefinition = {
