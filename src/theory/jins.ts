@@ -5,9 +5,10 @@ export type JinsType =
   "Trichord" | "Tetrachord" | "Pentachord" | "UndefinedSize"
 export type JinsSizeLabel = "3-note" | "4-note" | "5-note" | "(undefined size)"
 export interface AudioSample {
-  audioTitle: string
+  title: string
+
   url?: string
-  songerName?: string
+  songer?: string
 }
 export interface JinsDefinition {
   readonly id: string
