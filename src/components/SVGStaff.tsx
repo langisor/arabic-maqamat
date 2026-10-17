@@ -73,7 +73,7 @@ export function SVGStaff({
   }, [])
 
   return (
-    <div className="relative touch-pan-x scrollbar-thin overflow-x-auto rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-950 to-slate-900 p-2 shadow-inner sm:p-5">
+    <div className="relative touch-pan-x scrollbar-thin overflow-x-auto rounded-2xl border border-slate-800/80 bg-linear-to-b from-slate-950 to-slate-900 p-2 shadow-inner sm:p-5">
       <div className="mb-2 flex items-center justify-between gap-3 text-[11px] text-slate-300">
         <span className="font-semibold tracking-[0.18em] text-purple-300 uppercase">
           {title}
@@ -87,7 +87,7 @@ export function SVGStaff({
       </div>
       <svg
         viewBox={`0 0 ${staffWidth} 270`}
-        className="h-auto w-full min-w-[720px] overflow-visible select-none"
+        className="h-auto w-full min-w-180 overflow-visible select-none"
         style={{ width: `max(100%, ${staffWidth}px)` }}
         xmlns="http://www.w3.org/2000/svg"
       >

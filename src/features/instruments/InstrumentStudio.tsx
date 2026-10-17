@@ -1,5 +1,8 @@
 import { Music } from "lucide-react"
-import { ViolinFingerboard, type ViolinTuningPreset } from "../../components/ViolinFingerboard"
+import {
+  ViolinFingerboard,
+  type ViolinTuningPreset,
+} from "../../components/ViolinFingerboard"
 import { Button } from "../../components/ui/button"
 import { useLanguage } from "../../state/language"
 import type { TimbreType } from "../../audio/microtonal-audio"
@@ -33,7 +36,7 @@ export function InstrumentStudio({
       aria-labelledby="instrument-studio-title"
       dir={language === "ar" ? "rtl" : "ltr"}
     >
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-amber-900/50 bg-gradient-to-br from-amber-950/50 via-slate-900 to-slate-950 p-4 sm:flex-row sm:items-center sm:p-5">
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-amber-900/50 bg-linear-to-br from-amber-950/50 via-slate-900 to-slate-950 p-4 sm:flex-row sm:items-center sm:p-5">
         <div>
           <h2
             id="instrument-studio-title"

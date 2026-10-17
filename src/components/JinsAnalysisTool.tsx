@@ -452,7 +452,7 @@ export function JinsAnalysisTool({
   return (
     <div className={`space-y-6 ${isCompact ? "p-1" : ""}`}>
       {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-950/60 via-slate-900/90 to-amber-950/40 p-5 shadow-xl backdrop-blur-md sm:p-6">
+      <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-linear-to-r from-purple-950/60 via-slate-900/90 to-amber-950/40 p-5 shadow-xl backdrop-blur-md sm:p-6">
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5">
@@ -579,7 +579,7 @@ export function JinsAnalysisTool({
             <button
               key={def.id}
               onClick={() => handleSelectJins(def)}
-              className={`min-w-[170px] flex-shrink-0 cursor-pointer rounded-xl border p-3 text-left transition-all ${
+              className={`min-w-42.5 shrink-0 cursor-pointer rounded-xl border p-3 text-left transition-all ${
                 isSelected
                   ? "border-purple-500 bg-purple-950/70 text-white shadow-md ring-1 shadow-purple-500/10 ring-purple-500/40"
                   : "border-slate-800/80 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
@@ -773,10 +773,10 @@ export function JinsAnalysisTool({
           </div>
 
           {/* THE INTERACTIVE SVG STAFF */}
-          <div className="relative touch-pan-x scrollbar-thin overflow-x-auto rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-950 to-slate-900 p-2 shadow-inner sm:p-5">
+          <div className="relative touch-pan-x scrollbar-thin overflow-x-auto rounded-2xl border border-slate-800/80 bg-linear-to-b from-slate-950 to-slate-900 p-2 shadow-inner sm:p-5">
             <svg
               viewBox="0 0 850 270"
-              className="h-auto w-full min-w-[720px] overflow-visible select-none"
+              className="h-auto w-full min-w-180 overflow-visible select-none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <defs>
