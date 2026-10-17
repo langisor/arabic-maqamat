@@ -620,10 +620,10 @@ export function JinsAnalysisTool({
       {/* Primary Interactive Section: Staff + Controls */}
       <Card className="overflow-hidden border-slate-800 bg-slate-950/80 shadow-2xl backdrop-blur-md">
         <CardHeader className="border-b border-slate-800/80 bg-slate-900/40 p-4 sm:p-5">
-          <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg md:text-sm">
+          <div className="flex flex-col sm:flex-wrap items-start justify-between gap-4 lg:flex-row lg:items-center">
+ 
+              <div className="flex flex-wrap items-center gap-2.5">
+                <CardTitle className="flex flex-wrap items-center gap-2 text-base text-white sm:text-lg md:text-sm">
                   <span>Interactive Musical Staff: {selectedDef.name}</span>
                   <span className="font-arabic text-md text-amber-400">
                     {selectedDef.arabicName}
@@ -650,7 +650,7 @@ export function JinsAnalysisTool({
                 {selectedDef.description ||
                   "No description available for this jins."}
               </CardDescription>
-            </div>
+         
 
             {/* Audio & Playback Toolbar - Responsive */}
             <div className="flex w-full flex-wrap items-center gap-1.5 sm:gap-2 lg:w-auto">
