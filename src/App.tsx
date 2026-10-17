@@ -265,7 +265,7 @@ function StudioContent() {
       <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/90 px-4 py-2.5 backdrop-blur-md sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           {/* Brand & Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <MainMenu
               activeLab={activeLab}
               onNavigateLab={setActiveLab}
