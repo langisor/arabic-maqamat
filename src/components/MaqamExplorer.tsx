@@ -1,5 +1,5 @@
 // src/components/MaqamExplorer.tsx
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 import { Maqam, MaqamatCatalogue } from "../theory/maqam"
 import {
   ArabicPitch,
@@ -46,8 +46,8 @@ import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { MaqamNetworkGraph } from "./MaqamNetworkGraph"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
+import { SVGStaff } from "./JinsAnalysisTool"
 
-// TODO: import SVGStaff
 interface Props {
   currentMaqam: Maqam
   onSelectMaqam: (maqam: Maqam) => void
@@ -81,9 +81,9 @@ export const MaqamExplorer: React.FC<Props> = ({
   const [showSayrDialogLocal, setShowSayrDialogLocal] = useState(false)
   const [showModulationDrawerLocal, setShowModulationDrawerLocal] =
     useState(false)
-  const [explorerTab, setExplorerTab] = useState<"structure" | "network">(
-    "structure"
-  )
+  const [explorerTab, setExplorerTab] = useState<
+    "structure" | "network" | "svg-staff"
+  >("structure")
 
   const handleOpenSayr = () => {
     if (onOpenSayrVisualization) {
@@ -192,6 +192,28 @@ export const MaqamExplorer: React.FC<Props> = ({
   const tonic = currentMaqam.getTonic()
   const ghammaz = currentMaqam.getGhammaz()
   const baggageNotes = currentMaqam.lowerJins.getBaggageNotes()
+
+  const maqamStaffNotes = useMemo(
+    () =>
+      scalePitches.map((pitch, index) => {
+        const spineInfo = ArabicNoteSpine.findByPitch(pitch)
+        const noteOffset = index === 0 ? 0 : tonic.diffCents(pitch)
+        return {
+          pitch,
+          isTonic: index === 0,
+          isBaggage: false,
+          stepOffset: index,
+          staffY: undefined,
+          staffX: undefined,
+          offsetCents: noteOffset,
+          offsetQuarterTones: index === 0 ? 0 : tonic.diffQuarterTones(pitch),
+          arabicName: spineInfo?.arabicName || pitch.toDisplayString(),
+          degreeLabel: index === 0 ? "Tonic" : `${index + 1}`,
+          roleLabel: index === 0 ? "Tonic" : `Degree ${index + 1}`,
+        }
+      }),
+    [scalePitches, tonic]
+  )
 
   return (
     <div className="space-y-6">
@@ -311,13 +333,11 @@ export const MaqamExplorer: React.FC<Props> = ({
               )}
             </div>
           </div>
-          {/* Todo: add a new Tab named 'SVG Staff' that contains updated maqam.ts entries */}
-          {/* Toggle between Structural View and Network Graph View */}
           <div className="mt-4 flex items-center gap-2 border-t border-slate-800 pt-3">
             <span className="text-xs font-semibold text-slate-400">
               View Mode:
             </span>
-            <div className="flex rounded-xl border border-slate-800 bg-slate-950 p-1">
+            <div className="flex flex-wrap rounded-xl border border-slate-800 bg-slate-950 p-1">
               <button
                 type="button"
                 onClick={() => setExplorerTab("structure")}
@@ -342,16 +362,33 @@ export const MaqamExplorer: React.FC<Props> = ({
                 <Network className="h-3.5 w-3.5" />
                 <span>Ajnas Network Graph (Abu Shumays)</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setExplorerTab("svg-staff")}
+                className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition ${
+                  explorerTab === "svg-staff"
+                    ? "bg-amber-500 font-bold text-slate-950 shadow-xs"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>SVG Staff</span>
+              </button>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6 pt-6">
           {explorerTab === "network" ? (
-            /* Network Graph View */
             <MaqamNetworkGraph maqam={currentMaqam} timbre={timbre} />
+          ) : explorerTab === "svg-staff" ? (
+            <SVGStaff
+              notes={maqamStaffNotes}
+              title="Maqam Staff View"
+              selectedDefName={currentMaqam.name}
+              selectedDefSizeLabel={currentMaqam.lowerJins.definition.sizeLabel}
+            />
           ) : (
-            /* Standard Structural View */
             <>
               {/* Structural Architecture: Lower Jins, Connection, Upper Jins */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
