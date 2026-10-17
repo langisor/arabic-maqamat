@@ -7,6 +7,11 @@ export type MaqamConnection = "Ittisal" | "Infisal" | "Tadakhul"
 export type MaqamFamilyMnemonic =
   "Nikriz" | "Nahawand" | "‘Ajam" | "Bayati" | "Sikah" | "Hijaz" | "Rast" | "Kurd"
 
+ /**
+  * TODO: Integrate these 
+  */
+
+
 export interface AlternateJinsBranch {
   readonly jins: Jins
   readonly role:

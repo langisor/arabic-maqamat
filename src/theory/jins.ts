@@ -263,25 +263,24 @@ export class AjnasLibrary {
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
     verified: true,
   }
-
   public static readonly HIJAZ_MURASSAA: JinsDefinition = {
     id: "hijaz-murassaa",
     name: "Hijaz Murassa‘",
     arabicName: "حجاز مرصع",
     type: "Tetrachord",
     sizeLabel: "4-note",
-    intervals: [2, 6, 2], // D to E♭ (2), E♭ to F♯ (6), F♯ to G (2) = 10 qt
+    intervals: [2, 6, 2], //
     description:
-      "4-note jins. Variation of Jins Hijaz with lowered 5th (A♭) in melodic movement; tonic on D, ghammaz on G.",
+      "Jins Hijaz Murassa‘ is a 4-note jins. It is notated here with its tonic on D and its ghammaz on G. Jins Hijaz Murassa‘ is not part of any maqam scale and usually occurs as a modulation from Jins Hijaz, most in Maqam Hijazkar. Its a variation of Jins Hijaz with LOWERED 5th (A♭) in melodic movement;",
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("D", "♮", 4),
     tonicCharacteristic:
       "Dramatic Hijaz inflection with lowered 5th degree in modulation",
-    baggageIntervals: [-4, -2],
+    baggageIntervals: [-4, -2, 2],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
-
   public static readonly KURD: JinsDefinition = {
     id: "kurd",
     name: "Kurd",
@@ -308,13 +307,14 @@ export class AjnasLibrary {
     sizeLabel: "4-note",
     intervals: [4, 4, 2], // G to A (4), A to B (4), B to C (2) = 10 qt
     description:
-      "4-note version of Jins ‘Ajam with ghammaz on G and tonic on C (the last degree of the jins scale).",
+      "Jins Upper ‘Ajam is a 4-note version of Jins ‘Ajam, with the unusual feature (shared by Jins Upper Rast) that its tonic is the last degree in the scale instead of the first. It is notated here with its ghammaz on G and its tonic on C. Jins Upper ‘Ajam is the second jins in Maqam ‘Ajam and also occurs on the 3rd degree of Maqam Bayati.",
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("G", "♮", 4),
     tonicCharacteristic: "Ghammaz on G4, tonic at upper octave C5",
     baggageIntervals: [-4, 4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly UPPER_RAST: JinsDefinition = {
@@ -488,17 +488,17 @@ export class AjnasLibrary {
     id: "lami",
     name: "Lami",
     arabicName: "لامي",
-    type: "Pentachord",
-    sizeLabel: "5-note",
-    intervals: [2, 4, 4, 2], // D to E♭ (2), E♭ to F (4), F to G (4) = 10 qt
+    type: "Tetrachord",
+    sizeLabel: "4-note",
+    intervals: [2, 4, 4], // D to E♭ (2), E♭ to F (4), F to G (4) = 10 qt
     description:
-      "5-note jins. Tonic on D, ghammaz on G; distinctive Iraqi character featuring a diminished 5th (A♭) in progression.  Jins Lami is the first jins in Maqam Lami.",
+      "Jins Lami is a 4-note jins. It is notated here with its tonic on D and its ghammaz on G. Jins Lami is the first jins in Maqam Lami.",
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("D", "♮", 4),
     tonicCharacteristic: "Melancholic Iraqi modal flavor with semitone opening",
-    baggageIntervals: [4],
+    baggageIntervals: [2,4],
     baggageDescription:
-      "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+      "Only one note over top  B𝄳4",
     verified: true,
   }
 
@@ -571,7 +571,7 @@ export class AjnasLibrary {
     baggageIntervals: [-7, -4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
-      verified:true
+    verified: true,
   }
 
   public static readonly SABA_DALANSHIN: JinsDefinition = {
