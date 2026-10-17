@@ -194,8 +194,7 @@ export class AjnasLibrary {
     type: "Trichord",
     sizeLabel: "3-note",
     intervals: [5, 2], // E𝄳 to F♯ (5 qt / 250c), F♯ to G (2 qt / 100c) = 7 qt (350 cents)
-    description:
-      "3-note jins. Variation of Jins Sikah with a raised 2nd degree (F♯); tonic on E𝄳, ghammaz on G.",
+    description: `3-note jins. Variation of Jins Sikah with a raised 2nd degree (F♯); tonic on E𝄳, ghammaz on G. Jins Musta‘ar is the first jins in Maqam Musta‘ar.`,
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch("E", "𝄳", 4),
     tonicCharacteristic:
@@ -203,6 +202,7 @@ export class AjnasLibrary {
     baggageIntervals: [-1, 4, 6],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly SIKAH: JinsDefinition = {
@@ -242,6 +242,7 @@ export class AjnasLibrary {
     baggageIntervals: [-7, -4, 4, 6],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly HIJAZ: JinsDefinition = {
@@ -252,7 +253,7 @@ export class AjnasLibrary {
     sizeLabel: "4-note",
     intervals: [2, 6, 2], // D to E♭ (2), E♭ to F♯ (6), F♯ to G (2) = 10 qt (500 cents)
     description:
-      "4-note jins with augmented 2nd step (6 qt); tonic on D, ghammaz on G.",
+      "4-note jins with augmented 2nd step (6 qt); tonic on D, ghammaz on G. The interval between the 2nd and 3rd degrees is usually played smaller than notated by raising the 2nd a little and lowering the 3rd a little. Jins Hijaz is the first jins in Maqam Hijaz, Maqam Hijazkar, and Maqam Zanjaran.",
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("D", "♮", 4),
     tonicCharacteristic:
@@ -260,6 +261,7 @@ export class AjnasLibrary {
     baggageIntervals: [-7, -4, 4, 6],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly HIJAZ_MURASSAA: JinsDefinition = {
@@ -295,23 +297,7 @@ export class AjnasLibrary {
     baggageIntervals: [-4, 4, 6],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
-  }
-
-  public static readonly LAMI: JinsDefinition = {
-    id: "lami",
-    name: "Lami",
-    arabicName: "لامي",
-    type: "Tetrachord",
-    sizeLabel: "4-note",
-    intervals: [2, 4, 4], // D to E♭ (2), E♭ to F (4), F to G (4) = 10 qt
-    description:
-      "4-note jins. Tonic on D, ghammaz on G; distinctive Iraqi character featuring a diminished 5th (A♭) in progression.",
-    hasQuarterTones: false,
-    defaultRoot: new ArabicPitch("D", "♮", 4),
-    tonicCharacteristic: "Melancholic Iraqi modal flavor with semitone opening",
-    baggageIntervals: [4],
-    baggageDescription:
-      "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly UPPER_AJAM: JinsDefinition = {
@@ -367,7 +353,7 @@ export class AjnasLibrary {
     baggageIntervals: [-10, -2, 4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
-    verified:true
+    verified: true,
   }
 
   public static readonly AJAM_MURASSAA: JinsDefinition = {
@@ -402,7 +388,7 @@ export class AjnasLibrary {
     baggageIntervals: [-8, -2, 2],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
-      verified:true
+    verified: true,
   }
 
   public static readonly JIHARKAH: JinsDefinition = {
@@ -421,6 +407,7 @@ export class AjnasLibrary {
     baggageIntervals: [-6, -3],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly NAHAWAND: JinsDefinition = {
@@ -439,6 +426,7 @@ export class AjnasLibrary {
     baggageIntervals: [-8, -6, -2, 2],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly NIKRIZ: JinsDefinition = {
@@ -449,13 +437,14 @@ export class AjnasLibrary {
     sizeLabel: "5-note",
     intervals: [4, 2, 6, 2], // C to D (4), D to E♭ (2), E♭ to F♯ (6), F♯ to G (2) = 14 qt (700 cents)
     description:
-      "5-note pentachord with augmented 2nd between 3rd and 4th degrees; tonic on C, ghammaz on G.",
+      "5-note pentachord with augmented 2nd between 3rd and 4th degrees; tonic on C, ghammaz on G.  Jins Nikriz is the first jins in Maqam Nikriz and Maqam Nawa Athar.",
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("C", "♮", 4),
     tonicCharacteristic: "Virtuosic, dramatic tension on 4th scale degree (F♯)",
     baggageIntervals: [-8, -2, 2, 4, 6],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
   public static readonly NAWA_ATHAR_NIKRIZ = AjnasLibrary.NIKRIZ
 
@@ -467,7 +456,7 @@ export class AjnasLibrary {
     sizeLabel: "5-note",
     intervals: [4, 3, 3, 4], // C to D (4), D to E𝄳 (3), E𝄳 to F (3), F to G (4) = 14 qt (700 cents)
     description:
-      "5-note pentachord with neutral 3rd (E𝄳); foundational root cell spanning a perfect 5th from tonic C to ghammaz G.",
+      "5-note pentachord with neutral 3rd (E𝄳); foundational root cell spanning a perfect 5th from tonic C to ghammaz G.  Jins Rast is the first jins in Maqam Rast, Maqam Suznak, and other maqamat in the Maqam Rast Family.",
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch("C", "♮", 4),
     tonicCharacteristic:
@@ -475,6 +464,7 @@ export class AjnasLibrary {
     baggageIntervals: [-6, -3, 2, 4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly SAZKAR: JinsDefinition = {
@@ -493,6 +483,23 @@ export class AjnasLibrary {
     baggageIntervals: [-3, 4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+  }
+  public static readonly LAMI: JinsDefinition = {
+    id: "lami",
+    name: "Lami",
+    arabicName: "لامي",
+    type: "Pentachord",
+    sizeLabel: "5-note",
+    intervals: [2, 4, 4, 2], // D to E♭ (2), E♭ to F (4), F to G (4) = 10 qt
+    description:
+      "5-note jins. Tonic on D, ghammaz on G; distinctive Iraqi character featuring a diminished 5th (A♭) in progression.  Jins Lami is the first jins in Maqam Lami.",
+    hasQuarterTones: false,
+    defaultRoot: new ArabicPitch("D", "♮", 4),
+    tonicCharacteristic: "Melancholic Iraqi modal flavor with semitone opening",
+    baggageIntervals: [4],
+    baggageDescription:
+      "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   // ==========================================
@@ -538,7 +545,7 @@ export class AjnasLibrary {
     sizeLabel: "(undefined size)",
     intervals: [4, 2, 4, 2], // C to D (4), D to E♭ (2), E♭ to F (4), F to G♭ (2)
     description:
-      "Undefined size jins with no ghammaz. Variation of Jins Nahawand with lowered 5th degree (G♭); tonic on C.",
+      "Undefined size jins with no ghammaz. Variation of Jins Nahawand with lowered 5th degree (G♭); tonic on C. Jins Nahawand Murassa‘ has no ghammaz",
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("C", "♮", 4),
     tonicCharacteristic:
@@ -546,6 +553,7 @@ export class AjnasLibrary {
     baggageIntervals: [-2, 6],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+    verified: true,
   }
 
   public static readonly SABA: JinsDefinition = {
@@ -554,15 +562,16 @@ export class AjnasLibrary {
     arabicName: "صبا",
     type: "UndefinedSize",
     sizeLabel: "(undefined size)",
-    intervals: [3, 3, 2], // D to E𝄳 (3), E𝄳 to F (3), F to G♭ (2) = 8 qt (400 cents)
+    intervals: [3, 3, 2, 6, 2], // D to E𝄳 (3), E𝄳 to F (3), F to G♭ (2) = 8 qt (400 cents)
     description:
-      "Undefined / ambiguous size jins (ghammaz on 3rd degree F4 or 6th degree B♭4). Deeply emotional and narrow 400-cent span.",
+      "Jins Saba has an ambiguous size. It is notated here with its tonic on D and two ghammaz possibilities: the 3rd degree (notated on F) or the 6th degree (notated on B♭). Jins Saba is the first jins in Maqam Saba.",
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch("D", "♮", 4),
     tonicCharacteristic: "Heart-wrenching grief, ultra-compressed span",
     baggageIntervals: [-7, -4],
     baggageDescription:
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
+      verified:true
   }
 
   public static readonly SABA_DALANSHIN: JinsDefinition = {

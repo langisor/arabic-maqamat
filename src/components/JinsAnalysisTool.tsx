@@ -616,7 +616,7 @@ export function JinsAnalysisTool({
           <div className="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
             <div>
               <div className="flex items-center gap-2.5">
-                <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
+                <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg md:text-sm">
                   <span>Interactive Musical Staff: {selectedDef.name}</span>
                   <span className="font-arabic text-md text-amber-400">
                     {selectedDef.arabicName}
