@@ -59,24 +59,57 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     
   },
 
-  // Todo: complete as above: https://www.maqamworld.com/en/maqam/ajam_ushayran.php
   {
     id: "ajam-ushayran",
     name: "‘Ajam ‘Ushayran",
     family: "‘Ajam",
     templateId: "ajam",
     sourceSlug: "ajam_ushayran",
+    ajnas: [
+      {
+        definition: AjnasLibrary.AJAM,
+        connection: "Ittisal",
+        direction: "asc",
+      },
+      {
+        definition: AjnasLibrary.UPPER_AJAM,
+        connection: "Ittisal",
+        direction: "asc",
+      },
+      {
+        definition: AjnasLibrary.NAHAWAND,
+        connection: "Ittisal",
+        direction: "desc",
+      },
+    ],
+    verified: true,
   },
-  // Todo: https://www.maqamworld.com/en/maqam/athar_kurd.php
   {
     id: "athar-kurd",
     name: "Athar Kurd",
     family: "Kurd",
     templateId: "kurd",
     sourceSlug: "athar_kurd",
+    ajnas: [
+      {
+        definition: AjnasLibrary.KURD,
+        connection: "Ittisal",
+        direction: "asc",
+      },
+      {
+        definition: AjnasLibrary.NAHAWAND,
+        connection: "Ittisal",
+        direction: "desc",
+      },
+      {
+        definition: AjnasLibrary.AJAM,
+        connection: "Ittisal",
+        direction: "asc",
+      },
+    ],
+    verified: true,
   },
 
-  // Todo: Continue all below entries
   {
     id: "awj-iraq", // .../awj_iraq.php
     name: "Awj ‘Iraq",
