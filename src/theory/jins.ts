@@ -4,7 +4,11 @@ import { ArabicPitch } from "../core/pitch"
 export type JinsType =
   "Trichord" | "Tetrachord" | "Pentachord" | "UndefinedSize"
 export type JinsSizeLabel = "3-note" | "4-note" | "5-note" | "(undefined size)"
-
+export interface AudioSample {
+  audioTitle: string
+  url?: string
+  songerName?: string
+}
 export interface JinsDefinition {
   readonly id: string
   readonly name: string
@@ -35,6 +39,7 @@ export interface JinsDefinition {
    */
   readonly baggageDescription?: string
   readonly verified?: boolean
+  readonly audioSamples?: AudioSample[]
 }
 
 export class Jins {
@@ -475,7 +480,7 @@ export class AjnasLibrary {
     sizeLabel: "5-note",
     intervals: [6, 1, 3, 4], // C to D♯ (6), D♯ to E𝄳 (1), E𝄳 to F (3), F to G (4) = 14 qt
     description:
-      "5-note pentachord. Variation of Jins Rast with raised 2nd degree (D♯); tonic on C, ghammaz on G.",
+      "5-note pentachord. Variation of Jins Rast with raised 2nd degree (D♯); tonic on C, ghammaz on G. Jins Sazkar is the first jins in Maqam Sazkar.",
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch("C", "♮", 4),
     tonicCharacteristic:
@@ -496,9 +501,8 @@ export class AjnasLibrary {
     hasQuarterTones: false,
     defaultRoot: new ArabicPitch("D", "♮", 4),
     tonicCharacteristic: "Melancholic Iraqi modal flavor with semitone opening",
-    baggageIntervals: [2,4],
-    baggageDescription:
-      "Only one note over top  B𝄳4",
+    baggageIntervals: [2, 4],
+    baggageDescription: "Only one note over top  B𝄳4",
     verified: true,
   }
 
