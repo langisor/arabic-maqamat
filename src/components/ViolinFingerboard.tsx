@@ -24,6 +24,7 @@ import {
   Columns,
 } from 'lucide-react';
 import { useLanguage } from '../state/language';
+import { getWorkspaceState, updateWorkspaceDraft } from '../state/workspace-state';
 
 export type ViolinTuningPreset = 'standard' | 'arabic' | 'western';
 
@@ -131,7 +132,14 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const [selectedPlacement, setSelectedPlacement] = useState<ViolinFingerPlacement | null>(null);
   const [showPedagogicalTips, setShowPedagogicalTips] = useState(true);
   const [isReversedStrings, setIsReversedStrings] = useState<boolean>(false);
-  const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [orientation, setOrientationState] = useState<'horizontal' | 'vertical'>(
+    () => getWorkspaceState().drafts.violin.orientation
+  );
+
+  const setOrientation = (nextOrientation: 'horizontal' | 'vertical') => {
+    setOrientationState(nextOrientation);
+    updateWorkspaceDraft('violin', { orientation: nextOrientation });
+  };
 
   // Strings according to tuning
   const tuningStrings: { name: ViolinStringName; label: string; arabicLabel: string; rootPitch: ArabicPitch }[] = useMemo(() => {

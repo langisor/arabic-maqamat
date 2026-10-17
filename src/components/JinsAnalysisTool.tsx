@@ -5,6 +5,12 @@ import { Jins, JinsDefinition, AjnasLibrary } from "../theory/jins"
 import { ArabicNoteSpine } from "../core/note-spine"
 import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
 import {
+  deserializePitch,
+  getWorkspaceState,
+  serializePitch,
+  updateWorkspaceDraft,
+} from "../state/workspace-state"
+import {
   Card,
   CardHeader,
   CardTitle,
@@ -418,7 +424,11 @@ export function JinsAnalysisTool({
 }: JinsAnalysisToolProps) {
   // Selected Jins & Root
   const allDefinitions = useMemo(() => AjnasLibrary.getAllDefinitions(), [])
-  const [selectedJinsId, setSelectedJinsId] = useState<string>(initialJinsId)
+  const savedAnalysis = getWorkspaceState().drafts.jinsAnalysis
+  const [selectedJinsId, setSelectedJinsId] = useState<string>(() => {
+    const savedId = savedAnalysis.selectedJinsId
+    return savedId && AjnasLibrary.findById(savedId) ? savedId : initialJinsId
+  })
 
   const selectedDef = useMemo(() => {
     return (
@@ -427,13 +437,28 @@ export function JinsAnalysisTool({
   }, [allDefinitions, selectedJinsId])
 
   const [currentRoot, setCurrentRoot] = useState<ArabicPitch>(() => {
-    return initialRoot || selectedDef.defaultRoot
+    const savedRoot = deserializePitch(savedAnalysis.root)
+    return savedAnalysis.selectedJinsId === selectedJinsId && savedRoot
+      ? savedRoot
+      : initialRoot || selectedDef.defaultRoot
   })
 
   // Whenever user picks a different jins definition, reset root to that jins' default root if desired
   const handleSelectJins = (def: JinsDefinition) => {
     setSelectedJinsId(def.id)
     setCurrentRoot(def.defaultRoot)
+    updateWorkspaceDraft("jinsAnalysis", {
+      selectedJinsId: def.id,
+      root: serializePitch(def.defaultRoot),
+    })
+  }
+
+  const handleSelectRoot = (root: ArabicPitch) => {
+    setCurrentRoot(root)
+    updateWorkspaceDraft("jinsAnalysis", {
+      selectedJinsId,
+      root: serializePitch(root),
+    })
   }
 
   // Instantiate Jins object
@@ -482,8 +507,20 @@ export function JinsAnalysisTool({
   >("all")
   const [activeViewTab, setActiveViewTab] = useState<
     "staff" | "theory" | "compare"
-  >("staff")
-  const [comparisonJinsId, setComparisonJinsId] = useState<string>("saba")
+  >(() => getWorkspaceState().drafts.jinsAnalysis.viewTab)
+  const [comparisonJinsId, setComparisonJinsIdState] = useState<string>(
+    () => getWorkspaceState().drafts.jinsAnalysis.comparisonJinsId
+  )
+
+  const selectViewTab = (tab: "staff" | "theory" | "compare") => {
+    setActiveViewTab(tab)
+    updateWorkspaceDraft("jinsAnalysis", { viewTab: tab })
+  }
+
+  const selectComparisonJins = (id: string) => {
+    setComparisonJinsIdState(id)
+    updateWorkspaceDraft("jinsAnalysis", { comparisonJinsId: id })
+  }
 
   const handleTimbreSelect = (t: TimbreType) => {
     onTimbreChange?.(t)
@@ -849,7 +886,7 @@ export function JinsAnalysisTool({
                 return (
                   <button
                     key={r.label}
-                    onClick={() => setCurrentRoot(r.pitch)}
+                    onClick={() => handleSelectRoot(r.pitch)}
                     className={`cursor-pointer rounded-lg px-2 py-0.5 font-mono text-[11px] transition-all ${
                       isSelected
                         ? "bg-amber-500 font-bold text-slate-950 shadow-xs"
@@ -863,7 +900,7 @@ export function JinsAnalysisTool({
               {/* Reset to Jins default root if different */}
               {!currentRoot.equals(selectedDef.defaultRoot) && (
                 <button
-                  onClick={() => setCurrentRoot(selectedDef.defaultRoot)}
+                  onClick={() => handleSelectRoot(selectedDef.defaultRoot)}
                   className="cursor-pointer rounded-lg border border-purple-800/60 bg-purple-950/60 px-2 py-0.5 text-[10px] text-purple-300 transition-all hover:text-purple-100"
                   title={`Reset to default root ${selectedDef.defaultRoot.toString()}`}
                 >
@@ -1622,7 +1659,7 @@ export function JinsAnalysisTool({
       {/* TABS FOR DEEP-DIVE ANALYSIS */}
       <div className="flex items-center gap-2 border-b border-slate-800">
         <button
-          onClick={() => setActiveViewTab("staff")}
+          onClick={() => selectViewTab("staff")}
           className={`flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-all ${
             activeViewTab === "staff"
               ? "border-purple-500 text-purple-300"
@@ -1634,7 +1671,7 @@ export function JinsAnalysisTool({
         </button>
 
         <button
-          onClick={() => setActiveViewTab("theory")}
+          onClick={() => selectViewTab("theory")}
           className={`flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-all ${
             activeViewTab === "theory"
               ? "border-purple-500 text-purple-300"
@@ -1646,7 +1683,7 @@ export function JinsAnalysisTool({
         </button>
 
         <button
-          onClick={() => setActiveViewTab("compare")}
+          onClick={() => selectViewTab("compare")}
           className={`flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold transition-all ${
             activeViewTab === "compare"
               ? "border-purple-500 text-purple-300"
@@ -1886,7 +1923,7 @@ export function JinsAnalysisTool({
                 <span className="text-xs text-slate-400">Compare with:</span>
                 <select
                   value={comparisonJinsId}
-                  onChange={(e) => setComparisonJinsId(e.target.value)}
+                  onChange={(e) => selectComparisonJins(e.target.value)}
                   className="cursor-pointer rounded-xl border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-white focus:border-purple-500 focus:outline-none"
                 >
                   {allDefinitions

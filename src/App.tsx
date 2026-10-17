@@ -8,7 +8,14 @@ import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import { MicrotonalAudioEngine, TimbreType } from "./audio/microtonal-audio"
 import { AudioTransport } from "./audio/audio-transport"
-import { ValidLab } from "./state/workspace-state"
+import {
+  ValidLab,
+  deserializePitch,
+  getWorkspaceState,
+  serializePitch,
+  updateWorkspaceDraft,
+  updateWorkspaceGlobal,
+} from "./state/workspace-state"
 import { LanguageProvider, useLanguage } from "./state/language"
 import { ThemeProvider } from "./components/theme-provider"
 
@@ -51,16 +58,36 @@ function StudioContent() {
 
   // State
   const [currentMaqam, setCurrentMaqam] = useState<Maqam>(() => {
-    return MaqamatCatalogue.getById("rast") || MaqamatCatalogue.getAll()[0]
+    const workspace = getWorkspaceState()
+    const savedId = workspace.global.selectedMaqamId
+    const baseId = savedId.split("-transposed-")[0]
+    const baseMaqam =
+      MaqamatCatalogue.getById(baseId) ||
+      MaqamatCatalogue.getById("rast") ||
+      MaqamatCatalogue.getAll()[0]
+    const savedTonic = deserializePitch(
+      workspace.drafts.transposition.targetTonic
+    )
+    return savedId.includes("-transposed-") && savedTonic
+      ? baseMaqam.transpose(savedTonic)
+      : baseMaqam
   })
-  const [activeLab, setActiveLab] = useState<ValidLab>("explorer")
-  const [timbre, setTimbre] = useState<TimbreType>("violin")
-  const [selectedInstrument, setSelectedInstrument] = useState<TimbreType>("violin")
-  const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>("arabic")
+  const [activeLab, setActiveLab] = useState<ValidLab>(
+    () => getWorkspaceState().global.activeLab
+  )
+  const [timbre, setTimbre] = useState<TimbreType>(
+    () => getWorkspaceState().global.timbre
+  )
+  const [selectedInstrument, setSelectedInstrument] = useState<TimbreType>(
+    () => getWorkspaceState().global.selectedInstrument
+  )
+  const [violinTuning, setViolinTuning] = useState<ViolinTuningPreset>(
+    () => getWorkspaceState().drafts.violin.tuning
+  )
   const [isDroneActive, setIsDroneActive] = useState<boolean>(false)
   const [isPlayingScale, setIsPlayingScale] = useState<boolean>(false)
   const [systemTuningMode, setSystemTuningMode] = useState<"24edo" | "12tet">(
-    "24edo"
+    () => getWorkspaceState().global.systemTuningMode
   )
 
   // Modals & Drawers state
@@ -75,6 +102,32 @@ function StudioContent() {
   const [transportStatus, setTransportStatus] = useState(() =>
     AudioTransport.getStatus()
   )
+
+  useEffect(() => {
+    updateWorkspaceGlobal({
+      selectedMaqamId: currentMaqam.id,
+      activeLab,
+      timbre,
+      selectedInstrument,
+      systemTuningMode,
+    })
+    const isTransposed = currentMaqam.id.includes("-transposed-")
+    updateWorkspaceDraft("transposition", {
+      targetTonic: isTransposed
+        ? serializePitch(currentMaqam.getTonic())
+        : null,
+    })
+  }, [
+    activeLab,
+    currentMaqam,
+    selectedInstrument,
+    systemTuningMode,
+    timbre,
+  ])
+
+  useEffect(() => {
+    updateWorkspaceDraft("violin", { tuning: violinTuning })
+  }, [violinTuning])
 
   const handleSelectInstrument = useCallback((instrument: TimbreType) => {
     setSelectedInstrument(instrument)

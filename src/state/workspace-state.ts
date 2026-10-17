@@ -1,10 +1,11 @@
 // src/state/workspace-state.ts
 import { DiatonicBase, MicrotonalAccidental, ArabicPitch } from '../core/pitch';
 import { MaqamatCatalogue } from '../theory/maqam';
+import { AjnasLibrary } from '../theory/jins';
 import type { TimbreType } from '../audio/microtonal-audio';
 import type { MetronomeSoundType } from '../audio/metronome-engine';
 
-export const WORKSPACE_SCHEMA_VERSION = 1;
+export const WORKSPACE_SCHEMA_VERSION = 2;
 export const WORKSPACE_STORAGE_KEY = 'arabic_maqamat_workspace_v1';
 
 export type ValidLab = 
@@ -58,6 +59,8 @@ export interface WorkspaceGlobalState {
   selectedMaqamId: string;
   activeLab: ValidLab;
   timbre: TimbreType;
+  selectedInstrument: TimbreType;
+  systemTuningMode: '24edo' | '12tet';
   audioSettings: {
     masterVolume: number;
     reverbWet: number;
@@ -74,6 +77,7 @@ export interface WorkspaceGlobalState {
 export interface WorkspaceDrafts {
   explorer: {
     transpositionTab: 'classical' | 'spine' | 'custom';
+    viewTab: 'structure' | 'network' | 'svg-staff';
     customTonic: SerializedPitch;
   };
   transposition: {
@@ -82,6 +86,7 @@ export interface WorkspaceDrafts {
   violin: {
     orientation: 'vertical' | 'horizontal';
     viewMode: 'maqam' | 'sequence';
+    tuning: 'standard' | 'arabic' | 'western';
     seqBpm: number;
     customSequence: SerializedPitch[];
     stringFilter: 'all' | 'G' | 'D' | 'A' | 'E';
@@ -93,6 +98,12 @@ export interface WorkspaceDrafts {
   };
   jinsDetector: {
     customPhrase: SerializedPitch[] | null;
+  };
+  jinsAnalysis: {
+    selectedJinsId: string | null;
+    root: SerializedPitch | null;
+    comparisonJinsId: string;
+    viewTab: 'staff' | 'theory' | 'compare';
   };
   training: {
     activeMode: 'memorize' | 'sight' | 'tracker' | 'record';
@@ -115,6 +126,8 @@ export const DEFAULT_WORKSPACE_STATE: WorkspaceState = {
     selectedMaqamId: 'rast',
     activeLab: 'explorer',
     timbre: 'violin',
+    selectedInstrument: 'violin',
+    systemTuningMode: '24edo',
     audioSettings: {
       masterVolume: 85,
       reverbWet: 20,
@@ -130,6 +143,7 @@ export const DEFAULT_WORKSPACE_STATE: WorkspaceState = {
   drafts: {
     explorer: {
       transpositionTab: 'classical',
+      viewTab: 'structure',
       customTonic: { diatonic: 'G', accidental: '♮', octave: 4 }
     },
     transposition: {
@@ -138,6 +152,7 @@ export const DEFAULT_WORKSPACE_STATE: WorkspaceState = {
     violin: {
       orientation: 'vertical',
       viewMode: 'maqam',
+      tuning: 'arabic',
       seqBpm: 100,
       customSequence: [],
       stringFilter: 'all',
@@ -149,6 +164,12 @@ export const DEFAULT_WORKSPACE_STATE: WorkspaceState = {
     },
     jinsDetector: {
       customPhrase: null
+    },
+    jinsAnalysis: {
+      selectedJinsId: null,
+      root: null,
+      comparisonJinsId: 'saba',
+      viewTab: 'staff'
     },
     training: {
       activeMode: 'memorize',
@@ -195,6 +216,12 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
     if (g.timbre === 'violin' || g.timbre === 'oud') {
       result.global.timbre = g.timbre;
     }
+    if (g.selectedInstrument === 'violin' || g.selectedInstrument === 'oud') {
+      result.global.selectedInstrument = g.selectedInstrument;
+    }
+    if (g.systemTuningMode === '24edo' || g.systemTuningMode === '12tet') {
+      result.global.systemTuningMode = g.systemTuningMode;
+    }
     // Audio settings validation
     if (g.audioSettings && typeof g.audioSettings === 'object') {
       const a = g.audioSettings;
@@ -234,6 +261,13 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
       if (['classical', 'spine', 'custom'].includes(d.explorer.transpositionTab as string)) {
         result.drafts.explorer.transpositionTab = d.explorer.transpositionTab;
       }
+      if (
+        d.explorer.viewTab === 'structure' ||
+        d.explorer.viewTab === 'network' ||
+        d.explorer.viewTab === 'svg-staff'
+      ) {
+        result.drafts.explorer.viewTab = d.explorer.viewTab;
+      }
       const customP = deserializePitch(d.explorer.customTonic);
       if (customP) {
         result.drafts.explorer.customTonic = serializePitch(customP);
@@ -253,6 +287,9 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
       }
       if (d.violin.viewMode === 'maqam' || d.violin.viewMode === 'sequence') {
         result.drafts.violin.viewMode = d.violin.viewMode;
+      }
+      if (d.violin.tuning === 'standard' || d.violin.tuning === 'arabic' || d.violin.tuning === 'western') {
+        result.drafts.violin.tuning = d.violin.tuning;
       }
       if (typeof d.violin.seqBpm === 'number' && d.violin.seqBpm >= 40 && d.violin.seqBpm <= 240) {
         result.drafts.violin.seqBpm = Math.round(d.violin.seqBpm);
@@ -288,6 +325,32 @@ export function sanitizeWorkspaceState(raw: unknown): WorkspaceState {
         .map(serializePitch);
       result.drafts.jinsDetector.customPhrase = validPhrase.length > 0 ? validPhrase : null;
     }
+    if (d.jinsAnalysis) {
+      if (
+        typeof d.jinsAnalysis.selectedJinsId === 'string' &&
+        AjnasLibrary.findById(d.jinsAnalysis.selectedJinsId)
+      ) {
+        result.drafts.jinsAnalysis.selectedJinsId = d.jinsAnalysis.selectedJinsId;
+      }
+      const root = deserializePitch(d.jinsAnalysis.root);
+      if (root) {
+        result.drafts.jinsAnalysis.root = serializePitch(root);
+      }
+      if (
+        typeof d.jinsAnalysis.comparisonJinsId === 'string' &&
+        AjnasLibrary.findById(d.jinsAnalysis.comparisonJinsId)
+      ) {
+        result.drafts.jinsAnalysis.comparisonJinsId =
+          d.jinsAnalysis.comparisonJinsId;
+      }
+      if (
+        d.jinsAnalysis.viewTab === 'staff' ||
+        d.jinsAnalysis.viewTab === 'theory' ||
+        d.jinsAnalysis.viewTab === 'compare'
+      ) {
+        result.drafts.jinsAnalysis.viewTab = d.jinsAnalysis.viewTab;
+      }
+    }
     // Training
     if (d.training) {
       if (['memorize', 'sight', 'tracker', 'record'].includes(d.training.activeMode)) {
@@ -314,7 +377,7 @@ const stateListeners = new Set<(state: WorkspaceState) => void>();
 
 export function getWorkspaceState(): WorkspaceState {
   if (cachedState) return cachedState;
-  if (typeof window === 'undefined' || !window.localStorage) {
+  if (typeof window === 'undefined') {
     const fallback = JSON.parse(JSON.stringify(DEFAULT_WORKSPACE_STATE));
     cachedState = fallback;
     return fallback;
@@ -330,7 +393,8 @@ export function getWorkspaceState(): WorkspaceState {
     const sanitized = sanitizeWorkspaceState(parsed);
     cachedState = sanitized;
     return sanitized;
-  } catch {
+  } catch (error) {
+    console.error('Could not load saved workspace state; using defaults.', error);
     const fallback = JSON.parse(JSON.stringify(DEFAULT_WORKSPACE_STATE));
     cachedState = fallback;
     return fallback;
@@ -339,18 +403,18 @@ export function getWorkspaceState(): WorkspaceState {
 
 export function saveWorkspaceState(state: WorkspaceState): void {
   cachedState = state;
-  if (typeof window !== 'undefined' && window.localStorage) {
+  if (typeof window !== 'undefined') {
     try {
       localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // safe fallback if quota exceeded
+    } catch (error) {
+      console.error('Could not persist workspace state.', error);
     }
   }
   stateListeners.forEach((fn) => {
     try {
       fn(state);
-    } catch {
-      // safe
+    } catch (error) {
+      console.error('Workspace state listener failed.', error);
     }
   });
 }

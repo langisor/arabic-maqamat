@@ -81,9 +81,14 @@ export const MaqamExplorer: React.FC<Props> = ({
   const [showSayrDialogLocal, setShowSayrDialogLocal] = useState(false)
   const [showModulationDrawerLocal, setShowModulationDrawerLocal] =
     useState(false)
-  const [explorerTab, setExplorerTab] = useState<
+  const [explorerTab, setExplorerTabState] = useState<
     "structure" | "network" | "svg-staff"
-  >("structure")
+  >(() => getWorkspaceState().drafts.explorer.viewTab)
+
+  const setExplorerTab = (tab: "structure" | "network" | "svg-staff") => {
+    setExplorerTabState(tab)
+    updateWorkspaceDraft("explorer", { viewTab: tab })
+  }
 
   const handleOpenSayr = () => {
     if (onOpenSayrVisualization) {
