@@ -286,7 +286,7 @@ function StudioContent() {
             />
 
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 text-xs font-black text-slate-950 shadow-md shadow-amber-500/20 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-tr from-amber-600 to-amber-400 text-xs font-black text-slate-950 shadow-md shadow-amber-500/20 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">
                 م
               </div>
               <div className="min-w-0">
@@ -383,8 +383,8 @@ function StudioContent() {
       {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}
       <div className="relative border-b border-slate-800/80 bg-slate-900/60">
         {/* Subtle mobile edge fade indicators */}
-        <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-gradient-to-r from-slate-950/80 to-transparent sm:hidden" />
-        <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-3 bg-gradient-to-l from-slate-950/80 to-transparent sm:hidden" />
+        <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-linear-to-r from-slate-950/80 to-transparent sm:hidden" />
+        <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-3 bg-linear-to-l from-slate-950/80 to-transparent sm:hidden" />
 
         <nav
           className="touch-pan-x scrollbar-none overflow-x-auto scroll-smooth px-2.5 sm:px-6"
@@ -399,7 +399,7 @@ function StudioContent() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveLab(tab.id)}
-                  className={`flex min-h-[38px] shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all select-none sm:gap-2 sm:px-3.5 sm:py-2 sm:text-xs ${
+                  className={`flex min-h-9.5 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all select-none sm:gap-2 sm:px-3.5 sm:py-2 sm:text-xs ${
                     isActive
                       ? "bg-amber-500 font-bold text-slate-950 shadow-md shadow-amber-500/20"
                       : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 active:scale-95"
