@@ -198,27 +198,79 @@ export const MaqamExplorer: React.FC<Props> = ({
   const ghammaz = currentMaqam.getGhammaz()
   const baggageNotes = currentMaqam.lowerJins.getBaggageNotes()
 
-  const maqamStaffNotes = useMemo(
-    () =>
-      scalePitches.map((pitch, index) => {
+  const maqamStaffNotes = useMemo(() => {
+    const notes: {
+      pitch: ArabicPitch
+      isTonic: boolean
+      isBaggage: boolean
+      offsetCents: number
+      offsetQuarterTones: number
+      arabicName: string
+      roleLabel: string
+      degreeLabel: string
+      sectionLabel: string
+    }[] = []
+    const appendSection = (
+      pitches: ArabicPitch[],
+      sectionLabel: string,
+      direction: "ascending" | "descending"
+    ) => {
+      pitches.forEach((pitch, index) => {
         const spineInfo = ArabicNoteSpine.findByPitch(pitch)
-        const noteOffset = index === 0 ? 0 : tonic.diffCents(pitch)
-        return {
+        notes.push({
           pitch,
-          isTonic: index === 0,
+          isTonic: pitch.equals(tonic),
           isBaggage: false,
-          stepOffset: index,
-          staffY: undefined,
-          staffX: undefined,
-          offsetCents: noteOffset,
-          offsetQuarterTones: index === 0 ? 0 : tonic.diffQuarterTones(pitch),
+          offsetCents: tonic.diffCents(pitch),
+          offsetQuarterTones: tonic.diffQuarterTones(pitch),
           arabicName: spineInfo?.arabicName || pitch.toDisplayString(),
-          degreeLabel: index === 0 ? "Tonic" : `${index + 1}`,
-          roleLabel: index === 0 ? "Tonic" : `Degree ${index + 1}`,
-        }
-      }),
-    [scalePitches, tonic]
-  )
+          roleLabel: `${sectionLabel} (${direction})`,
+          degreeLabel: `${direction === "ascending" ? "↑" : "↓"}${index + 1}`,
+          sectionLabel,
+        })
+      })
+    }
+
+    const lowerPitches = currentMaqam.lowerJins.getPitches()
+    const upperPitches = currentMaqam.upperJins.getPitches()
+    const sharesPivot = lowerPitches.at(-1)?.equals(upperPitches[0]) ?? false
+    const upperPitchesAfterPivot = sharesPivot
+      ? upperPitches.slice(1)
+      : upperPitches
+    const ascendingCore = [...lowerPitches, ...upperPitchesAfterPivot]
+
+    appendSection(
+      lowerPitches,
+      `Ascending Jins ${currentMaqam.lowerJins.definition.name}`,
+      "ascending"
+    )
+    appendSection(
+      upperPitchesAfterPivot,
+      `Ascending Jins ${currentMaqam.upperJins.definition.name}`,
+      "ascending"
+    )
+
+    const extensionPitches = scalePitches.slice(ascendingCore.length)
+    if (extensionPitches.length > 0) {
+      appendSection(extensionPitches, "Ascending extension", "ascending")
+    }
+
+    for (const branch of currentMaqam.alternateUpperAjnas) {
+      appendSection(
+        [...branch.jins.getPitches()].reverse(),
+        `Descending Jins ${branch.jins.definition.name}`,
+        "descending"
+      )
+    }
+
+    appendSection(
+      scalePitches.slice(0, -1).reverse(),
+      "Descending Maqam",
+      "descending"
+    )
+
+    return notes
+  }, [currentMaqam, scalePitches, tonic])
 
   return (
     <div className="space-y-6">
