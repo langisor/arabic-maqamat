@@ -47,7 +47,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const ui = language === 'ar'
     ? {
         title: 'لوحة أصابع الكمان',
-        subtitle: 'مواضع أصابع ميكروتونية بنظام ٢٤ درجة، وأمتعة الأجناس، وضبط الكمان العربي التقليدي (صول - ري - صول - ري).',
+        subtitle: 'مواضع أصابع ميكروتونية بنظام ٢٤ درجة، وضبط الكمان العربي التقليدي (صول - ري - صول - ري).',
         tuning: 'الضبط',
         arabicTuning: 'عربي (صول-ري-صول-ري)',
         westernTuning: 'غربي (صول-ري-لا-مي)',
@@ -64,7 +64,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
         reversedMode: 'معكوس',
         tonic: 'القرار',
         ghammaz: 'الغمّاز',
-        baggage: 'الأمتعة',
         scale: 'السلم',
         swipe: 'اسحب أفقياً أو اختر العرض العمودي',
         nutOpen: 'العظمة (مفتوح)',
@@ -82,13 +81,12 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
         guidelines: 'إرشادات أداء الكمان العربي',
         arabicTuningTip: 'الضبط العربي (صول-ري-صول-ري): يوفّر خفض الوترين الثالث والرابع رنيناً متآلفاً لمقامي الراست والبياتي.',
         quarterToneTip: 'موضع ربع الصوت المحايد: يوضع الإصبع بين علامة نصف البعد والبُعد الكامل، بفارق يقارب ٥٠ سنتاً.',
-        baggageTip: 'أصابع الأمتعة: قد تقع نغمات الأمتعة خارج الجنس الأساسي أسفل القرار أو أعلى نغماته؛ اختر الوتر والموضع الملائمين.',
         activePosition: 'الموضع والانتقالات',
         autoDescription: 'الوضع التلقائي: يحسب أصابع الموضع الأول الأكثر ملاءمة مع الاستفادة من الأوتار المطلقة وتقليل الانتقالات.',
       }
     : {
         title: 'Violin Fingerboard',
-        subtitle: '24-EDO microtonal finger placements, jins baggage, and traditional Arabic violin tuning (G-D-G-D)',
+        subtitle: '24-EDO microtonal finger placements and traditional Arabic violin tuning (G-D-G-D)',
         tuning: 'Tuning:',
         arabicTuning: 'Arabic (G-D-G-D)',
         westernTuning: 'Western (G-D-A-E)',
@@ -105,7 +103,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
         reversedMode: 'Reversed',
         tonic: 'Tonic',
         ghammaz: 'Ghammaz',
-        baggage: 'Baggage',
         scale: 'Scale',
         swipe: 'Swipe horizontally or select Vertical for upright view',
         nutOpen: 'Nut (Open)',
@@ -123,7 +120,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
         guidelines: 'Arabic Violin Pedagogical Guidelines',
         arabicTuningTip: 'Arabic Tuning (G-D-G-D): Re-tuning the A string down to G4 and E string down to D5 provides rich sympathetic resonance for Rast and Bayati.',
         quarterToneTip: 'Neutral Quarter-Tone Placement: Place the finger halfway between the semitone and whole-tone marks (approximately 50 cents sharp from the flat).',
-        baggageTip: 'Baggage Fingerings: Baggage notes outside the core jins may fall below the tonic or above its top pitch; choose a string and position suited to the register.',
         activePosition: 'Active Position & Shifts',
         autoDescription: 'Auto Mode: Computes ergonomic first-position fingering with useful open strings and minimal shifts.',
       };
@@ -177,17 +173,15 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
   // Ergonomic placements for the current maqam notes
   const scalePitches = useMemo(() => currentMaqam.getScale(), [currentMaqam]);
-  const baggageNotes = useMemo(() => currentMaqam.lowerJins.getBaggageNotes(), [currentMaqam]);
   const tonic = useMemo(() => currentMaqam.getTonic(), [currentMaqam]);
   const ghammaz = useMemo(() => currentMaqam.getGhammaz(), [currentMaqam]);
 
   const placements = useMemo(() => {
-    const allPitches = [...baggageNotes, ...scalePitches];
     const posNum: ViolinPositionNumber = selectedPosition === 'auto' ? 1 : selectedPosition;
-    return allPitches.map((pitch) =>
+    return scalePitches.map((pitch) =>
       ViolinErgonomicsEngine.mapPitchToPosition(pitch, posNum)
     );
-  }, [scalePitches, baggageNotes, selectedPosition]);
+  }, [scalePitches, selectedPosition]);
 
   const handlePlayPitch = async (pitch: ArabicPitch, placement?: ViolinFingerPlacement) => {
     setActivePlayedPitch(pitch.toString());
@@ -348,10 +342,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               </CardTitle>
               <CardDescription className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
                 {ui.tonic}: <span className="text-amber-300 font-semibold">{tonic.toString()}</span> • {ui.ghammaz}:{' '}
-                <span className="text-emerald-300 font-semibold">{ghammaz.toString()}</span> • Baggage:{' '}
-                <span className="text-purple-300 font-semibold">
-                  {baggageNotes.map((n) => n.toString()).join(', ') || 'None'}
-                </span>
+                <span className="text-emerald-300 font-semibold">{ghammaz.toString()}</span>
               </CardDescription>
             </div>
 
@@ -362,9 +353,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               </span>
               <span className="flex items-center gap-1 text-emerald-400">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-200 inline-block" /> {ui.ghammaz}
-              </span>
-              <span className="flex items-center gap-1 text-purple-400">
-              <span className="w-2.5 h-2.5 rounded-full bg-purple-500 border border-purple-200 inline-block" /> {ui.baggage}
               </span>
               <span className="flex items-center gap-1 text-sky-400">
               <span className="w-2.5 h-2.5 rounded-full bg-sky-500 border border-sky-200 inline-block" /> {ui.scale}
@@ -440,7 +428,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                             {stringPlacements.map((placement, pIdx) => {
                               const isTonic = tonic.equals(placement.pitch);
                               const isGhammaz = ghammaz.equals(placement.pitch);
-                              const isBaggage = baggageNotes.some((b) => b.equals(placement.pitch));
                               const isPlayed = activePlayedPitch === placement.pitch.toString();
                               const isSelected = selectedPlacement?.pitch.equals(placement.pitch);
 
@@ -456,8 +443,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                                 badgeBg = 'bg-amber-500 border-amber-200 text-slate-950 font-black ring-2 ring-amber-400/50';
                               } else if (isGhammaz) {
                                 badgeBg = 'bg-emerald-600 border-emerald-200 text-white font-bold ring-2 ring-emerald-400/50';
-                              } else if (isBaggage) {
-                                badgeBg = 'bg-purple-600 border-purple-200 text-white font-bold ring-2 ring-purple-400/50';
                               }
 
                               return (
@@ -592,7 +577,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                         {stringPlacements.map((placement, pIdx) => {
                           const isTonic = tonic.equals(placement.pitch);
                           const isGhammaz = ghammaz.equals(placement.pitch);
-                          const isBaggage = baggageNotes.some((b) => b.equals(placement.pitch));
                           const isPlayed = activePlayedPitch === placement.pitch.toString();
                           const isSelected = selectedPlacement?.pitch.equals(placement.pitch);
 
@@ -607,8 +591,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                             badgeBg = 'bg-amber-500 border-amber-200 text-slate-950 font-black ring-2 ring-amber-400/50';
                           } else if (isGhammaz) {
                             badgeBg = 'bg-emerald-600 border-emerald-200 text-white font-bold ring-2 ring-emerald-400/50';
-                          } else if (isBaggage) {
-                            badgeBg = 'bg-purple-600 border-purple-200 text-white font-bold ring-2 ring-purple-400/50';
                           }
 
                           return (
@@ -679,8 +661,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                         ? language === 'ar' ? 'القرار' : 'Tonic'
                         : ghammaz.equals(selectedPlacement.pitch)
                         ? language === 'ar' ? 'الغمّاز' : 'Ghammaz'
-                        : baggageNotes.some((b) => b.equals(selectedPlacement.pitch))
-                        ? language === 'ar' ? 'الأمتعة' : 'Baggage'
                         : ui.maqamDegree}
                     </Badge>
                   </div>
@@ -726,9 +706,6 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                   </li>
                   <li>
                     {ui.quarterToneTip}
-                  </li>
-                  <li>
-                    {ui.baggageTip}
                   </li>
                 </ul>
               </div>
