@@ -37,7 +37,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const [tuning, setTuning] = useState<OudTuning>("arabic")
   const [orientation, setOrientation] =
     useState<FingerboardOrientation>("horizontal")
-  const [includeBassCourse, setIncludeBassCourse] = useState(true)
+  const [includeBassCourse, setIncludeBassCourse] = useState(false)
   const [reverseCourses, setReverseCourses] = useState(false)
   const [highlightMaqam, setHighlightMaqam] = useState(true)
   const [activePitch, setActivePitch] = useState<string | number | null>(null)
@@ -74,6 +74,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     const pitchClass = ((pitch.toQuarterToneIndex() % 24) + 24) % 24
     const isTonic = pitchClass === tonicPitchClass
     const isMaqamNote = maqamPitchClasses.has(pitchClass)
+    const cycleBackground =
+      pitchClass % 4 < 2 ? "bg-[#fff7ed]/[0.1]" : "bg-[#140d09]/65"
     const isActive =
       activePitch === `${course.id}-${position}` ||
       activePitch === pitch.toQuarterToneIndex()
@@ -84,9 +86,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
         ? "bg-amber-400 font-bold text-slate-950 shadow-[0_0_14px_rgba(251,191,36,0.4)]"
         : highlightMaqam && isMaqamNote
           ? "bg-sky-500/25 font-semibold text-sky-100 ring-1 ring-inset ring-sky-300/45"
-          : position === 0
-            ? "font-semibold text-amber-50 hover:bg-amber-900/75"
-            : "text-amber-100/75 hover:bg-amber-900/75 hover:text-white"
+          : `${cycleBackground} text-amber-50 hover:bg-amber-900/75`
 
     return (
       <button
@@ -94,10 +94,10 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
         type="button"
         disabled={isStarting}
         onClick={() => void playPitch(pitch, `${course.id}-${position}`)}
-        aria-label={`${t("oudPlayScale")} ${pitch.toString()} ${t("oudCourse")} ${originalCourseNumber}, ${t("oudSemitone")} ${Math.ceil(position / 2)}`}
+        aria-label={`${t("oudPlayScale")} ${pitch.toString()} ${t("oudCourse")} ${originalCourseNumber}, +${position * 50} cents`}
         aria-pressed={isActive}
         title={`${pitch.toString()} · +${position * 50} cents`}
-        className={`relative flex shrink-0 cursor-pointer items-center justify-center rounded-md font-mono text-[10px] transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:outline-none disabled:cursor-wait ${
+        className={`relative flex shrink-0 cursor-pointer items-center justify-center rounded-md font-mono text-[11px] leading-none tracking-tight transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:outline-none disabled:cursor-wait ${
           vertical ? "h-8 w-full" : "h-10 w-10"
         } ${
           isActive
@@ -105,16 +105,6 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             : highlightClass
         }`}
       >
-        {position > 0 && position % 2 === 0 && (
-          <span
-            aria-hidden="true"
-            className={`pointer-events-none absolute rounded-full bg-gradient-to-b from-amber-100 via-amber-300 to-amber-100 shadow-[0_0_5px_rgba(251,191,36,0.6)] ${
-              vertical
-                ? "inset-x-0 top-0 h-[3px]"
-                : "inset-y-0 left-0 w-[3px] -translate-x-1/2"
-            }`}
-          />
-        )}
         {pitch.toDisplayString()}
       </button>
     )
@@ -420,7 +410,20 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                     ))}
                   </div>
                 </div>
-                <div className="relative z-0 ml-14 space-y-2 rounded-r-2xl border-y border-amber-100/10 bg-gradient-to-b from-[#302016] via-[#1d130e] to-[#39251a] py-2 shadow-inner">
+                <div className="relative z-0 ml-20 space-y-2 rounded-r-2xl border-y border-amber-100/10 bg-gradient-to-b from-[#302016] via-[#1d130e] to-[#39251a] py-2 shadow-inner">
+                  {Array.from(
+                    { length: positionRange / 2 },
+                    (_, index) => (index + 1) * 2
+                  ).map((position) => (
+                    <span
+                      key={position}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-2 bottom-2 z-20 w-[3px] -translate-x-1/2 rounded-full bg-gradient-to-b from-amber-100 via-amber-300 to-amber-100 shadow-[0_0_7px_rgba(251,191,36,0.7)]"
+                      style={{
+                        left: `calc(3.5rem + ${position * 2.5}rem)`,
+                      }}
+                    />
+                  ))}
                   {displayedCourses.map((course) => (
                     <div
                       key={course.id}
@@ -439,17 +442,17 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                           style={{ height: course.thickness }}
                         />
                       </div>
-                      <span className="absolute left-[-3.4rem] z-20 flex w-12 flex-col text-[10px] font-semibold leading-tight text-amber-100/80">
-                        <span className="block truncate">
+                      <span className="absolute top-1/2 left-0 z-20 flex w-14 -translate-y-1/2 flex-col rounded-md border border-amber-100/10 bg-[#1b110c]/85 px-1 py-0.5 text-[9px] font-semibold leading-tight text-amber-100 shadow-sm">
+                        <span className="block truncate font-mono text-[10px] text-amber-50">
+                          {course.openPitch.toString()}
+                        </span>
+                        <span className="block truncate font-normal text-amber-100/70">
                           {language === "ar"
                             ? `${t("oudCourse")} ${OUD_COURSES.findIndex(({ id }) => id === course.id) + 1}`
                             : course.label}
                         </span>
-                        <span className="font-mono text-[9px] text-amber-200">
-                          {course.openPitch.toDisplayString()}
-                        </span>
                       </span>
-                      <div className="relative z-10 ml-4 flex">
+                      <div className="relative z-10 ml-14 flex">
                         {Array.from(
                           { length: positionRange + 1 },
                           (_, position) => renderPosition(course, position)
@@ -478,7 +481,20 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                   aria-hidden="true"
                   className="mb-3 h-3 rounded-md border-y-2 border-[#b99a70] bg-gradient-to-b from-[#5a3824] to-[#3b2418] shadow-[0_3px_8px_rgba(0,0,0,0.6)]"
                 />
-                <div className="flex items-start justify-around gap-2 rounded-2xl border-x border-amber-100/10 bg-gradient-to-r from-[#302016] via-[#1d130e] to-[#39251a] px-2 py-3 shadow-inner">
+                <div className="relative flex items-start justify-around gap-2 rounded-2xl border-x border-amber-100/10 bg-gradient-to-r from-[#302016] via-[#1d130e] to-[#39251a] px-2 py-3 shadow-inner">
+                  {Array.from(
+                    { length: positionRange / 2 },
+                    (_, index) => (index + 1) * 2
+                  ).map((position) => (
+                    <span
+                      key={position}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-2 z-20 h-[3px] -translate-y-1/2 rounded-full bg-gradient-to-r from-amber-100 via-amber-300 to-amber-100 shadow-[0_0_7px_rgba(251,191,36,0.7)]"
+                      style={{
+                        top: `calc(3rem + ${position * 2.125}rem)`,
+                      }}
+                    />
+                  ))}
                   {displayedCourses.map((course) => (
                     <div
                       key={course.id}
@@ -516,7 +532,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] text-amber-100/70">
             <span className="flex items-center gap-2">
-              <span className="h-3 w-[3px] rounded bg-amber-300 shadow-[0_0_5px_rgba(251,191,36,0.6)]" />
+              <span className="h-3 w-0.75 rounded bg-amber-300 shadow-[0_0_5px_rgba(251,191,36,0.6)]" />
               {t("oudSemitoneTapes")}
             </span>
             <span>{t("oudOpenString")}</span>
