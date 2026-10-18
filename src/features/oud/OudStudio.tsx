@@ -516,7 +516,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                       </span>
                       <span
                         aria-hidden="true"
-                        className="pointer-events-none absolute top-10 bottom-0 rounded-full bg-gradient-to-r from-amber-100/70 via-amber-700/90 to-amber-100/60 shadow-[0_0_8px_rgba(251,191,36,0.18)]"
+                        className="pointer-events-none absolute top-10 bottom-0 rounded-full bg-linear-to-r from-amber-100/70 via-amber-700/90 to-amber-100/60 shadow-[0_0_8px_rgba(251,191,36,0.18)]"
                         style={{ width: course.thickness }}
                       />
                       <div className="relative z-10 flex w-full flex-col gap-0.5">

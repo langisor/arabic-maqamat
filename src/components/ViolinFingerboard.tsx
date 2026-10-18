@@ -39,7 +39,7 @@ interface ViolinFingerboardProps {
 export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   currentMaqam,
   timbre = 'violin',
-  tuning = 'arabic',
+  tuning = 'western',
   onTuningChange,
   onPitchSelect,
 }) => {
@@ -131,7 +131,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const [activePlayedPitch, setActivePlayedPitch] = useState<string | null>(null);
   const [selectedPlacement, setSelectedPlacement] = useState<ViolinFingerPlacement | null>(null);
   const [showPedagogicalTips, setShowPedagogicalTips] = useState(true);
-  const [isReversedStrings, setIsReversedStrings] = useState<boolean>(false);
+  const [isReversedStrings, setIsReversedStrings] = useState<boolean>(true);
   const [orientation, setOrientationState] = useState<'horizontal' | 'vertical'>(
     () => getWorkspaceState().drafts.violin.orientation
   );

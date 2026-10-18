@@ -46,6 +46,7 @@ export function InstrumentStudio({
             {t("instrumentStudio")}
           </h2>
           <p className="mt-1 text-sm text-amber-200/80">{instrumentName}</p>
+         
         </div>
         <div
           className="flex w-fit items-center gap-1 rounded-xl border border-amber-100/10 bg-black/20 p-1"
