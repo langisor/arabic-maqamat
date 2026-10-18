@@ -397,17 +397,21 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                   minWidth: `${Math.max(760, (positionRange + 1) * 42 + 180)}px`,
                 }}
               >
+                     
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 rounded-l-[1.5rem] border-r-4 border-[#b99a70] bg-gradient-to-r from-[#5a3824] to-[#3b2418] shadow-[3px_0_8px_rgba(0,0,0,0.6)]"
                 >
                   <div className="absolute inset-y-2 left-2 flex flex-col justify-around">
                     {displayedCourses.map((course) => (
+             
                       <span
                         key={course.id}
                         className="h-2.5 w-2.5 rounded-full border border-amber-100/50 bg-[#16100d] shadow-[0_0_0_2px_rgba(120,78,44,0.75)]"
                       />
+                      
                     ))}
+                           
                   </div>
                 </div>
                 <div className="relative z-0 ml-20 space-y-2 rounded-r-2xl border-y border-amber-100/10 bg-gradient-to-b from-[#302016] via-[#1d130e] to-[#39251a] py-2 shadow-inner">
@@ -442,15 +446,16 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                           style={{ height: course.thickness }}
                         />
                       </div>
+                      
                       <span className="absolute top-1/2 left-0 z-20 flex w-14 -translate-y-1/2 flex-col rounded-md border border-amber-100/10 bg-[#1b110c]/85 px-1 py-0.5 text-[9px] font-semibold leading-tight text-amber-100 shadow-sm">
                         <span className="block truncate font-mono text-[10px] text-amber-50">
                           {course.openPitch.toString()}
                         </span>
-                        <span className="block truncate font-normal text-amber-100/70">
+                        {/* <span className="block truncate font-normal text-amber-100/70">
                           {language === "ar"
                             ? `${t("oudCourse")} ${OUD_COURSES.findIndex(({ id }) => id === course.id) + 1}`
                             : course.label}
-                        </span>
+                        </span> */}
                       </span>
                       <div className="relative z-10 ml-14 flex">
                         {Array.from(
@@ -465,6 +470,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                   aria-hidden="true"
                   className="pointer-events-none absolute top-1/2 right-3 z-20 flex h-24 w-28 -translate-y-1/2 items-center justify-center rounded-[45%] border border-amber-200/20 bg-gradient-to-br from-[#58351f] via-[#28170f] to-[#4b2b19] shadow-[0_0_18px_rgba(0,0,0,0.7)]"
                 >
+                  
                   <span className="h-10 w-10 rounded-full border-4 border-[#a7794c]/70 bg-[#130e0b] shadow-[inset_0_0_12px_rgba(0,0,0,0.9)]" />
                   <span className="absolute top-1/2 left-3 h-1.5 w-4 -translate-y-1/2 rounded bg-[#ba946b]" />
                   <span className="absolute top-1/2 right-3 h-1.5 w-4 -translate-y-1/2 rounded bg-[#ba946b]" />
