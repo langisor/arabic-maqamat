@@ -1977,7 +1977,7 @@ export class MaqamatCatalogue {
           arabicName: "نهاوند",
           scaleDegree: 5,
           root: new ArabicPitch("G", "♮", 4),
-          connections: [1, 8],
+          connections: [1, 5],
           frequency: "common",
           roleDescription: "Upper Nahawand on 5th",
         },
@@ -2036,7 +2036,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "nikriz",
-      name: "Maqam Nikriz",
+      name: "Nikriz",
       arabicName: "مقام نكريز",
       family: "Nikriz",
       lowerJins: lower,
