@@ -62,3 +62,7 @@ export function getOudPositionPitch(
   }
   return openPitch.transpose(quarterTonePosition)
 }
+
+export function getOudDisplayedPitch(pitch: ArabicPitch): ArabicPitch {
+  return pitch.transpose(-24)
+}

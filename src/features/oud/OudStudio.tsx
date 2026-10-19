@@ -22,7 +22,11 @@ import {
   CardTitle,
 } from "../../components/ui/card"
 import { useLanguage } from "../../state/language"
-import { getOudPositionPitch, OUD_COURSES } from "./oud-instrument"
+import {
+  getOudDisplayedPitch,
+  getOudPositionPitch,
+  OUD_COURSES,
+} from "./oud-instrument"
 
 const OUD_SEQUENCE_SCOPE = "oud-feature"
 type OudTuning = "arabic" | "high"
@@ -158,6 +162,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   ) => {
     const pitchClass = ((pitch.toQuarterToneIndex() % 24) + 24) % 24
     const isTonic = pitchClass === tonicPitchClass
+    const displayedPitch = getOudDisplayedPitch(pitch)
     const key = `${courseId}-${position}`
     const isActive =
       activePitch === key ||
@@ -170,9 +175,9 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
         type="button"
         disabled={isStarting}
         onClick={() => void playPitch(pitch, key)}
-        aria-label={`${t("oudPlayScale")} ${pitch.toString()} ${t("oudPositionUnit")} ${position}`}
+        aria-label={`${t("oudPlayScale")} ${displayedPitch.toString()} ${t("oudPositionUnit")} ${position}`}
         aria-pressed={isActive}
-        title={`${pitch.toDisplayString()} · +${position * 50} cents`}
+        title={`${displayedPitch.toString()} · +${position * 50} cents`}
         className={`absolute z-10 flex h-8 min-w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border px-1 font-mono text-[10px] font-semibold leading-none transition focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:outline-none disabled:cursor-wait sm:h-9 sm:min-w-9 sm:text-[11px] ${
           isActive
             ? "scale-110 border-white bg-amber-300 text-slate-950 shadow-[0_0_14px_rgba(251,191,36,0.65)]"
@@ -186,7 +191,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             : { left: `${positionPercent}%` }
         }
       >
-        {pitch.toDisplayString()}
+        {displayedPitch.toString()}
       </button>
     )
   }
@@ -249,7 +254,9 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             <CardDescription className="mt-1 text-slate-400">
               {t(tuning === "arabic" ? "oudArabicTuning" : "oudHighTuning")} ·{" "}
               {displayedCourses
-                .map((course) => course.openPitch.toString())
+                .map((course) =>
+                  getOudDisplayedPitch(course.openPitch).toString()
+                )
                 .join(" ")}
             </CardDescription>
           </div>
@@ -362,7 +369,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                     : "bg-sky-950 text-sky-100"
                 }`}
               >
-                {pitch.toString()}
+                {getOudDisplayedPitch(pitch).toString()}
               </span>
             ))}
           </div>
@@ -404,7 +411,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                           : course.label}
                       </span>
                       <span className="font-mono text-xs text-amber-50">
-                        {course.openPitch.toDisplayString()}
+                        {getOudDisplayedPitch(course.openPitch).toString()}
                       </span>
                     </div>
                     <div className="relative h-10 flex-1">
@@ -457,7 +464,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                         ? `${t("oudCourse")} ${OUD_COURSES.findIndex(({ id }) => id === course.id) + 1}`
                         : course.label}
                       <span className="block font-mono text-xs text-amber-50">
-                        {course.openPitch.toDisplayString()}
+                        {getOudDisplayedPitch(course.openPitch).toString()}
                       </span>
                     </span>
                     <div className="relative mt-2 w-full flex-1">
