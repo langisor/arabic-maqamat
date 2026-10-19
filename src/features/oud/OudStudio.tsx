@@ -61,9 +61,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const displayedCourses = reverseCourses
     ? [...visibleCourses].reverse()
     : visibleCourses
-  const maqamScale = currentMaqam.getScale()
-  const maqamTonic = currentMaqam.getTonic()
-  console.log("Maqam Tonic: ", maqamTonic)
+  const maqamScale = currentMaqam.getScale().map((x) => getOudDisplayedPitch(x))
+  console.log("Maqam Scale: ",maqamScale)
   const maqamPitchClasses = new Set(
     maqamScale.map((pitch) => ((pitch.toQuarterToneIndex() % 24) + 24) % 24)
   )
