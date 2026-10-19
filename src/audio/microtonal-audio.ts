@@ -211,7 +211,8 @@ export class MicrotonalAudioEngine {
   ): void {
     AudioTransport.stopAll();
     this.requestAudioContext();
-    const freq = pitch.toFrequency(this.referenceA4);
+    const octaveAdjustedPitch = timbre === 'oud' ? pitch.transpose(-24) : pitch;
+    const freq = octaveAdjustedPitch.toFrequency(this.referenceA4);
     const now = Tone.now();
 
     try {
@@ -240,7 +241,14 @@ export class MicrotonalAudioEngine {
     this.requestAudioContext();
     const now = Tone.now();
     try {
-      this.triggerFrequency(freq, durationSeconds, timbre, velocity, now);
+      const octaveAdjustedFrequency = timbre === 'oud' ? freq / 2 : freq;
+      this.triggerFrequency(
+        octaveAdjustedFrequency,
+        durationSeconds,
+        timbre,
+        velocity,
+        now
+      );
     } catch {
       // Fallback safe
     }
@@ -301,9 +309,12 @@ export class MicrotonalAudioEngine {
       const stepTime = startTime + index * intervalSeconds;
       Tone.getDraw().schedule(() => {
         if (!session.isActive()) return;
-        voices.frequencies.push(pitch.toFrequency(this.referenceA4));
+        const octaveAdjustedPitch =
+          timbre === 'oud' ? pitch.transpose(-24) : pitch;
+        const frequency = octaveAdjustedPitch.toFrequency(this.referenceA4);
+        voices.frequencies.push(frequency);
         this.triggerFrequency(
-          pitch.toFrequency(this.referenceA4),
+          frequency,
           intervalSeconds * 0.92,
           timbre,
           this.scaleVelocity(timbre, 0.75),

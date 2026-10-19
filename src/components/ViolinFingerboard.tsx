@@ -175,6 +175,25 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const scalePitches = useMemo(() => currentMaqam.getScale(), [currentMaqam]);
   const tonic = useMemo(() => currentMaqam.getTonic(), [currentMaqam]);
   const ghammaz = useMemo(() => currentMaqam.getGhammaz(), [currentMaqam]);
+  const positionTapes = useMemo(
+    () =>
+      ([4, 8, 10, 14] as const).map((quarterTones, index) => {
+        const distanceRatio =
+          ViolinErgonomicsEngine.calculateFingerStopRatio(quarterTones);
+        return {
+          label: String(index + 1),
+          horizontalPercent: Math.min(
+            92,
+            Math.max(4, 4 + (distanceRatio / 0.4) * 88)
+          ),
+          verticalPercent: Math.min(
+            92,
+            Math.max(6, 6 + (distanceRatio / 0.4) * 86)
+          ),
+        };
+      }),
+    []
+  );
 
   const placements = useMemo(() => {
     const posNum: ViolinPositionNumber = selectedPosition === 'auto' ? 1 : selectedPosition;
@@ -362,6 +381,23 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
         </CardHeader>
 
         <CardContent className="p-3.5 sm:p-6">
+          <div
+            className="mb-4 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2.5"
+            aria-label={`${currentMaqam.name} ${ui.scale}`}
+          >
+            {scalePitches.map((pitch, index) => (
+              <span
+                key={`${pitch.toQuarterToneIndex()}-${index}`}
+                className={`rounded-lg px-2.5 py-1 font-mono text-sm font-bold sm:text-base ${
+                  index === 0
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'bg-sky-950 text-sky-100'
+                }`}
+              >
+                {pitch.toString()}
+              </span>
+            ))}
+          </div>
           {/* HORIZONTAL ORIENTATION VIEW */}
           {orientation === 'horizontal' && (
             <>
@@ -388,6 +424,20 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
                   {/* Fret / Interval Position Guides */}
                   <div className="relative h-64 sm:h-68 flex flex-col justify-between py-2 sm:py-4">
+                    <div className="pointer-events-none absolute inset-y-2 left-[5.5rem] right-0 z-[5] sm:inset-y-4 sm:left-[6.75rem]">
+                      {positionTapes.map((tape) => (
+                        <div
+                          key={tape.label}
+                          className="absolute inset-y-0 -translate-x-1/2"
+                          style={{ left: `${tape.horizontalPercent}%` }}
+                        >
+                          <span className="block h-full w-1 rounded-full border-x border-amber-100/70 bg-amber-300/50 shadow-[0_0_6px_rgba(251,191,36,0.55)]" />
+                          <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded bg-slate-950/90 px-1 text-[9px] font-bold text-amber-200">
+                            {tape.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                     {displayedStrings.map((str) => {
                       const stringPlacements = placements.filter((p) => p.string === str.name);
                       const thickness = getStringThickness(str.name);
@@ -528,6 +578,20 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               <div className="relative h-[560px] sm:h-[620px] w-full flex">
                 {/* 4 Strings Area */}
                 <div className="flex-1 grid grid-cols-4 gap-2 sm:gap-4 relative h-full">
+                  <div className="pointer-events-none absolute inset-0 z-[5]">
+                    {positionTapes.map((tape) => (
+                      <div
+                        key={tape.label}
+                        className="absolute inset-x-0 -translate-y-1/2"
+                        style={{ top: `${tape.verticalPercent}%` }}
+                      >
+                        <span className="block h-1 w-full border-y border-amber-100/70 bg-amber-300/50 shadow-[0_0_6px_rgba(251,191,36,0.55)]" />
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 rounded bg-slate-950/90 px-1 text-[9px] font-bold text-amber-200">
+                          {tape.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                   {/* Background subtle fret markers across strings */}
                   {[
                     { label: ui.semitone, top: 14 },
