@@ -62,7 +62,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     ? [...visibleCourses].reverse()
     : visibleCourses
   const maqamScale = currentMaqam.getScale().map((x) => getOudDisplayedPitch(x))
-  console.log("Maqam Scale: ",maqamScale)
+  console.log("Maqam Scale: ", maqamScale)
   const maqamPitchClasses = new Set(
     maqamScale.map((pitch) => ((pitch.toQuarterToneIndex() % 24) + 24) % 24)
   )
@@ -376,7 +376,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                     : "bg-sky-950 text-sky-100"
                 }`}
               >
-                {getOudDisplayedPitch(pitch).toString()}
+                {pitch.toString()}
               </span>
             ))}
           </div>
