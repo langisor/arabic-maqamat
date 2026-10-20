@@ -2314,7 +2314,6 @@ export class MaqamatCatalogue {
       case "‘Ajam":
       case "Ajam":
         return this.buildAjam()
-      case "صنع":
       case "Saba":
       case "None":
         return this.buildSaba()
