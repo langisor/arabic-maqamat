@@ -1,5 +1,5 @@
 // src/components/ViolinFingerboard.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { ArabicPitch } from '../core/pitch';
 import { Maqam } from '../theory/maqam';
 import {
@@ -15,6 +15,8 @@ import { Badge } from './ui/badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import {
   Music,
+  Play,
+  Square,
   SlidersHorizontal,
   Info,
   Volume2,
@@ -43,7 +45,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   onTuningChange,
   onPitchSelect,
 }) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const ui = language === 'ar'
     ? {
         title: 'لوحة أصابع الكمان',
@@ -125,6 +127,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
       };
   const [selectedPosition, setSelectedPosition] = useState<ViolinPositionMode>('auto');
   const [activePlayedPitch, setActivePlayedPitch] = useState<string | null>(null);
+  const [isPlayingScale, setIsPlayingScale] = useState(false);
   const [selectedPlacement, setSelectedPlacement] = useState<ViolinFingerPlacement | null>(null);
   const [showPedagogicalTips, setShowPedagogicalTips] = useState(true);
   const [isReversedStrings, setIsReversedStrings] = useState<boolean>(true);
@@ -201,6 +204,37 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
       ViolinErgonomicsEngine.mapPitchToPosition(pitch, posNum)
     );
   }, [scalePitches, selectedPosition]);
+
+  const playScale = async () => {
+    try {
+      await MicrotonalAudioEngine.startAudioContext();
+      MicrotonalAudioEngine.playSequence(
+        scalePitches,
+        500,
+        timbre,
+        (index) => {
+          setActivePlayedPitch(index < 0 ? null : scalePitches[index].toString());
+        },
+        () => setIsPlayingScale(false),
+        undefined,
+        'violin-fingerboard-sequence',
+      );
+      setIsPlayingScale(true);
+    } catch {
+      setIsPlayingScale(false);
+      setActivePlayedPitch(null);
+    }
+  };
+
+  const stopScale = () => {
+    MicrotonalAudioEngine.stopSequence('violin-fingerboard-sequence');
+    setIsPlayingScale(false);
+    setActivePlayedPitch(null);
+  };
+
+  useEffect(() => () => {
+    MicrotonalAudioEngine.stopSequence('violin-fingerboard-sequence');
+  }, []);
 
   const handlePlayPitch = async (pitch: ArabicPitch, placement?: ViolinFingerPlacement) => {
     setActivePlayedPitch(pitch.toString());
@@ -388,15 +422,28 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             {scalePitches.map((pitch, index) => (
               <span
                 key={`${pitch.toQuarterToneIndex()}-${index}`}
-                className={`rounded-lg px-2.5 py-1 font-mono text-sm font-bold sm:text-base ${
-                  index === 0
-                    ? 'bg-amber-500 text-slate-950'
-                    : 'bg-sky-950 text-sky-100'
+                className={`rounded-lg px-2.5 py-1 font-mono text-sm font-bold transition-all sm:text-base ${
+                  activePlayedPitch === pitch.toString()
+                    ? 'scale-110 bg-amber-300 text-slate-950 ring-2 ring-white'
+                    : index === 0
+                      ? 'bg-amber-500 text-slate-950'
+                      : 'bg-sky-950 text-sky-100'
                 }`}
               >
                 {pitch.toString()}
               </span>
             ))}
+            {isPlayingScale ? (
+              <Button type="button" variant="amberOutline" size="sm" onClick={stopScale}>
+                <Square className="h-3.5 w-3.5" />
+                {t('stopMaqam')}
+              </Button>
+            ) : (
+              <Button type="button" variant="amber" size="sm" onClick={() => void playScale()}>
+                <Play className="h-3.5 w-3.5" />
+                {t('playMaqam')}
+              </Button>
+            )}
           </div>
           {/* HORIZONTAL ORIENTATION VIEW */}
           {orientation === 'horizontal' && (

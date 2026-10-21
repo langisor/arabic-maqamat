@@ -219,21 +219,6 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             {t("oudDescription")}
           </p>
         </div>
-        {isPlayingScale ? (
-          <Button variant="amberOutline" onClick={stopScale}>
-            <Square className="h-3.5 w-3.5" />
-            {t("oudStopScale")}
-          </Button>
-        ) : (
-          <Button
-            variant="amber"
-            onClick={() => void playScale()}
-            disabled={isStarting}
-          >
-            <Play className="h-3.5 w-3.5" />
-            {t("oudPlayScale")} {currentMaqam.name}
-          </Button>
-        )}
       </div>
 
       {audioError && (
@@ -370,15 +355,33 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             {maqamScale.map((pitch, index) => (
               <span
                 key={`${pitch.toQuarterToneIndex()}-${index}`}
-                className={`rounded-lg px-2.5 py-1 font-mono text-sm font-bold sm:text-base ${
-                  index === 0
-                    ? "bg-amber-500 text-slate-950"
-                    : "bg-sky-950 text-sky-100"
+                className={`rounded-lg px-2.5 py-1 font-mono text-sm font-bold transition-all sm:text-base ${
+                  activePitch === pitch.toQuarterToneIndex()
+                    ? "scale-110 bg-amber-300 text-slate-950 ring-2 ring-white"
+                    : index === 0
+                      ? "bg-amber-500 text-slate-950"
+                      : "bg-sky-950 text-sky-100"
                 }`}
               >
                 {pitch.toString()}
               </span>
             ))}
+            {isPlayingScale ? (
+              <Button variant="amberOutline" size="sm" onClick={stopScale}>
+                <Square className="h-3.5 w-3.5" />
+                {t("stopMaqam")}
+              </Button>
+            ) : (
+              <Button
+                variant="amber"
+                size="sm"
+                onClick={() => void playScale()}
+                disabled={isStarting}
+              >
+                <Play className="h-3.5 w-3.5" />
+                {t("playMaqam")}
+              </Button>
+            )}
           </div>
           {orientation === "horizontal" ? (
             <div
