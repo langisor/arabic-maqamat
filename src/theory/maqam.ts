@@ -1409,19 +1409,20 @@ export class MaqamatCatalogue {
         {
           jins: new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4)),
           role: "upper_alternate",
-          description: "Upper Rast on G4 (melodic ascent featuring Awj B𝄳4)",
+          description:
+            "Bayati Rast: Bayati on D4 followed by Rast on G4, producing G4–A4–B𝄳4–C5–D5",
         },
         {
           jins: new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4)),
           role: "upper_alternate",
-          description: "Upper Hijaz on G4 (Bayati Shuri variant)",
+          description: "Bayati Shuri: Upper Hijaz on G4",
         },
       ],
       sayrDirection: "ascending",
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       network: bayatiNetwork,
       description:
-        "One of the most popular and common maqamat in the Arabic repertory and the principal maqam of the Bayati family. It begins with Jins Bayati on the tonic and continues with either Jins Nahawand or Jins Rast on the fourth degree G4.",
+        "Bayati on D4 has two principal upper-jins versions: Bayati Nahawand (D4–E𝄳4–F4–G4–A4–B♭4–C5–D5) and Bayati Rast (D4–E𝄳4–F4–G4–A4–B𝄳4–C5–D5).",
     })
   }
 
@@ -2168,14 +2169,14 @@ export class MaqamatCatalogue {
           jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4)),
           role: "upper_alternate",
           description:
-            "Nahawand descending from C5 to the ghammaz G4 in Egyptian Ajam sayr",
+            "Ajam Rast: Ajam on C4 followed by Nahawand on G4, producing G4–A4–B♭4–C5",
         },
       ],
       sayrDirection: "ascending",
       extraPitches: [new ArabicPitch("C", "♮", 5)],
       network: ajamNetwork,
       description:
-        "The principal maqam in the 'Ajam family (also called Egyptian 'Ajam). It begins with root jins 'Ajam on the tonic and often continues with upper 'Ajam or Nahawand.",
+        "Ajam on C4 has two principal upper-jins versions: Ajam Upper Ajam (C4–D4–E4–F4–G4–A4–B4–C5) and Ajam Nahawand (C4–D4–E4–F4–G4–A4–B♭4–C5).",
     })
   }
 
