@@ -164,7 +164,6 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
   ])
   const [auditioningMaqamId, setAuditioningMaqamId] = useState<string | null>(null)
 
-  const allMaqamat = MaqamatCatalogue.getAllMaqamat()
   const families = Object.values(MaqamatCatalogue.FAMILIES)
   const independentMaqamat = MaqamatCatalogue.getMaqamatByFamily("None")
 
@@ -185,7 +184,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
   }
 
   const handleFamilyClick = (mnemonic: MaqamFamilyMnemonic) => {
-    const found = allMaqamat.find((m) => m.family === mnemonic)
+    const found = MaqamatCatalogue.getRepresentativeMaqamForFamily(mnemonic)
     if (found && onSelectMaqam) {
       onSelectMaqam(found)
     }
@@ -261,7 +260,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
             <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
               {families.map((fam) => {
                 const isSelected = currentMaqam?.family === fam.mnemonic
-                const sampleMaqam = allMaqamat.find((m) => m.family === fam.mnemonic)
+                const sampleMaqam = MaqamatCatalogue.getRepresentativeMaqamForFamily(fam.mnemonic)
                 const isAuditioning = sampleMaqam && auditioningMaqamId === sampleMaqam.id
                 return (
                   <div

@@ -41,6 +41,7 @@ import {
   GitFork,
   Network,
   Package,
+  ExternalLink,
 } from "lucide-react"
 import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
@@ -379,6 +380,11 @@ export const MaqamExplorer: React.FC<Props> = ({
                     Family: {currentMaqam.family}
                   </Badge>
                 </MaqamTermTooltip>
+                {currentMaqam.verified && (
+                  <Badge className="border-emerald-700/60 bg-emerald-950/50 text-emerald-300">
+                    Source verified
+                  </Badge>
+                )}
                 {isTransposed && (
                   <Badge
                     variant="default"
@@ -393,6 +399,17 @@ export const MaqamExplorer: React.FC<Props> = ({
               <CardDescription className="mt-1 max-w-2xl text-sm text-slate-300">
                 {currentMaqam.description}
               </CardDescription>
+              {currentMaqam.sourceSlug && (
+                <a
+                  href={`https://www.maqamworld.com/en/maqam/${currentMaqam.sourceSlug}.php`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-sky-400 underline-offset-2 hover:text-sky-300 hover:underline"
+                >
+                  MaqamWorld source
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
             </div>
 
             {/* Scale Audio Playback & Tonic Drone */}

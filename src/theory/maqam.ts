@@ -709,6 +709,8 @@ export interface MaqamScaleStructure {
    * From Sami Abu Shumays' "Maqam Analysis: A Primer".
    */
   readonly network?: MaqamNetwork
+  readonly sourceSlug?: string
+  readonly verified?: boolean
   readonly description: string
 }
 
@@ -725,6 +727,8 @@ export class Maqam {
   public readonly sayrDirection: SayrTrajectory
   public readonly extraPitches: readonly ArabicPitch[]
   public readonly network: MaqamNetwork | undefined
+  public readonly sourceSlug?: string
+  public readonly verified: boolean
   public readonly description: string
 
   constructor(structure: MaqamScaleStructure) {
@@ -740,6 +744,8 @@ export class Maqam {
     this.sayrDirection = structure.sayrDirection ?? "ascending"
     this.extraPitches = structure.extraPitches ?? []
     this.network = structure.network
+    this.sourceSlug = structure.sourceSlug
+    this.verified = structure.verified ?? false
     this.description = structure.description
     this.validateConnection()
   }
@@ -863,6 +869,8 @@ export class Maqam {
       sayrDirection: this.sayrDirection,
       extraPitches: newExtras,
       network: transposedNetwork,
+      sourceSlug: this.sourceSlug,
+      verified: this.verified,
       description:
         transInfo?.description ??
         `Transposed variant of ${this.name} starting on ${newTonic.toScientificString()}${newTonic.octave} (${centsText} shift)`,
@@ -2862,17 +2870,22 @@ export class MaqamatCatalogue {
           `Missing maqam template "${entry.templateId}" for index entry "${entry.id}".`
         )
       }
-      if (entry.id === template.id) return template
-
       return new Maqam({
         id: entry.id,
-        name: `Maqam ${entry.name}`,
+        name: entry.id === template.id ? template.name : `Maqam ${entry.name}`,
+        arabicName: template.arabicName,
         family: entry.family,
         lowerJins: template.lowerJins,
         connection: template.connection,
         upperJins: template.upperJins,
         ghammaz: template.ghammaz,
-        description: `Index entry for ${entry.name}. Its current scale structure uses the ${template.name} template pending a dedicated source-specific model.`,
+        alternateUpperAjnas: [...template.alternateUpperAjnas],
+        sayrDirection: template.sayrDirection,
+        extraPitches: [...template.extraPitches],
+        network: template.network,
+        sourceSlug: entry.sourceSlug,
+        verified: entry.verified ?? template.verified,
+        description: template.description,
       })
     })
   }
