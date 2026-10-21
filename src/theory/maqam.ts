@@ -46,6 +46,16 @@ const AJNAS_AJAM: JinsDefWithDirection[] = [
   },
 ]
 
+const AJNAS_SHAWQ_AFZA: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.AJAM, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.SABA_DALANSHIN,
+    connection: "Tadakhul",
+    direction: "asc",
+  },
+]
+
 const AJNAS_BAYATI: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.BAYATI, connection: "Ittisal", direction: "asc" },
   {
@@ -60,6 +70,17 @@ const AJNAS_BAYATI: JinsDefWithDirection[] = [
   },
 ]
 
+const AJNAS_MUHAYYAR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.BAYATI, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+  { definition: AjnasLibrary.BAYATI, connection: "Infisal", direction: "desc" },
+]
+
 const AJNAS_HIJAZ: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
   {
@@ -68,6 +89,11 @@ const AJNAS_HIJAZ: JinsDefWithDirection[] = [
     direction: "desc",
   },
   { definition: AjnasLibrary.RAST, connection: "Infisal", direction: "asc" },
+]
+
+const AJNAS_ZANJARAN: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.AJAM, connection: "Ittisal", direction: "asc" },
 ]
 
 const AJNAS_KURD: JinsDefWithDirection[] = [
@@ -90,6 +116,24 @@ const AJNAS_NAHAWAND: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.HIJAZ, connection: "Infisal", direction: "desc" },
 ]
 
+const AJNAS_USHAQ_MASRI: JinsDefWithDirection[] = [
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.BAYATI, connection: "Ittisal", direction: "asc" },
+]
+
+const AJNAS_NAHAWAND_MURASSAA: JinsDefWithDirection[] = [
+  {
+    definition: AjnasLibrary.NAHAWAND_MURASSAA,
+    connection: "Tadakhul",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.HIJAZ, connection: "Tadakhul", direction: "asc" },
+]
+
 const AJNAS_NIKRIZ: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.NIKRIZ, connection: "Ittisal", direction: "asc" },
   {
@@ -98,6 +142,15 @@ const AJNAS_NIKRIZ: JinsDefWithDirection[] = [
     direction: "desc",
   },
   { definition: AjnasLibrary.RAST, connection: "Infisal", direction: "asc" },
+]
+
+const AJNAS_NAWA_ATHAR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.NIKRIZ, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.HIJAZKAR,
+    connection: "Ittisal",
+    direction: "asc",
+  },
 ]
 
 const AJNAS_RAST: JinsDefWithDirection[] = [
@@ -110,10 +163,25 @@ const AJNAS_RAST: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "desc" },
 ]
 
+const AJNAS_SUZNAK: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+]
+
+const AJNAS_MAHUR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.UPPER_AJAM,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+]
+
 const AJNAS_SABA: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.SABA, connection: "Tadakhul", direction: "asc" },
   { definition: AjnasLibrary.HIJAZ, connection: "Tadakhul", direction: "asc" },
   { definition: AjnasLibrary.AJAM, connection: "Infisal", direction: "desc" },
+  { definition: AjnasLibrary.NIKRIZ, connection: "Infisal", direction: "asc" },
 ]
 
 const AJNAS_SIKAH: JinsDefWithDirection[] = [
@@ -126,17 +194,26 @@ const AJNAS_SIKAH: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "desc" },
 ]
 
+const AJNAS_BASTANIKAR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.SABA, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.HIJAZ, connection: "Tadakhul", direction: "asc" },
+  { definition: AjnasLibrary.NIKRIZ, connection: "Ittisal", direction: "asc" },
+]
+
+const AJNAS_HUZAM: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
+]
+
 const AJNAS_HIJAZKAR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.NIKRIZ, connection: "Ittisal", direction: "asc" },
   {
     definition: AjnasLibrary.HIJAZKAR,
-    connection: "Ittisal",
-    direction: "asc",
-  },
-  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "desc" },
-  {
-    definition: AjnasLibrary.NAHAWAND,
-    connection: "Infisal",
-    direction: "asc",
+    connection: "Tadakhul",
+    direction: "desc",
   },
 ]
 
@@ -237,9 +314,10 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "bastanikar",
     name: "Bastanikar",
     family: "Sikah",
-    templateId: "sikah",
+    templateId: "bastanikar",
     sourceSlug: "bastanikar",
-    ajnas: AJNAS_SIKAH,
+    ajnas: AJNAS_BASTANIKAR,
+    verified: true,
   },
   {
     id: "bayati",
@@ -248,6 +326,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     templateId: "bayati",
     sourceSlug: "bayati",
     ajnas: AJNAS_BAYATI,
+    verified: true,
   },
   {
     id: "bayati-shuri",
@@ -285,7 +364,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "hijazkar",
     name: "Hijazkar",
     family: "Hijaz",
-    templateId: "hijaz",
+    templateId: "hijazkar",
     sourceSlug: "hijazkar",
     ajnas: AJNAS_HIJAZKAR,
   },
@@ -309,9 +388,10 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "huzam",
     name: "Huzam",
     family: "Sikah",
-    templateId: "sikah",
+    templateId: "huzam",
     sourceSlug: "huzam",
-    ajnas: AJNAS_SIKAH,
+    ajnas: AJNAS_HUZAM,
+    verified: true,
   },
   {
     id: "iraq",
@@ -325,7 +405,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "jiharkah",
     name: "Jiharkah",
     family: "None",
-    templateId: "ajam",
+    templateId: "jiharkah",
     sourceSlug: "jiharkah",
     ajnas: AJNAS_JIHARKAH,
   },
@@ -333,7 +413,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "kirdan",
     name: "Kirdan",
     family: "Rast",
-    templateId: "rast",
+    templateId: "kirdan",
     sourceSlug: "kirdan",
     ajnas: AJNAS_RAST,
   },
@@ -344,6 +424,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     templateId: "kurd",
     sourceSlug: "kurd",
     ajnas: AJNAS_KURD,
+    verified: true,
   },
   {
     id: "lami",
@@ -357,9 +438,10 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "mahur",
     name: "Mahur",
     family: "Rast",
-    templateId: "rast",
+    templateId: "mahur",
     sourceSlug: "mahur",
-    ajnas: AJNAS_RAST,
+    ajnas: AJNAS_MAHUR,
+    verified: true,
   },
   {
     id: "muhayyar",
@@ -367,7 +449,8 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "Bayati",
     templateId: "muhayyar",
     sourceSlug: "bayati",
-    ajnas: AJNAS_BAYATI,
+    ajnas: AJNAS_MUHAYYAR,
+    verified: true,
   },
   {
     id: "mustaar",
@@ -389,9 +472,10 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "nahawand-murassaa",
     name: "Nahawand Murassa‘",
     family: "Nahawand",
-    templateId: "nahawand",
+    templateId: "nahawand-murassaa",
     sourceSlug: "nahawand_murassaa",
-    ajnas: AJNAS_NAHAWAND,
+    ajnas: AJNAS_NAHAWAND_MURASSAA,
+    verified: true,
   },
   {
     id: "nairuz",
@@ -405,9 +489,10 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "nawa-athar",
     name: "Nawa Athar",
     family: "Nikriz",
-    templateId: "nikriz",
+    templateId: "nawa-athar",
     sourceSlug: "nawa_athar",
-    ajnas: AJNAS_NIKRIZ,
+    ajnas: AJNAS_NAWA_ATHAR,
+    verified: true,
   },
   {
     id: "nikriz",
@@ -416,14 +501,16 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     templateId: "nikriz",
     sourceSlug: "nikriz",
     ajnas: AJNAS_NIKRIZ,
+    verified: true,
   },
   {
     id: "rahat-al-arwah",
     name: "Rahat al-Arwah",
     family: "Sikah",
-    templateId: "sikah",
+    templateId: "rahat-al-arwah",
     sourceSlug: "huzam",
-    ajnas: AJNAS_SIKAH,
+    ajnas: AJNAS_HUZAM,
+    verified: true,
   },
   {
     id: "rast",
@@ -432,6 +519,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     templateId: "rast",
     sourceSlug: "rast",
     ajnas: AJNAS_RAST,
+    verified: true,
   },
   {
     id: "saba",
@@ -440,6 +528,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     templateId: "saba",
     sourceSlug: "saba",
     ajnas: AJNAS_SABA,
+    verified: true,
   },
   {
     id: "saba-zamzam",
@@ -476,10 +565,11 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
   {
     id: "shawq-afza",
     name: "Shawq Afza",
-    family: "Bayati",
-    templateId: "bayati",
+    family: "‘Ajam",
+    templateId: "shawq-afza",
     sourceSlug: "shawq_afza",
-    ajnas: AJNAS_BAYATI,
+    ajnas: AJNAS_SHAWQ_AFZA,
+    verified: true,
   },
   {
     id: "sikah",
@@ -488,6 +578,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     templateId: "sikah",
     sourceSlug: "sikah",
     ajnas: AJNAS_SIKAH,
+    verified: true,
   },
   {
     id: "sikah-baladi",
@@ -517,17 +608,19 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "suznak",
     name: "Suznak",
     family: "Rast",
-    templateId: "rast",
+    templateId: "suznak",
     sourceSlug: "suznak",
-    ajnas: AJNAS_RAST,
+    ajnas: AJNAS_SUZNAK,
+    verified: true,
   },
   {
     id: "ushaq-masri",
     name: "‘Ushaq Masri",
-    family: "Bayati",
-    templateId: "bayati",
+    family: "Nahawand",
+    templateId: "ushaq-masri",
     sourceSlug: "ushaq_masri",
-    ajnas: AJNAS_BAYATI,
+    ajnas: AJNAS_USHAQ_MASRI,
+    verified: true,
   },
   {
     id: "yakah",
@@ -541,9 +634,10 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "zanjaran",
     name: "Zanjaran",
     family: "Hijaz",
-    templateId: "hijaz",
+    templateId: "zanjaran",
     sourceSlug: "zanjaran",
-    ajnas: AJNAS_HIJAZ,
+    ajnas: AJNAS_ZANJARAN,
+    verified: true,
   },
 ]
 
@@ -695,10 +789,7 @@ export class Maqam {
 
     const uniqueCombined: ArabicPitch[] = []
     for (const p of combined) {
-      if (
-        uniqueCombined.length === 0 ||
-        !uniqueCombined[uniqueCombined.length - 1].equals(p)
-      ) {
+      if (!uniqueCombined.some((existing) => existing.equals(p))) {
         uniqueCombined.push(p)
       }
     }
@@ -1018,7 +1109,62 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("C", "♮", 5)],
       network: rastNetwork,
       description:
-        "The principal maqam in the Rast family and one of the most common and central maqamat in the Arabic repertory. Its scale begins with the root jins Rast on the tonic, with the upper section often continuing through either upper Rast or Nahawand at the ghammaz.",
+        "The main maqam in the Rast family and by far one of the most popular and common maqamat in the Arabic repertory. It begins with Jins Rast on the C4 tonic, followed on the fifth degree G4 by either Jins Upper Rast, whose tonic is on the eighth degree C5, or Jins Nahawand.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Kirdan.
+   * Kirdan uses the Rast scale structure, but its characteristic sayr starts
+   * in the octave and descends through Upper Rast before resolving to C4.
+   */
+  public static buildKirdan(): Maqam {
+    const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(
+      AjnasLibrary.UPPER_RAST,
+      new ArabicPitch("G", "♮", 4)
+    )
+
+    return new Maqam({
+      id: "kirdan",
+      name: "Maqam Kirdan",
+      arabicName: "مقام كردان",
+      family: "Rast",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      sayrDirection: "descending_octave_first",
+      extraPitches: [new ArabicPitch("C", "♮", 5)],
+      description:
+        "A Rast-derived maqam whose sayr begins on the octave C5, descends through Upper Rast from the fifth degree G4, and eventually resolves through the lower Jins Rast to tonic C4.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Mahur.
+   * Jins Rast on C4 is followed by Upper ‘Ajam on G4, whose tonic is C5.
+   */
+  public static buildMahur(): Maqam {
+    const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(
+      AjnasLibrary.UPPER_AJAM,
+      new ArabicPitch("G", "♮", 4)
+    )
+
+    return new Maqam({
+      id: "mahur",
+      name: "Maqam Mahur",
+      arabicName: "مقام ماهور",
+      family: "Rast",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      sayrDirection: "ascending",
+      extraPitches: [new ArabicPitch("C", "♮", 5)],
+      description:
+        "A Rast-family maqam beginning with Jins Rast on the C4 tonic, followed by Jins Upper ‘Ajam on the fifth degree G4, with its tonic at the octave C5.",
     })
   }
 
@@ -1030,7 +1176,6 @@ export class MaqamatCatalogue {
 
     const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
     const upper = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4))
-    // Todo: update alternateUpperJins - Rast on degree 4 => G4 A4 Bd4 C5 D5 on degree 8
     const bayatiNetwork: MaqamNetwork = {
       nodes: [
         {
@@ -1268,7 +1413,7 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       network: bayatiNetwork,
       description:
-        "The principal maqam in the Bayati family and a cornerstone of Arabic modal practice. It starts with jins Bayati on the tonic and commonly continues with Nahawand or Rast at the upper pivot.",
+        "One of the most popular and common maqamat in the Arabic repertory and the principal maqam of the Bayati family. It begins with Jins Bayati on the tonic and continues with either Jins Nahawand or Jins Rast on the fourth degree G4.",
     })
   }
 
@@ -1349,10 +1494,7 @@ export class MaqamatCatalogue {
    */
   public static buildMuhayyar(): Maqam {
     const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
-    const upper = new Jins(
-      AjnasLibrary.UPPER_RAST,
-      new ArabicPitch("G", "♮", 4)
-    )
+    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4))
 
     const muhayyarNetwork: MaqamNetwork = {
       nodes: [
@@ -1454,7 +1596,7 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       network: muhayyarNetwork,
       description:
-        "A Bayati-derived maqam whose sayr emphasizes the octave or upper register; it often uses Rast in the ascent before returning through the Bayati-family ajnas that shape the descent.",
+        "A Bayati-derived maqam whose sayr starts at the octave D5 (Muhayyar). It often uses Jins Rast on the fourth degree G4 for ascent, emphasizes Jins Bayati at the octave, and descends through Nahawand and the other ajnas common to Bayati.",
     })
   }
 
@@ -1566,6 +1708,66 @@ export class MaqamatCatalogue {
   }
 
   /**
+   * Constructs Maqam Zanjaran.
+   * A Hijaz variation with Jins ‘Ajam on the fourth degree.
+   */
+  public static buildZanjaran(): Maqam {
+    const lower = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("D", "♮", 4))
+    const upper = new Jins(AjnasLibrary.AJAM, new ArabicPitch("G", "♮", 4))
+
+    return new Maqam({
+      id: "zanjaran",
+      name: "Maqam Zanjaran",
+      arabicName: "مقام زنجران",
+      family: "Hijaz",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      sayrDirection: "ascending",
+      description:
+        "A variation of Maqam Hijaz with Jins ‘Ajam as the second jins on the fourth degree, above root Jins Hijaz on the tonic.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Hijazkar.
+   * The upper Nikriz branch begins on F4 and the descending Hijazkar branch
+   * overlaps from A♭4 (the sixth scale degree).
+   */
+  public static buildHijazkar(): Maqam {
+    const lower = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(AjnasLibrary.NIKRIZ, new ArabicPitch("F", "♮", 4))
+
+    return new Maqam({
+      id: "hijazkar",
+      name: "Maqam Hijazkar",
+      arabicName: "مقام حجازكار",
+      family: "Hijaz",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("F", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.HIJAZKAR, new ArabicPitch("A", "♭", 4)),
+          role: "descent_only",
+          description:
+            "Descending Hijazkar branch overlapping from A♭4 at the sixth degree",
+        },
+      ],
+      sayrDirection: "descending_octave_first",
+      extraPitches: [
+        new ArabicPitch("C", "♮", 5),
+        new ArabicPitch("D", "♭", 5),
+        new ArabicPitch("E", "♮", 5),
+      ],
+      description:
+        "Hijaz on C4 followed by Nikriz on F4, with a descending Hijazkar branch overlapping from A♭4. The characteristic descent is E5-D♭5-C5-B4-A♭4-G4-F4-E4-D♭4-C4.",
+    })
+  }
+
+  /**
    * Constructs Maqam Nahawand
    */
   public static buildNahawand(): Maqam {
@@ -1668,7 +1870,57 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("C", "♮", 5)],
       network: nahawandNetwork,
       description:
-        "The principal maqam in the Nahawand family. It starts with the root jins Nahawand on the tonic and often continues with Hijaz or Kurd as the upper branch.",
+        "The principal maqam in the Nahawand family. Its root jins Nahawand on C4 is followed either by Hijaz on G4 (C4-D-E♭-F-G-A♭-B-C5) or by Kurd on G4 (C4-D-E♭-F-G-A♭-B♭-C5).",
+    })
+  }
+
+  /**
+   * Constructs Maqam ‘Ushaq Masri.
+   * A Nahawand variation with Jins Bayati on the fifth degree.
+   */
+  public static buildUshaqMasri(): Maqam {
+    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("G", "♮", 4))
+
+    return new Maqam({
+      id: "ushaq-masri",
+      name: "Maqam ‘Ushaq Masri",
+      arabicName: "مقام عُشّاق مصري",
+      family: "Nahawand",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      sayrDirection: "ascending",
+      description:
+        "A variation of Maqam Nahawand with Jins Bayati on the fifth degree above the root Jins Nahawand on the tonic.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Nahawand Murassa‘.
+   * Its lowered fifth is represented by Jins Nahawand Murassa‘, overlapped
+   * by Jins Hijaz beginning on the fourth degree F4.
+   */
+  public static buildNahawandMurassaa(): Maqam {
+    const lower = new Jins(
+      AjnasLibrary.NAHAWAND_MURASSAA,
+      new ArabicPitch("C", "♮", 4)
+    )
+    const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("F", "♮", 4))
+
+    return new Maqam({
+      id: "nahawand-murassaa",
+      name: "Maqam Nahawand Murassa‘",
+      arabicName: "مقام نهاوند مرصع",
+      family: "Nahawand",
+      lowerJins: lower,
+      connection: "Tadakhul",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("F", "♮", 4),
+      sayrDirection: "ascending",
+      description:
+        "A variation of Maqam Nahawand with a lowered fifth scale degree. It begins with Jins Nahawand Murassa‘ on the C4 tonic and overlaps with Jins Hijaz beginning on the fourth degree F4.",
     })
   }
 
@@ -1676,8 +1928,8 @@ export class MaqamatCatalogue {
    * Constructs Maqam Farahfaza (Nahawand family on G)
    */
   public static buildFarahfaza(): Maqam {
-    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4))
-    const upper = new Jins(AjnasLibrary.KURD, new ArabicPitch("D", "♮", 5))
+    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 3))
+    const upper = new Jins(AjnasLibrary.KURD, new ArabicPitch("D", "♮", 4))
 
     return new Maqam({
       id: "farahfaza",
@@ -1687,19 +1939,19 @@ export class MaqamatCatalogue {
       lowerJins: lower,
       connection: "Ittisal",
       upperJins: upper,
-      ghammaz: new ArabicPitch("D", "♮", 5),
+      ghammaz: new ArabicPitch("D", "♮", 4),
       alternateUpperAjnas: [
         {
-          jins: new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("D", "♮", 5)),
+          jins: new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("D", "♮", 4)),
           role: "upper_alternate",
           description:
-            "Upper Hijaz on D5 (Farahfaza Murassah / harmonic minor color)",
+            "Upper Hijaz on D4 (Farahfaza Murassah / harmonic minor color)",
         },
       ],
       sayrDirection: "ascending",
-      extraPitches: [new ArabicPitch("G", "♮", 5)],
+      extraPitches: [new ArabicPitch("G", "♮", 4)],
       description:
-        "Effectively a transposition of Nahawand to a tonic of G, preserving the same internal ajnas and family identity but with a different tonal center.",
+        "A direct transposition of Nahawand to tonic G3: G3-A3-B♭3-C4-D4-E♭4-F4-G4, with the same Hijaz and Kurd upper branches.",
     })
   }
 
@@ -1805,7 +2057,7 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       network: kurdNetwork,
       description:
-        "The principal maqam in the Kurd family. It begins with root jins Kurd on the tonic and continues with Nahawand on the upper pivot.",
+        "The principal maqam in the Kurd family. It begins with Jins Kurd on the D4 tonic, followed conjunctly by Jins Nahawand beginning on the fourth degree G4, and resolves at the D5 octave.",
     })
   }
 
@@ -1920,6 +2172,79 @@ export class MaqamatCatalogue {
   }
 
   /**
+   * Constructs Maqam Shawq Afza.
+   * Its defining upper branch is Hijaz on the fifth degree, with frequent
+   * Saba Dalanshin modulation on the third and fifth degrees.
+   */
+  public static buildShawqAfza(): Maqam {
+    const lower = new Jins(AjnasLibrary.AJAM, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4))
+
+    return new Maqam({
+      id: "shawq-afza",
+      name: "Maqam Shawq Afza",
+      arabicName: "مقام شوق أفزا",
+      family: "‘Ajam",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(
+            AjnasLibrary.SABA_DALANSHIN,
+            new ArabicPitch("F", "♮", 4)
+          ),
+          role: "modulation",
+          description: "Frequent Saba Dalanshin modulation on the third degree F4",
+        },
+        {
+          jins: new Jins(
+            AjnasLibrary.SABA_DALANSHIN,
+            new ArabicPitch("G", "♮", 4)
+          ),
+          role: "modulation",
+          description: "Frequent Saba Dalanshin modulation on the fifth degree G4",
+        },
+      ],
+      sayrDirection: "ascending",
+      extraPitches: [new ArabicPitch("C", "♮", 5)],
+      description:
+        "The most common variant of Maqam ‘Ajam. It begins with Jins ‘Ajam on the C4 tonic, uses Jins Hijaz on the fifth degree G4 as its distinguishing characteristic, and frequently modulates to Jins Saba Dalanshin on the third and fifth degrees.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Jiharkah.
+   * The image's structure is Jins Jiharkah on F4 followed by Upper Rast on C5.
+   */
+  public static buildJiharkah(): Maqam {
+    const lower = new Jins(
+      AjnasLibrary.JIHARKAH,
+      new ArabicPitch("F", "♮", 4)
+    )
+    const upper = new Jins(
+      AjnasLibrary.UPPER_RAST,
+      new ArabicPitch("C", "♮", 5)
+    )
+
+    return new Maqam({
+      id: "jiharkah",
+      name: "Maqam Jiharkah",
+      arabicName: "مقام جهاركاه",
+      family: "None",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("C", "♮", 5),
+      sayrDirection: "ascending",
+      extraPitches: [new ArabicPitch("F", "♮", 5)],
+      description:
+        "Jins Jiharkah on F4 followed by Upper Rast on C5. The two ajnas join at degree 5 and produce the ascending octave F4-G4-A𝄳4-B♭4-C5-D5-E𝄳5-F5.",
+    })
+  }
+
+  /**
    * Constructs Maqam Ajam Ushayran
    */
   public static buildAjamUshayran(): Maqam {
@@ -1959,7 +2284,7 @@ export class MaqamatCatalogue {
   /**
    * Constructs Maqam Bastanikar
    */
-  public static buildBastanikar():Maqam {
+  public static buildBastanikar(): Maqam {
     const lower = new Jins(AjnasLibrary.SIKAH, new ArabicPitch("B", "𝄳", 3))
     const upper = new Jins(AjnasLibrary.SABA, new ArabicPitch("D", "♮", 4))
 
@@ -1993,7 +2318,7 @@ export class MaqamatCatalogue {
         new ArabicPitch("F", "♮", 5),
       ],
       description:
-        "Sikah on B𝄳3 followed by Saba on D4, overlapping Hijaz on F4, and upper Nikriz around B♭4.",
+        "Effectively Jins Sikah followed by Maqam Saba: Jins Sikah on the tonic, Jins Saba on the third degree, overlapping Jins Hijaz on the fifth degree, and Jins Nikriz in the octave register.",
     })
   }
  
@@ -2097,7 +2422,127 @@ export class MaqamatCatalogue {
       ],
       network: sikahNetwork,
       description:
-        "A distinctive member of the Sikah family. Its scale begins with root jins Sikah on the tonic and is shaped by upper Rast and secondary Rast material around the ghammaz.",
+        "A rare member of the Sikah family. It begins with Jins Sikah on the E𝄳4 tonic, followed by Jins Upper Rast on the third degree G4 with its tonic on the sixth degree C5, then Jins Rast on C5 as a secondary ghammaz.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Huzam.
+   * Its three-part structure is Sikah on the tonic, Hijaz on degree 3,
+   * and Rast beginning on degree 6.
+   */
+  public static buildHuzam(): Maqam {
+    const lower = new Jins(AjnasLibrary.SIKAH, new ArabicPitch("E", "𝄳", 4))
+    const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4))
+
+    const huzamNetwork: MaqamNetwork = {
+      nodes: [
+        {
+          jinsId: "sikah",
+          jinsName: "Jins Sikah",
+          arabicName: "سيكاه",
+          scaleDegree: 1,
+          root: new ArabicPitch("E", "𝄳", 4),
+          connections: [3, 6],
+          frequency: "common",
+          roleDescription: "Root Jins Sikah on the tonic E𝄳4",
+        },
+        {
+          jinsId: "hijaz",
+          jinsName: "Jins Hijaz",
+          arabicName: "حجاز",
+          scaleDegree: 3,
+          root: new ArabicPitch("G", "♮", 4),
+          connections: [1, 6],
+          frequency: "common",
+          roleDescription: "Jins Hijaz beginning on the third degree G4",
+        },
+        {
+          jinsId: "rast",
+          jinsName: "Jins Rast",
+          arabicName: "راست",
+          scaleDegree: 6,
+          root: new ArabicPitch("C", "♮", 5),
+          connections: [3, 1],
+          frequency: "common",
+          roleDescription: "Jins Rast beginning on the sixth degree C5",
+        },
+      ],
+      pathways: [
+        {
+          fromDegree: 1,
+          toDegree: 3,
+          technique: "Ittisal",
+          frequency: "common",
+          description: "Conjunct ascent from Sikah to Hijaz on G4",
+        },
+        {
+          fromDegree: 3,
+          toDegree: 6,
+          technique: "Ittisal",
+          frequency: "common",
+          description: "Conjunct ascent from Hijaz to Rast on C5",
+        },
+        {
+          fromDegree: 6,
+          toDegree: 1,
+          technique: "Ittisal",
+          frequency: "common",
+          description: "Return from upper Rast to the Sikah tonic",
+        },
+      ],
+    }
+
+    return new Maqam({
+      id: "huzam",
+      name: "Maqam Huzam",
+      arabicName: "مقام حزام",
+      family: "Sikah",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.RAST, new ArabicPitch("C", "♮", 5)),
+          role: "upper_secondary",
+          description: "Jins Rast beginning on the sixth degree C5",
+        },
+      ],
+      sayrDirection: "ascending",
+      extraPitches: [
+        new ArabicPitch("D", "♮", 5),
+        new ArabicPitch("E", "𝄳", 5),
+      ],
+      network: huzamNetwork,
+      description:
+        "The principal and most common maqam of the Sikah family. It begins with Jins Sikah on the E𝄳4 tonic, continues with Jins Hijaz on the third degree G4, and reaches Jins Rast on the sixth degree C5.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Rahat al-Arwah as the exact transposition of Huzam
+   * from E𝄳4 to B𝄳3, preserving Huzam's sayr and ajnas relationships.
+   */
+  public static buildRahatAlArwah(): Maqam {
+    const huzam = this.buildHuzam()
+    const transposed = huzam.transpose(new ArabicPitch("B", "𝄳", 3))
+
+    return new Maqam({
+      id: "rahat-al-arwah",
+      name: "Maqam Rahat al-Arwah",
+      arabicName: "مقام راحة الأرواح",
+      family: "Sikah",
+      lowerJins: transposed.lowerJins,
+      connection: transposed.connection,
+      upperJins: transposed.upperJins,
+      ghammaz: transposed.ghammaz,
+      alternateUpperAjnas: [...transposed.alternateUpperAjnas],
+      sayrDirection: huzam.sayrDirection,
+      extraPitches: [...transposed.extraPitches],
+      network: transposed.network,
+      description:
+        "The transposition of Maqam Huzam to B𝄳3. Rahat al-Arwah preserves exactly the same sayr and ajnas relationships as Huzam at the transposed pitch level.",
     })
   }
 
@@ -2199,7 +2644,34 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("C", "♮", 5)],
       network: nikrizNetwork,
       description:
-        "Ornate pentachord with augmented 2nd: C - D - E♭ - F♯ - G - A♭ - B - C",
+        "The principal and main maqam in the Nikriz family. It begins with Jins Nikriz on the C4 tonic and continues with Jins Nahawand on the fifth degree G4.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Nawa Athar.
+   * Jins Nikriz on C4 is followed by Jins Hijazkar centered on G4,
+   * the fifth degree of the maqam.
+   */
+  public static buildNawaAthar(): Maqam {
+    const lower = new Jins(AjnasLibrary.NIKRIZ, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(
+      AjnasLibrary.HIJAZKAR,
+      new ArabicPitch("G", "♮", 4)
+    )
+
+    return new Maqam({
+      id: "nawa-athar",
+      name: "Maqam Nawa Athar",
+      arabicName: "مقام نوى أثر",
+      family: "Nikriz",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      sayrDirection: "ascending",
+      description:
+        "A popular maqam in the Nikriz family. It begins with Jins Nikriz on the C4 tonic, followed by Jins Hijazkar centered on the fifth degree G4.",
     })
   }
 
@@ -2246,11 +2718,11 @@ export class MaqamatCatalogue {
           jinsId: "nikriz",
           jinsName: "Jins Nikriz",
           arabicName: "نكريز",
-          scaleDegree: 7,
-          root: new ArabicPitch("C", "♮", 5),
+          scaleDegree: 6,
+          root: new ArabicPitch("B", "♭", 4),
           connections: [1, 3],
           frequency: "uncommon",
-          roleDescription: "Upper Nikriz flourish on C5",
+          roleDescription: "Alternative upper Nikriz on the sixth degree B♭4",
         },
       ],
       pathways: [
@@ -2311,11 +2783,11 @@ export class MaqamatCatalogue {
         {
           jins: new Jins(
             AjnasLibrary.NAWA_ATHAR_NIKRIZ,
-            new ArabicPitch("C", "♮", 5)
+            new ArabicPitch("B", "♭", 4)
           ),
           role: "upper_secondary",
           description:
-            "Upper Jins Nikriz on C5 (expressive ornamentation at upper register)",
+            "Upper Jins Nikriz on B♭4, beginning on the sixth degree",
         },
       ],
       sayrDirection: "ascending",
@@ -2326,7 +2798,30 @@ export class MaqamatCatalogue {
       ],
       network: sabaNetwork,
       description:
-        "A popular and highly expressive maqam in the Arabic repertory. It begins with jins Saba on the tonic, then overlaps with Hijaz and often introduces 'Ajam or Nikriz material at the upper area.",
+        "A very popular and common maqam in the Arabic repertory. It begins with Jins Saba on the tonic, overlaps with Jins Hijaz on the third degree, and continues with either Jins ‘Ajam or Jins Nikriz on the sixth degree.",
+    })
+  }
+
+  /**
+   * Constructs Maqam Suznak.
+   * Suznak is the characteristic Rast modulation to Jins Hijaz on the fifth degree.
+   */
+  public static buildSuznak(): Maqam {
+    const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4))
+
+    return new Maqam({
+      id: "suznak",
+      name: "Maqam Suznak",
+      arabicName: "مقام سوزناك",
+      family: "Rast",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      sayrDirection: "ascending",
+      description:
+        "The most popular modulation of Maqam Rast. It centers Jins Hijaz on the fifth degree, a practically obligatory modulation in taqsim or mawwal beginning with Jins Rast on the tonic.",
     })
   }
 
@@ -2334,16 +2829,29 @@ export class MaqamatCatalogue {
     const templates = new Map(
       [
         this.buildRast(),
+        this.buildSuznak(),
+        this.buildKirdan(),
+        this.buildMahur(),
         this.buildBayati(),
         this.buildMuhayyar(),
         this.buildHijaz(),
+        this.buildHijazkar(),
         this.buildNahawand(),
+        this.buildNahawandMurassaa(),
         this.buildFarahfaza(),
         this.buildKurd(),
         this.buildAjam(),
+        this.buildShawqAfza(),
+        this.buildJiharkah(),
         this.buildSikah(),
+        this.buildBastanikar(),
+        this.buildHuzam(),
+        this.buildRahatAlArwah(),
         this.buildNikriz(),
+        this.buildNawaAthar(),
         this.buildSaba(),
+        this.buildUshaqMasri(),
+        this.buildZanjaran(),
       ].map((maqam) => [maqam.id, maqam])
     )
 
@@ -2611,6 +3119,32 @@ export class MaqamatCatalogue {
           arabicName: "مقام سوزدل",
           title: "Suzidil",
           desc: "Hijaz transposed up a 5th to A4 (Husayni)",
+        },
+      },
+      hijazkar: {
+        "G♮3": {
+          name: "Maqam Shadd ‘Araban (Hijazkar on G3)",
+          arabicName: "مقام شد عربان",
+          title: "Shadd ‘Araban",
+          desc: "Hijazkar transposed down a perfect fourth to low G3",
+        },
+        "A♮3": {
+          name: "Maqam Suzidil (Hijazkar on A3)",
+          arabicName: "مقام سوزدل",
+          title: "Suzidil",
+          desc: "Hijazkar transposed down a major third to low A3",
+        },
+        "C♮4": {
+          name: "Maqam Hijazkar (Original C4)",
+          arabicName: "مقام حجازكار",
+          title: "Hijazkar",
+          desc: "Hijazkar on its original C4 tonic",
+        },
+        "D♮4": {
+          name: "Maqam Shahnaz (Hijazkar on D4)",
+          arabicName: "مقام شاهناز",
+          title: "Shahnaz",
+          desc: "Hijazkar transposed up a whole tone to D4",
         },
       },
       nahawand: {
