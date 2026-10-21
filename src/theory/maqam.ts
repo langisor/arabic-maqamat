@@ -1027,9 +1027,10 @@ export class MaqamatCatalogue {
    * Network: Based on Abu Shumays' Example 23 - nodes at degrees 1, 4, 5, 6, 8
    */
   public static buildBayati(): Maqam {
+
     const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
     const upper = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4))
-
+    // Todo: update alternateUpperJins - Rast on degree 4 => G4 A4 Bd4 C5 D5 on degree 8
     const bayatiNetwork: MaqamNetwork = {
       nodes: [
         {
@@ -1269,6 +1270,21 @@ export class MaqamatCatalogue {
       description:
         "The principal maqam in the Bayati family and a cornerstone of Arabic modal practice. It starts with jins Bayati on the tonic and commonly continues with Nahawand or Rast at the upper pivot.",
     })
+  }
+
+
+  /**
+   * Constructs Maqam Bayati Shuri
+   */
+  public static buildBayatiShuri():Maqam{
+    // Todo: Jins Bayati on tonic D4 and Hijaz start from 4th degree G4 with extra octave pitch D5 (D4-Ed-F-G-Ab-B-C5-D5)
+  }
+
+    /**
+   * Constructs Maqam Dalanshin
+   */
+  public static buildDalanshin():Maqam{
+    // Todo: Jins Rast on tonic and Upper Rast start from 5th degree G4 Then Saba Dalanshin played usually in decending fashoin: E5 - Db5 - C5 - Bd4 - A - G - F - Ed - D - C4
   }
 
   /**
@@ -1832,7 +1848,7 @@ export class MaqamatCatalogue {
       ghammaz: new ArabicPitch("G", "♮", 4),
       alternateUpperAjnas: [
         {
-          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("C", "♮", 5)),
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4)),
           role: "upper_alternate",
           description:
             "Nahawand descending from C5 to the ghammaz G4 in Egyptian Ajam sayr",
@@ -1845,6 +1861,24 @@ export class MaqamatCatalogue {
         "The principal maqam in the 'Ajam family (also called Egyptian 'Ajam). It begins with root jins 'Ajam on the tonic and often continues with upper 'Ajam or Nahawand.",
     })
   }
+
+  /**
+   * Constructs Maqam Ajam Ushayran
+   */
+  public static buildAjamUshayran(): Maqam {
+    // Todo: Descendly Ajans:  Nahawand -> Kurd -> Ajam
+    // pitches on order descendly: Bb4 - A4 - G4 - F4 - Eb4 - D4 - C4 - Bb3
+    // Maqam ‘Ajam ‘Ushayran is an archaic version of Maqam ‘Ajam with a different sayr, and has a completely different tonal emphasis as well. Rather than tonicizing its 5th scale degree (for starting the next jins), it tonicizes its 3rd and 6th scale degrees instead.
+
+     
+  }
+  /**
+   * Constructs Maqam Bastanikar
+   */
+  public static buildBastanikar():Maqam {
+    // Maqam Bastanikar is effectively Jins Sikah followed by Maqam Saba. Its scale starts with the root Jins Sikah on the tonic (Bb3), then Jins Saba on the 3rd degree (D4), an overlapping Jins Hijaz on the 5th degree F4, and finally Jins Nikriz on the octave Bb4. Maqam Pitches: Bd3-C4-D4-Ed4-F4-Gb4-A4-Bb4-C5-Db5-E5-F5
+  }
+ 
 
   /**
    * Constructs Maqam Sikah
