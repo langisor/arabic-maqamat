@@ -288,7 +288,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "ajam-ushayran",
     name: "‘Ajam ‘Ushayran",
     family: "‘Ajam",
-    templateId: "ajam",
+    templateId: "ajam-ushayran",
     sourceSlug: "ajam_ushayran",
     ajnas: AJNAS_AJAM,
     verified: true,
@@ -332,7 +332,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "bayati-shuri",
     name: "Bayati Shuri",
     family: "Bayati",
-    templateId: "bayati",
+    templateId: "bayati-shuri",
     sourceSlug: "bayati_shuri",
     ajnas: AJNAS_BAYATI,
   },
@@ -340,7 +340,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "dalanshin",
     name: "Dalanshin",
     family: "Bayati",
-    templateId: "bayati",
+    templateId: "dalanshin",
     sourceSlug: "dalanshin",
     ajnas: AJNAS_BAYATI,
   },
@@ -1430,7 +1430,7 @@ export class MaqamatCatalogue {
    * Constructs Maqam Bayati Shuri
    */
   public static buildBayatiShuri():Maqam{
-    const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
+    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("C", "♮", 4))
     const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4))
 
     return new Maqam({
@@ -1452,7 +1452,7 @@ export class MaqamatCatalogue {
       sayrDirection: "ascending",
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       description:
-        "Bayati on D4 followed by Hijaz on the fourth degree G4, with the octave D5 completing the characteristic Bayati Shuri register.",
+        "A C4-based Bayati Shuri scale: C4, D4, E♭4, F4, G4, A♭4, B4, C5, D5, formed by Nahawand on C4 followed by Hijaz on G4.",
     })
   }
 
@@ -1460,9 +1460,9 @@ export class MaqamatCatalogue {
    * Constructs Maqam Dalanshin
    */
   public static buildDalanshin():Maqam{
-    const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch("C", "♮", 4))
+    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("C", "♮", 4))
     const upper = new Jins(
-      AjnasLibrary.UPPER_RAST,
+      AjnasLibrary.NAHAWAND,
       new ArabicPitch("G", "♮", 4)
     )
 
@@ -1493,7 +1493,7 @@ export class MaqamatCatalogue {
         new ArabicPitch("E", "♮", 5),
       ],
       description:
-        "Rast on C4 with Upper Rast on G4. Its distinctive sayr reaches the octave and commonly descends through Saba Dalanshin: E5, D♭5, C5, B𝄳4, A4, G4, F4, E𝄳4, D4, C4.",
+        "Its characteristic descending Dalanshin passage is E5, D♭5, C5, B♭4, A4, G4, F4, E♭4, D4, C4.",
     })
   }
 
@@ -1501,8 +1501,8 @@ export class MaqamatCatalogue {
    * Constructs Maqam Muhayyar (Bayati family, octave-emphasized)
    */
   public static buildMuhayyar(): Maqam {
-    const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
-    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4))
+    const lower = new Jins(AjnasLibrary.KURD, new ArabicPitch("D", "♮", 4))
+    const upper = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4))
 
     const muhayyarNetwork: MaqamNetwork = {
       nodes: [
@@ -1604,7 +1604,7 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       network: muhayyarNetwork,
       description:
-        "A Bayati-derived maqam whose sayr starts at the octave D5 (Muhayyar). It often uses Jins Rast on the fourth degree G4 for ascent, emphasizes Jins Bayati at the octave, and descends through Nahawand and the other ajnas common to Bayati.",
+        "A D4-based Muhayyar scale: D4, E♭4, F4, G4, A4, B♭4, C5, D5, with an octave-first sayr and Nahawand branches around G4.",
     })
   }
 
@@ -2218,7 +2218,7 @@ export class MaqamatCatalogue {
       sayrDirection: "ascending",
       extraPitches: [new ArabicPitch("C", "♮", 5)],
       description:
-        "The most common variant of Maqam ‘Ajam. It begins with Jins ‘Ajam on the C4 tonic, uses Jins Hijaz on the fifth degree G4 as its distinguishing characteristic, and frequently modulates to Jins Saba Dalanshin on the third and fifth degrees.",
+        "The most common variant of Maqam ‘Ajam. Its scale is C4, D4, E4, F4, G4, A♭4, B4, C5: Jins ‘Ajam on C4 followed by Jins Hijaz on G4. It frequently modulates to Jins Saba Dalanshin on the third and fifth degrees.",
     })
   }
 
@@ -2256,7 +2256,7 @@ export class MaqamatCatalogue {
    * Constructs Maqam Ajam Ushayran
    */
   public static buildAjamUshayran(): Maqam {
-    const lower = new Jins(AjnasLibrary.AJAM, new ArabicPitch("B", "♭", 3))
+    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("B", "♭", 3))
     const upper = new Jins(
       AjnasLibrary.UPPER_AJAM,
       new ArabicPitch("F", "♮", 4)
@@ -2841,6 +2841,8 @@ export class MaqamatCatalogue {
         this.buildKirdan(),
         this.buildMahur(),
         this.buildBayati(),
+        this.buildBayatiShuri(),
+        this.buildDalanshin(),
         this.buildMuhayyar(),
         this.buildHijaz(),
         this.buildHijazkar(),
@@ -2849,6 +2851,7 @@ export class MaqamatCatalogue {
         this.buildFarahfaza(),
         this.buildKurd(),
         this.buildAjam(),
+        this.buildAjamUshayran(),
         this.buildShawqAfza(),
         this.buildJiharkah(),
         this.buildSikah(),
