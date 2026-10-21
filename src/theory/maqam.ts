@@ -1277,14 +1277,71 @@ export class MaqamatCatalogue {
    * Constructs Maqam Bayati Shuri
    */
   public static buildBayatiShuri():Maqam{
-    // Todo: Jins Bayati on tonic D4 and Hijaz start from 4th degree G4 with extra octave pitch D5 (D4-Ed-F-G-Ab-B-C5-D5)
+    const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
+    const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4))
+
+    return new Maqam({
+      id: "bayati-shuri",
+      name: "Maqam Bayati Shuri",
+      arabicName: "مقام بياتي شوري",
+      family: "Bayati",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4)),
+          role: "upper_alternate",
+          description: "Upper Rast on G4 as an alternative to the Shuri Hijaz branch",
+        },
+      ],
+      sayrDirection: "ascending",
+      extraPitches: [new ArabicPitch("D", "♮", 5)],
+      description:
+        "Bayati on D4 followed by Hijaz on the fourth degree G4, with the octave D5 completing the characteristic Bayati Shuri register.",
+    })
   }
 
     /**
    * Constructs Maqam Dalanshin
    */
   public static buildDalanshin():Maqam{
-    // Todo: Jins Rast on tonic and Upper Rast start from 5th degree G4 Then Saba Dalanshin played usually in decending fashoin: E5 - Db5 - C5 - Bd4 - A - G - F - Ed - D - C4
+    const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(
+      AjnasLibrary.UPPER_RAST,
+      new ArabicPitch("G", "♮", 4)
+    )
+
+    return new Maqam({
+      id: "dalanshin",
+      name: "Maqam Dalanshin",
+      arabicName: "مقام دلنشين",
+      family: "Rast",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(
+            AjnasLibrary.SABA_DALANSHIN,
+            new ArabicPitch("C", "♮", 5)
+          ),
+          role: "descent_only",
+          description:
+            "Saba Dalanshin on the octave, used in the characteristic descending Dalanshin passage",
+        },
+      ],
+      sayrDirection: "descending_octave_first",
+      extraPitches: [
+        new ArabicPitch("C", "♮", 5),
+        new ArabicPitch("D", "♭", 5),
+        new ArabicPitch("E", "♮", 5),
+      ],
+      description:
+        "Rast on C4 with Upper Rast on G4. Its distinctive sayr reaches the octave and commonly descends through Saba Dalanshin: E5, D♭5, C5, B𝄳4, A4, G4, F4, E𝄳4, D4, C4.",
+    })
   }
 
   /**
@@ -1866,17 +1923,78 @@ export class MaqamatCatalogue {
    * Constructs Maqam Ajam Ushayran
    */
   public static buildAjamUshayran(): Maqam {
-    // Todo: Descendly Ajans:  Nahawand -> Kurd -> Ajam
-    // pitches on order descendly: Bb4 - A4 - G4 - F4 - Eb4 - D4 - C4 - Bb3
-    // Maqam ‘Ajam ‘Ushayran is an archaic version of Maqam ‘Ajam with a different sayr, and has a completely different tonal emphasis as well. Rather than tonicizing its 5th scale degree (for starting the next jins), it tonicizes its 3rd and 6th scale degrees instead.
+    const lower = new Jins(AjnasLibrary.AJAM, new ArabicPitch("B", "♭", 3))
+    const upper = new Jins(
+      AjnasLibrary.UPPER_AJAM,
+      new ArabicPitch("F", "♮", 4)
+    )
 
-     
+    return new Maqam({
+      id: "ajam-ushayran",
+      name: "Maqam ‘Ajam ‘Ushayran",
+      arabicName: "مقام عجم عشيران",
+      family: "‘Ajam",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("F", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("B", "♭", 4)),
+          role: "descent_only",
+          description: "Nahawand descent from the upper register",
+        },
+        {
+          jins: new Jins(AjnasLibrary.KURD, new ArabicPitch("F", "♮", 4)),
+          role: "descent_only",
+          description: "Kurd descent through the middle register",
+        },
+      ],
+      sayrDirection: "descending_octave_first",
+      extraPitches: [new ArabicPitch("B", "♭", 4)],
+      description:
+        "An archaic ‘Ajam variant whose sayr descends through Nahawand, Kurd, and ‘Ajam rather than centering the fifth degree. The characteristic descent is B♭4, A4, G4, F4, E♭4, D4, C4, B♭3.",
+    })
   }
   /**
    * Constructs Maqam Bastanikar
    */
   public static buildBastanikar():Maqam {
-    // Maqam Bastanikar is effectively Jins Sikah followed by Maqam Saba. Its scale starts with the root Jins Sikah on the tonic (Bb3), then Jins Saba on the 3rd degree (D4), an overlapping Jins Hijaz on the 5th degree F4, and finally Jins Nikriz on the octave Bb4. Maqam Pitches: Bd3-C4-D4-Ed4-F4-Gb4-A4-Bb4-C5-Db5-E5-F5
+    const lower = new Jins(AjnasLibrary.SIKAH, new ArabicPitch("B", "𝄳", 3))
+    const upper = new Jins(AjnasLibrary.SABA, new ArabicPitch("D", "♮", 4))
+
+    return new Maqam({
+      id: "bastanikar",
+      name: "Maqam Bastanikar",
+      arabicName: "مقام بستانكار",
+      family: "Sikah",
+      lowerJins: lower,
+      connection: "Tadakhul",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("D", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("F", "♮", 4)),
+          role: "upper_secondary",
+          description: "Overlapping Hijaz on F4",
+        },
+        {
+          jins: new Jins(AjnasLibrary.NIKRIZ, new ArabicPitch("B", "♭", 4)),
+          role: "upper_secondary",
+          description: "Upper Nikriz on the octave area",
+        },
+      ],
+      sayrDirection: "ascending",
+      extraPitches: [
+        new ArabicPitch("B", "♭", 4),
+        new ArabicPitch("C", "♮", 5),
+        new ArabicPitch("D", "♭", 5),
+        new ArabicPitch("E", "♮", 5),
+        new ArabicPitch("F", "♮", 5),
+      ],
+      description:
+        "Sikah on B𝄳3 followed by Saba on D4, overlapping Hijaz on F4, and upper Nikriz around B♭4.",
+    })
   }
  
 
