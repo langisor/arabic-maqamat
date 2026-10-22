@@ -784,6 +784,7 @@ export class Maqam {
       }
     }
 
+    console.log("getScale: ", uniqueCombined)
     return uniqueCombined
   }
 
@@ -1221,7 +1222,7 @@ export class MaqamatCatalogue {
    */
   public static buildBayati(): Maqam {
     const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
-    const upper = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4))
+    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4))
     const bayatiNetwork: MaqamNetwork = {
       nodes: [
         {
@@ -1444,14 +1445,9 @@ export class MaqamatCatalogue {
       upperJins: upper,
       ghammaz: new ArabicPitch("G", "♮", 4),
       alternateUpperAjnas: [
+ 
         {
-          jins: new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4)),
-          role: "upper_alternate",
-          description:
-            "Bayati Rast: Bayati on D4 followed by Rast on G4, producing G4–A4–B𝄳4–C5–D5",
-        },
-        {
-          jins: new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4)),
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4)),
           role: "upper_alternate",
           description: "Bayati Shuri: Upper Hijaz on G4",
         },
@@ -1461,6 +1457,7 @@ export class MaqamatCatalogue {
       network: bayatiNetwork,
       description:
         "Bayati on D4 has two principal upper-jins versions: Bayati Nahawand (D4–E𝄳4–F4–G4–A4–B♭4–C5–D5) and Bayati Rast (D4–E𝄳4–F4–G4–A4–B𝄳4–C5–D5).",
+        verified:true
     })
   }
 
@@ -2109,6 +2106,7 @@ export class MaqamatCatalogue {
       network: ajamNetwork,
       description:
         "Ajam on C4 has two principal upper-jins versions: Ajam Upper Ajam (C4–D4–E4–F4–G4–A4–B4–C5) and Ajam Nahawand (C4–D4–E4–F4–G4–A4–B♭4–C5).",
+        verified:true
     })
   }
 
