@@ -480,7 +480,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 <span>
                   {language === "ar"
                     ? currentMaqam.arabicName
-                    : `Maqam ${currentMaqam.name}`}
+                    : `${currentMaqam.name}`}
                 </span>
                 <Badge
                   variant="secondary"
@@ -527,7 +527,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             aria-label={`${currentMaqam.name} ${ui.scale}`}
           >
             <span>
-              {currentMaqam.verified ? (
+              {currentMaqam.verified===true ? (
                 <BadgeCheck className="text-green-500" />
               ) : (
                 <CircleOff className="text-red-500" />

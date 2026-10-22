@@ -298,15 +298,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     ajnas: AJNAS_AJAM,
     verified: true,
   },
-  {
-    id: "athar-kurd",
-    name: "Athar Kurd",
-    family: "Kurd",
-    templateId: "kurd",
-    sourceSlug: "athar_kurd",
-    ajnas: AJNAS_KURD,
-    verified: true,
-  },
+ 
   {
     id: "awj-iraq",
     name: "Awj ‘Iraq",
@@ -572,14 +564,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     sourceSlug: "sikah_baladi",
     ajnas: AJNAS_SIKAH_BALADI,
   },
-  {
-    id: "suzdalara",
-    name: "Suzdalara",
-    family: "Hijaz",
-    templateId: "hijaz",
-    sourceSlug: "suzdalara",
-    ajnas: AJNAS_HIJAZ,
-  },
+
   {
     id: "suzidil",
     name: "Suzidil",
@@ -621,7 +606,6 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     templateId: "zanjaran",
     sourceSlug: "zanjaran",
     ajnas: AJNAS_ZANJARAN,
-    verified: true,
   },
 ]
 
@@ -959,7 +943,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "nairuz",
-      name: "Maqam Nairuz",
+      name: "Nairuz",
       arabicName: "مقام نيروز",
       family: "Rast",
       lowerJins: lower,
@@ -983,7 +967,7 @@ export class MaqamatCatalogue {
     const yakah = niruz.transpose(newTonic)
     return new Maqam({
       id: "yakah",
-      name: "Maqam Yakah",
+      name: "Yakah",
       arabicName: "مقام يكاه",
       family: "Rast",
       lowerJins: yakah.lowerJins,
@@ -1626,7 +1610,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "hijaz",
-      name: "Maqam Hijaz",
+      name: "Hijaz",
       arabicName: "مقام حجاز",
       family: "Hijaz",
       lowerJins: lower,
@@ -1655,8 +1639,8 @@ export class MaqamatCatalogue {
    * A Hijaz variation with Jins ‘Ajam on the fourth degree.
    */
   public static buildZanjaran(): Maqam {
-    const lower = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("D", "♮", 4))
-    const upper = new Jins(AjnasLibrary.AJAM, new ArabicPitch("G", "♮", 4))
+    const lower = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(AjnasLibrary.AJAM, new ArabicPitch("F", "♮", 4))
 
     return new Maqam({
       id: "zanjaran",
@@ -1666,10 +1650,11 @@ export class MaqamatCatalogue {
       lowerJins: lower,
       connection: "Ittisal",
       upperJins: upper,
-      ghammaz: new ArabicPitch("G", "♮", 4),
+      ghammaz: new ArabicPitch("F", "♮", 4),
       sayrDirection: "ascending",
       description:
         "A variation of Maqam Hijaz with Jins ‘Ajam as the second jins on the fourth degree, above root Jins Hijaz on the tonic.",
+        verified:true
     })
   }
 
@@ -1704,8 +1689,6 @@ export class MaqamatCatalogue {
       verified: true,
     })
   }
-
- 
 
   /**
    * Constructs Maqam Nahawand
@@ -1811,6 +1794,7 @@ export class MaqamatCatalogue {
       network: nahawandNetwork,
       description:
         "The principal maqam in the Nahawand family. Its root jins Nahawand on C4 is followed either by Hijaz on G4 (C4-D-E♭-F-G-A♭-B-C5) or by Kurd on G4 (C4-D-E♭-F-G-A♭-B♭-C5).",
+        verified:true
     })
   }
 
@@ -1834,6 +1818,7 @@ export class MaqamatCatalogue {
       sayrDirection: "ascending",
       description:
         "A variation of Maqam Nahawand with Jins Bayati on the fifth degree above the root Jins Nahawand on the tonic.",
+      
     })
   }
 
@@ -1979,25 +1964,20 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "kurd",
-      name: "Maqam Kurd",
+      name: "Kurd",
       arabicName: "مقام كُرد",
       family: "Kurd",
       lowerJins: lower,
       connection: "Ittisal",
       upperJins: upper,
       ghammaz: new ArabicPitch("G", "♮", 4),
-      alternateUpperAjnas: [
-        {
-          jins: new Jins(AjnasLibrary.KURD, new ArabicPitch("G", "♮", 4)),
-          role: "upper_alternate",
-          description: "Upper Kurd on G4 (double-Kurd variant)",
-        },
-      ],
+
       sayrDirection: "ascending",
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       network: kurdNetwork,
       description:
         "The principal maqam in the Kurd family. It begins with Jins Kurd on the D4 tonic, followed conjunctly by Jins Nahawand beginning on the fourth degree G4, and resolves at the D5 octave.",
+        verified:true
     })
   }
 
@@ -2088,7 +2068,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "ajam",
-      name: "Maqam Ajam",
+      name: "Ajam",
       arabicName: "مقام عجم",
       family: "‘Ajam",
       lowerJins: lower,
@@ -2123,7 +2103,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "shawq-afza",
-      name: "Maqam Shawq Afza",
+      name: "Shawq Afza",
       arabicName: "مقام شوق أفزا",
       family: "‘Ajam",
       lowerJins: lower,
@@ -2170,7 +2150,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "jiharkah",
-      name: "Maqam Jiharkah",
+      name: "Jiharkah",
       arabicName: "مقام جهاركاه",
       family: "None",
       lowerJins: lower,
@@ -2196,7 +2176,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "ajam-ushayran",
-      name: "Maqam ‘Ajam ‘Ushayran",
+      name: "‘Ajam ‘Ushayran",
       arabicName: "مقام عجم عشيران",
       family: "‘Ajam",
       lowerJins: lower,
@@ -2231,7 +2211,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "bastanikar",
-      name: "Maqam Bastanikar",
+      name: "Bastanikar",
       arabicName: "مقام بستانكار",
       family: "Sikah",
       lowerJins: lower,
@@ -2340,7 +2320,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "sikah",
-      name: "Maqam Sikah",
+      name: "Sikah",
       arabicName: "مقام سيكاه",
       family: "Sikah",
       lowerJins: lower,
@@ -2435,7 +2415,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "huzam",
-      name: "Maqam Huzam",
+      name: "Huzam",
       arabicName: "مقام حزام",
       family: "Sikah",
       lowerJins: lower,
@@ -2470,7 +2450,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "rahat-al-arwah",
-      name: "Maqam Rahat al-Arwah",
+      name: "Rahat al-Arwah",
       arabicName: "مقام راحة الأرواح",
       family: "Sikah",
       lowerJins: transposed.lowerJins,
@@ -2599,7 +2579,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "nawa-athar",
-      name: "Maqam Nawa Athar",
+      name: "Nawa Athar",
       arabicName: "مقام نوى أثر",
       family: "Nikriz",
       lowerJins: lower,
@@ -2703,7 +2683,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "saba",
-      name: "Maqam Saba",
+      name: "Saba",
       arabicName: "مقام صبا",
       family: "None",
       lowerJins: lower,
@@ -2749,7 +2729,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "suznak",
-      name: "Maqam Suznak",
+      name: "Suznak",
       arabicName: "مقام سوزناك",
       family: "Rast",
       lowerJins: lower,
