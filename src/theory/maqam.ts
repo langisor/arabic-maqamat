@@ -542,9 +542,9 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "shahnaz",
     name: "Shahnaz",
     family: "Hijaz",
-    templateId: "hijaz",
+    templateId: "hijazkar",
     sourceSlug: "hijazkar",
-    ajnas: AJNAS_HIJAZ,
+    ajnas: AJNAS_HIJAZKAR,
   },
   {
     id: "shawq-afza",
@@ -584,7 +584,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "suzidil",
     name: "Suzidil",
     family: "Hijaz",
-    templateId: "hijaz",
+    templateId: "hijazkar",
     sourceSlug: "hijazkar",
     ajnas: AJNAS_HIJAZ,
   },
@@ -2798,12 +2798,22 @@ export class MaqamatCatalogue {
     )
 
     return MAQAM_INDEX.map((entry) => {
-      const template = templates.get(entry.templateId)
-      if (!template) {
+      const baseTemplate = templates.get(entry.templateId)
+      if (!baseTemplate) {
         throw new Error(
           `Missing maqam template "${entry.templateId}" for index entry "${entry.id}".`
         )
       }
+      const tonicByVariant: Record<string, ArabicPitch> = {
+        "shadd-araban": new ArabicPitch("G", "♮", 3),
+        suzidil: new ArabicPitch("A", "♮", 3),
+        shahnaz: new ArabicPitch("D", "♮", 4),
+      }
+      // Maqam.transpose also shifts the template's extraPitches (the added
+      // octave notes), along with its jins, ghammaz, and network pitches.
+      const template = tonicByVariant[entry.id]
+        ? baseTemplate.transpose(tonicByVariant[entry.id])
+        : baseTemplate
       return new Maqam({
         id: entry.id,
         name: entry.id === template.id ? template.name : `Maqam ${entry.name}`,
@@ -3067,13 +3077,13 @@ export class MaqamatCatalogue {
           name: "Maqam Shadd ‘Araban (Hijazkar on G3)",
           arabicName: "مقام شد عربان",
           title: "Shadd ‘Araban",
-          desc: "Hijazkar transposed down a perfect fourth to low G3",
+          desc: "Hijazkar interval pattern transposed to low G3",
         },
         "A♮3": {
           name: "Maqam Suzidil (Hijazkar on A3)",
           arabicName: "مقام سوزدل",
           title: "Suzidil",
-          desc: "Hijazkar transposed down a major third to low A3",
+          desc: "Hijazkar interval pattern transposed to low A3",
         },
         "C♮4": {
           name: "Maqam Hijazkar (Original C4)",
@@ -3085,7 +3095,7 @@ export class MaqamatCatalogue {
           name: "Maqam Shahnaz (Hijazkar on D4)",
           arabicName: "مقام شاهناز",
           title: "Shahnaz",
-          desc: "Hijazkar transposed up a whole tone to D4",
+          desc: "Hijazkar interval pattern transposed to D4",
         },
       },
       nahawand: {
