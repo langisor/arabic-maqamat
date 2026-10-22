@@ -957,6 +957,10 @@ export class MaqamatCatalogue {
     })
   }
 
+  /**
+   * Constructs Yakah: Its just Nairuz transformed to lower tonic (G3)
+   *
+   */
   public static buildYakah(): Maqam {
     const niruz = MaqamatCatalogue.buildNairuz()
     const newTonic = new ArabicPitch("G", "♮", 3)
