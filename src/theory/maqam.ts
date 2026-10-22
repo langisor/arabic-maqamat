@@ -534,7 +534,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "shadd-araban",
     name: "Shadd ‘Araban",
     family: "Hijaz",
-    templateId: "hijaz",
+    templateId: "hijazkar",
     sourceSlug: "hijazkar",
     ajnas: AJNAS_HIJAZKAR,
   },
