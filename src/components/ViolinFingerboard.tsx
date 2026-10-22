@@ -476,7 +476,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
         <CardHeader className="border-b border-slate-900 bg-slate-900/40 p-3.5 sm:p-5">
           <div className="flex flex-col items-start justify-between gap-2.5 sm:flex-row sm:items-center">
             <div>
-              <CardTitle className="flex items-center gap-2 text-sm text-slate-200 sm:text-base">
+              <CardTitle className="flex items-center gap-2 text-sm text-green-200 sm:text-base">
                 <span>
                   {language === "ar"
                     ? currentMaqam.arabicName
@@ -484,7 +484,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 </span>
                 <Badge
                   variant="secondary"
-                  className="font-mono text-[10px] capitalize"
+                  className="font-mono text-[12px]  border-amber-300 capitalize"
                 >
                   {ui.mode}:{" "}
                   {orientation === "horizontal" ? ui.horizontal : ui.vertical} ·{" "}
@@ -494,7 +494,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               <CardDescription className="mt-0.5 text-[11px] text-slate-400 sm:text-xs">
                 {ui.tonic}:{" "}
                 <span className="font-semibold text-amber-300">
-                  {tonic.toString()}
+                {tonic.toString()}
                 </span>{" "}
                 • {ui.ghammaz}:{" "}
                 <span className="font-semibold text-emerald-300">
