@@ -546,6 +546,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               >
                 {pitch.toString()}
               </span>
+
             ))}
             {isPlayingScale ? (
               <Button
@@ -571,9 +572,12 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
           </div>
 
           {/* Maqam Intervals */}
-          <div className="w-full text-center">
+          <div className="w-full text-center my-2">
+            <p>
             {currentMaqam.getTonic().toString()} - 
             {currentMaqam.getIntervals().join(" - ")}
+            </p>
+            <p className="flex justify-between flex-wrap ml-5 border p-2   rounded-2xl"><span>Maqam: {currentMaqam.name}</span> <span>Family: {currentMaqam.family}</span> </p>
           </div>
           {/* HORIZONTAL ORIENTATION VIEW */}
           {orientation === "horizontal" && (
@@ -588,9 +592,9 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
               {/* Fingerboard Neck Container with smooth touch scrolling */}
               <div className="relative touch-pan-x scrollbar-thin overflow-x-auto pb-3">
-                <div className="relative min-w-[780px] rounded-2xl border-2 border-stone-800 bg-stone-900/90 p-4 shadow-inner select-none sm:min-w-[850px] sm:p-6">
+                <div className="relative min-w-195 rounded-2xl border-2 border-stone-800 bg-stone-900/90 p-4 shadow-inner select-none sm:min-w-212.5 sm:p-6">
                   {/* Wooden fingerboard texture simulation */}
-                  <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-stone-950 via-stone-900 to-stone-950 opacity-80" />
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl bg-linear-to-r from-stone-950 via-stone-900 to-stone-950 opacity-80" />
 
                   {/* Nut indicator */}
                   <div className="absolute top-3 bottom-3 left-20 z-10 w-2 rounded-sm bg-stone-200 shadow-md sm:top-4 sm:bottom-4 sm:left-24">
@@ -601,7 +605,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
                   {/* Fret / Interval Position Guides */}
                   <div className="relative flex h-64 flex-col justify-between py-2 sm:h-68 sm:py-4">
-                    <div className="pointer-events-none absolute inset-y-2 right-0 left-[5.5rem] z-[5] sm:inset-y-4 sm:left-[6.75rem]">
+                    <div className="pointer-events-none absolute inset-y-2 right-0 left-22 z-5 sm:inset-y-4 sm:left-27">
                       {positionTapes.map((tape) => (
                         <div
                           key={tape.label}
@@ -636,7 +640,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                           {/* String Line (physically accurate thickness based on string gauge) */}
                           <div className="relative ml-2 flex h-full flex-1 items-center sm:ml-3">
                             <div
-                              className="w-full rounded-full bg-gradient-to-r from-amber-200 via-stone-300 to-amber-100 shadow-sm"
+                              className="w-full rounded-full bg-linear-to-r from-amber-200 via-stone-300 to-amber-100 shadow-sm"
                               style={{
                                 height: `${thickness}px`,
                                 opacity: 0.85,

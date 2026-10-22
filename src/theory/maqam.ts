@@ -1148,7 +1148,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "rast",
-      name: "Maqam Rast",
+      name: "Rast",
       arabicName: "مقام راست",
       family: "Rast",
       lowerJins: lower,
@@ -1190,7 +1190,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "kirdan",
-      name: "Maqam Kirdan",
+      name: "Kirdan",
       arabicName: "مقام كردان",
       family: "Rast",
       lowerJins: lower,
@@ -1217,7 +1217,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "mahur",
-      name: "Maqam Mahur",
+      name: "Mahur",
       arabicName: "مقام ماهور",
       family: "Rast",
       lowerJins: lower,
@@ -1452,7 +1452,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "bayati",
-      name: "Maqam Bayati",
+      name: "Bayati",
       arabicName: "مقام بياتي",
       family: "Bayati",
       lowerJins: lower,
@@ -1484,7 +1484,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "bayati-shuri",
-      name: "Maqam Bayati Shuri",
+      name: "Bayati Shuri",
       arabicName: "مقام بياتي شوري",
       family: "Bayati",
       lowerJins: lower,
@@ -1519,7 +1519,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "dalanshin",
-      name: "Maqam Dalanshin",
+      name: "Dalanshin",
       arabicName: "مقام دلنشين",
       family: "Rast",
       lowerJins: lower,
@@ -1660,7 +1660,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "zanjaran",
-      name: "Maqam Zanjaran",
+      name: "Zanjaran",
       arabicName: "مقام زنجران",
       family: "Hijaz",
       lowerJins: lower,
@@ -1685,7 +1685,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "hijazkar",
-      name: "Maqam Hijazkar",
+      name: "Hijazkar",
       arabicName: "مقام حجازكار",
       family: "Hijaz",
       lowerJins: lower,
@@ -1791,7 +1791,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "nahawand",
-      name: "Maqam Nahawand",
+      name: "Nahawand",
       arabicName: "مقام نهاوند",
       family: "Nahawand",
       lowerJins: lower,
@@ -1824,7 +1824,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "ushaq-masri",
-      name: "Maqam ‘Ushaq Masri",
+      name: "‘Ushaq Masri",
       arabicName: "مقام عُشّاق مصري",
       family: "Nahawand",
       lowerJins: lower,
@@ -1851,7 +1851,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "nahawand-murassaa",
-      name: "Maqam Nahawand Murassa‘",
+      name: "Nahawand Murassa‘",
       arabicName: "مقام نهاوند مرصع",
       family: "Nahawand",
       lowerJins: lower,
@@ -1873,7 +1873,7 @@ export class MaqamatCatalogue {
 
     return new Maqam({
       id: "farahfaza",
-      name: "Maqam Farahfaza",
+      name: "Farahfaza",
       arabicName: "مقام فَرَحْفَزا",
       family: "Nahawand",
       lowerJins: lower,
