@@ -82,15 +82,15 @@ const BUILDER_PRESETS: PresetTemplate[] = [
     description: "Melancholic Nahawand on C with fiery upper Hijaz on G4.",
   },
   {
-    name: "Maqam Nairuz / Yakah (نيروز)",
+    name: "Maqam Nairuz (نيروز)",
     arabicName: "مقام نيروز",
     lowerJinsId: "rast",
     tonic: { diatonic: "C", accidental: "♮", octave: 4 },
-    connection: "Infisal",
+    connection: "Ittisal",
     upperJinsId: "bayati",
     family: "Rast",
     description:
-      "Classical Rast on C with upper Bayati on G4 featuring Awj (B𝄳4).",
+      "Classical Rast on C4 followed by Bayati on the fifth degree G4.",
   },
   {
     name: "Maqam Mahur (ماهور)",

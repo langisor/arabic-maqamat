@@ -526,13 +526,13 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             className="mb-4 flex flex-wrap items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2.5"
             aria-label={`${currentMaqam.name} ${ui.scale}`}
           >
-              <span>
-                    {currentMaqam.verified ? (
-                      <BadgeCheck className="text-green-500" />
-                    ) : (
-                      <CircleOff className="text-red-500" />
-                    )}
-                  </span>
+            <span>
+              {currentMaqam.verified ? (
+                <BadgeCheck className="text-green-500" />
+              ) : (
+                <CircleOff className="text-red-500" />
+              )}
+            </span>
             {scalePitches.map((pitch, index) => (
               <span
                 key={`${pitch.toQuarterToneIndex()}-${index}`}
@@ -569,7 +569,12 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               </Button>
             )}
           </div>
-          
+
+          {/* Maqam Intervals */}
+          <div className="w-full text-center">
+            {currentMaqam.getTonic().toString()} - 
+            {currentMaqam.getIntervals().join(" - ")}
+          </div>
           {/* HORIZONTAL ORIENTATION VIEW */}
           {orientation === "horizontal" && (
             <>
