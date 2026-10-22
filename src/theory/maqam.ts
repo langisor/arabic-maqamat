@@ -1,5 +1,5 @@
 // src/theory/maqam.ts
-import { ArabicPitch } from "../core/pitch"
+import { ArabicPitch, type DiatonicBase } from "../core/pitch"
 import { Jins, AjnasLibrary, type JinsDefinition } from "./jins"
 
 export type MaqamConnection = "Ittisal" | "Infisal" | "Tadakhul"
@@ -784,8 +784,20 @@ export class Maqam {
       }
     }
 
-    console.log("getScale: ", uniqueCombined)
-    return uniqueCombined
+    // Spell each ascending scale degree on the next diatonic letter. This
+    // keeps enharmonic spellings (for example G♯) readable as the next letter
+    // (A♭) instead of repeating a letter already used by the scale.
+    const diatonicLetters: DiatonicBase[] = ["C", "D", "E", "F", "G", "A", "B"]
+    const tonicLetterIndex = diatonicLetters.indexOf(this.getTonic().diatonic)
+
+    return uniqueCombined.map((pitch, index) => {
+      const preferredBase =
+        diatonicLetters[(tonicLetterIndex + index) % diatonicLetters.length]
+      return ArabicPitch.fromQuarterToneIndex(
+        pitch.toQuarterToneIndex(),
+        preferredBase
+      )
+    })
   }
 
   public getTonic(): ArabicPitch {
@@ -802,9 +814,12 @@ export class Maqam {
 
   public getIntervals(): number[] {
     const scale = this.getScale()
-    return scale
+    const normalizedScale = scale
       .slice(1)
       .map((pitch, index) => scale[index].diffQuarterTones(pitch))
+
+    console.log("NormalizedScale: ", normalizedScale)
+    return normalizedScale
   }
 
   /**
@@ -1445,7 +1460,6 @@ export class MaqamatCatalogue {
       upperJins: upper,
       ghammaz: new ArabicPitch("G", "♮", 4),
       alternateUpperAjnas: [
- 
         {
           jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4)),
           role: "upper_alternate",
@@ -1457,7 +1471,7 @@ export class MaqamatCatalogue {
       network: bayatiNetwork,
       description:
         "Bayati on D4 has two principal upper-jins versions: Bayati Nahawand (D4–E𝄳4–F4–G4–A4–B♭4–C5–D5) and Bayati Rast (D4–E𝄳4–F4–G4–A4–B𝄳4–C5–D5).",
-        verified:true
+      verified: true,
     })
   }
 
@@ -1497,9 +1511,10 @@ export class MaqamatCatalogue {
    */
   public static buildDalanshin(): Maqam {
     const lower = new Jins(AjnasLibrary.RAST, new ArabicPitch("C", "♮", 4))
+    // include Middle Rast
     const upper = new Jins(
-      AjnasLibrary.UPPER_RAST,
-      new ArabicPitch("G", "♮", 4)
+      AjnasLibrary.SABA_DALANSHIN,
+      new ArabicPitch("A", "♮", 4)
     )
 
     return new Maqam({
@@ -1508,23 +1523,12 @@ export class MaqamatCatalogue {
       arabicName: "مقام دلنشين",
       family: "Rast",
       lowerJins: lower,
-      connection: "Ittisal",
+      connection: "Infisal",
       upperJins: upper,
       ghammaz: new ArabicPitch("G", "♮", 4),
-      alternateUpperAjnas: [
-        {
-          jins: new Jins(
-            AjnasLibrary.SABA_DALANSHIN,
-            new ArabicPitch("C", "♮", 5)
-          ),
-          role: "descent_only",
-          description:
-            "Saba Dalanshin on the octave, used in the characteristic descending Dalanshin passage",
-        },
-      ],
+
       sayrDirection: "descending_octave_first",
       extraPitches: [
-        new ArabicPitch("C", "♮", 5),
         new ArabicPitch("D", "♭", 5),
         new ArabicPitch("E", "♮", 5),
       ],
@@ -1543,7 +1547,7 @@ export class MaqamatCatalogue {
    */
   public static buildHijaz(): Maqam {
     const lower = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("D", "♮", 4))
-    const upper = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4))
+    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4))
 
     const hijazNetwork: MaqamNetwork = {
       nodes: [
@@ -1631,17 +1635,18 @@ export class MaqamatCatalogue {
       ghammaz: new ArabicPitch("G", "♮", 4),
       alternateUpperAjnas: [
         {
-          jins: new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4)),
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4)),
           role: "upper_alternate",
           description:
-            "Upper Rast on G4 (Hijaz with upper Rast / Suznak color)",
+            "Upper Nahawand on G4 (Hijaz with upper Rast / Suznak color)",
         },
       ],
       sayrDirection: "ascending",
       extraPitches: [new ArabicPitch("D", "♮", 5)],
       network: hijazNetwork,
       description:
-        "The principal maqam in the Hijaz family. Its scale begins with root jins Hijaz on the tonic and commonly continues with Nahawand or Rast at the upper ghammaz.",
+        "The principal maqam in the Hijaz family. Its scale begins with root jins Hijaz on the tonic and commonly continues with Rast or Nahawand at the upper ghammaz.",
+      verified: true,
     })
   }
 
@@ -1675,6 +1680,7 @@ export class MaqamatCatalogue {
    */
   public static buildHijazkar(): Maqam {
     const lower = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("C", "♮", 4))
+    // first: link with nikriz
     const upper = new Jins(AjnasLibrary.NIKRIZ, new ArabicPitch("F", "♮", 4))
 
     return new Maqam({
@@ -1683,17 +1689,10 @@ export class MaqamatCatalogue {
       arabicName: "مقام حجازكار",
       family: "Hijaz",
       lowerJins: lower,
-      connection: "Ittisal",
+      connection: "Tadakhul",
       upperJins: upper,
       ghammaz: new ArabicPitch("F", "♮", 4),
-      alternateUpperAjnas: [
-        {
-          jins: new Jins(AjnasLibrary.HIJAZKAR, new ArabicPitch("A", "♭", 4)),
-          role: "descent_only",
-          description:
-            "Descending Hijazkar branch overlapping from A♭4 at the sixth degree",
-        },
-      ],
+
       sayrDirection: "descending_octave_first",
       extraPitches: [
         new ArabicPitch("C", "♮", 5),
@@ -1702,8 +1701,11 @@ export class MaqamatCatalogue {
       ],
       description:
         "Hijaz on C4 followed by Nikriz on F4, with a descending Hijazkar branch overlapping from A♭4. The characteristic descent is E5-D♭5-C5-B4-A♭4-G4-F4-E4-D♭4-C4.",
+      verified: true,
     })
   }
+
+ 
 
   /**
    * Constructs Maqam Nahawand
@@ -2106,7 +2108,7 @@ export class MaqamatCatalogue {
       network: ajamNetwork,
       description:
         "Ajam on C4 has two principal upper-jins versions: Ajam Upper Ajam (C4–D4–E4–F4–G4–A4–B4–C5) and Ajam Nahawand (C4–D4–E4–F4–G4–A4–B♭4–C5).",
-        verified:true
+      verified: true,
     })
   }
 
