@@ -9,6 +9,7 @@ import {
   ViolinPositionMode,
   ViolinFingerPlacement,
 } from "../violin/ergonomics"
+import type { ViolinStringPitchMap } from "../violin/ergonomics"
 import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -165,67 +166,44 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   }
 
   // Strings according to tuning
+  const stringBasePitches = useMemo<ViolinStringPitchMap>(
+    () =>
+      tuning === "arabic"
+        ? ViolinErgonomicsEngine.ARABIC_STRING_BASE_PITCHES
+        : ViolinErgonomicsEngine.STRING_BASE_PITCHES,
+    [tuning]
+  )
+
   const tuningStrings: {
     name: ViolinStringName
     label: string
     arabicLabel: string
     rootPitch: ArabicPitch
   }[] = useMemo(() => {
-    if (tuning === "arabic") {
-      return [
-        {
-          name: "G",
-          label: "G3",
-          arabicLabel: "يكاه · صول",
-          rootPitch: new ArabicPitch("G", "♮", 3),
-        },
-        {
-          name: "D",
-          label: "D4",
-          arabicLabel: "دوكاه · ري",
-          rootPitch: new ArabicPitch("D", "♮", 4),
-        },
-        {
-          name: "A",
-          label: "G4",
-          arabicLabel: "نوى · صول",
-          rootPitch: new ArabicPitch("G", "♮", 4),
-        },
-        {
-          name: "E",
-          label: "D5",
-          arabicLabel: "محير · ري",
-          rootPitch: new ArabicPitch("D", "♮", 5),
-        },
-      ]
-    }
-    return [
-      {
-        name: "G",
-        label: "G3",
-        arabicLabel: "يكاه · صول",
-        rootPitch: new ArabicPitch("G", "♮", 3),
-      },
-      {
-        name: "D",
-        label: "D4",
-        arabicLabel: "دوكاه · ري",
-        rootPitch: new ArabicPitch("D", "♮", 4),
-      },
-      {
-        name: "A",
-        label: "A4",
-        arabicLabel: "حسيني · لا",
-        rootPitch: new ArabicPitch("A", "♮", 4),
-      },
-      {
-        name: "E",
-        label: "E5",
-        arabicLabel: "جواب · مي",
-        rootPitch: new ArabicPitch("E", "♮", 5),
-      },
-    ]
-  }, [tuning])
+    const descriptions: {
+      name: ViolinStringName
+      label: string
+      arabicLabel: string
+    }[] =
+      tuning === "arabic"
+        ? [
+            { name: "G", label: "G3", arabicLabel: "يكاه · صول" },
+            { name: "D", label: "D4", arabicLabel: "دوكاه · ري" },
+            { name: "A", label: "G4", arabicLabel: "نوى · صول" },
+            { name: "E", label: "D5", arabicLabel: "محير · ري" },
+          ]
+        : [
+            { name: "G", label: "G3", arabicLabel: "يكاه · صول" },
+            { name: "D", label: "D4", arabicLabel: "دوكاه · ري" },
+            { name: "A", label: "A4", arabicLabel: "حسيني · لا" },
+            { name: "E", label: "E5", arabicLabel: "جواب · مي" },
+          ]
+
+    return descriptions.map((string) => ({
+      ...string,
+      rootPitch: stringBasePitches[string.name],
+    }))
+  }, [stringBasePitches, tuning])
 
   // Displayed strings (supports Reverse Strings toggle)
   const displayedStrings = useMemo(() => {
@@ -276,9 +254,13 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
     const posNum: ViolinPositionNumber =
       selectedPosition === "auto" ? 1 : selectedPosition
     return scalePitches.map((pitch) =>
-      ViolinErgonomicsEngine.mapPitchToPosition(pitch, posNum)
+      ViolinErgonomicsEngine.mapPitchToPosition(
+        pitch,
+        posNum,
+        stringBasePitches
+      )
     )
-  }, [scalePitches, selectedPosition])
+  }, [scalePitches, selectedPosition, stringBasePitches])
 
   const playScale = async () => {
     try {

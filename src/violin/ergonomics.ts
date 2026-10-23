@@ -2,6 +2,7 @@
 import { ArabicPitch } from "@/core/pitch"
 
 export type ViolinStringName = 'G' | 'D' | 'A' | 'E';
+export type ViolinStringPitchMap = Readonly<Record<ViolinStringName, ArabicPitch>>;
 export type ViolinFinger = 0 | 1 | 2 | 3 | 4;
 export type ViolinPositionNumber = 1 | 2 | 3 | 4;
 export type ViolinPositionMode = ViolinPositionNumber | 'auto';
@@ -41,6 +42,13 @@ export class ViolinErgonomicsEngine {
     D: new ArabicPitch('D', '♮', 4), // open D (293.66 Hz) - Qt index 100
     A: new ArabicPitch('A', '♮', 4), // open A (440.0 Hz) - Qt index 114
     E: new ArabicPitch('E', '♮', 5)  // open E (659.25 Hz) - Qt index 128
+  };
+
+  public static readonly ARABIC_STRING_BASE_PITCHES: ViolinStringPitchMap = {
+    G: new ArabicPitch('G', '♮', 3),
+    D: new ArabicPitch('D', '♮', 4),
+    A: new ArabicPitch('G', '♮', 4),
+    E: new ArabicPitch('D', '♮', 5)
   };
 
   public static readonly POSITION_INFO: Record<ViolinPositionNumber, PositionRangeInfo> = {
@@ -91,7 +99,8 @@ export class ViolinErgonomicsEngine {
    */
   public static mapPitchToPosition(
     pitch: ArabicPitch,
-    targetPosition: ViolinPositionNumber = 1
+    targetPosition: ViolinPositionNumber = 1,
+    stringBasePitches: ViolinStringPitchMap = this.STRING_BASE_PITCHES
   ): ViolinFingerPlacement {
     const targetQt = pitch.toQuarterToneIndex();
     const stringOrder: ViolinStringName[] = ['E', 'A', 'D', 'G'];
@@ -115,7 +124,7 @@ export class ViolinErgonomicsEngine {
     let minDiff = Infinity;
 
     for (const str of stringOrder) {
-      const openQt = this.STRING_BASE_PITCHES[str].toQuarterToneIndex();
+      const openQt = stringBasePitches[str].toQuarterToneIndex();
       const intervalQt = targetQt - openQt;
 
       // An open string can only be played with finger 0 in 1st position (or as open string)
@@ -148,7 +157,7 @@ export class ViolinErgonomicsEngine {
     // Fallback if not cleanly in range: pick highest string that is <= targetQt
     if (minDiff === Infinity) {
       for (const str of stringOrder) {
-        const openQt = this.STRING_BASE_PITCHES[str].toQuarterToneIndex();
+        const openQt = stringBasePitches[str].toQuarterToneIndex();
         if (targetQt >= openQt) {
           chosenString = str;
           break;
@@ -156,7 +165,7 @@ export class ViolinErgonomicsEngine {
       }
     }
 
-    const openQt = this.STRING_BASE_PITCHES[chosenString].toQuarterToneIndex();
+    const openQt = stringBasePitches[chosenString].toQuarterToneIndex();
     const intervalQt = targetQt - openQt;
 
     if (intervalQt === 0) {
@@ -244,19 +253,22 @@ export class ViolinErgonomicsEngine {
   /**
    * Find alternative fingerings across strings and positions for a note.
    */
-  public static findAlternativePlacements(pitch: ArabicPitch): ViolinFingerPlacement[] {
+  public static findAlternativePlacements(
+    pitch: ArabicPitch,
+    stringBasePitches: ViolinStringPitchMap = this.STRING_BASE_PITCHES
+  ): ViolinFingerPlacement[] {
     const alternatives: ViolinFingerPlacement[] = [];
     const targetQt = pitch.toQuarterToneIndex();
     const stringOrder: ViolinStringName[] = ['G', 'D', 'A', 'E'];
 
     for (const str of stringOrder) {
-      const openQt = this.STRING_BASE_PITCHES[str].toQuarterToneIndex();
+      const openQt = stringBasePitches[str].toQuarterToneIndex();
       const intervalQt = targetQt - openQt;
       if (intervalQt < 0) continue; // cannot play below open string
 
       // Try positions 1, 2, 3, 4
       ([1, 2, 3, 4] as ViolinPositionNumber[]).forEach(pos => {
-        const placement = this.mapPitchToPosition(pitch, pos);
+        const placement = this.mapPitchToPosition(pitch, pos, stringBasePitches);
         if (placement.string === str) {
           // Avoid exact duplicates
           const exists = alternatives.some(
@@ -319,17 +331,18 @@ export class ViolinErgonomicsEngine {
    */
   public static generateFingeringChart(
     pitches: ArabicPitch[],
-    positionMode: ViolinPositionMode = 1
+    positionMode: ViolinPositionMode = 1,
+    stringBasePitches: ViolinStringPitchMap = this.STRING_BASE_PITCHES
   ): ViolinFingerPlacement[] {
     return pitches.map(pitch => {
       if (positionMode === 'auto') {
         // Smart auto: if note is high (> E5), shift to 3rd pos; otherwise 1st pos
         const targetQt = pitch.toQuarterToneIndex();
-        const e5Qt = this.STRING_BASE_PITCHES['E'].toQuarterToneIndex();
+        const e5Qt = stringBasePitches.E.toQuarterToneIndex();
         const pos: ViolinPositionNumber = targetQt >= e5Qt + 6 ? 3 : 1;
-        return this.mapPitchToPosition(pitch, pos);
+        return this.mapPitchToPosition(pitch, pos, stringBasePitches);
       }
-      return this.mapPitchToPosition(pitch, positionMode);
+      return this.mapPitchToPosition(pitch, positionMode, stringBasePitches);
     });
   }
 
