@@ -298,12 +298,12 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     ajnas: AJNAS_AJAM,
     verified: true,
   },
- 
+
   {
     id: "awj-iraq",
     name: "Awj ‘Iraq",
     family: "Sikah",
-    templateId: "sikah",
+    templateId: "awj-iraq",
     sourceSlug: "awj_iraq",
     ajnas: AJNAS_SIKAH,
   },
@@ -438,7 +438,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     id: "mustaar",
     name: "Musta‘ar",
     family: "Sikah",
-    templateId: "sikah",
+    templateId: "mustaar",
     sourceSlug: "mustaar",
     ajnas: AJNAS_MUSTAAR,
   },
@@ -977,7 +977,7 @@ export class MaqamatCatalogue {
       sourceSlug: "nairuz",
       verified: true,
       description:
-        "The Nairuz interval structure transposed to G3 as the tonic: Jins Rast on G3 followed by Jins Bayati on D4.",
+        "The Nairuz interval structure transposed to G3 as the tonic: Jins Rast on G3 followed by Jins Bayati on D4. ",
     })
   }
 
@@ -1157,6 +1157,7 @@ export class MaqamatCatalogue {
       network: rastNetwork,
       description:
         "The main maqam in the Rast family and by far one of the most popular and common maqamat in the Arabic repertory. It begins with Jins Rast on the C4 tonic, followed on the fifth degree G4 by either Jins Upper Rast, whose tonic is on the eighth degree C5, or Jins Nahawand.",
+      verified: true,
     })
   }
 
@@ -1185,6 +1186,7 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("C", "♮", 5)],
       description:
         "A Rast-derived maqam whose sayr begins on the octave C5, descends through Upper Rast from the fifth degree G4, and eventually resolves through the lower Jins Rast to tonic C4.",
+      verified: true,
     })
   }
 
@@ -1654,7 +1656,7 @@ export class MaqamatCatalogue {
       sayrDirection: "ascending",
       description:
         "A variation of Maqam Hijaz with Jins ‘Ajam as the second jins on the fourth degree, above root Jins Hijaz on the tonic.",
-        verified:true
+      verified: true,
     })
   }
 
@@ -1794,7 +1796,7 @@ export class MaqamatCatalogue {
       network: nahawandNetwork,
       description:
         "The principal maqam in the Nahawand family. Its root jins Nahawand on C4 is followed either by Hijaz on G4 (C4-D-E♭-F-G-A♭-B-C5) or by Kurd on G4 (C4-D-E♭-F-G-A♭-B♭-C5).",
-        verified:true
+      verified: true,
     })
   }
 
@@ -1803,8 +1805,8 @@ export class MaqamatCatalogue {
    * A Nahawand variation with Jins Bayati on the fifth degree.
    */
   public static buildUshaqMasri(): Maqam {
-    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("C", "♮", 4))
-    const upper = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("G", "♮", 4))
+    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("D", "♮", 4))
+    const upper = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("A", "♮", 4))
 
     return new Maqam({
       id: "ushaq-masri",
@@ -1814,11 +1816,11 @@ export class MaqamatCatalogue {
       lowerJins: lower,
       connection: "Ittisal",
       upperJins: upper,
-      ghammaz: new ArabicPitch("G", "♮", 4),
+      ghammaz: new ArabicPitch("A", "♮", 4),
       sayrDirection: "ascending",
       description:
         "A variation of Maqam Nahawand with Jins Bayati on the fifth degree above the root Jins Nahawand on the tonic.",
-      
+      verified: true,
     })
   }
 
@@ -1843,6 +1845,7 @@ export class MaqamatCatalogue {
       connection: "Tadakhul",
       upperJins: upper,
       ghammaz: new ArabicPitch("F", "♮", 4),
+      extraPitches: [new ArabicPitch("C", "♮", 5)],
       sayrDirection: "ascending",
       description:
         "A variation of Maqam Nahawand with a lowered fifth scale degree. It begins with Jins Nahawand Murassa‘ on the C4 tonic and overlaps with Jins Hijaz beginning on the fourth degree F4.",
@@ -1877,6 +1880,7 @@ export class MaqamatCatalogue {
       extraPitches: [new ArabicPitch("G", "♮", 4)],
       description:
         "A direct transposition of Nahawand to tonic G3: G3-A3-B♭3-C4-D4-E♭4-F4-G4, with the same Hijaz and Kurd upper branches.",
+      verified: true,
     })
   }
 
@@ -1977,7 +1981,7 @@ export class MaqamatCatalogue {
       network: kurdNetwork,
       description:
         "The principal maqam in the Kurd family. It begins with Jins Kurd on the D4 tonic, followed conjunctly by Jins Nahawand beginning on the fourth degree G4, and resolves at the D5 octave.",
-        verified:true
+      verified: true,
     })
   }
 
@@ -2343,6 +2347,102 @@ export class MaqamatCatalogue {
       network: sikahNetwork,
       description:
         "A rare member of the Sikah family. It begins with Jins Sikah on the E𝄳4 tonic, followed by Jins Upper Rast on the third degree G4 with its tonic on the sixth degree C5, then Jins Rast on C5 as a secondary ghammaz.",
+      verified: true,
+    })
+  }
+
+  /**
+   * Constructs Awj ‘Iraq using its supplied scale rather than transposing the
+   * standard Sikah template. The lower tetrachord meets the upper jins at E𝄳4.
+   */
+  public static buildAwjIraq(): Maqam {
+    const lowerDefinition: JinsDefinition = {
+      id: "awj-iraq-lower",
+      name: "Awj ‘Iraq Lower Tetrachord",
+      arabicName: "جنس عراق",
+      type: "Tetrachord",
+      sizeLabel: "4-note",
+      intervals: [3, 4, 3],
+      description: "Lower tetrachord from B𝄳3 to E𝄳4.",
+      hasQuarterTones: true,
+      defaultRoot: new ArabicPitch("B", "𝄳", 3),
+      tonicCharacteristic: "Neutral tonic on B𝄳3",
+    }
+    const upperDefinition: JinsDefinition = {
+      id: "awj-iraq-upper",
+      name: "Awj ‘Iraq Upper Scale",
+      arabicName: "عراق",
+      type: "UndefinedSize",
+      sizeLabel: "(undefined size)",
+      intervals: [5, 2, 6, 1, 3, 4],
+      description: "Upper scale from E𝄳4 to D5.",
+      hasQuarterTones: true,
+      defaultRoot: new ArabicPitch("E", "𝄳", 4),
+      tonicCharacteristic: "Upper continuation from E𝄳4",
+    }
+    const lower = new Jins(
+      lowerDefinition,
+      new ArabicPitch("B", "𝄳", 3)
+    )
+    const upper = new Jins(
+      upperDefinition,
+      new ArabicPitch("E", "𝄳", 4)
+    )
+
+    return new Maqam({
+      id: "awj-iraq",
+      name: "Awj ‘Iraq",
+      family: "Sikah",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("F", "♯", 4),
+      sayrDirection: "ascending",
+      description:
+        "Awj ‘Iraq on B𝄳3, with its lower tetrachord joined at E𝄳4 to the upper scale through D5.",
+        verified:true
+    })
+  }
+
+  /**
+   * Constructs Maqam Musta‘ar with its characteristic E𝄳–F♯–G opening
+   * and the supplied upper scale from G4 through E𝄳5.
+   */
+  public static buildMustaar(): Maqam {
+    const upperDefinition: JinsDefinition = {
+      id: "mustaar-upper",
+      name: "Musta‘ar Upper Scale",
+      arabicName: "جنس مستعار",
+      type: "UndefinedSize",
+      sizeLabel: "(undefined size)",
+      intervals: [4, 2, 4, 4, 3],
+      description: "Upper scale from G4 through E𝄳5.",
+      hasQuarterTones: true,
+      defaultRoot: new ArabicPitch("G", "♮", 4),
+      tonicCharacteristic: "Upper continuation from the third degree G4",
+    }
+    const lower = new Jins(
+      AjnasLibrary.MUSTAAR,
+      new ArabicPitch("E", "𝄳", 4)
+    )
+    const upper = new Jins(
+      upperDefinition,
+      new ArabicPitch("G", "♮", 4)
+    )
+
+    return new Maqam({
+      id: "mustaar",
+      name: "Musta‘ar",
+      arabicName: "مقام مستعار",
+      family: "Sikah",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      sayrDirection: "ascending",
+      description:
+        "Musta‘ar on E𝄳4, with its characteristic F♯ and an upper scale continuing from G4 to E𝄳5.",
+      verified: true,
     })
   }
 
@@ -2463,6 +2563,7 @@ export class MaqamatCatalogue {
       network: transposed.network,
       description:
         "The transposition of Maqam Huzam to B𝄳3. Rahat al-Arwah preserves exactly the same sayr and ajnas relationships as Huzam at the transposed pitch level.",
+      
     })
   }
 
@@ -2565,6 +2666,7 @@ export class MaqamatCatalogue {
       network: nikrizNetwork,
       description:
         "The principal and main maqam in the Nikriz family. It begins with Jins Nikriz on the C4 tonic and continues with Jins Nahawand on the fifth degree G4.",
+      verified: true,
     })
   }
 
@@ -2575,7 +2677,7 @@ export class MaqamatCatalogue {
    */
   public static buildNawaAthar(): Maqam {
     const lower = new Jins(AjnasLibrary.NIKRIZ, new ArabicPitch("C", "♮", 4))
-    const upper = new Jins(AjnasLibrary.HIJAZKAR, new ArabicPitch("G", "♮", 4))
+    const upper = new Jins(AjnasLibrary.HIJAZKAR, new ArabicPitch("E", "♭", 4))
 
     return new Maqam({
       id: "nawa-athar",
@@ -2583,12 +2685,14 @@ export class MaqamatCatalogue {
       arabicName: "مقام نوى أثر",
       family: "Nikriz",
       lowerJins: lower,
-      connection: "Ittisal",
+      connection: "Tadakhul",
       upperJins: upper,
       ghammaz: new ArabicPitch("G", "♮", 4),
+      extraPitches: [new ArabicPitch("C", "♮", 5)],
       sayrDirection: "ascending",
       description:
         "A popular maqam in the Nikriz family. It begins with Jins Nikriz on the C4 tonic, followed by Jins Hijazkar centered on the fifth degree G4.",
+      verified: true,
     })
   }
 
@@ -2739,6 +2843,7 @@ export class MaqamatCatalogue {
       sayrDirection: "ascending",
       description:
         "The most popular modulation of Maqam Rast. It centers Jins Hijaz on the fifth degree, a practically obligatory modulation in taqsim or mawwal beginning with Jins Rast on the tonic.",
+      verified: true,
     })
   }
 
@@ -2766,6 +2871,8 @@ export class MaqamatCatalogue {
         this.buildShawqAfza(),
         this.buildJiharkah(),
         this.buildSikah(),
+        this.buildMustaar(),
+        this.buildAwjIraq(),
         this.buildBastanikar(),
         this.buildHuzam(),
         this.buildRahatAlArwah(),

@@ -38,6 +38,8 @@ interface OudStudioProps {
 
 export function OudStudio({ currentMaqam }: OudStudioProps) {
   const { language, t } = useLanguage()
+  // These controls describe the visible fingerboard; the selected maqam remains
+  // the source of pitches shown and played in either layout.
   const [positionRange, setPositionRange] = useState<12 | 24>(12)
   const [tuning, setTuning] = useState<OudTuning>("arabic")
   const [orientation, setOrientation] =
@@ -50,11 +52,15 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const [audioError, setAudioError] = useState<string | null>(null)
   const activePitchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Build the selected tuning from the shared course definitions. The high
+  // preset raises each open course by ten quarter tones (a perfect fourth).
   const courses = OUD_COURSES.map((course) => ({
     ...course,
     openPitch:
       tuning === "high" ? course.openPitch.transpose(10) : course.openPitch,
   }))
+  // The bass course is optional, and reversing creates a display-only order
+  // without mutating the shared course list used for numbering.
   const visibleCourses = includeBassCourse
     ? courses
     : courses.filter((course) => course.id !== "course-6")
@@ -63,6 +69,9 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     : visibleCourses
   const maqamScale = currentMaqam.getScale().map((x) => getOudDisplayedPitch(x))
   console.log("Maqam Scale: ", maqamScale)
+
+  // Compare pitch classes rather than octaves so every position matching a
+  // maqam degree is shown throughout the selected fingerboard range.
   const maqamPitchClasses = new Set(
     maqamScale.map((pitch) => ((pitch.toQuarterToneIndex() % 24) + 24) % 24)
   )
@@ -77,6 +86,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     }).filter(({ pitchClass }) => maqamPitchClasses.has(pitchClass))
 
   useEffect(() => {
+    // Track only this studio's sequence; clear its playback UI when the engine
+    // reports that a sequence we observed has ended or has been stopped.
     let observedSequence = false
     const unsubscribe = AudioTransport.subscribe((status) => {
       const hasSequence = status.activeSessions.some(
@@ -92,6 +103,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     })
     return () => {
       unsubscribe()
+      // Stop component-owned playback and timer when leaving the studio.
       MicrotonalAudioEngine.stopSequence(OUD_SEQUENCE_SCOPE)
       if (activePitchTimeout.current !== null) {
         clearTimeout(activePitchTimeout.current)
@@ -104,9 +116,13 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     setAudioError(null)
     console.log("Playing pitch: ", pitch.toString())
     try {
+      // Audio contexts require a user gesture in many browsers, so initialize
+      // before triggering the individual note.
       await MicrotonalAudioEngine.startAudioContext()
       MicrotonalAudioEngine.playPitch(pitch, 1.2, "oud", 0.8)
       setActivePitch(key)
+      // Replace any prior timer so the active marker stays aligned with the
+      // latest tapped note rather than an earlier note's timeout.
       if (activePitchTimeout.current !== null) {
         clearTimeout(activePitchTimeout.current)
       }
@@ -128,6 +144,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
         clearTimeout(activePitchTimeout.current)
         activePitchTimeout.current = null
       }
+      // Playback callbacks update the highlighted degree while the sequence
+      // runs; the scope lets this studio stop only its own sequence.
       MicrotonalAudioEngine.playSequence(
         maqamScale,
         // lowerOctavePitches,
@@ -151,6 +169,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   }
 
   const stopScale = () => {
+    // The transport subscription also observes this stop and keeps playback
+    // state synchronized if the sequence is ended from elsewhere.
     MicrotonalAudioEngine.stopSequence(OUD_SEQUENCE_SCOPE)
     setIsPlayingScale(false)
     setActivePitch(null)
@@ -162,12 +182,15 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     position: number,
     vertical = false
   ) => {
+    // Normalize the absolute pitch into one 24-EDO octave for scale membership
+    // and tonic highlighting, while retaining its full pitch for playback.
     const pitchClass = ((pitch.toQuarterToneIndex() % 24) + 24) % 24
     const isTonic = pitchClass === tonicPitchClass
     const displayedPitch = getOudDisplayedPitch(pitch.transpose(24))
     const key = `${courseId}-${position}`
     const isActive =
       activePitch === key || activePitch === pitch.toQuarterToneIndex()
+    // Reserve a small margin at both ends so note buttons are not clipped.
     const positionPercent = 4 + (position / positionRange) * 92
 
     return (
@@ -348,6 +371,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
         </CardHeader>
 
         <CardContent className="space-y-4 p-3 sm:p-5">
+          {/* The scale row doubles as playback progress: the sounding pitch is
+              highlighted while the full maqam sequence plays. */}
           <div
             className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2.5"
             aria-label={`${currentMaqam.name} ${t("oudMaqamNotes")}`}
@@ -383,6 +408,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
               </Button>
             )}
           </div>
+          {/* Both views share the same course and note data. The orientation
+              changes only which axis represents ascending fret position. */}
           {orientation === "horizontal" ? (
             <div
               className="overflow-x-auto rounded-2xl border border-amber-100/15 bg-gradient-to-r from-[#332319] via-[#211810] to-[#332319] p-4 shadow-inner"
@@ -398,6 +425,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-y-0 right-0 left-[4.75rem] z-0"
                 >
+                  {/* Fret markers appear every two positions (one semitone in
+                      24-EDO); note buttons are layered above these guides. */}
                   {Array.from(
                     { length: positionRange / 2 },
                     (_, index) => (index + 1) * 2
@@ -457,6 +486,8 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-x-0 top-14 bottom-0 z-0"
                 >
+                  {/* The vertical layout reuses the same even-position guides
+                      along the length of each course. */}
                   {Array.from(
                     { length: positionRange / 2 },
                     (_, index) => (index + 1) * 2
