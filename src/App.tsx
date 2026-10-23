@@ -119,13 +119,7 @@ function StudioContent() {
         ? serializePitch(currentMaqam.getTonic())
         : null,
     })
-  }, [
-    activeLab,
-    currentMaqam,
-    selectedInstrument,
-    systemTuningMode,
-    timbre,
-  ])
+  }, [activeLab, currentMaqam, selectedInstrument, systemTuningMode, timbre])
 
   useEffect(() => {
     updateWorkspaceDraft("violin", { tuning: violinTuning })
@@ -313,8 +307,6 @@ function StudioContent() {
 
           {/* Quick Controls & Tools - Responsive */}
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-
-
             {/* Drone Toggle Button */}
             <Button
               variant={isDroneActive ? "default" : "outline"}
@@ -352,7 +344,9 @@ function StudioContent() {
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  {tVal === "violin" ? t("instrumentViolin") : t("instrumentOud")}
+                  {tVal === "violin"
+                    ? t("instrumentViolin")
+                    : t("instrumentOud")}
                 </button>
               ))}
             </div>
@@ -598,7 +592,12 @@ function StudioContent() {
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 px-6 py-4 text-center text-xs text-slate-500">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 sm:flex-row">
-          <span>{t("instrumentStudioFooter")}</span>
+          <span>
+            {t("instrumentStudioFooter")} -{" "}
+            {language === "en"
+              ? "Implemented and organized by Faris Alhodlai"
+              : "تم التجميع بواسطة فارس الهذلي"}
+          </span>
         </div>
       </footer>
     </div>
