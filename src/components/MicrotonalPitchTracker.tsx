@@ -40,6 +40,8 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioStarting, setAudioStarting] = useState(false);
   const [referenceA4, setReferenceA4] = useState<number>(440);
   const [noiseThreshold] = useState<number>(0.015);
   const [inputLevelDb, setInputLevelDb] = useState<number>(-100);
@@ -60,6 +62,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streakTimerRef = useRef<number | null>(null);
   const dronePitchRef = useRef<ArabicPitch | null>(null);
+  const audioActionInProgressRef = useRef(false);
 
   useEffect(() => {
     detectorRef.current = new MicrotonalPitchDetector(44100, 2048, {
@@ -222,6 +225,22 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
     ctx.stroke();
   };
 
+  const startAudioAction = async (action: () => void) => {
+    if (audioActionInProgressRef.current) return;
+    audioActionInProgressRef.current = true;
+    setAudioStarting(true);
+    setAudioError(null);
+    try {
+      await MicrotonalAudioEngine.startAudioContext();
+      action();
+    } catch (err) {
+      setAudioError(err instanceof Error ? err.message : 'Could not start audio playback.');
+    } finally {
+      audioActionInProgressRef.current = false;
+      setAudioStarting(false);
+    }
+  };
+
   const toggleDrone = () => {
     if (dronePlaying) {
       if (dronePitchRef.current) {
@@ -231,14 +250,18 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       setDronePlaying(false);
     } else {
       const pitchToPlay = trackingMode === 'target' ? targetPitch : currentDetection?.closestPitch ?? targetPitch;
-      dronePitchRef.current = pitchToPlay;
-      MicrotonalAudioEngine.toggleDrone(pitchToPlay, true);
-      setDronePlaying(true);
+      void startAudioAction(() => {
+        dronePitchRef.current = pitchToPlay;
+        MicrotonalAudioEngine.toggleDrone(pitchToPlay, true);
+        setDronePlaying(true);
+      });
     }
   };
 
   const playPitchOnce = (pitch: ArabicPitch) => {
-    MicrotonalAudioEngine.playPitch(pitch, 1.2, timbre, 0.75);
+    void startAudioAction(() => {
+      MicrotonalAudioEngine.playPitch(pitch, 1.2, timbre, 0.75);
+    });
   };
 
   const scalePitches = currentMaqam.getScale();
@@ -299,6 +322,15 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
               title="Microphone Access Required"
               description={micError}
               action={{ label: 'Retry Access', onClick: startMicrophone }}
+            />
+          </div>
+        )}
+        {audioError && (
+          <div className="mt-3">
+            <AsyncFeedback
+              kind="error"
+              title="Audio Playback Unavailable"
+              description={audioError}
             />
           </div>
         )}
@@ -488,6 +520,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                   variant="outline"
                   size="sm"
                   onClick={toggleDrone}
+                  disabled={audioStarting}
                   className={`text-xs gap-1.5 cursor-pointer ${
                     dronePlaying ? 'bg-amber-500/20 border-amber-500 text-amber-300' : ''
                   }`}
@@ -521,6 +554,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                 <button
                   type="button"
                   key={idx}
+                  disabled={audioStarting}
                   onClick={() => {
                     setTargetPitch(p);
                     setTrackingMode('target');

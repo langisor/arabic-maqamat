@@ -3,11 +3,17 @@ import { calculateStaffY } from "./staff-layout"
 
 export interface SVGStaffNote {
   pitch: ArabicPitch
+  /** Optional precomputed vertical coordinate; otherwise derived from `pitch`. */
   staffY?: number
+  /** Optional horizontal coordinate; otherwise notes use the component's 60-unit spacing. */
   staffX?: number
+  /** Diatonic staff-step offset from C4, used for stems and ledger lines. */
   stepOffset?: number
+  /** Marks a note outside the jins core, shown with the baggage color. */
   isBaggage?: boolean
+  /** Marks the tonal root, which has its own color and zero-cent label. */
   isTonic?: boolean
+  /** Pitch displacement from the tonic, in cents, for the note's annotation. */
   offsetCents?: number
   offsetQuarterTones?: number
   arabicName?: string
@@ -18,9 +24,12 @@ export interface SVGStaffNote {
 
 export interface SVGStaffBoundary {
   label: string
+  /** Horizontal extents are in the SVG viewBox coordinate system. */
   startX: number
   endX: number
+  /** Width of the covered span, used to size the shaded boundary box. */
   width: number
+  /** Center of the span, used to center its label and bracket. */
   centerX: number
 }
 
@@ -49,11 +58,17 @@ export function SVGStaff({
   selectedDefName,
   selectedDefSizeLabel,
 }: SVGStaffProps) {
+  // Keep a useful minimum canvas size while extending the viewBox for long sequences.
   const staffWidth = Math.max(
     850,
     105 + Math.max(0, notes.length - 1) * 60 + 70
   )
+  // Explicit staffX values allow callers to control spacing; the fallback keeps
+  // the first note clear of the clef and places later notes at regular intervals.
   const noteXAt = (index: number) => notes[index].staffX ?? 105 + index * 60
+
+  // Collapse adjacent notes with the same section label into a single bracket.
+  // A later recurrence of a label starts a new section rather than joining across gaps.
   const sectionLabels = notes.reduce<
     { label: string; startX: number; endX: number }[]
   >((sections, note, index) => {
@@ -92,6 +107,7 @@ export function SVGStaff({
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
+          {/* Glow filters emphasize the currently highlighted tonic, baggage, or core notes. */}
           <filter id="purpleGlow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="3.5" result="blur" />
             <feMerge>
@@ -126,6 +142,7 @@ export function SVGStaff({
             <stop offset="100%" stopColor="#d97706" />
           </linearGradient>
         </defs>
+        {/* The panel and five horizontal lines form the staff's fixed visual frame. */}
         <rect
           x="10"
           y="10"
@@ -193,11 +210,13 @@ export function SVGStaff({
           strokeWidth="2"
         />
         <g transform="translate(42, 36) scale(0.68)">
+          {/* Treble clef path, sized and positioned to align with the staff lines. */}
           <path
             d="M18.4,78.2 C18.1,76.5 17.5,74.7 16.7,73.1 C14.6,68.9 11.2,66.1 7.2,65.2 C5.8,64.9 4.3,64.9 2.9,65.3 C0.9,65.9 -0.6,67.4 -1.1,69.4 C-1.6,71.4 -0.9,73.5 0.7,74.9 C2.3,76.3 4.6,76.8 6.6,76.2 C7.9,75.8 8.8,74.9 9.3,73.7 C9.5,73.2 9.4,72.7 9.1,72.3 C8.8,71.9 8.2,71.7 7.7,71.9 C6.8,72.3 5.7,72.2 4.9,71.5 C4.3,71.0 4.1,70.3 4.3,69.5 C4.5,68.7 5.2,68.1 6.0,67.9 C7.9,67.6 9.8,68.8 10.6,70.6 C11.9,73.5 11.5,77.1 9.5,79.7 C7.6,82.2 4.5,83.7 1.4,83.6 C-2.4,83.5 -5.8,81.4 -7.5,78.0 C-9.3,74.4 -9.3,70.0 -7.4,66.3 C-4.8,61.1 0.3,57.5 5.9,56.5 C8.1,56.1 10.3,56.2 12.5,56.8 L12.5,33.5 C10.9,34.8 9.2,36.3 7.7,37.9 C6.3,39.4 5.2,40.9 4.3,42.5 C4.0,43.0 3.5,43.3 2.9,43.3 C2.3,43.3 1.8,43.0 1.5,42.5 C0.9,41.5 1.2,40.1 2.2,39.2 C3.5,38.0 5.0,36.5 6.6,35.0 C8.5,33.2 10.5,31.7 12.5,30.3 L12.5,18.0 C12.5,13.2 14.1,8.6 17.0,5.0 C19.9,1.4 23.9,-0.6 28.5,-0.6 C32.6,-0.6 36.3,1.1 38.8,4.1 C41.3,7.1 42.4,11.2 41.9,15.3 C41.2,21.5 37.6,26.9 32.2,30.2 C27.8,32.9 22.8,34.4 17.6,34.8 L17.6,58.8 C21.4,60.2 24.8,62.6 27.2,65.8 C29.7,69.2 31.0,73.3 30.7,77.6 C30.2,83.7 26.6,89.1 21.2,92.1 C18.3,93.7 15.1,94.6 11.9,94.7 L11.9,103.5 C11.9,106.6 10.7,109.6 8.5,111.8 C6.3,114.0 3.3,115.2 0.2,115.2 C-3.0,115.2 -6.0,114.0 -8.2,111.8 C-10.4,109.6 -11.6,106.6 -11.6,103.5 C-11.6,100.4 -10.4,97.4 -8.2,95.2 C-6.0,93.0 -3.0,91.8 0.2,91.8 C2.0,91.8 3.8,92.2 5.4,93.0 L5.4,85.2 C9.8,84.9 14.2,82.8 16.9,79.5 C17.7,78.5 18.2,77.3 18.4,76.1 Z"
             fill="#94a3b8"
           />
         </g>
+        {/* Baggage regions are shaded spans with a lower bracket and centered label. */}
         {baggageBoundaries.map((boundary) => (
           <g key={boundary.label}>
             <rect
@@ -237,6 +256,7 @@ export function SVGStaff({
             </text>
           </g>
         ))}
+        {/* The upper bracket marks the core jins range, distinct from baggage spans. */}
         {coreBoundary && (
           <g>
             <path
@@ -264,6 +284,7 @@ export function SVGStaff({
             </text>
           </g>
         )}
+        {/* Connect notes in sequence; use resolved coordinates so overrides are respected. */}
         {notes.length > 1 && (
           <polyline
             points={notes
@@ -279,6 +300,7 @@ export function SVGStaff({
             strokeDasharray="3 4"
           />
         )}
+        {/* Section brackets identify labeled note groups beneath the staff. */}
         {sectionLabels.map((section) => (
           <g key={`${section.label}-${section.startX}`}>
             <path
@@ -305,12 +327,16 @@ export function SVGStaff({
             </text>
           </g>
         ))}
+        {/* Each note is rendered as one interactive group with pitch, role, and interval data. */}
         {notes.map((note, index) => {
           const noteX = noteXAt(index)
           const noteY = note.staffY ?? calculateStaffY(note.pitch).y
           const stepOffset = note.stepOffset ?? calculateStaffY(note.pitch).step
           const isHovered = hoveredNote?.pitch.equals(note.pitch)
           const isSounding = activeSoundingPitch?.equals(note.pitch)
+
+          // The staff spans diatonic steps 0 through 12; add ledger lines only
+          // when notes extend beyond it, at every other step (line positions).
           const ledgerLines: number[] = []
           if (stepOffset <= 0) {
             ledgerLines.push(136)
@@ -321,9 +347,14 @@ export function SVGStaff({
             ledgerLines.push(40)
             if (stepOffset >= 14) ledgerLines.push(24)
           }
+
+          // Keep stems to the conventional side of each note, switching direction
+          // around the middle of the displayed staff to reduce visual collisions.
           const isStemDown = stepOffset >= 6
           const stemX = isStemDown ? noteX - 7 : noteX + 7
           const stemEndY = isStemDown ? noteY + 34 : noteY - 34
+
+          // Tonic, baggage, and core notes use coordinated stroke, fill, and glow colors.
           const noteColor = note.isTonic
             ? "#10b981"
             : note.isBaggage
@@ -355,6 +386,7 @@ export function SVGStaff({
               onClick={() => onNoteClick?.(note.pitch)}
               style={{ cursor: onNoteClick ? "pointer" : "default" }}
             >
+              {/* Ledger lines are drawn before the notehead so the note remains legible. */}
               {ledgerLines.map((ledgerY) => (
                 <line
                   key={`${ledgerY}-${index}`}
@@ -376,6 +408,7 @@ export function SVGStaff({
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
+              {/* Notehead and curved accent mark the pitch at its staff coordinate. */}
               <ellipse
                 cx={noteX}
                 cy={noteY}
@@ -395,6 +428,7 @@ export function SVGStaff({
                   strokeLinecap="round"
                 />
               </g>
+              {/* Keep the written pitch above the note; stems-down notes use a lower offset. */}
               <rect
                 x={noteX - 17}
                 y={pitchPillY - 9}
@@ -417,6 +451,7 @@ export function SVGStaff({
               >
                 {note.pitch.toString()}
               </text>
+              {/* The remaining labels show its Arabic name, tonic-relative cents, and role. */}
               <text
                 x={noteX}
                 y={196}
