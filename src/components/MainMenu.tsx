@@ -130,6 +130,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       arabic: "مختبر التدريب والتمرين",
       icon: GraduationCap,
     },
+    {
+      id: "earn-practice",
+      title: "Earn Practice",
+      arabic: "تدريب المقامات",
+      icon: GraduationCap,
+    },
   ]
 
   const handleLabSelect = (lab: ValidLab) => {

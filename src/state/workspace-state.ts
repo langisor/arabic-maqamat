@@ -18,6 +18,7 @@ export type ValidLab =
   | "detector"
   | "training"
   | "jins-analysis"
+  | "earn-practice"
 
 export const VALID_LABS: readonly ValidLab[] = [
   "explorer",
@@ -29,6 +30,7 @@ export const VALID_LABS: readonly ValidLab[] = [
   "detector",
   "training",
   "jins-analysis",
+  "earn-practice",
 ] as const
 
 export interface SerializedPitch {

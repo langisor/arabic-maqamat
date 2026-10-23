@@ -36,6 +36,7 @@ import { ModulationPathwaysDrawer } from "./components/ModulationPathwaysDrawer"
 import { JinsAnalysisTool } from "./components/JinsAnalysisTool"
 import { JinsAnalysisDrawer } from "./components/JinsAnalysisDrawer"
 import { InstrumentStudio } from "./features/instruments/InstrumentStudio"
+import { EarnPractice } from "./components/EarnPractice"
 import { ThemeToggle } from "./components/ThemeToggle"
 import { PWAInstallButton } from "./components/PWAInstallButton"
 import { Button } from "./components/ui/button"
@@ -51,6 +52,7 @@ import {
   GitFork,
   Package,
   Radio,
+  GraduationCap,
 } from "lucide-react"
 
 function StudioContent() {
@@ -256,6 +258,12 @@ function StudioContent() {
       label: "Theory & Baggage",
       arabic: "النظرية وأمتعة الأجناس",
       icon: BookOpen,
+    },
+    {
+      id: "earn-practice",
+      label: "Earn Practice",
+      arabic: "تدريب المقامات",
+      icon: GraduationCap,
     },
   ]
 
@@ -543,6 +551,8 @@ function StudioContent() {
             <MaqamFacts />
           </div>
         )}
+
+        {activeLab === "earn-practice" && <EarnPractice timbre={timbre} />}
       </main>
 
       {/* Global Interactive Drawers */}
