@@ -69,6 +69,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
           westernTuning: "غربي (صول-ري-لا-مي)",
           position: "الموضع",
           auto: "تلقائي",
+          allPitches: "كل النغمات",
           reverseStrings: "عكس ترتيب الأوتار",
           reversed: "معكوس",
           horizontal: "أفقي",
@@ -112,6 +113,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
           westernTuning: "Western (G-D-A-E)",
           position: "Position:",
           auto: "Auto",
+          allPitches: "All Pitches",
           reverseStrings: "Reverse Strings",
           reversed: "Rev",
           horizontal: "Horizontal",
@@ -160,9 +162,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const [orientation, setOrientationState] = useState<
     "horizontal" | "vertical"
   >(() => getWorkspaceState().drafts.violin.orientation)
-  
-  // TODo: Implememnt display all pitches not just a scale/Maqam. It show all notes in fingerboard including quarters for free interactive playaround. if false (default), only current Maqam displayed. In both situations only the current Maqam will playedback when clicking Play Maqam button.
-  const [allNotes,showAllNotes]=useState(false);
+  const [allNotes, showAllNotes] = useState(false)
   const setOrientation = (nextOrientation: "horizontal" | "vertical") => {
     setOrientationState(nextOrientation)
     updateWorkspaceDraft("violin", { orientation: nextOrientation })
@@ -265,6 +265,38 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
     )
   }, [scalePitches, selectedPosition, stringBasePitches])
 
+  const allPitchPlacements = useMemo(
+    () =>
+      tuningStrings.flatMap((string) => {
+        const openPitchIndex = string.rootPitch.toQuarterToneIndex()
+        return Array.from({ length: 14 }, (_, index) => {
+          const pitch = ArabicPitch.fromQuarterToneIndex(
+            openPitchIndex + index + 1
+          )
+          const placement = ViolinErgonomicsEngine.mapPitchToPosition(
+            pitch,
+            1,
+            stringBasePitches
+          )
+          const quarterTonesAboveOpen =
+            pitch.toQuarterToneIndex() - openPitchIndex
+
+          return {
+            ...placement,
+            string: string.name,
+            noteAnnotation: `${quarterTonesAboveOpen} quarter-tones above open ${string.name}`,
+            distanceRatioFromNut:
+              ViolinErgonomicsEngine.calculateFingerStopRatio(
+                quarterTonesAboveOpen
+              ),
+            centsAboveOpenString: quarterTonesAboveOpen * 50,
+          }
+        })
+      }),
+    [stringBasePitches, tuningStrings]
+  )
+  const displayedPlacements = allNotes ? allPitchPlacements : placements
+
   const playScale = async () => {
     // 3-second countdown with on-screen counter
     setCountdown(3)
@@ -319,9 +351,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
     placement?: ViolinFingerPlacement
   ) => {
     setActivePlayedPitch(pitch.toString())
-    if (placement) {
-      setSelectedPlacement(placement)
-    }
+    setSelectedPlacement(placement ?? null)
     if (onPitchSelect) {
       onPitchSelect(pitch)
     }
@@ -353,7 +383,25 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
         </div>
 
         <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto">
-          {/* Tuning Preset Selector */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-pressed={allNotes}
+          onClick={() => {
+            showAllNotes(!allNotes)
+            setSelectedPlacement(null)
+          }}
+          className={`h-8 cursor-pointer rounded-xl border px-2.5 text-xs font-semibold transition-all ${
+            allNotes
+              ? "border-amber-500/50 bg-amber-500/20 text-amber-300 shadow-xs"
+              : "border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-900 hover:text-white"
+          }`}
+        >
+          {ui.allPitches}
+        </Button>
+
+        {/* Tuning Preset Selector */}
           <div className="flex w-full items-center justify-between gap-1 rounded-xl border border-slate-800 bg-slate-950 p-1 text-xs sm:w-auto sm:justify-start">
             <span className="px-1.5 text-[11px] font-medium text-slate-400 sm:px-2 sm:text-xs">
               {ui.tuning}
@@ -627,7 +675,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                       ))}
                     </div>
                     {displayedStrings.map((str) => {
-                      const stringPlacements = placements.filter(
+                      const stringPlacements = displayedPlacements.filter(
                         (p) => p.string === str.name
                       )
                       const thickness = getStringThickness(str.name)
@@ -671,6 +719,9 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                             {stringPlacements.map((placement, pIdx) => {
                               const isTonic = tonic.equals(placement.pitch)
                               const isGhammaz = ghammaz.equals(placement.pitch)
+                              const isMaqamPitch = scalePitches.some((pitch) =>
+                                pitch.equals(placement.pitch)
+                              )
                               const isPlayed =
                                 activePlayedPitch === placement.pitch.toString()
                               const isSelected =
@@ -688,7 +739,9 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
                               // Colors based on role
                               let badgeBg =
-                                "bg-sky-600 border-sky-300 text-white"
+                                allNotes && !isMaqamPitch
+                                  ? "bg-stone-700 border-stone-500 text-stone-200"
+                                  : "bg-sky-600 border-sky-300 text-white"
                               if (isTonic) {
                                 badgeBg =
                                   "bg-amber-500 border-amber-200 text-slate-950 font-black ring-2 ring-amber-400/50"
@@ -702,8 +755,16 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                                   key={`${placement.string}-${placement.pitch.toString()}-${pIdx}`}
                                   className="group absolute z-20 flex -translate-x-1/2 cursor-pointer flex-col items-center"
                                   style={{ left: `${leftPercent}%` }}
+                                  title={
+                                    allNotes
+                                      ? `${str.name} string: ${placement.pitch.toString()}`
+                                      : undefined
+                                  }
                                   onClick={() =>
-                                    handlePlayPitch(placement.pitch, placement)
+                                    handlePlayPitch(
+                                      placement.pitch,
+                                      allNotes ? undefined : placement
+                                    )
                                   }
                                 >
                                   {/* Invisible expanded touch hitbox for mobile fingertips */}
@@ -711,26 +772,32 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
                                   {/* Finger placement bead */}
                                   <div
-                                    className={`flex h-7 w-7 transform items-center justify-center rounded-full border-2 text-[10px] shadow-md transition-all group-hover:scale-125 active:scale-95 sm:h-8 sm:w-8 sm:text-xs ${badgeBg} ${
+                                    className={`flex h-7 w-7 transform items-center justify-center rounded-full border-2 ${allNotes ? "text-[8px] sm:text-[8px]" : "text-[10px] sm:text-xs"} shadow-md transition-all group-hover:scale-125 active:scale-95 sm:h-8 sm:w-8 ${badgeBg} ${
                                       isPlayed
                                         ? "scale-125 animate-pulse ring-4 ring-white"
                                         : ""
                                     } ${isSelected ? "scale-110 ring-2 ring-white" : ""}`}
                                   >
-                                    {placement.finger}
+                                    {allNotes
+                                      ? placement.pitch.toString()
+                                      : placement.finger}
                                   </div>
 
                                   {/* Visible note name pill for mobile legibility */}
-                                  <span className="py-0.2 mt-0.5 rounded border border-stone-700/60 bg-stone-950/85 px-1 font-mono text-[9px] leading-none font-semibold whitespace-nowrap text-slate-300 shadow-xs">
-                                    {placement.pitch.toString()}
-                                  </span>
+                                  {!allNotes && (
+                                    <span className="py-0.2 mt-0.5 rounded border border-stone-700/60 bg-stone-950/85 px-1 font-mono text-[9px] leading-none font-semibold whitespace-nowrap text-slate-300 shadow-xs">
+                                      {placement.pitch.toString()}
+                                    </span>
+                                  )}
 
                                   {/* Desktop hover tooltip */}
-                                  <div className="pointer-events-none absolute -top-8 z-30 hidden rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] whitespace-nowrap text-slate-100 opacity-0 shadow transition-opacity group-hover:opacity-100 sm:block">
-                                    {placement.pitch.toString()} •{" "}
-                                    {placement.noteAnnotation} (Finger{" "}
-                                    {placement.finger})
-                                  </div>
+                                  {!allNotes && (
+                                    <div className="pointer-events-none absolute -top-8 z-30 hidden rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] whitespace-nowrap text-slate-100 opacity-0 shadow transition-opacity group-hover:opacity-100 sm:block">
+                                      {placement.pitch.toString()} •{" "}
+                                      {placement.noteAnnotation} (Finger{" "}
+                                      {placement.finger})
+                                    </div>
+                                  )}
                                 </div>
                               )
                             })}
@@ -818,7 +885,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                   ))}
 
                   {displayedStrings.map((str) => {
-                    const stringPlacements = placements.filter(
+                    const stringPlacements = displayedPlacements.filter(
                       (p) => p.string === str.name
                     )
                     const thickness = getStringThickness(str.name)
@@ -854,6 +921,9 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                         {stringPlacements.map((placement, pIdx) => {
                           const isTonic = tonic.equals(placement.pitch)
                           const isGhammaz = ghammaz.equals(placement.pitch)
+                          const isMaqamPitch = scalePitches.some((pitch) =>
+                            pitch.equals(placement.pitch)
+                          )
                           const isPlayed =
                             activePlayedPitch === placement.pitch.toString()
                           const isSelected = selectedPlacement?.pitch.equals(
@@ -869,7 +939,10 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                             )
                           )
 
-                          let badgeBg = "bg-sky-600 border-sky-300 text-white"
+                          let badgeBg =
+                            allNotes && !isMaqamPitch
+                              ? "bg-stone-700 border-stone-500 text-stone-200"
+                              : "bg-sky-600 border-sky-300 text-white"
                           if (isTonic) {
                             badgeBg =
                               "bg-amber-500 border-amber-200 text-slate-950 font-black ring-2 ring-amber-400/50"
@@ -883,8 +956,16 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                               key={`${placement.string}-${placement.pitch.toString()}-${pIdx}`}
                               className="group absolute z-20 flex -translate-y-1/2 cursor-pointer flex-col items-center"
                               style={{ top: `${topPercent}%` }}
+                              title={
+                                allNotes
+                                  ? `${str.name} string: ${placement.pitch.toString()}`
+                                  : undefined
+                              }
                               onClick={() =>
-                                handlePlayPitch(placement.pitch, placement)
+                                handlePlayPitch(
+                                  placement.pitch,
+                                  allNotes ? undefined : placement
+                                )
                               }
                             >
                               {/* Invisible expanded touch hitbox */}
@@ -892,26 +973,32 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
 
                               {/* Finger placement bead */}
                               <div
-                                className={`flex h-7 w-7 transform items-center justify-center rounded-full border-2 text-[10px] shadow-md transition-all group-hover:scale-125 active:scale-95 sm:h-8 sm:w-8 sm:text-xs ${badgeBg} ${
+                                className={`flex h-7 w-7 transform items-center justify-center rounded-full border-2 ${allNotes ? "text-[8px] sm:text-[8px]" : "text-[10px] sm:text-xs"} shadow-md transition-all group-hover:scale-125 active:scale-95 sm:h-8 sm:w-8 ${badgeBg} ${
                                   isPlayed
                                     ? "scale-125 animate-pulse ring-4 ring-white"
                                     : ""
                                 } ${isSelected ? "scale-110 ring-2 ring-white" : ""}`}
                               >
-                                {placement.finger}
+                                {allNotes
+                                  ? placement.pitch.toString()
+                                  : placement.finger}
                               </div>
 
                               {/* Visible note name pill */}
-                              <span className="py-0.2 mt-0.5 rounded border border-stone-700/60 bg-stone-950/90 px-1 font-mono text-[9px] leading-none font-semibold whitespace-nowrap text-slate-300 shadow-xs">
-                                {placement.pitch.toString()}
-                              </span>
+                              {!allNotes && (
+                                <span className="py-0.2 mt-0.5 rounded border border-stone-700/60 bg-stone-950/90 px-1 font-mono text-[9px] leading-none font-semibold whitespace-nowrap text-slate-300 shadow-xs">
+                                  {placement.pitch.toString()}
+                                </span>
+                              )}
 
                               {/* Desktop hover tooltip */}
-                              <div className="pointer-events-none absolute -top-8 z-30 hidden rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] whitespace-nowrap text-slate-100 opacity-0 shadow transition-opacity group-hover:opacity-100 sm:block">
-                                {placement.pitch.toString()} •{" "}
-                                {placement.noteAnnotation} (Finger{" "}
-                                {placement.finger})
-                              </div>
+                              {!allNotes && (
+                                <div className="pointer-events-none absolute -top-8 z-30 hidden rounded border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] whitespace-nowrap text-slate-100 opacity-0 shadow transition-opacity group-hover:opacity-100 sm:block">
+                                  {placement.pitch.toString()} •{" "}
+                                  {placement.noteAnnotation} (Finger{" "}
+                                  {placement.finger})
+                                </div>
+                              )}
                             </div>
                           )
                         })}
