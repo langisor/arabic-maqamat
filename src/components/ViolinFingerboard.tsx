@@ -161,7 +161,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
     "horizontal" | "vertical"
   >(() => getWorkspaceState().drafts.violin.orientation)
   
-  // TODo: Implememnt display all pitches not just a scale/Maqam. It show all notes in fingerboard including quarters for free interactive playaround. if false (default), only current Maqam displayed.
+  // TODo: Implememnt display all pitches not just a scale/Maqam. It show all notes in fingerboard including quarters for free interactive playaround. if false (default), only current Maqam displayed. In both situations only the current Maqam will playedback when clicking Play Maqam button.
   const [allNotes,showAllNotes]=useState(false);
   const setOrientation = (nextOrientation: "horizontal" | "vertical") => {
     setOrientationState(nextOrientation)
