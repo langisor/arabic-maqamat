@@ -254,10 +254,6 @@ export class MetronomeAudioEngine {
     , () => Tone.context.state === 'running');
   }
 
-  private static requestAudioContext(): void {
-    void this.startAudioContext().catch(() => {});
-  }
-
   /**
    * Starts the metronome.
    */
@@ -453,7 +449,6 @@ export class MetronomeAudioEngine {
   }
 
   public static setVolume(vol: number): void {
-    this.requestAudioContext();
     const clamped = Math.max(0, Math.min(1, vol));
     this.volume = clamped;
     if (this.masterGain) {
