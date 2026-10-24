@@ -265,10 +265,10 @@ function StudioContent() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-950 font-sans text-slate-100 selection:bg-amber-500/30">
       {/* Top Main Navigation Bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/90 px-4 py-2.5 backdrop-blur-md sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/90 px-3 py-2 backdrop-blur-md sm:px-6 sm:py-2.5">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           {/* Brand & Menu */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <MainMenu
               activeLab={activeLab}
               onNavigateLab={setActiveLab}
@@ -307,7 +307,7 @@ function StudioContent() {
           </div>
 
           {/* Quick Controls & Tools - Responsive */}
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:flex-nowrap sm:gap-2">
             {/* Drone Toggle Button */}
             <Button
               variant={isDroneActive ? "default" : "outline"}
@@ -386,53 +386,54 @@ function StudioContent() {
       {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}
       <div className="relative border-b border-slate-800/80 bg-slate-900/60">
         {/* Subtle mobile edge fade indicators */}
-        <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-linear-to-r from-slate-950/80 to-transparent sm:hidden" />
-        <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-3 bg-linear-to-l from-slate-950/80 to-transparent sm:hidden" />
+        {isMobile && (
+          <>
+            <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-linear-to-r from-slate-950/80 to-transparent" />
+            <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-3 bg-linear-to-l from-slate-950/80 to-transparent" />
+          </>
+        )}
 
         <nav
           className="touch-pan-x scrollbar-none overflow-x-auto scroll-smooth px-2.5 sm:px-6"
           aria-label="Studio labs tabs"
         >
-          <div className="mx-auto flex max-w-7xl min-w-max items-center justify-start gap-1.5 py-2 sm:justify-center sm:gap-2 sm:py-2.5">
+          <div className="mx-auto flex max-w-7xl min-w-max items-center justify-start gap-1 py-2 sm:justify-center sm:gap-2 sm:py-2.5">
             {navTabs.map((tab) => {
               const Icon = tab.icon
               const isActive = activeLab === tab.id
               const primaryLabel = language === "ar" ? tab.arabic : tab.label
-           
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveLab(tab.id)}
-                    className={`flex min-h-9.5 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all select-none sm:gap-2 sm:px-3.5 sm:py-2 sm:text-xs ${
-                      isActive
-                        ? "bg-amber-500 font-bold text-slate-950 shadow-md shadow-amber-500/20"
-                        : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 active:scale-95"
-                    }`}
-                    title={primaryLabel}
-                    aria-label={primaryLabel}
-                  >
-                    <Icon
-                      className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`}
-                    />
-                    {!isMobile && (
-                      <span
-                        className={language === "ar" ? "font-arabic text-xs" : ""}
-                      >
-                        {primaryLabel}
-                      </span>
-                    )}
-                  </button>
-                )
-              }
-              
-      
-            )}
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveLab(tab.id)}
+                  className={`flex min-h-10 min-w-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] font-semibold transition-all select-none sm:min-w-0 sm:justify-start sm:px-3.5 sm:py-2 sm:text-xs ${
+                    isActive
+                      ? "bg-amber-500 font-bold text-slate-950 shadow-md shadow-amber-500/20"
+                      : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 active:scale-95"
+                  }`}
+                  title={primaryLabel}
+                  aria-label={primaryLabel}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <Icon
+                    className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`}
+                  />
+                  {!isMobile && (
+                    <span
+                      className={language === "ar" ? "font-arabic text-xs" : ""}
+                    >
+                      {primaryLabel}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </nav>
       </div>
 
       {/* Main Workspace Area */}
-      <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 p-3 sm:p-6 lg:p-8">
         {activeLab === "explorer" && (
           <MaqamExplorer
             currentMaqam={currentMaqam}
