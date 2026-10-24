@@ -160,7 +160,9 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const [orientation, setOrientationState] = useState<
     "horizontal" | "vertical"
   >(() => getWorkspaceState().drafts.violin.orientation)
-
+  
+  // TODo: Implememnt display all pitches not just a scale/Maqam. It show all notes in fingerboard including quarters for free interactive playaround. if false (default), only current Maqam displayed.
+  const [allNotes,showAllNotes]=useState(false);
   const setOrientation = (nextOrientation: "horizontal" | "vertical") => {
     setOrientationState(nextOrientation)
     updateWorkspaceDraft("violin", { orientation: nextOrientation })
