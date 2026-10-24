@@ -45,6 +45,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const [orientation, setOrientation] =
     useState<FingerboardOrientation>("horizontal")
   const [includeBassCourse, setIncludeBassCourse] = useState(false)
+  const [showAllPitches, setShowAllPitches] = useState(false)
   const [reverseCourses, setReverseCourses] = useState(false)
   const [activePitch, setActivePitch] = useState<string | number | null>(null)
   const [isPlayingScale, setIsPlayingScale] = useState(false)
@@ -84,7 +85,10 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
       const pitch = getOudPositionPitch(course.openPitch, position)
       const pitchClass = ((pitch.toQuarterToneIndex() % 24) + 24) % 24
       return { pitch, position, pitchClass }
-    }).filter(({ pitchClass }) => maqamPitchClasses.has(pitchClass))
+    }).filter(
+      ({ pitchClass }) =>
+        showAllPitches || maqamPitchClasses.has(pitchClass)
+    )
 
   useEffect(() => {
     // Track only this studio's sequence; clear its playback UI when the engine
@@ -201,6 +205,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     // and tonic highlighting, while retaining its full pitch for playback.
     const pitchClass = ((pitch.toQuarterToneIndex() % 24) + 24) % 24
     const isTonic = pitchClass === tonicPitchClass
+    const isMaqamPitch = maqamPitchClasses.has(pitchClass)
     const displayedPitch = getOudDisplayedPitch(pitch.transpose(24))
     const key = `${courseId}-${position}`
     const isActive =
@@ -222,7 +227,9 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             ? "scale-110 border-white bg-amber-300 text-slate-950 shadow-[0_0_14px_rgba(251,191,36,0.65)]"
             : isTonic
               ? "border-amber-200 bg-amber-500 text-slate-950 shadow-[0_0_10px_rgba(251,191,36,0.35)] hover:bg-amber-300"
-              : "border-sky-200/70 bg-sky-600 text-white hover:bg-sky-500"
+              : isMaqamPitch
+                ? "border-sky-200/70 bg-sky-600 text-white hover:bg-sky-500"
+                : "border-slate-500 bg-slate-700 text-slate-200 hover:bg-slate-600"
         } ${vertical ? "left-1/2" : "top-1/2"}`}
         style={
           vertical
@@ -337,6 +344,20 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                 </button>
               ))}
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-pressed={showAllPitches}
+              onClick={() => setShowAllPitches((show) => !show)}
+              className={`h-9 border-slate-700 bg-slate-950/70 text-xs text-slate-200 hover:bg-slate-800 hover:text-white ${
+                showAllPitches
+                  ? "border-amber-500/60 bg-amber-500/20 text-amber-200"
+                  : ""
+              }`}
+            >
+              {t("oudAllPitches")}
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -577,6 +598,12 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
               <span className="h-2.5 w-2.5 rounded-full bg-sky-600" />
               {t("oudMaqamNotes")}
             </span>
+            {showAllPitches && (
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-600" />
+                {t("oudOtherPitches")}
+              </span>
+            )}
             <span>{t("oudPositionUnit")}</span>
             <span>{t("oudTapNote")}</span>
           </div>
