@@ -263,9 +263,9 @@ function StudioContent() {
   ]
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 font-sans text-slate-100 selection:bg-amber-500/30">
+    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground selection:bg-amber-500/30">
       {/* Top Main Navigation Bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/90 px-3 py-2 backdrop-blur-md sm:px-6 sm:py-2.5">
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 px-3 py-2 backdrop-blur-md sm:px-6 sm:py-2.5">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           {/* Brand & Menu */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
@@ -293,7 +293,7 @@ function StudioContent() {
                 م
               </div>
               <div className="min-w-0">
-                <h1 className="flex items-center gap-1.5 truncate text-xs font-bold tracking-tight text-white sm:text-base">
+                <h1 className="flex items-center gap-1.5 truncate text-xs font-bold tracking-tight text-foreground sm:text-base">
                   <span>{t("brandName")}</span>
                   <span className="hidden text-xs font-normal text-amber-400/90 md:inline">
                     {t("brandTagline")}
@@ -384,12 +384,12 @@ function StudioContent() {
       />
 
       {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}
-      <div className="relative border-b border-slate-800/80 bg-slate-900/60">
+      <div className="relative border-b border-border/80 bg-muted/60">
         {/* Subtle mobile edge fade indicators */}
         {isMobile && (
           <>
-            <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-linear-to-r from-slate-950/80 to-transparent" />
-            <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-3 bg-linear-to-l from-slate-950/80 to-transparent" />
+            <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-linear-to-r from-background/80 to-transparent" />
+            <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-3 bg-linear-to-l from-background/80 to-transparent" />
           </>
         )}
 
@@ -599,7 +599,7 @@ function StudioContent() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 px-6 py-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-border/80 bg-background px-6 py-4 text-center text-xs text-muted-foreground">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 sm:flex-row">
           <span>
             {t("instrumentStudioFooter")} -{" "}

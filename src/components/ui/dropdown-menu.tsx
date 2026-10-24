@@ -38,7 +38,7 @@ function DropdownMenuContent({
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn(
-            "z-50 max-h-(--available-height) w-(--anchor-width) min-w-40 overflow-x-hidden overflow-y-auto rounded-xl p-1.5 bg-slate-900 border border-slate-700 text-slate-100 shadow-xl",
+            "z-50 max-h-(--available-height) w-(--anchor-width) min-w-40 overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-xl dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100",
             className
           )}
           {...props}
@@ -63,10 +63,7 @@ function DropdownMenuLabel({
     <div
       data-slot="dropdown-menu-label"
       data-inset={inset}
-      className={cn(
-        "px-2 py-1 text-xs text-muted-foreground",
-        className
-      )}
+      className={cn("px-2 py-1 text-xs text-muted-foreground", className)}
       {...props}
     />
   )
@@ -87,7 +84,7 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "group/dropdown-menu-item relative flex min-h-7 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs outline-hidden select-none hover:bg-slate-800 hover:text-white transition",
+        "group/dropdown-menu-item relative flex min-h-7 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs outline-hidden transition select-none hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white",
         className
       )}
       {...props}

@@ -14,15 +14,25 @@ interface ThemeToggleProps {
 }
 
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = "" }) => {
-  const { theme, setTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
   const { t } = useLanguage()
 
   return (
     <div className={`flex items-center ${className}`}>
       <DropdownMenu>
-        <DropdownMenuTrigger className="relative flex cursor-pointer items-center justify-center rounded-lg p-2 text-slate-100 transition hover:bg-slate-800 focus:outline-none">
-          <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-          <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+        <DropdownMenuTrigger
+          aria-label={t("toggleTheme")}
+          title={t("toggleTheme")}
+          className="relative flex cursor-pointer items-center justify-center rounded-lg p-2 text-foreground transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          <Sun
+            aria-hidden="true"
+            className={`h-4 w-4 transition-all ${resolvedTheme === "light" ? "scale-100 rotate-0" : "scale-0 -rotate-90"}`}
+          />
+          <Moon
+            aria-hidden="true"
+            className={`absolute h-4 w-4 transition-all ${resolvedTheme === "dark" ? "scale-100 rotate-0" : "scale-0 rotate-90"}`}
+          />
           <span className="sr-only">{t("toggleTheme")}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
