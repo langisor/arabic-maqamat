@@ -155,6 +155,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   const [selectedPlacement, setSelectedPlacement] =
     useState<ViolinFingerPlacement | null>(null)
   const [showPedagogicalTips, setShowPedagogicalTips] = useState(false)
+  const [countdown, setCountdown] = useState<number | null>(null)
   const [isReversedStrings, setIsReversedStrings] = useState<boolean>(true)
   const [orientation, setOrientationState] = useState<
     "horizontal" | "vertical"
@@ -263,7 +264,19 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   }, [scalePitches, selectedPosition, stringBasePitches])
 
   const playScale = async () => {
-    // hang/wait with feedback for 3 seconds with in screen counter
+    // 3-second countdown with on-screen counter
+    setCountdown(3)
+    await new Promise((resolve) => {
+      let count = 3
+      const interval = setInterval(() => {
+        count -= 1
+        setCountdown(count > 0 ? count : null)
+        if (count === 0) {
+          clearInterval(interval)
+          resolve(null)
+        }
+      }, 1000)
+    })
     try {
       await MicrotonalAudioEngine.startAudioContext()
       MicrotonalAudioEngine.playSequence(
@@ -467,7 +480,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 </span>
                 <Badge
                   variant="secondary"
-                  className="font-mono text-[12px]  border-amber-300 capitalize"
+                  className="border-amber-300 font-mono text-[12px] capitalize"
                 >
                   {ui.mode}:{" "}
                   {orientation === "horizontal" ? ui.horizontal : ui.vertical} ·{" "}
@@ -477,7 +490,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               <CardDescription className="mt-0.5 text-[11px] text-slate-400 sm:text-xs">
                 {ui.tonic}:{" "}
                 <span className="font-semibold text-amber-300">
-                {tonic.toString()}
+                  {tonic.toString()}
                 </span>{" "}
                 • {ui.ghammaz}:{" "}
                 <span className="font-semibold text-emerald-300">
@@ -510,7 +523,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             aria-label={`${currentMaqam.name} ${ui.scale}`}
           >
             <span>
-              {currentMaqam.verified===true ? (
+              {currentMaqam.verified === true ? (
                 <BadgeCheck className="text-green-500" />
               ) : (
                 <CircleOff className="text-red-500" />
@@ -529,12 +542,10 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               >
                 {pitch.toString()}
               </span>
-
             ))}
             {isPlayingScale ? (
               <Button
                 type="button"
-               
                 size="sm"
                 className={"bg-red-600"}
                 onClick={stopScale}
@@ -542,6 +553,13 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                 <Square className="h-3.5 w-3.5" />
                 {t("stopMaqam")}
               </Button>
+            ) : countdown !== null ? (
+              <div className="flex items-center gap-2 rounded-lg bg-amber-500/20 px-3 py-1.5">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+                <span className="font-mono text-sm font-bold text-amber-300">
+                  {countdown}
+                </span>
+              </div>
             ) : (
               <Button
                 type="button"
@@ -556,12 +574,15 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
           </div>
 
           {/* Maqam Intervals */}
-          <div className="w-full text-center my-2">
+          <div className="my-2 w-full text-center">
             <p>
-            {currentMaqam.getTonic().toString()} - 
-            {currentMaqam.getIntervals().join(" - ")}
+              {currentMaqam.getTonic().toString()} -
+              {currentMaqam.getIntervals().join(" - ")}
             </p>
-            <p className="flex justify-between flex-wrap ml-5 border p-2   rounded-2xl"><span>Maqam: {currentMaqam.name}</span> <span>Family: {currentMaqam.family}</span> </p>
+            <p className="ml-5 flex flex-wrap justify-between rounded-2xl border p-2">
+              <span>Maqam: {currentMaqam.name}</span>{" "}
+              <span>Family: {currentMaqam.family}</span>{" "}
+            </p>
           </div>
           {/* HORIZONTAL ORIENTATION VIEW */}
           {orientation === "horizontal" && (
@@ -737,7 +758,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
           {orientation === "vertical" && (
             <div className="relative mx-auto w-full max-w-xl rounded-2xl border-2 border-stone-800 bg-stone-900/90 p-4 shadow-inner select-none sm:p-6">
               {/* Wooden fingerboard texture simulation */}
-              <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 opacity-80" />
+              <div className="pointer-events-none absolute inset-0 rounded-2xl bg-linear-to-b from-stone-950 via-stone-900 to-stone-950 opacity-80" />
 
               {/* String Headers row above the Nut */}
               <div className="relative z-20 mb-2.5 grid grid-cols-4 gap-2 pr-12 text-center sm:gap-4 sm:pr-14">
@@ -760,10 +781,10 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               </div>
 
               {/* Main Vertical Fingerboard Playing Board with Fret Grid */}
-              <div className="relative flex h-[560px] w-full sm:h-[620px]">
+              <div className="relative flex h-140 w-full sm:h-155">
                 {/* 4 Strings Area */}
                 <div className="relative grid h-full flex-1 grid-cols-4 gap-2 sm:gap-4">
-                  <div className="pointer-events-none absolute inset-0 z-[5]">
+                  <div className="pointer-events-none absolute inset-0 z-5">
                     {positionTapes.map((tape) => (
                       <div
                         key={tape.label}
@@ -807,7 +828,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
                       >
                         {/* Vertical String line */}
                         <div
-                          className="h-full rounded-full bg-gradient-to-b from-amber-200 via-stone-300 to-amber-100 shadow-sm"
+                          className="h-full rounded-full bg-linear-to-b from-amber-200 via-stone-300 to-amber-100 shadow-sm"
                           style={{
                             width: `${thickness}px`,
                             opacity: 0.85,

@@ -802,7 +802,7 @@ export class Maqam {
       .slice(1)
       .map((pitch, index) => scale[index].diffQuarterTones(pitch))
 
-    console.log("NormalizedScale: ", normalizedScale)
+    // console.log("NormalizedScale: ", normalizedScale)
     return normalizedScale
   }
 
