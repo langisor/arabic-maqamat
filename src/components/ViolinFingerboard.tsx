@@ -579,7 +579,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
               {currentMaqam.getTonic().toString()} -
               {currentMaqam.getIntervals().join(" - ")}
             </p>
-            <p className="ml-5 flex flex-wrap justify-between rounded-2xl border p-2">
+            <p className="ml-5 flex flex-wrap justify-between rounded-2xl border p-2 text-white">
               <span>Maqam: {currentMaqam.name}</span>{" "}
               <span>Family: {currentMaqam.family}</span>{" "}
             </p>

@@ -435,6 +435,17 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
               </Button>
             )}
           </div>
+            {/* Maqam Intervals */}
+          <div className="my-2 w-full text-center">
+            <p>
+              {currentMaqam.getTonic().toString()} -
+              {currentMaqam.getIntervals().join(" - ")}
+            </p>
+            <p className="ml-5 flex flex-wrap justify-between rounded-2xl border p-2 text-white">
+              <span>Maqam: {currentMaqam.name}</span>{" "}
+              <span>Family: {currentMaqam.family}</span>{" "}
+            </p>
+          </div>
           {/* Both views share the same course and note data. The orientation
               changes only which axis represents ascending fret position. */}
           {orientation === "horizontal" ? (
