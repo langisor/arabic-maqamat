@@ -263,6 +263,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
   }, [scalePitches, selectedPosition, stringBasePitches])
 
   const playScale = async () => {
+    // hang/wait with feedback for 3 seconds with in screen counter
     try {
       await MicrotonalAudioEngine.startAudioContext()
       MicrotonalAudioEngine.playSequence(
@@ -533,8 +534,9 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             {isPlayingScale ? (
               <Button
                 type="button"
-                variant="amberOutline"
+               
                 size="sm"
+                className={"bg-red-600"}
                 onClick={stopScale}
               >
                 <Square className="h-3.5 w-3.5" />
@@ -543,7 +545,7 @@ export const ViolinFingerboard: React.FC<ViolinFingerboardProps> = ({
             ) : (
               <Button
                 type="button"
-                variant="amber"
+                variant="outline"
                 size="sm"
                 onClick={() => void playScale()}
               >
