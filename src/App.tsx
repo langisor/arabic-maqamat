@@ -100,7 +100,6 @@ function StudioContent() {
   const [isModulationOpen, setIsModulationOpen] = useState(false)
   const [isJinsAnalysisDrawerOpen, setIsJinsAnalysisDrawerOpen] =
     useState(false)
-  // TODO: apply isMobile if less than breakpoint (768) show only Icons in tabs nav without text labels
   const isMobile = useIsMobile()
   // Audio Transport state
   const [transportStatus, setTransportStatus] = useState(() =>
@@ -385,7 +384,6 @@ function StudioContent() {
       />
 
       {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}
-      {/* TODO: consume useIsMobile hook here */}
       <div className="relative border-b border-slate-800/80 bg-slate-900/60">
         {/* Subtle mobile edge fade indicators */}
         <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-linear-to-r from-slate-950/80 to-transparent sm:hidden" />
@@ -411,15 +409,18 @@ function StudioContent() {
                         : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 active:scale-95"
                     }`}
                     title={primaryLabel}
+                    aria-label={primaryLabel}
                   >
                     <Icon
                       className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`}
                     />
-                    <span
-                      className={language === "ar" ? "font-arabic text-xs" : ""}
-                    >
-                      {primaryLabel}
-                    </span>
+                    {!isMobile && (
+                      <span
+                        className={language === "ar" ? "font-arabic text-xs" : ""}
+                      >
+                        {primaryLabel}
+                      </span>
+                    )}
                   </button>
                 )
               }
