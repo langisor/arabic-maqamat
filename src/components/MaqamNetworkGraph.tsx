@@ -79,9 +79,10 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
   }, [activeNode])
 
   const activeJins = useMemo(
-    () => activeNode && activeJinsDef
-      ? new Jins(activeJinsDef, activeNode.root)
-      : null,
+    () =>
+      activeNode && activeJinsDef
+        ? new Jins(activeJinsDef, activeNode.root)
+        : null,
     [activeNode, activeJinsDef]
   )
 
@@ -529,7 +530,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                 </Button>
                 {baggageNotes.length > 0 && (
                   <Button
-                    variant="amber"
+                    variant="destructive"
                     size="sm"
                     onClick={() => handlePlayNodeJins(activeNode, true)}
                     className="flex-1 cursor-pointer gap-1.5 text-xs font-bold"
@@ -584,7 +585,8 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                           <span className="text-[10px] text-purple-400 opacity-75">
                             {activeNode &&
                             activeJins &&
-                            bp.toQuarterToneIndex() > activeJins.getTopPitch().toQuarterToneIndex()
+                            bp.toQuarterToneIndex() >
+                              activeJins.getTopPitch().toQuarterToneIndex()
                               ? "↑"
                               : "↓"}
                           </span>
