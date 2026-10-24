@@ -542,13 +542,13 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
               </div>
             </div>
 
-            {/* 2. Jins Baggage Notes (أمتعة الجنس) */}
+            {/* 2. Jins Baggage Notes (زخرفة الجنس) */}
             <div className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-purple-400 uppercase">
                     <Package className="h-3.5 w-3.5 text-purple-400" />
-                    <span>Jins Baggage (أمتعة الجنس)</span>
+                    <span>Jins Baggage (زخرفة الجنس)</span>
                   </span>
                   <Badge
                     variant="outline"

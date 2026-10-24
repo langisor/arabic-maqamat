@@ -62,8 +62,8 @@ const MAQAM_FACTS_DATA: FactSection[] = [
   },
   {
     id: "jins-baggage",
-    title: "Jins Baggage Concept (أمتعة الجنس - أبو شميس)",
-    arabicTitle: "أمتعة الجنس النغمية",
+    title: "Jins Baggage Concept (زخرفة الجنس - أبو شميس)",
+    arabicTitle: "زخرفة الجنس النغمية",
     icon: Package,
     highlighted: true,
     sampleMaqamId: "bayati",

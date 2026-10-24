@@ -40,7 +40,7 @@ const maqamFacts: FactSection[] = [
   },
   {
     id: "jins-baggage",
-    title: "Jins Baggage (أمتعة الجنس)",
+    title: "Jins Baggage (زخرفة الجنس)",
     icon: Package,
     highlighted: true,
     content: [

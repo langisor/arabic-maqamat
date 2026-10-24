@@ -631,7 +631,7 @@ function SayrDiagram({
             <Package className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
             <div className="space-y-1 text-xs">
               <span className="font-semibold text-purple-200">
-                Jins Baggage Notes (أمتعة الجنس):
+                Jins Baggage Notes (زخرفة الجنس):
               </span>
               <p className="text-slate-300 leading-relaxed">
                 Baggage notes outside the lower jins core (below its root or above its top pitch):{" "}

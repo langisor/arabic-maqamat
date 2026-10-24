@@ -44,7 +44,7 @@ export const JinsAnalysisDrawer: React.FC<JinsAnalysisDrawerProps> = ({
               <SheetTitle className="flex items-center gap-2 text-sm font-bold text-white sm:text-base">
                 <span>Jins Analysis Sidebar</span>
                 <span className="font-arabic text-xs text-purple-400">
-                  أمتعة الأجناس الموسيقية
+                  زخرفة الأجناس الموسيقية
                 </span>
               </SheetTitle>
               <SheetDescription className="text-[11px] text-slate-400">

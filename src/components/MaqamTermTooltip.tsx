@@ -50,9 +50,9 @@ const maqamTerms: Record<string, MaqamTerm> = {
     arabic: "الجنس"
   },
   "baggage": {
-    term: "Jins Baggage (أمتعة الجنس)",
+    term: "Jins Baggage (زخرفة الجنس)",
     definition: "Notes outside the core jins, represented as signed offsets below the root or above the top pitch.",
-    arabic: "أمتعة الجنس"
+    arabic: "زخرفة الجنس"
   },
   "network": {
     term: "Maqam Network (شبكة المقام)",

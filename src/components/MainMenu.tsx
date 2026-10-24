@@ -115,7 +115,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     {
       id: "jins-analysis",
       title: "Jins Analysis Tool (Baggage)",
-      arabic: "تحليل الأجناس وأمتعة النغم",
+      arabic: "تحليل الأجناس وزخرفة النغم",
       icon: Package,
     },
     {
@@ -294,7 +294,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-white group-hover:text-purple-200">
-                        {language === "ar" ? "أمتعة الأجناس" : "Jins Baggage Sidebar"}
+                        {language === "ar" ? "زخرفة الأجناس" : "Jins Baggage Sidebar"}
                       </div>
                     </div>
                   </button>

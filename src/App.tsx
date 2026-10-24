@@ -221,7 +221,7 @@ function StudioContent() {
     {
       id: "jins-analysis",
       label: "Jins Analysis",
-      arabic: "أمتعة الأجناس",
+      arabic: "زخرفة الأجناس",
       icon: Package,
     },
     {
@@ -251,7 +251,7 @@ function StudioContent() {
     {
       id: "training",
       label: "Theory & Baggage",
-      arabic: "النظرية وأمتعة الأجناس",
+      arabic: "النظرية وزخرفة الأجناس",
       icon: BookOpen,
     },
     {

@@ -464,7 +464,7 @@ export function JinsAnalysisTool({
                   <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-white sm:text-2xl">
                     <span>Jins Analysis Tool</span>
                     <span className="font-arabic text-sm font-normal text-purple-400">
-                      أمتعة الأجناس الموسيقية
+                      زخرفة الأجناس الموسيقية
                     </span>
                   </h2>
                   <Badge
@@ -475,7 +475,7 @@ export function JinsAnalysisTool({
                   </Badge>
                 </div>
                 <p className="max-w-2xl text-sm leading-relaxed text-slate-300">
-                  Explore ajnas by size alongside baggage notes (أمتعة الجنس):
+                  Explore ajnas by size alongside baggage notes (زخرفة الجنس):
                   negative offsets fall below the tonic, while positive offsets
                   extend above the jins top pitch. Note if the data with red
                   circle off icon{" "}
@@ -1484,7 +1484,7 @@ export function JinsAnalysisTool({
             <CardTitle className="flex items-center gap-2 text-base font-bold text-white">
               <BookOpen className="h-5 w-5 text-amber-400" />
               <span>
-                Sami Abu Shumays&apos; Theory of Jins Baggage (أمتعة الجنس)
+                Sami Abu Shumays&apos; Theory of Jins Baggage (زخرفة الجنس)
               </span>
             </CardTitle>
             <CardDescription className="text-xs text-slate-400">
