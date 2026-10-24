@@ -214,7 +214,6 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = "violin",
     velocity: number = 0.7
   ): void {
-    AudioTransport.stopAll()
     this.requestAudioContext()
     const octaveAdjustedPitch = timbre === "oud" ? pitch.transpose(-24) : pitch
     const freq = octaveAdjustedPitch.toFrequency(this.referenceA4)
@@ -242,7 +241,6 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = "violin",
     velocity: number = 0.7
   ): void {
-    AudioTransport.stopAll()
     this.requestAudioContext()
     const now = Tone.now()
     try {

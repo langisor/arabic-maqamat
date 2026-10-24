@@ -101,7 +101,9 @@ export class AudioTransport {
   }
 
   public static startSession(scope: string, activity: string): TransportSession {
-    this.stopAll();
+    // Sessions are independent audio activities. Starting a new activity only
+    // replaces the previous session that owns the same scope.
+    this.stopScope(scope);
     const record: SessionRecord = {
       id: this.nextSessionId++,
       scope,
