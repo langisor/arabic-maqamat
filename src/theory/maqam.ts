@@ -2733,7 +2733,7 @@ export class MaqamatCatalogue {
           root: new ArabicPitch("B", "♭", 4),
           connections: [1, 3],
           frequency: "common",
-          roleDescription: "Upper Ajam on B♭4",
+          roleDescription: "‘Ajam branch on B♭4, ascending through D♭5 to F5",
         },
         {
           jinsId: "nikriz",
@@ -2743,7 +2743,7 @@ export class MaqamatCatalogue {
           root: new ArabicPitch("B", "♭", 4),
           connections: [1, 3],
           frequency: "uncommon",
-          roleDescription: "Alternative upper Nikriz on the sixth degree B♭4",
+          roleDescription: "Alternative Nikriz branch on B♭4, ascending through D5 to F5",
         },
       ],
       pathways: [
@@ -2799,7 +2799,7 @@ export class MaqamatCatalogue {
           jins: new Jins(AjnasLibrary.AJAM, new ArabicPitch("B", "♭", 4)),
           role: "upper_secondary",
           description:
-            "Upper Jins ‘Ajam on B♭4 (frequent melodic destination in Saba sayr)",
+            "‘Ajam branch on B♭4: B♭4, C5, D♭5, E5, F5",
         },
         {
           jins: new Jins(
@@ -2808,18 +2808,19 @@ export class MaqamatCatalogue {
           ),
           role: "upper_secondary",
           description:
-            "Upper Jins Nikriz on B♭4, beginning on the sixth degree",
+            "Nikriz branch on B♭4: B♭4, C5, D5, E5, F5",
         },
       ],
       sayrDirection: "ascending",
       extraPitches: [
-        new ArabicPitch("B", "♭", 4),
         new ArabicPitch("C", "♮", 5),
-        new ArabicPitch("D", "♭", 5), // Characteristic flat octave
+        new ArabicPitch("D", "♭", 5),
+        new ArabicPitch("E", "♮", 5),
+        new ArabicPitch("F", "♮", 5),
       ],
       network: sabaNetwork,
       description:
-        "A very popular and common maqam in the Arabic repertory. It begins with Jins Saba on the tonic, overlaps with Jins Hijaz on the third degree, and continues with either Jins ‘Ajam or Jins Nikriz on the sixth degree.",
+        "A very popular and common maqam in the Arabic repertory. It begins with Jins Saba on D4, overlaps with Jins Hijaz on F4, and continues from B♭4 through C5, D♭5, E5, and F5 in the ‘Ajam branch. The Nikriz branch uses D5 in place of D♭5.",
     })
   }
 
