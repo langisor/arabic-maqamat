@@ -439,18 +439,18 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
               changes only which axis represents ascending fret position. */}
           {orientation === "horizontal" ? (
             <div
-              className="overflow-x-auto rounded-2xl border border-amber-100/15 bg-gradient-to-r from-[#332319] via-[#211810] to-[#332319] p-4 shadow-inner"
+              className="overflow-x-auto rounded-2xl border border-amber-100/15 bg-linear-to-r from-[#332319] via-[#211810] to-[#332319] p-4 shadow-inner"
               dir="ltr"
             >
               <div
-                className="relative min-w-[740px] space-y-3"
+                className="relative min-w-185 space-y-3"
                 style={{
                   width: `${Math.max(740, positionRange * 42 + 160)}px`,
                 }}
               >
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-y-0 right-0 left-[4.75rem] z-0"
+                  className="pointer-events-none absolute inset-y-0 right-0 left-19 z-0"
                 >
                   {/* Fret markers appear every two positions (one semitone in
                       24-EDO); note buttons are layered above these guides. */}
@@ -487,7 +487,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                     <div className="relative h-10 flex-1">
                       <span
                         aria-hidden="true"
-                        className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-amber-100/80 via-amber-700 to-amber-100/70 shadow-[0_0_8px_rgba(251,191,36,0.18)]"
+                        className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-linear-to-r from-amber-100/80 via-amber-700 to-amber-100/70 shadow-[0_0_8px_rgba(251,191,36,0.18)]"
                         style={{ height: course.thickness }}
                       />
                       {getCourseNotes(course).map(({ pitch, position }) =>
@@ -500,11 +500,11 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
             </div>
           ) : (
             <div
-              className="max-h-[70vh] overflow-auto rounded-2xl border border-amber-100/15 bg-gradient-to-b from-[#332319] via-[#211810] to-[#332319] p-4 shadow-inner"
+              className="max-h-[70vh] overflow-auto rounded-2xl border border-amber-100/15 bg-linear-to-b from-[#332319] via-[#211810] to-[#332319] p-4 shadow-inner"
               dir="ltr"
             >
               <div
-                className="relative flex min-h-[700px] min-w-max justify-around gap-3"
+                className="relative flex min-h-175 min-w-max justify-around gap-3"
                 style={{
                   height: `${Math.max(700, positionRange * 32 + 100)}px`,
                 }}
@@ -544,7 +544,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
                     <div className="relative mt-2 w-full flex-1">
                       <span
                         aria-hidden="true"
-                        className="absolute inset-y-0 left-1/2 w-1 -translate-x-1/2 rounded-full bg-gradient-to-b from-amber-100/80 via-amber-700 to-amber-100/70 shadow-[0_0_8px_rgba(251,191,36,0.18)]"
+                        className="absolute inset-y-0 left-1/2 w-1 -translate-x-1/2 rounded-full bg-linear-to-b from-amber-100/80 via-amber-700 to-amber-100/70 shadow-[0_0_8px_rgba(251,191,36,0.18)]"
                         style={{ width: course.thickness }}
                       />
                       {getCourseNotes(course).map(({ pitch, position }) =>
