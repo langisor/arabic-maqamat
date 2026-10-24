@@ -46,7 +46,6 @@ export function InstrumentStudio({
             {t("instrumentStudio")}
           </h2>
           <p className="mt-1 text-sm text-amber-200/80">{instrumentName}</p>
-         
         </div>
         <div
           className="flex w-fit items-center gap-1 rounded-xl border border-amber-100/10 bg-black/20 p-1"
@@ -59,10 +58,10 @@ export function InstrumentStudio({
               <Button
                 key={choice}
                 type="button"
-                variant={selected ? "amber" : "ghost"}
+
                 aria-pressed={selected}
                 onClick={() => onInstrumentChange(choice)}
-                className="h-9 px-4"
+                className={`h-9 px-4 ${selected ? "bg-amber-400" : ""}`}
               >
                 {choice === "violin"
                   ? t("instrumentViolin")

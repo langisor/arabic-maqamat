@@ -50,6 +50,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const [isPlayingScale, setIsPlayingScale] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
+  const [countdown, setCountdown] = useState<number | null>(null)
   const activePitchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Build the selected tuning from the shared course definitions. The high
@@ -138,6 +139,19 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     setIsStarting(true)
     setAudioError(null)
     // const lowerOctavePitches = maqamScale.map((x) => getOudDisplayedPitch(x))
+    // 3-second countdown with on-screen counter
+    setCountdown(3)
+    await new Promise((resolve) => {
+      let count = 3
+      const interval = setInterval(() => {
+        count -= 1
+        setCountdown(count > 0 ? count : null)
+        if (count === 0) {
+          clearInterval(interval)
+          resolve(null)
+        }
+      }, 1000)
+    })
     try {
       await MicrotonalAudioEngine.startAudioContext()
       if (activePitchTimeout.current !== null) {
@@ -173,6 +187,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     // state synchronized if the sequence is ended from elsewhere.
     MicrotonalAudioEngine.stopSequence(OUD_SEQUENCE_SCOPE)
     setIsPlayingScale(false)
+    setCountdown(null)
     setActivePitch(null)
   }
 
@@ -226,7 +241,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
       aria-labelledby="oud-studio-title"
       dir={language === "ar" ? "rtl" : "ltr"}
     >
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-amber-900/50 bg-gradient-to-br from-amber-950/50 via-slate-900 to-slate-950 p-4 sm:flex-row sm:items-center sm:p-5">
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-amber-900/50 bg-linear-to-br from-amber-950/50 via-slate-900 to-slate-950 p-4 sm:flex-row sm:items-center sm:p-5">
         <div>
           <h2
             id="oud-studio-title"
@@ -392,16 +407,28 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
               </span>
             ))}
             {isPlayingScale ? (
-              <Button variant="amberOutline" size="sm" onClick={stopScale}>
+              <Button
+                type="button"
+                size="sm"
+                className={"bg-red-600"}
+                onClick={stopScale}
+              >
                 <Square className="h-3.5 w-3.5" />
                 {t("stopMaqam")}
               </Button>
+            ) : countdown !== null ? (
+              <div className="flex items-center gap-2 rounded-lg bg-amber-500/20 px-3 py-1.5">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+                <span className="font-mono text-sm font-bold text-amber-300">
+                  {countdown}
+                </span>
+              </div>
             ) : (
               <Button
-                variant="amber"
+                type="button"
+                variant="outline"
                 size="sm"
                 onClick={() => void playScale()}
-                disabled={isStarting}
               >
                 <Play className="h-3.5 w-3.5" />
                 {t("playMaqam")}
