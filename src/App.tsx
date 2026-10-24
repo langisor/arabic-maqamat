@@ -8,6 +8,7 @@ import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import { MicrotonalAudioEngine, TimbreType } from "./audio/microtonal-audio"
 import { AudioTransport } from "./audio/audio-transport"
+import { useIsMobile } from "./hooks/use-mobile"
 import {
   ValidLab,
   deserializePitch,
@@ -99,7 +100,8 @@ function StudioContent() {
   const [isModulationOpen, setIsModulationOpen] = useState(false)
   const [isJinsAnalysisDrawerOpen, setIsJinsAnalysisDrawerOpen] =
     useState(false)
-
+  // TODO: apply isMobile if less than breakpoint (768) show only Icons in tabs nav without text labels
+  const isMobile = useIsMobile()
   // Audio Transport state
   const [transportStatus, setTransportStatus] = useState(() =>
     AudioTransport.getStatus()
@@ -383,6 +385,7 @@ function StudioContent() {
       />
 
       {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}
+      {/* TODO: consume useIsMobile hook here */}
       <div className="relative border-b border-slate-800/80 bg-slate-900/60">
         {/* Subtle mobile edge fade indicators */}
         <div className="pointer-events-none absolute top-0 bottom-0 left-0 z-10 w-3 bg-linear-to-r from-slate-950/80 to-transparent sm:hidden" />
@@ -397,28 +400,32 @@ function StudioContent() {
               const Icon = tab.icon
               const isActive = activeLab === tab.id
               const primaryLabel = language === "ar" ? tab.arabic : tab.label
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveLab(tab.id)}
-                  className={`flex min-h-9.5 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all select-none sm:gap-2 sm:px-3.5 sm:py-2 sm:text-xs ${
-                    isActive
-                      ? "bg-amber-500 font-bold text-slate-950 shadow-md shadow-amber-500/20"
-                      : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 active:scale-95"
-                  }`}
-                  title={primaryLabel}
-                >
-                  <Icon
-                    className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`}
-                  />
-                  <span
-                    className={language === "ar" ? "font-arabic text-xs" : ""}
+           
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveLab(tab.id)}
+                    className={`flex min-h-9.5 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold transition-all select-none sm:gap-2 sm:px-3.5 sm:py-2 sm:text-xs ${
+                      isActive
+                        ? "bg-amber-500 font-bold text-slate-950 shadow-md shadow-amber-500/20"
+                        : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 active:scale-95"
+                    }`}
+                    title={primaryLabel}
                   >
-                    {primaryLabel}
-                  </span>
-                </button>
-              )
-            })}
+                    <Icon
+                      className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-400"}`}
+                    />
+                    <span
+                      className={language === "ar" ? "font-arabic text-xs" : ""}
+                    >
+                      {primaryLabel}
+                    </span>
+                  </button>
+                )
+              }
+              
+      
+            )}
           </div>
         </nav>
       </div>
