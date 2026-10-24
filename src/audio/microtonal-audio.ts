@@ -322,7 +322,7 @@ export class MicrotonalAudioEngine {
         const octaveAdjustedPitch =
           timbre === "oud" ? pitch.transpose(24) : pitch
 
-        console.log("transform pitch to ", pitch.toString())
+        // console.log("transform pitch to ", pitch.toString())
         const frequency = octaveAdjustedPitch.toFrequency(this.referenceA4)
         voices.frequencies.push(frequency)
         this.triggerFrequency(

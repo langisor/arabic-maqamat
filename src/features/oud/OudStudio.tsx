@@ -69,7 +69,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
     ? [...visibleCourses].reverse()
     : visibleCourses
   const maqamScale = currentMaqam.getScale().map((x) => getOudDisplayedPitch(x))
-  console.log("Maqam Scale: ", maqamScale)
+  // console.log("Maqam Scale: ", maqamScale)
 
   // Compare pitch classes rather than octaves so every position matching a
   // maqam degree is shown throughout the selected fingerboard range.
@@ -115,7 +115,7 @@ export function OudStudio({ currentMaqam }: OudStudioProps) {
   const playPitch = async (pitch: ArabicPitch, key: string) => {
     setIsStarting(true)
     setAudioError(null)
-    console.log("Playing pitch: ", pitch.toString())
+    // console.log("Playing pitch: ", pitch.toString())
     try {
       // Audio contexts require a user gesture in many browsers, so initialize
       // before triggering the individual note.
