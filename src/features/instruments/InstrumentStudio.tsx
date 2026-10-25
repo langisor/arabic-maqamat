@@ -61,7 +61,7 @@ export function InstrumentStudio({
 
                 aria-pressed={selected}
                 onClick={() => onInstrumentChange(choice)}
-                className={`h-9 px-4 ${selected ? "bg-amber-400" : ""}`}
+                className={`h-9 px-4 ${selected ? "bg-primary" : "bg-slate-400/40"}`}
               >
                 {choice === "violin"
                   ? t("instrumentViolin")
