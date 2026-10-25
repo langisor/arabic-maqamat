@@ -487,7 +487,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                   ) : currentDetection.status === 'sharp' ? (
                     <>
                       <AlertCircle className="w-4 h-4 text-amber-400" />
-                      <span className="font-bold text-sm">عالي (Sharp) — انزل بالإصبع قليلاً (+{currentDetection.centsDeviation}¢)</span>
+                      <span className="font-bold text-sm">عالي (Sharp) — خفض بالإصبع قليلاً (+{currentDetection.centsDeviation}¢)</span>
                     </>
                   ) : (
                     <>
