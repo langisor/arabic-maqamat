@@ -109,7 +109,9 @@ function StudioContent() {
   const [transportStatus, setTransportStatus] = useState(() =>
     AudioTransport.getStatus()
   )
-  const [masterVolume, setMasterVolume] = useState(() => AudioOutput.getVolume())
+  const [masterVolume, setMasterVolume] = useState(() =>
+    AudioOutput.getVolume()
+  )
   const scoreMusicXml = useMemo(
     () =>
       MusicXMLExporter.generateScaleMusicXML(currentMaqam, {
@@ -311,16 +313,17 @@ function StudioContent() {
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-tr from-amber-600 to-amber-400 text-xs font-black text-slate-950 shadow-md shadow-amber-500/20 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">
                 م
               </div>
-              <div className="min-w-0">
+
+              <div className="min-w-0 md:hidden">
                 <h1 className="flex items-center gap-1.5 truncate text-xs font-bold tracking-tight text-foreground sm:text-base">
                   <span>{t("brandName")}</span>
-                  <span className="hidden text-xs font-normal text-amber-400/90 md:inline">
+                  {/* <span className="hidden text-xs font-normal text-amber-400/90 md:inline">
                     {t("brandTagline")}
-                  </span>
+                  </span> */}
                 </h1>
-                <p className="hidden truncate text-[10px] text-slate-400 sm:block">
+                {/* <p className="hidden truncate text-[10px] text-slate-400 sm:block">
                   {t("brandDescription")}
-                </p>
+                </p> */}
               </div>
             </div>
           </div>
