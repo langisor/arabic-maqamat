@@ -315,10 +315,10 @@ export class MicrotonalAudioEngine {
       Tone.getDraw().schedule(() => {
         if (!session.isActive()) return
         const octaveAdjustedPitch =
-          timbre === "oud" ? pitch.transpose(24) : pitch
+          timbre === "oud" ? pitch.transpose(-24) : pitch
 
-        // console.log("transform pitch to ", pitch.toString())
         const frequency = octaveAdjustedPitch.toFrequency(this.referenceA4)
+        console.log(`Pitch: ${pitch.toString()}, Freq: ${frequency}`)
         voices.frequencies.push(frequency)
         this.triggerFrequency(
           frequency,
