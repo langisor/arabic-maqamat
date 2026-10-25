@@ -1,6 +1,7 @@
 // src/audio/metronome-engine.ts
 import * as Tone from 'tone';
 import { AudioTransport, type TransportSession } from './audio-transport';
+import { AudioOutput } from './audio-output';
 
 export type MetronomeSoundType = 'dum-tak' | 'woodblock' | 'digital' | 'silent';
 
@@ -186,8 +187,8 @@ export class MetronomeAudioEngine {
   private static initAudio(): void {
     if (this.isInitialized) return;
 
-    this.limiter = new Tone.Limiter(-0.5).toDestination();
-    this.masterGain = new Tone.Gain(this.volume).connect(this.limiter);
+    this.limiter = null;
+    this.masterGain = new Tone.Gain(this.volume).connect(AudioOutput.getInput());
 
     // 1. Dum Synth (Resonant Arabic percussion bass / membrane)
     this.dumSynth = new Tone.MembraneSynth({
@@ -249,9 +250,7 @@ export class MetronomeAudioEngine {
     if (!this.isInitialized) {
       this.initAudio();
     }
-    return AudioTransport.ensureAudioContext(() =>
-      Tone.context.state === 'running' ? Promise.resolve() : Tone.start()
-    , () => Tone.context.state === 'running');
+    return AudioOutput.start();
   }
 
   /**

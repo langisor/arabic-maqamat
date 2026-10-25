@@ -8,6 +8,7 @@ import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import { MicrotonalAudioEngine, TimbreType } from "./audio/microtonal-audio"
 import { AudioTransport } from "./audio/audio-transport"
+import { AudioOutput } from "./audio/audio-output"
 import { useIsMobile } from "./hooks/use-mobile"
 import {
   ValidLab,
@@ -108,6 +109,7 @@ function StudioContent() {
   const [transportStatus, setTransportStatus] = useState(() =>
     AudioTransport.getStatus()
   )
+  const [masterVolume, setMasterVolume] = useState(() => AudioOutput.getVolume())
   const scoreMusicXml = useMemo(
     () =>
       MusicXMLExporter.generateScaleMusicXML(currentMaqam, {
@@ -395,6 +397,12 @@ function StudioContent() {
         maqam={currentMaqam}
         isDroneActive={isDroneActive}
         transportStatus={transportStatus}
+        masterVolume={masterVolume}
+        onMasterVolumeChange={(volume) => {
+          AudioOutput.setVolume(volume)
+          setMasterVolume(volume)
+        }}
+        onStopAll={() => AudioTransport.stopAll()}
         onNavigate={setActiveLab}
         onSelectFamily={handleSelectFamily}
         onSelectMaqam={handleSelectMaqam}

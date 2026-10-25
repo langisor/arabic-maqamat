@@ -1,4 +1,4 @@
-import {  Music2, Radio, Layers } from "lucide-react"
+import {  Music2, Radio, Layers, Square, Volume2 } from "lucide-react"
 import { MaqamatCatalogue, type Maqam } from "../theory/maqam"
 import type { AudioTransportStatus } from "../audio/audio-transport"
 import type { ValidLab } from "../state/workspace-state"
@@ -11,12 +11,18 @@ interface Props {
   onNavigate: (lab: ValidLab) => void
   onSelectFamily?: (familyKey: string) => void
   onSelectMaqam?: (maqam: Maqam) => void
+  masterVolume: number
+  onMasterVolumeChange: (volume: number) => void
+  onStopAll: () => void
 }
 
 export function SessionBar({
   maqam,
   isDroneActive,
   transportStatus,
+  masterVolume,
+  onMasterVolumeChange,
+  onStopAll,
 
   onSelectFamily,
   onSelectMaqam,
@@ -171,6 +177,30 @@ export function SessionBar({
                   ? t("audioReady")
                   : t("audioIdle")}
           </span>
+          <label className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">
+            <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="sr-only">Master volume</span>
+            <input
+              aria-label="Master volume"
+              type="range"
+              min="0"
+              max="100"
+              value={Math.round(masterVolume * 100)}
+              onChange={(event) => onMasterVolumeChange(Number(event.target.value) / 100)}
+              className="w-16 accent-amber-500"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={onStopAll}
+            disabled={transportStatus.activeSessions.length === 0}
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Stop all audio"
+            title="Stop all audio"
+          >
+            <Square className="h-3 w-3 fill-current" aria-hidden="true" />
+            <span className="hidden sm:inline">Stop audio</span>
+          </button>
 
         </div>
       </div>

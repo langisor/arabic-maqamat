@@ -2,6 +2,7 @@
 import * as Tone from "tone"
 import { ArabicPitch } from "../core/pitch"
 import { AudioTransport, type TransportSession } from "./audio-transport"
+import { AudioOutput } from "./audio-output"
 
 export type TimbreType = "violin" | "oud"
 
@@ -46,8 +47,8 @@ export class MicrotonalAudioEngine {
     if (this.isInitialized) return
 
     // 1. Master Output Chain with Brickwall Limiter to avoid clipping
-    this.masterLimiter = new Tone.Limiter(-0.5).toDestination()
-    this.masterGain = new Tone.Gain(0.85).connect(this.masterLimiter)
+    this.masterLimiter = null
+    this.masterGain = new Tone.Gain(0.85).connect(AudioOutput.getInput())
 
     // 2. Master Acoustic Reverb (simulates historic Ottoman / Andalusian stone courtyard or concert hall)
     this.masterReverb = new Tone.Freeverb({
@@ -147,11 +148,7 @@ export class MicrotonalAudioEngine {
     if (!this.isInitialized) {
       this.initAudio()
     }
-    return AudioTransport.ensureAudioContext(
-      () =>
-        Tone.context.state === "running" ? Promise.resolve() : Tone.start(),
-      () => Tone.context.state === "running"
-    ).then(() => {
+    return AudioOutput.start().then(() => {
       if (!this.oudSamplerReady) {
         throw new Error("Oud sampler was not initialized.")
       }
