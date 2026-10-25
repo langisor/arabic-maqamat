@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import { MicrotonalAudioEngine, TimbreType } from "./audio/microtonal-audio"
@@ -40,7 +40,9 @@ import { InstrumentStudio } from "./features/instruments/InstrumentStudio"
 import { EarnPractice } from "./components/EarnPractice"
 import { ThemeToggle } from "./components/ThemeToggle"
 import { PWAInstallButton } from "./components/PWAInstallButton"
+import { SheetMusicInteractiveViewer } from "./components/SheetMusicInteractiveViewer"
 import { Button } from "./components/ui/button"
+import { MusicXMLExporter } from "./score/musicxml-exporter"
 
 // Icons
 import {
@@ -54,6 +56,7 @@ import {
   Package,
   Radio,
   GraduationCap,
+  FileMusic,
 } from "lucide-react"
 
 function StudioContent() {
@@ -104,6 +107,14 @@ function StudioContent() {
   // Audio Transport state
   const [transportStatus, setTransportStatus] = useState(() =>
     AudioTransport.getStatus()
+  )
+  const scoreMusicXml = useMemo(
+    () =>
+      MusicXMLExporter.generateScaleMusicXML(currentMaqam, {
+        direction: "both",
+        tempoBpm: 100,
+      }),
+    [currentMaqam]
   )
 
   useEffect(() => {
@@ -235,6 +246,12 @@ function StudioContent() {
       label: "Sayr & Qafla Lab",
       arabic: "السير والقفلات",
       icon: Compass,
+    },
+    {
+      id: "score",
+      label: "Interactive Score",
+      arabic: "النوتة الموسيقية",
+      icon: FileMusic,
     },
     {
       id: "detector",
@@ -479,6 +496,21 @@ function StudioContent() {
             onOpenModulationPathways={() => setIsModulationOpen(true)}
             onSelectMaqam={handleSelectMaqam}
           />
+        )}
+
+        {activeLab === "score" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                <FileMusic className="h-5 w-5 text-amber-400" />
+                {currentMaqam.name} · {t("notation")}
+              </h2>
+              <p className="mt-1 text-xs text-slate-400">
+                {t("scoreDescription")}
+              </p>
+            </div>
+            <SheetMusicInteractiveViewer musicXml={scoreMusicXml} />
+          </div>
         )}
 
         {activeLab === "detector" && (
