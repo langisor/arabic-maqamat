@@ -1,5 +1,5 @@
 // src/components/MicrotonalPitchTracker.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ArabicPitch } from '../core/pitch';
 import { getPitchThemeClasses } from '../core/pitch-styling';
 import { Maqam } from '../theory/maqam';
@@ -12,8 +12,11 @@ import { TrainingStorage } from '../theory/training-progress';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Slider } from './ui/slider';
 import { AsyncFeedback } from './AsyncFeedback';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import {
+  HelpCircle,
   Mic,
   MicOff,
   Volume2,
@@ -43,6 +46,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   const [audioError, setAudioError] = useState<string | null>(null);
   const [audioStarting, setAudioStarting] = useState(false);
   const [referenceA4, setReferenceA4] = useState<number>(440);
+  const [tuningToleranceCents, setTuningToleranceCents] = useState(7);
   const [noiseThreshold] = useState<number>(0.015);
   const [inputLevelDb, setInputLevelDb] = useState<number>(-100);
 
@@ -63,14 +67,40 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   const streakTimerRef = useRef<number | null>(null);
   const dronePitchRef = useRef<ArabicPitch | null>(null);
   const audioActionInProgressRef = useRef(false);
+  const tuningToleranceRef = useRef(tuningToleranceCents);
+  const trackingModeRef = useRef(trackingMode);
+  const targetPitchRef = useRef(targetPitch);
+  const trackingMaqam = useMemo(
+    () =>
+      timbre === 'oud'
+        ? currentMaqam.transpose(
+            currentMaqam.getTonic().transpose(-24)
+          )
+        : currentMaqam,
+    [currentMaqam, timbre]
+  );
+  const activeTargetPitch =
+    timbre === 'oud' ? targetPitch.transpose(-24) : targetPitch;
+  const trackingMaqamRef = useRef(trackingMaqam);
+
+  useEffect(() => {
+    trackingModeRef.current = trackingMode;
+    targetPitchRef.current = activeTargetPitch;
+    trackingMaqamRef.current = trackingMaqam;
+  }, [activeTargetPitch, trackingMaqam, trackingMode]);
 
   useEffect(() => {
     detectorRef.current = new MicrotonalPitchDetector(44100, 2048, {
       referenceA4,
       volumeThresholdRms: noiseThreshold,
-      inTuneCentsTolerance: 7.0,
+      inTuneCentsTolerance: tuningToleranceRef.current,
     });
   }, [referenceA4, noiseThreshold]);
+
+  useEffect(() => {
+    tuningToleranceRef.current = tuningToleranceCents;
+    detectorRef.current?.setInTuneCentsTolerance(tuningToleranceCents);
+  }, [tuningToleranceCents]);
 
   const stopMicrophone = useCallback(() => {
     if (animationFrameRef.current !== null) {
@@ -123,7 +153,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       detectorRef.current = new MicrotonalPitchDetector(audioCtx.sampleRate, 2048, {
         referenceA4,
         volumeThresholdRms: noiseThreshold,
-        inTuneCentsTolerance: 7.0,
+        inTuneCentsTolerance: tuningToleranceCents,
       });
 
       const sourceNode = audioCtx.createMediaStreamSource(stream);
@@ -158,13 +188,18 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       lastTime = currentTime;
 
       analyser.getFloatTimeDomainData(timeDomainBuffer);
-      const detection = detector.detectPitch(timeDomainBuffer, currentMaqam);
+      const detection = detector.detectPitch(
+        timeDomainBuffer,
+        trackingMaqamRef.current
+      );
 
       if (detection) {
         setCurrentDetection(detection);
         setInputLevelDb(detection.volumeDb);
 
-        const matchesTarget = trackingMode === 'free' || detection.closestPitch.equals(targetPitch);
+        const matchesTarget =
+          trackingModeRef.current === 'free' ||
+          detection.closestPitch.equals(targetPitchRef.current);
         if (detection.inTune && matchesTarget) {
           streakCounter += dt;
           setInTuneStreakSeconds(Math.round(streakCounter * 10) / 10);
@@ -249,7 +284,10 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       }
       setDronePlaying(false);
     } else {
-      const pitchToPlay = trackingMode === 'target' ? targetPitch : currentDetection?.closestPitch ?? targetPitch;
+      const pitchToPlay =
+        trackingMode === 'target'
+          ? activeTargetPitch
+          : currentDetection?.closestPitch ?? activeTargetPitch;
       void startAudioAction(() => {
         dronePitchRef.current = pitchToPlay;
         MicrotonalAudioEngine.toggleDrone(pitchToPlay, true);
@@ -264,7 +302,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
     });
   };
 
-  const scalePitches = currentMaqam.getScale();
+  const scalePitches = trackingMaqam.getScale();
   const detectionPitch = currentDetection?.closestPitch;
   const pitchTheme = detectionPitch ? getPitchThemeClasses(detectionPitch, 'card') : null;
 
@@ -293,6 +331,55 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="How to use the Microtonal Pitch Tracker"
+                    title="How to use this lab"
+                  />
+                }
+              >
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              </PopoverTrigger>
+              <PopoverContent
+                role="dialog"
+                aria-label="Microtonal Pitch Tracker help"
+                align="end"
+                className="w-[min(22rem,calc(100vw-2rem))] text-sm"
+              >
+                <h3 className="text-sm font-semibold text-foreground">
+                  Using the Pitch Tracker
+                </h3>
+                <ol className="list-decimal space-y-1.5 pl-4 text-xs leading-relaxed text-muted-foreground">
+                  <li>
+                    Allow microphone access, then sing or play one clear note.
+                    Use a quiet space and keep the instrument near the mic.
+                  </li>
+                  <li>
+                    Read the detected note and cents gauge. Green means the
+                    pitch is within the tracker&apos;s ±7-cent tuning range.
+                  </li>
+                  <li>
+                    Choose a scale degree to hear its reference and set it as
+                    the practice target. Free Tracking accepts any pitch;
+                    Target Hold counts only while you match the selected note.
+                  </li>
+                  <li>
+                    Use the A4 buttons to calibrate, or turn on the Reference
+                    Drone to tune by ear. In-tune time builds your streak.
+                  </li>
+                  <li>
+                    With Oud selected, detected notes and scale targets are
+                    shown one octave lower than with Violin (for example, C4
+                    is tracked as C3).
+                  </li>
+                </ol>
+              </PopoverContent>
+            </Popover>
             <Button
               onClick={isListening ? stopMicrophone : startMicrophone}
               className={`gap-2 font-bold cursor-pointer transition-all ${
@@ -441,8 +528,11 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                 <div className="h-4 bg-muted/60 dark:bg-slate-950 rounded-full relative overflow-hidden border border-border/80">
                   <div
                     className="absolute top-0 bottom-0 bg-emerald-500/25 border-x border-emerald-500/40"
-                    style={{ left: `${((25 - 7) / 50) * 100}%`, width: `${(14 / 50) * 100}%` }}
-                    title="In-tune tolerance zone (±7 cents)"
+                    style={{
+                      left: `${((25 - tuningToleranceCents) / 50) * 100}%`,
+                      width: `${((2 * tuningToleranceCents) / 50) * 100}%`,
+                    }}
+                    title={`In-tune tolerance zone (±${tuningToleranceCents} cents)`}
                   />
                   {currentDetection && (
                     <div
@@ -465,6 +555,34 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                   <span>+15¢</span>
                   <span>+25¢ (Sharp)</span>
                 </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+                <label
+                  htmlFor="tracker-cents-tolerance"
+                  className="shrink-0 text-xs font-semibold text-muted-foreground"
+                >
+                  In-tune sensitivity
+                </label>
+                <Slider
+                  id="tracker-cents-tolerance"
+                  aria-label="In-tune tolerance in cents"
+                  value={[tuningToleranceCents]}
+                  min={1}
+                  max={15}
+                  step={1}
+                  onValueChange={(value) => {
+                    const nextValue =
+                      typeof value === 'number' ? value : value[0];
+                    if (nextValue !== undefined) {
+                      setTuningToleranceCents(nextValue);
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <span className="w-12 shrink-0 text-right font-mono text-xs font-bold text-emerald-400">
+                  ±{tuningToleranceCents}¢
+                </span>
               </div>
 
               <div
@@ -548,7 +666,8 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
             {scalePitches.map((p, idx) => {
               const isDetected = currentDetection?.closestPitch.equals(p);
               const isInTuneMatch = isDetected && currentDetection?.inTune;
-              const isTarget = trackingMode === 'target' && targetPitch.equals(p);
+              const isTarget =
+                trackingMode === 'target' && activeTargetPitch.equals(p);
               const theme = getPitchThemeClasses(p, 'card', { isSounding: isDetected });
               return (
                 <button
@@ -556,7 +675,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
                   key={idx}
                   disabled={audioStarting}
                   onClick={() => {
-                    setTargetPitch(p);
+                    setTargetPitch(timbre === 'oud' ? p.transpose(24) : p);
                     setTrackingMode('target');
                     playPitchOnce(p);
                   }}

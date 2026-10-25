@@ -73,6 +73,12 @@ export class MicrotonalPitchDetector {
     this.volumeThresholdRms = Math.max(0.001, Math.min(0.2, threshold));
   }
 
+  public setInTuneCentsTolerance(cents: number): void {
+    if (Number.isFinite(cents)) {
+      this.inTuneCentsTolerance = Math.max(1, Math.min(15, cents));
+    }
+  }
+
   /**
    * Process a time-domain audio buffer (from Web Audio AnalyserNode.getFloatTimeDomainData)
    * and detect the fundamental frequency and 24-EDO microtonal deviation.
