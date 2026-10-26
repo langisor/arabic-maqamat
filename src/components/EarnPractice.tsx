@@ -5,7 +5,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  GraduationCap,
   Headphones,
+  HelpCircle,
   Mic,
   Pencil,
   Play,
@@ -13,6 +15,7 @@ import {
   RotateCcw,
   Save,
   Trash2,
+  Trophy,
   X,
 } from "lucide-react"
 import { MicrotonalAudioEngine, type TimbreType } from "../audio/microtonal-audio"
@@ -20,6 +23,8 @@ import { MicrotonalPitchDetector } from "../audio/pitch-detector"
 import { ArabicPitch } from "../core/pitch"
 import { AjnasLibrary, Jins, type JinsDefinition } from "../theory/jins"
 import { Maqam, MaqamatCatalogue } from "../theory/maqam"
+import { DRILL_TYPES_CATALOGUE, PracticeDrillEngine, type PracticeDrillType, type PositionShiftVariation } from "../theory/practice-drills"
+import { TrainingStorage, type TrainingStats } from "../theory/training-progress"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import {
@@ -102,23 +107,27 @@ const ALL_METHODS: PracticeMethod[] = [
 
 const METHOD_DETAILS: Record<
   PracticeMethod,
-  { title: string; description: string }
+  { title: string; description: string; howTo: string[] }
 > = {
   "identify-jins": {
     title: "Identify the Jins",
     description: "Listen to a short phrase and choose the Jins you hear.",
+    howTo: ["Listen to the complete phrase.", "Replay it as often as needed.", "Choose the Jins whose characteristic intervals match the phrase, then check your answer."],
   },
   "identify-maqam": {
     title: "Identify the Maqam",
     description: "Listen to a short phrase and identify its Maqam.",
+    howTo: ["Listen for the tonic, characteristic intervals, and melodic contour.", "Replay the phrase if needed.", "Select the Maqam you hear and check your answer."],
   },
   "identify-degree": {
     title: "Identify the degree",
     description: "Hear the tonic followed by a scale note, then name its degree.",
+    howTo: ["The first note is the tonic; compare the second note against it.", "Replay the two notes and sing or hum the interval.", "Select the scale degree of the second note and check your answer."],
   },
   "play-performance": {
     title: "Play the Maqam or Jins",
     description: "Prepare your instrument, then record a short performance.",
+    howTo: ["Replay the reference pitches and review the target scale.", "Start the microphone check and wait for the countdown.", "Play sustained target notes, then select Check to review intonation and in-scale accuracy."],
   },
 }
 
@@ -387,9 +396,112 @@ function analyzeRecording(
 
 interface EarnPracticeProps {
   timbre: TimbreType
+  maqam?: Maqam
+  mode?: "boundaries" | "drills"
 }
 
-export function EarnPractice({ timbre }: EarnPracticeProps) {
+const DRILL_HOW_TO: Record<PracticeDrillType, string[]> = {
+  "scale-run": ["Choose ascending, descending, or both directions.", "Follow the notes from the tonic through the scale; in both mode, turn at the upper tonic.", "Replay the reference and practice even rhythm, relaxed fingering, and accurate quarter tones."],
+  "sequence-3": ["Play each three-note group in order as the pattern moves through the scale.", "Keep a steady beat as each group shifts to the next starting degree.", "Listen for clean transitions and even articulation."],
+  "sequence-4": ["Play each four-note group in order and notice how it outlines the jins.", "Keep the fourth note clear as the pattern moves through the scale.", "Focus on the ghammaz pivot and consistent tone."],
+  "position-shift": ["Review the generated shift instruction and guide-finger note.", "Play the phrase slowly, keeping the guide finger light during the shift.", "Repeat until the destination pitch is centered and relaxed."],
+  sightreading: ["Read the generated phrase before playing; notice its meter and cadence.", "Play once without stopping, keeping the pulse and written durations.", "Replay the reference phrase and compare your note choices and cadence."],
+}
+
+function PracticeDrillsLab({ timbre, maqam }: { timbre: TimbreType; maqam: Maqam }) {
+  const [type, setType] = useState<PracticeDrillType>("scale-run")
+  const [direction, setDirection] = useState<"both" | "ascending" | "descending">("both")
+  const [variation, setVariation] = useState<PositionShiftVariation>("ghammaz-pivot")
+  const [melody, setMelody] = useState<ReturnType<typeof PracticeDrillEngine.generateDrill> | null>(null)
+  const [stats, setStats] = useState<TrainingStats>(() => TrainingStorage.getStats())
+  const [error, setError] = useState<string | null>(null)
+  const metadata = DRILL_TYPES_CATALOGUE.find((item) => item.id === type)!
+
+  const generate = () => {
+    try {
+      const next = PracticeDrillEngine.generateDrill(maqam, {
+        type,
+        direction,
+        positionShiftVariation: variation,
+        sightReadingDifficulty: "level1",
+        sightReadingLength: 8,
+        tempoBpm: type === "scale-run" ? 85 : 80,
+      })
+      setMelody(next)
+      setError(null)
+      const current = TrainingStorage.getStats()
+      const updated = { ...current, melodiesPracticed: current.melodiesPracticed + 1 }
+      if (updated.melodiesPracticed >= 5) setStats(TrainingStorage.unlockBadge("sight_reader", updated))
+      else {
+        TrainingStorage.saveStats(updated)
+        setStats(updated)
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not generate this exercise.")
+    }
+  }
+
+  const playMelody = async () => {
+    if (!melody) return
+    try {
+      await MicrotonalAudioEngine.startAudioContext()
+      MicrotonalAudioEngine.playSequence(melody.pitches, Math.round(60_000 / melody.tempoBpm), timbre, undefined, undefined, undefined, "practice-drills")
+    } catch (cause) {
+      setError(cause instanceof Error ? `Audio could not start: ${cause.message}` : "Audio could not start.")
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-6">
+      <header className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:flex-row sm:items-center">
+        <div>
+          <h2 className="flex items-center gap-2 text-2xl font-bold text-white"><GraduationCap className="size-5 text-amber-400" />Dills</h2>
+          <p className="mt-1 max-w-2xl text-sm text-slate-400">Generate focused maqam exercises, follow each How To guide, and build your practice record.</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm" aria-label="Training progress">
+          <Trophy className="size-4 text-amber-400" /><span>{stats.xp} XP</span><span className="text-muted-foreground">· Level {stats.level}</span><span className="text-muted-foreground">· {stats.melodiesPracticed} exercises</span>
+        </div>
+      </header>
+      <Card>
+        <CardHeader>
+          <CardTitle>Practice generator</CardTitle>
+          <CardDescription>{maqam.name} · {metadata.descriptionEn} Focus: {metadata.pedagogicalFocus}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm font-medium">Practice type
+              <select value={type} onChange={(event) => { setType(event.target.value as PracticeDrillType); setMelody(null) }} className="h-10 rounded-md border border-input bg-background px-3">
+                {DRILL_TYPES_CATALOGUE.map((item) => <option key={item.id} value={item.id}>{item.titleEn}</option>)}
+              </select>
+            </label>
+            {["scale-run", "sequence-3", "sequence-4"].includes(type) ? (
+              <label className="flex flex-col gap-1 text-sm font-medium">Direction
+                <select value={direction} onChange={(event) => setDirection(event.target.value as typeof direction)} className="h-10 rounded-md border border-input bg-background px-3"><option value="both">Ascending and descending</option><option value="ascending">Ascending</option><option value="descending">Descending</option></select>
+              </label>
+            ) : type === "position-shift" ? (
+              <label className="flex flex-col gap-1 text-sm font-medium">Shift variation
+                <select value={variation} onChange={(event) => setVariation(event.target.value as PositionShiftVariation)} className="h-10 rounded-md border border-input bg-background px-3"><option value="ghammaz-pivot">Ghammaz pivot</option><option value="octave-leap">Octave leap</option><option value="expressive-slide">Expressive slide</option></select>
+              </label>
+            ) : <div className="flex items-center text-sm text-muted-foreground">Sight-reading · 8 measures · Level 1</div>}
+          </div>
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+            <h3 className="flex items-center gap-2 font-semibold"><HelpCircle className="size-4 text-amber-500" />How To: {metadata.titleEn}</h3>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">{DRILL_HOW_TO[type].map((step) => <li key={step}>{step}</li>)}</ol>
+          </div>
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+          <div className="flex flex-wrap gap-2"><Button onClick={generate}>Generate exercise</Button>{melody && <Button variant="outline" onClick={() => void playMelody()}><Play data-icon="inline-start" />Play reference</Button>}</div>
+          {melody && <div className="rounded-xl border border-border p-4" aria-live="polite">
+            <h3 className="font-semibold">{melody.title}</h3><p className="mt-1 text-sm text-muted-foreground">{melody.description}</p>
+            <ol className="mt-3 flex flex-wrap gap-2" aria-label="Exercise notes">{melody.notes.map((note, index) => <li key={`${melody.id}-${index}`} className="rounded-md bg-muted px-2 py-1 text-sm"><span className="font-mono">{note.pitch.toScientificString()}</span>{note.positionNumber && <span className="ml-1 text-xs text-muted-foreground">P{note.positionNumber}</span>}</li>)}</ol>
+            {melody.notes.some((note) => note.pedagogicalNote || note.shiftInstruction) && <ul className="mt-3 space-y-1 text-sm text-muted-foreground">{melody.notes.filter((note) => note.pedagogicalNote || note.shiftInstruction).map((note, index) => <li key={`${melody.id}-hint-${index}`}>{note.shiftInstruction || note.pedagogicalNote}</li>)}</ul>}
+          </div>}
+        </CardContent>
+      </Card>
+    </section>
+  )
+}
+
+export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPracticeProps) {
   const [initialSaved] = useState(loadSavedBoundaries)
   const [customBoundaries, setCustomBoundaries] = useState(initialSaved.boundaries)
   const [storageError, setStorageError] = useState<string | null>(initialSaved.error)
@@ -412,6 +524,7 @@ export function EarnPractice({ timbre }: EarnPracticeProps) {
   const [recordingReport, setRecordingReport] =
     useState<RecordingReport | null>(null)
   const [practiceError, setPracticeError] = useState<string | null>(null)
+  const [trainingStats, setTrainingStats] = useState<TrainingStats>(() => TrainingStorage.getStats())
 
   const streamRef = useRef<MediaStream | null>(null)
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
@@ -814,6 +927,13 @@ export function EarnPractice({ timbre }: EarnPracticeProps) {
   const submitAnswer = () => {
     if (!selectedAnswer || !question) return
     setAnswerChecked(true)
+    const correct = selectedAnswer === question.answerId
+    let updated = TrainingStorage.updateStreak(correct, TrainingStorage.getStats())
+    updated = { ...updated, completedQuizzes: updated.completedQuizzes + 1 }
+    TrainingStorage.saveStats(updated)
+    if (correct) updated = TrainingStorage.addXp(10, updated)
+    updated = TrainingStorage.unlockBadge("first_step", updated)
+    setTrainingStats(updated)
   }
 
   const nextQuestion = () => {
@@ -855,6 +975,10 @@ export function EarnPractice({ timbre }: EarnPracticeProps) {
     "identify-degree",
     "play-performance",
   ]
+
+  if (mode === "drills" && maqam) {
+    return <PracticeDrillsLab timbre={timbre} maqam={maqam} />
+  }
 
   return (
     <section className="flex flex-col gap-6">
@@ -1127,6 +1251,10 @@ export function EarnPractice({ timbre }: EarnPracticeProps) {
                     ? "Play the prompted Maqam or Jins. You will have four seconds to get ready, followed by up to 12 seconds to perform."
                     : question?.prompt}
                 </CardDescription>
+                <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold"><HelpCircle className="size-4 text-amber-500" />How To: {METHOD_DETAILS[activeMethod].title}</h3>
+                  <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">{METHOD_DETAILS[activeMethod].howTo.map((step) => <li key={step}>{step}</li>)}</ol>
+                </div>
               </div>
               <Button variant="outline" onClick={exitPractice}>
                 <X data-icon="inline-start" />
@@ -1206,7 +1334,7 @@ export function EarnPractice({ timbre }: EarnPracticeProps) {
                           question.method === "identify-degree"
                             ? `degree ${question.answerId}`
                             : question.targetLabel
-                        }.`}
+                        }. Review the How To steps, replay the example, and try the next question.`}
                   </p>
                 )}
                 <div className="flex justify-end">
@@ -1405,6 +1533,10 @@ export function EarnPractice({ timbre }: EarnPracticeProps) {
       )}
 
       {!draft && !activeBoundary && (
+        <>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm" aria-label="Training progress">
+          <Trophy className="size-4 text-amber-500" /><span>{trainingStats.xp} XP</span><span className="text-muted-foreground">· Level {trainingStats.level}</span><span className="text-muted-foreground">· Current streak {trainingStats.streak}</span><span className="text-muted-foreground">· {trainingStats.completedQuizzes} answers checked</span>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           {boundaries.map((boundary) => {
             const isPreset = boundary.id.startsWith("preset-")
@@ -1506,6 +1638,7 @@ export function EarnPractice({ timbre }: EarnPracticeProps) {
             )
           })}
         </div>
+        </>
       )}
     </section>
   )

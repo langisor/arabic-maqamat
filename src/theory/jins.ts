@@ -406,7 +406,7 @@ export class AjnasLibrary {
     arabicName: "جهاركاه",
     type: "Pentachord",
     sizeLabel: "5-note",
-    intervals: [4, 3, 3, 4], // F to G (4), G to A♮↓ (3), A♮↓ to B♭↓ (3), B♭↓ to C (4) = 14 qt
+    intervals: [4, 4, 2, 4], // F
     description:
       "Jins Jiharkah is a 5-note jins. It is notated here with its tonic on F and its ghammaz on C. The 3rd and 4th degrees are usually played lower than notated. Jins Jiharkah is the first jins in Maqam Jiharkah.",
     hasQuarterTones: true,

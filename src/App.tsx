@@ -281,6 +281,12 @@ function StudioContent() {
       arabic: "تدريب المقامات",
       icon: GraduationCap,
     },
+    {
+      id: "dills",
+      label: "Dills",
+      arabic: "تمارين المقامات",
+      icon: GraduationCap,
+    },
   ]
 
   return (
@@ -599,6 +605,9 @@ function StudioContent() {
         )}
 
         {activeLab === "earn-practice" && <EarnPractice timbre={timbre} />}
+        {activeLab === "dills" && (
+          <EarnPractice timbre={timbre} maqam={currentMaqam} mode="drills" />
+        )}
       </main>
 
       {/* Global Interactive Drawers */}
