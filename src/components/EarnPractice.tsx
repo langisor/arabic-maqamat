@@ -14,6 +14,7 @@ import {
   Plus,
   RotateCcw,
   Save,
+  Square,
   Trash2,
   Trophy,
   X,
@@ -477,12 +478,19 @@ function PracticeDrillsLab({
   )
   const [activeSoundingPitch, setActiveSoundingPitch] =
     useState<ArabicPitch | null>(null)
+  const [isReferencePlaying, setIsReferencePlaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const noteHighlightTimeoutRef = useRef<number | null>(null)
   const metadata = DRILL_TYPES_CATALOGUE.find((item) => item.id === type)!
 
+  const stopReference = () => {
+    MicrotonalAudioEngine.stopSequence("practice-drills")
+    setIsReferencePlaying(false)
+  }
+
   useEffect(
     () => () => {
+      MicrotonalAudioEngine.stopSequence("practice-drills")
       if (noteHighlightTimeoutRef.current !== null) {
         window.clearTimeout(noteHighlightTimeoutRef.current)
       }
@@ -491,6 +499,7 @@ function PracticeDrillsLab({
   )
 
   const generate = () => {
+    stopReference()
     try {
       const next = PracticeDrillEngine.generateDrill(maqam, {
         type,
@@ -531,11 +540,14 @@ function PracticeDrillsLab({
         Math.round(60_000 / melody.tempoBpm),
         timbre,
         undefined,
-        undefined,
+        () => setIsReferencePlaying(false),
         undefined,
         "practice-drills"
       )
+      setIsReferencePlaying(true)
+      setError(null)
     } catch (cause) {
+      setIsReferencePlaying(false)
       setError(
         cause instanceof Error
           ? `Audio could not start: ${cause.message}`
@@ -549,6 +561,7 @@ function PracticeDrillsLab({
     try {
       await MicrotonalAudioEngine.startAudioContext()
       const noteDuration = Math.round(60_000 / melody.tempoBpm)
+      setIsReferencePlaying(false)
       MicrotonalAudioEngine.playSequence(
         [pitch],
         noteDuration,
@@ -616,6 +629,7 @@ function PracticeDrillsLab({
               <select
                 value={type}
                 onChange={(event) => {
+                  stopReference()
                   setType(event.target.value as PracticeDrillType)
                   setMelody(null)
                 }}
@@ -683,9 +697,19 @@ function PracticeDrillsLab({
           <div className="flex flex-wrap gap-2">
             <Button onClick={generate}>Generate exercise</Button>
             {melody && (
-              <Button variant="outline" onClick={() => void playMelody()}>
-                <Play data-icon="inline-start" />
-                Play reference
+              <Button
+                variant="outline"
+                aria-pressed={isReferencePlaying}
+                onClick={() =>
+                  isReferencePlaying ? stopReference() : void playMelody()
+                }
+              >
+                {isReferencePlaying ? (
+                  <Square data-icon="inline-start" />
+                ) : (
+                  <Play data-icon="inline-start" />
+                )}
+                {isReferencePlaying ? "Stop" : "Play reference"}
               </Button>
             )}
           </div>
