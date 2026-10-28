@@ -18,13 +18,24 @@ import {
   Trophy,
   X,
 } from "lucide-react"
-import { MicrotonalAudioEngine, type TimbreType } from "../audio/microtonal-audio"
+import {
+  MicrotonalAudioEngine,
+  type TimbreType,
+} from "../audio/microtonal-audio"
 import { MicrotonalPitchDetector } from "../audio/pitch-detector"
 import { ArabicPitch } from "../core/pitch"
 import { AjnasLibrary, Jins, type JinsDefinition } from "../theory/jins"
 import { Maqam, MaqamatCatalogue } from "../theory/maqam"
-import { DRILL_TYPES_CATALOGUE, PracticeDrillEngine, type PracticeDrillType, type PositionShiftVariation } from "../theory/practice-drills"
-import { TrainingStorage, type TrainingStats } from "../theory/training-progress"
+import {
+  DRILL_TYPES_CATALOGUE,
+  PracticeDrillEngine,
+  type PracticeDrillType,
+  type PositionShiftVariation,
+} from "../theory/practice-drills"
+import {
+  TrainingStorage,
+  type TrainingStats,
+} from "../theory/training-progress"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import {
@@ -43,10 +54,7 @@ import {
 } from "./ui/questionnaire"
 
 type PracticeMethod =
-  | "identify-jins"
-  | "identify-maqam"
-  | "identify-degree"
-  | "play-performance"
+  "identify-jins" | "identify-maqam" | "identify-degree" | "play-performance"
 
 interface PracticeBoundary {
   id: string
@@ -112,22 +120,39 @@ const METHOD_DETAILS: Record<
   "identify-jins": {
     title: "Identify the Jins",
     description: "Listen to a short phrase and choose the Jins you hear.",
-    howTo: ["Listen to the complete phrase.", "Replay it as often as needed.", "Choose the Jins whose characteristic intervals match the phrase, then check your answer."],
+    howTo: [
+      "Listen to the complete phrase.",
+      "Replay it as often as needed.",
+      "Choose the Jins whose characteristic intervals match the phrase, then check your answer.",
+    ],
   },
   "identify-maqam": {
     title: "Identify the Maqam",
     description: "Listen to a short phrase and identify its Maqam.",
-    howTo: ["Listen for the tonic, characteristic intervals, and melodic contour.", "Replay the phrase if needed.", "Select the Maqam you hear and check your answer."],
+    howTo: [
+      "Listen for the tonic, characteristic intervals, and melodic contour.",
+      "Replay the phrase if needed.",
+      "Select the Maqam you hear and check your answer.",
+    ],
   },
   "identify-degree": {
     title: "Identify the degree",
-    description: "Hear the tonic followed by a scale note, then name its degree.",
-    howTo: ["The first note is the tonic; compare the second note against it.", "Replay the two notes and sing or hum the interval.", "Select the scale degree of the second note and check your answer."],
+    description:
+      "Hear the tonic followed by a scale note, then name its degree.",
+    howTo: [
+      "The first note is the tonic; compare the second note against it.",
+      "Replay the two notes and sing or hum the interval.",
+      "Select the scale degree of the second note and check your answer.",
+    ],
   },
   "play-performance": {
     title: "Play the Maqam or Jins",
     description: "Prepare your instrument, then record a short performance.",
-    howTo: ["Replay the reference pitches and review the target scale.", "Start the microphone check and wait for the countdown.", "Play sustained target notes, then select Check to review intonation and in-scale accuracy."],
+    howTo: [
+      "Replay the reference pitches and review the target scale.",
+      "Start the microphone check and wait for the countdown.",
+      "Play sustained target notes, then select Check to review intonation and in-scale accuracy.",
+    ],
   },
 }
 
@@ -174,7 +199,8 @@ function loadSavedBoundaries(): StoredBoundaries {
     if (!Array.isArray(parsed)) {
       return {
         boundaries: [],
-        error: "Saved practices could not be read because the stored data is invalid.",
+        error:
+          "Saved practices could not be read because the stored data is invalid.",
       }
     }
     const boundaries = parsed.filter(isPracticeBoundary)
@@ -382,14 +408,15 @@ function analyzeRecording(
       (samples.filter((sample) => sample.inBoundary).length / samples.length) *
         100
     ),
-    averageCents: Math.round(
-      (samples.reduce(
-        (total, sample) => total + Math.abs(sample.centsDeviation),
-        0
-      ) /
-        samples.length) *
-        10
-    ) / 10,
+    averageCents:
+      Math.round(
+        (samples.reduce(
+          (total, sample) => total + Math.abs(sample.centsDeviation),
+          0
+        ) /
+          samples.length) *
+          10
+      ) / 10,
     duration,
   }
 }
@@ -401,19 +428,52 @@ interface EarnPracticeProps {
 }
 
 const DRILL_HOW_TO: Record<PracticeDrillType, string[]> = {
-  "scale-run": ["Choose ascending, descending, or both directions.", "Follow the notes from the tonic through the scale; in both mode, turn at the upper tonic.", "Replay the reference and practice even rhythm, relaxed fingering, and accurate quarter tones."],
-  "sequence-3": ["Play each three-note group in order as the pattern moves through the scale.", "Keep a steady beat as each group shifts to the next starting degree.", "Listen for clean transitions and even articulation."],
-  "sequence-4": ["Play each four-note group in order and notice how it outlines the jins.", "Keep the fourth note clear as the pattern moves through the scale.", "Focus on the ghammaz pivot and consistent tone."],
-  "position-shift": ["Review the generated shift instruction and guide-finger note.", "Play the phrase slowly, keeping the guide finger light during the shift.", "Repeat until the destination pitch is centered and relaxed."],
-  sightreading: ["Read the generated phrase before playing; notice its meter and cadence.", "Play once without stopping, keeping the pulse and written durations.", "Replay the reference phrase and compare your note choices and cadence."],
+  "scale-run": [
+    "Choose ascending, descending, or both directions.",
+    "Follow the notes from the tonic through the scale; in both mode, turn at the upper tonic.",
+    "Replay the reference and practice even rhythm, relaxed fingering, and accurate quarter tones.",
+  ],
+  "sequence-3": [
+    "Play each three-note group in order as the pattern moves through the scale.",
+    "Keep a steady beat as each group shifts to the next starting degree.",
+    "Listen for clean transitions and even articulation.",
+  ],
+  "sequence-4": [
+    "Play each four-note group in order and notice how it outlines the jins.",
+    "Keep the fourth note clear as the pattern moves through the scale.",
+    "Focus on the ghammaz pivot and consistent tone.",
+  ],
+  "position-shift": [
+    "Review the generated shift instruction and guide-finger note.",
+    "Play the phrase slowly, keeping the guide finger light during the shift.",
+    "Repeat until the destination pitch is centered and relaxed.",
+  ],
+  sightreading: [
+    "Read the generated phrase before playing; notice its meter and cadence.",
+    "Play once without stopping, keeping the pulse and written durations.",
+    "Replay the reference phrase and compare your note choices and cadence.",
+  ],
 }
 
-function PracticeDrillsLab({ timbre, maqam }: { timbre: TimbreType; maqam: Maqam }) {
+function PracticeDrillsLab({
+  timbre,
+  maqam,
+}: {
+  timbre: TimbreType
+  maqam: Maqam
+}) {
   const [type, setType] = useState<PracticeDrillType>("scale-run")
-  const [direction, setDirection] = useState<"both" | "ascending" | "descending">("both")
-  const [variation, setVariation] = useState<PositionShiftVariation>("ghammaz-pivot")
-  const [melody, setMelody] = useState<ReturnType<typeof PracticeDrillEngine.generateDrill> | null>(null)
-  const [stats, setStats] = useState<TrainingStats>(() => TrainingStorage.getStats())
+  const [direction, setDirection] = useState<
+    "both" | "ascending" | "descending"
+  >("both")
+  const [variation, setVariation] =
+    useState<PositionShiftVariation>("ghammaz-pivot")
+  const [melody, setMelody] = useState<ReturnType<
+    typeof PracticeDrillEngine.generateDrill
+  > | null>(null)
+  const [stats, setStats] = useState<TrainingStats>(() =>
+    TrainingStorage.getStats()
+  )
   const [error, setError] = useState<string | null>(null)
   const metadata = DRILL_TYPES_CATALOGUE.find((item) => item.id === type)!
 
@@ -430,14 +490,22 @@ function PracticeDrillsLab({ timbre, maqam }: { timbre: TimbreType; maqam: Maqam
       setMelody(next)
       setError(null)
       const current = TrainingStorage.getStats()
-      const updated = { ...current, melodiesPracticed: current.melodiesPracticed + 1 }
-      if (updated.melodiesPracticed >= 5) setStats(TrainingStorage.unlockBadge("sight_reader", updated))
+      const updated = {
+        ...current,
+        melodiesPracticed: current.melodiesPracticed + 1,
+      }
+      if (updated.melodiesPracticed >= 5)
+        setStats(TrainingStorage.unlockBadge("sight_reader", updated))
       else {
         TrainingStorage.saveStats(updated)
         setStats(updated)
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not generate this exercise.")
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not generate this exercise."
+      )
     }
   }
 
@@ -445,9 +513,21 @@ function PracticeDrillsLab({ timbre, maqam }: { timbre: TimbreType; maqam: Maqam
     if (!melody) return
     try {
       await MicrotonalAudioEngine.startAudioContext()
-      MicrotonalAudioEngine.playSequence(melody.pitches, Math.round(60_000 / melody.tempoBpm), timbre, undefined, undefined, undefined, "practice-drills")
+      MicrotonalAudioEngine.playSequence(
+        melody.pitches,
+        Math.round(60_000 / melody.tempoBpm),
+        timbre,
+        undefined,
+        undefined,
+        undefined,
+        "practice-drills"
+      )
     } catch (cause) {
-      setError(cause instanceof Error ? `Audio could not start: ${cause.message}` : "Audio could not start.")
+      setError(
+        cause instanceof Error
+          ? `Audio could not start: ${cause.message}`
+          : "Audio could not start."
+      )
     }
   }
 
@@ -455,62 +535,186 @@ function PracticeDrillsLab({ timbre, maqam }: { timbre: TimbreType; maqam: Maqam
     <section className="flex flex-col gap-6">
       <header className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="flex items-center gap-2 text-2xl font-bold text-white"><GraduationCap className="size-5 text-amber-400" />Dills</h2>
-          <p className="mt-1 max-w-2xl text-sm text-slate-400">Generate focused maqam exercises, follow each How To guide, and build your practice record.</p>
+          <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
+            <GraduationCap className="size-5 text-amber-400" />
+            Dills
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-slate-400">
+            Generate focused maqam exercises, follow each How To guide, and
+            build your practice record.
+          </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm" aria-label="Training progress">
-          <Trophy className="size-4 text-amber-400" /><span>{stats.xp} XP</span><span className="text-muted-foreground">· Level {stats.level}</span><span className="text-muted-foreground">· {stats.melodiesPracticed} exercises</span>
+        <div
+          className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm"
+          aria-label="Training progress"
+        >
+          <Trophy className="size-4 text-amber-400" />
+          <span>{stats.xp} XP</span>
+          <span className="text-muted-foreground">· Level {stats.level}</span>
+          <span className="text-muted-foreground">
+            · {stats.melodiesPracticed} exercises
+          </span>
         </div>
       </header>
       <Card>
         <CardHeader>
           <CardTitle>Practice generator</CardTitle>
-          <CardDescription>{maqam.name} · {metadata.descriptionEn} Focus: {metadata.pedagogicalFocus}</CardDescription>
+          <CardDescription>
+            {maqam.name} · {metadata.descriptionEn} Focus:{" "}
+            {metadata.pedagogicalFocus}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm font-medium">Practice type
-              <select value={type} onChange={(event) => { setType(event.target.value as PracticeDrillType); setMelody(null) }} className="h-10 rounded-md border border-input bg-background px-3">
-                {DRILL_TYPES_CATALOGUE.map((item) => <option key={item.id} value={item.id}>{item.titleEn}</option>)}
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              Practice type
+              <select
+                value={type}
+                onChange={(event) => {
+                  setType(event.target.value as PracticeDrillType)
+                  setMelody(null)
+                }}
+                className="h-10 rounded-md border border-input bg-background px-3"
+              >
+                {DRILL_TYPES_CATALOGUE.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.titleEn}
+                  </option>
+                ))}
               </select>
             </label>
             {["scale-run", "sequence-3", "sequence-4"].includes(type) ? (
-              <label className="flex flex-col gap-1 text-sm font-medium">Direction
-                <select value={direction} onChange={(event) => setDirection(event.target.value as typeof direction)} className="h-10 rounded-md border border-input bg-background px-3"><option value="both">Ascending and descending</option><option value="ascending">Ascending</option><option value="descending">Descending</option></select>
+              <label className="flex flex-col gap-1 text-sm font-medium">
+                Direction
+                <select
+                  value={direction}
+                  onChange={(event) =>
+                    setDirection(event.target.value as typeof direction)
+                  }
+                  className="h-10 rounded-md border border-input bg-background px-3"
+                >
+                  <option value="both">Ascending and descending</option>
+                  <option value="ascending">Ascending</option>
+                  <option value="descending">Descending</option>
+                </select>
               </label>
             ) : type === "position-shift" ? (
-              <label className="flex flex-col gap-1 text-sm font-medium">Shift variation
-                <select value={variation} onChange={(event) => setVariation(event.target.value as PositionShiftVariation)} className="h-10 rounded-md border border-input bg-background px-3"><option value="ghammaz-pivot">Ghammaz pivot</option><option value="octave-leap">Octave leap</option><option value="expressive-slide">Expressive slide</option></select>
+              <label className="flex flex-col gap-1 text-sm font-medium">
+                Shift variation
+                <select
+                  value={variation}
+                  onChange={(event) =>
+                    setVariation(event.target.value as PositionShiftVariation)
+                  }
+                  className="h-10 rounded-md border border-input bg-background px-3"
+                >
+                  <option value="ghammaz-pivot">Ghammaz pivot</option>
+                  <option value="octave-leap">Octave leap</option>
+                  <option value="expressive-slide">Expressive slide</option>
+                </select>
               </label>
-            ) : <div className="flex items-center text-sm text-muted-foreground">Sight-reading · 8 measures · Level 1</div>}
+            ) : (
+              <div className="flex items-center text-sm text-muted-foreground">
+                Sight-reading · 8 measures · Level 1
+              </div>
+            )}
           </div>
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-            <h3 className="flex items-center gap-2 font-semibold"><HelpCircle className="size-4 text-amber-500" />How To: {metadata.titleEn}</h3>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">{DRILL_HOW_TO[type].map((step) => <li key={step}>{step}</li>)}</ol>
+            <h3 className="flex items-center gap-2 font-semibold">
+              <HelpCircle className="size-4 text-amber-500" />
+              How To: {metadata.titleEn}
+            </h3>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+              {DRILL_HOW_TO[type].map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
           </div>
-          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <div className="flex flex-wrap gap-2"><Button onClick={generate}>Generate exercise</Button>{melody && <Button variant="outline" onClick={() => void playMelody()}><Play data-icon="inline-start" />Play reference</Button>}</div>
-          {melody && <div className="rounded-xl border border-border p-4" aria-live="polite">
-            <h3 className="font-semibold">{melody.title}</h3><p className="mt-1 text-sm text-muted-foreground">{melody.description}</p>
-            <ol className="mt-3 flex flex-wrap gap-2" aria-label="Exercise notes">{melody.notes.map((note, index) => <li key={`${melody.id}-${index}`} className="rounded-md bg-muted px-2 py-1 text-sm"><span className="font-mono">{note.pitch.toScientificString()}</span>{note.positionNumber && <span className="ml-1 text-xs text-muted-foreground">P{note.positionNumber}</span>}</li>)}</ol>
-            {melody.notes.some((note) => note.pedagogicalNote || note.shiftInstruction) && <ul className="mt-3 space-y-1 text-sm text-muted-foreground">{melody.notes.filter((note) => note.pedagogicalNote || note.shiftInstruction).map((note, index) => <li key={`${melody.id}-hint-${index}`}>{note.shiftInstruction || note.pedagogicalNote}</li>)}</ul>}
-          </div>}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={generate}>Generate exercise</Button>
+            {melody && (
+              <Button variant="outline" onClick={() => void playMelody()}>
+                <Play data-icon="inline-start" />
+                Play reference
+              </Button>
+            )}
+          </div>
+          {melody && (
+            <div
+              className="rounded-xl border border-border p-4"
+              aria-live="polite"
+            >
+              <h3 className="font-semibold">{melody.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {melody.description}
+              </p>
+              <ol
+                className="mt-3 flex flex-wrap gap-2"
+                aria-label="Exercise notes"
+              >
+                {melody.notes.map((note, index) => (
+                  <li
+                    key={`${melody.id}-${index}`}
+                    className="rounded-md bg-muted px-2 py-1 text-sm"
+                  >
+                    <span className="font-mono">
+                      {note.pitch.toScientificString()}
+                    </span>
+                    {note.positionNumber && (
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        P{note.positionNumber}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+              {melody.notes.some(
+                (note) => note.pedagogicalNote || note.shiftInstruction
+              ) && (
+                <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+                  {melody.notes
+                    .filter(
+                      (note) => note.pedagogicalNote || note.shiftInstruction
+                    )
+                    .map((note, index) => (
+                      <li key={`${melody.id}-hint-${index}`}>
+                        {note.shiftInstruction || note.pedagogicalNote}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </section>
   )
 }
 
-export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPracticeProps) {
+export function EarnPractice({
+  timbre,
+  maqam,
+  mode = "boundaries",
+}: EarnPracticeProps) {
   const [initialSaved] = useState(loadSavedBoundaries)
-  const [customBoundaries, setCustomBoundaries] = useState(initialSaved.boundaries)
-  const [storageError, setStorageError] = useState<string | null>(initialSaved.error)
+  const [customBoundaries, setCustomBoundaries] = useState(
+    initialSaved.boundaries
+  )
+  const [storageError, setStorageError] = useState<string | null>(
+    initialSaved.error
+  )
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState<PracticeBoundary | null>(null)
   const [draftStep, setDraftStep] = useState(0)
   const [builderError, setBuilderError] = useState<string | null>(null)
-  const [activeBoundary, setActiveBoundary] =
-    useState<PracticeBoundary | null>(null)
+  const [activeBoundary, setActiveBoundary] = useState<PracticeBoundary | null>(
+    null
+  )
   const [activeMethod, setActiveMethod] = useState<PracticeMethod | null>(null)
   const [question, setQuestion] = useState<ListeningQuestion | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
@@ -524,7 +728,9 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
   const [recordingReport, setRecordingReport] =
     useState<RecordingReport | null>(null)
   const [practiceError, setPracticeError] = useState<string | null>(null)
-  const [trainingStats, setTrainingStats] = useState<TrainingStats>(() => TrainingStorage.getStats())
+  const [trainingStats, setTrainingStats] = useState<TrainingStats>(() =>
+    TrainingStorage.getStats()
+  )
 
   const streamRef = useRef<MediaStream | null>(null)
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
@@ -573,8 +779,7 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
       12,
       Math.max(
         0,
-        (performance.now() - (startedAtRef.current ?? performance.now())) /
-          1000
+        (performance.now() - (startedAtRef.current ?? performance.now())) / 1000
       )
     )
     const report = analyzeRecording(recordedPitchesRef.current, duration)
@@ -620,11 +825,10 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
           analyser.getFloatTimeDomainData(buffer)
           const detected = detector.detectPitch(buffer)
           if (detected) {
-            const targetPitchClasses = target.pitches.map((pitch) =>
-              ((pitch.toQuarterToneIndex() % 24) + 24) % 24
+            const targetPitchClasses = target.pitches.map(
+              (pitch) => ((pitch.toQuarterToneIndex() % 24) + 24) % 24
             )
-            const pitchClass =
-              ((detected.quarterToneIndex % 24) + 24) % 24
+            const pitchClass = ((detected.quarterToneIndex % 24) + 24) % 24
             recordedPitchesRef.current.push({
               inTune: detected.inTune,
               centsDeviation: detected.centsDeviation,
@@ -649,17 +853,14 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
 
   useEffect(() => {
     if (countdown === null) return
-    const timer = window.setTimeout(
-      () => {
-        if (countdown <= 1) {
-          setCountdown(null)
-          beginRecording()
-        } else {
-          setCountdown(countdown - 1)
-        }
-      },
-      1000
-    )
+    const timer = window.setTimeout(() => {
+      if (countdown <= 1) {
+        setCountdown(null)
+        beginRecording()
+      } else {
+        setCountdown(countdown - 1)
+      }
+    }, 1000)
     return () => window.clearTimeout(timer)
   }, [beginRecording, countdown])
 
@@ -709,7 +910,12 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
     setEditingId(boundary?.id ?? null)
     setDraft(
       boundary
-        ? { ...boundary, jinsIds: [...boundary.jinsIds], maqamIds: [...boundary.maqamIds], methods: [...boundary.methods] }
+        ? {
+            ...boundary,
+            jinsIds: [...boundary.jinsIds],
+            maqamIds: [...boundary.maqamIds],
+            methods: [...boundary.methods],
+          }
         : {
             id: crypto.randomUUID(),
             name: "",
@@ -836,7 +1042,9 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
   ) => {
     const nextQuestion = createListeningQuestion(boundary, method)
     if (!nextQuestion) {
-      setPracticeError("This practice has no available targets for that method.")
+      setPracticeError(
+        "This practice has no available targets for that method."
+      )
       return
     }
     setActiveBoundary(boundary)
@@ -928,7 +1136,10 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
     if (!selectedAnswer || !question) return
     setAnswerChecked(true)
     const correct = selectedAnswer === question.answerId
-    let updated = TrainingStorage.updateStreak(correct, TrainingStorage.getStats())
+    let updated = TrainingStorage.updateStreak(
+      correct,
+      TrainingStorage.getStats()
+    )
     updated = { ...updated, completedQuizzes: updated.completedQuizzes + 1 }
     TrainingStorage.saveStats(updated)
     if (correct) updated = TrainingStorage.addXp(10, updated)
@@ -1025,7 +1236,9 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
             <div className="flex items-start justify-between gap-3">
               <div>
                 <CardTitle>
-                  {editingId ? "Edit practice boundary" : "Create a practice boundary"}
+                  {editingId
+                    ? "Edit practice boundary"
+                    : "Create a practice boundary"}
                 </CardTitle>
                 <CardDescription>
                   Step {draftStep + 1} of 3 · Name it, choose your material, and
@@ -1105,7 +1318,9 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                               }
                               className="accent-primary"
                             />
-                            <span className="min-w-0 truncate">{jins.name}</span>
+                            <span className="min-w-0 truncate">
+                              {jins.name}
+                            </span>
                             <span className="ms-auto text-xs text-muted-foreground">
                               {jins.sizeLabel}
                             </span>
@@ -1238,7 +1453,9 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
               <div>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Badge variant="amber">{METHOD_DETAILS[activeMethod].title}</Badge>
+                  <Badge variant="amber">
+                    {METHOD_DETAILS[activeMethod].title}
+                  </Badge>
                   <Badge variant="muted">{activeBoundary.name}</Badge>
                 </div>
                 <CardTitle>
@@ -1252,8 +1469,15 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                     : question?.prompt}
                 </CardDescription>
                 <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-                  <h3 className="flex items-center gap-2 text-sm font-semibold"><HelpCircle className="size-4 text-amber-500" />How To: {METHOD_DETAILS[activeMethod].title}</h3>
-                  <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">{METHOD_DETAILS[activeMethod].howTo.map((step) => <li key={step}>{step}</li>)}</ol>
+                  <h3 className="flex items-center gap-2 text-sm font-semibold">
+                    <HelpCircle className="size-4 text-amber-500" />
+                    How To: {METHOD_DETAILS[activeMethod].title}
+                  </h3>
+                  <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+                    {METHOD_DETAILS[activeMethod].howTo.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
                 </div>
               </div>
               <Button variant="outline" onClick={exitPractice}>
@@ -1312,7 +1536,13 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                         }`}
                       >
                         <span className="flex size-6 shrink-0 items-center justify-center rounded-full border text-xs">
-                          {correct ? <Check /> : option.label.match(/^Degree/) ? option.id : ""}
+                          {correct ? (
+                            <Check />
+                          ) : option.label.match(/^Degree/) ? (
+                            option.id
+                          ) : (
+                            ""
+                          )}
                         </span>
                         {option.label}
                       </button>
@@ -1344,10 +1574,7 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                       <ChevronRight data-icon="inline-end" />
                     </Button>
                   ) : (
-                    <Button
-                      disabled={!selectedAnswer}
-                      onClick={submitAnswer}
-                    >
+                    <Button disabled={!selectedAnswer} onClick={submitAnswer}>
                       Check answer
                       <Check data-icon="inline-end" />
                     </Button>
@@ -1372,7 +1599,9 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                     </div>
                     <Button
                       variant="outline"
-                      onClick={() => void playPitches(performanceTarget.pitches)}
+                      onClick={() =>
+                        void playPitches(performanceTarget.pitches)
+                      }
                     >
                       <RotateCcw data-icon="inline-start" />
                       Replay
@@ -1389,7 +1618,7 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                     <span className="text-sm text-muted-foreground">
                       Recording starts in
                     </span>
-                    <span className="text-5xl font-bold tabular-nums text-amber-300">
+                    <span className="text-5xl font-bold text-amber-300 tabular-nums">
                       {countdown}
                     </span>
                   </div>
@@ -1464,7 +1693,9 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                             <p className="mt-1 font-semibold">
                               ±{recordingReport.averageCents}¢
                             </p>
-                            <p className="text-sm">from the nearest 24-EDO pitch</p>
+                            <p className="text-sm">
+                              from the nearest 24-EDO pitch
+                            </p>
                           </div>
                         </div>
                         <div className="rounded-lg border border-border p-3 text-sm">
@@ -1517,10 +1748,7 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
                     </Button>
                   )}
                   {(isRecording || countdown !== null) && (
-                    <Button
-                      variant="destructive"
-                      onClick={checkRecording}
-                    >
+                    <Button variant="destructive" onClick={checkRecording}>
                       <Check data-icon="inline-start" />
                       {countdown !== null ? "Cancel countdown" : "Check"}
                     </Button>
@@ -1534,110 +1762,127 @@ export function EarnPractice({ timbre, maqam, mode = "boundaries" }: EarnPractic
 
       {!draft && !activeBoundary && (
         <>
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm" aria-label="Training progress">
-          <Trophy className="size-4 text-amber-500" /><span>{trainingStats.xp} XP</span><span className="text-muted-foreground">· Level {trainingStats.level}</span><span className="text-muted-foreground">· Current streak {trainingStats.streak}</span><span className="text-muted-foreground">· {trainingStats.completedQuizzes} answers checked</span>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {boundaries.map((boundary) => {
-            const isPreset = boundary.id.startsWith("preset-")
-            const jinsCount = getBoundaryJins(boundary).length
-            const maqamCount = getBoundaryMaqamat(boundary).length
-            const methods = getPracticeMethods(boundary)
-            return (
-              <Card key={boundary.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        {isPreset && <Badge variant="amber">Built-in</Badge>}
-                        <Badge variant="muted">
-                          {jinsCount} ajnas · {maqamCount} maqamat
-                        </Badge>
+          <div
+            className="flex flex-wrap items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm"
+            aria-label="Training progress"
+          >
+            <Trophy className="size-4 text-amber-500" />
+            <span>{trainingStats.xp} XP</span>
+            <span className="text-muted-foreground">
+              · Level {trainingStats.level}
+            </span>
+            <span className="text-muted-foreground">
+              · Current streak {trainingStats.streak}
+            </span>
+            <span className="text-muted-foreground">
+              · {trainingStats.completedQuizzes} answers checked
+            </span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {boundaries.map((boundary) => {
+              const isPreset = boundary.id.startsWith("preset-")
+              const jinsCount = getBoundaryJins(boundary).length
+              const maqamCount = getBoundaryMaqamat(boundary).length
+              const methods = getPracticeMethods(boundary)
+              return (
+                <Card key={boundary.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          {isPreset && <Badge variant="amber">Built-in</Badge>}
+                          <Badge variant="muted">
+                            {jinsCount} ajnas · {maqamCount} maqamat
+                          </Badge>
+                        </div>
+                        <CardTitle>{boundary.name}</CardTitle>
+                        <CardDescription className="mt-2">
+                          {isPreset
+                            ? "A preconfigured collection that cannot be changed or deleted."
+                            : "Your saved practice boundary."}
+                        </CardDescription>
                       </div>
-                      <CardTitle>{boundary.name}</CardTitle>
-                      <CardDescription className="mt-2">
-                        {isPreset
-                          ? "A preconfigured collection that cannot be changed or deleted."
-                          : "Your saved practice boundary."}
-                      </CardDescription>
+                      <div className="flex gap-1">
+                        {!isPreset && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Edit ${boundary.name}`}
+                              title="Edit boundary"
+                              onClick={() => openBuilder(boundary)}
+                            >
+                              <Pencil />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Delete ${boundary.name}`}
+                              title="Delete boundary"
+                              onClick={() => deleteBoundary(boundary)}
+                            >
+                              <Trash2 />
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Export ${boundary.name} as JSON`}
+                          title="Export JSON"
+                          onClick={() => exportBoundary(boundary)}
+                        >
+                          <Download />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-1">
-                      {!isPreset && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Edit ${boundary.name}`}
-                            title="Edit boundary"
-                            onClick={() => openBuilder(boundary)}
-                          >
-                            <Pencil />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`Delete ${boundary.name}`}
-                            title="Delete boundary"
-                            onClick={() => deleteBoundary(boundary)}
-                          >
-                            <Trash2 />
-                          </Button>
-                        </>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Export ${boundary.name} as JSON`}
-                        title="Export JSON"
-                        onClick={() => exportBoundary(boundary)}
-                      >
-                        <Download />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-3">
-                  {methods.length ? (
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3">
+                    {methods.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {methods.map((method) => (
+                          <Badge key={method} variant="muted">
+                            {METHOD_DETAILS[method].title}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Select compatible methods to begin practicing.
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-2">
                       {methods.map((method) => (
-                        <Badge key={method} variant="muted">
-                          {METHOD_DETAILS[method].title}
-                        </Badge>
+                        <Button
+                          key={method}
+                          variant={
+                            method === "play-performance"
+                              ? "outline"
+                              : "default"
+                          }
+                          size="sm"
+                          onClick={() =>
+                            method === "play-performance"
+                              ? startPerformancePractice(boundary)
+                              : startListeningPractice(boundary, method)
+                          }
+                        >
+                          {method === "play-performance" ? (
+                            <Mic data-icon="inline-start" />
+                          ) : (
+                            <Play data-icon="inline-start" />
+                          )}
+                          {method === "play-performance"
+                            ? "Play"
+                            : METHOD_DETAILS[method].title}
+                        </Button>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Select compatible methods to begin practicing.
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    {methods.map((method) => (
-                      <Button
-                        key={method}
-                        variant={method === "play-performance" ? "outline" : "default"}
-                        size="sm"
-                        onClick={() =>
-                          method === "play-performance"
-                            ? startPerformancePractice(boundary)
-                            : startListeningPractice(boundary, method)
-                        }
-                      >
-                        {method === "play-performance" ? (
-                          <Mic data-icon="inline-start" />
-                        ) : (
-                          <Play data-icon="inline-start" />
-                        )}
-                        {method === "play-performance"
-                          ? "Play"
-                          : METHOD_DETAILS[method].title}
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
         </>
       )}
     </section>
