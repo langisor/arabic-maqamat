@@ -144,3 +144,107 @@
     background: rgba(148, 163, 184, 0.45);
   }
 }
+
+@page print-services {
+  size: landscape;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-services-lab,
+  .print-services-lab * {
+    visibility: visible !important;
+  }
+
+  .print-services-lab {
+    page: print-services;
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    gap: 0 !important;
+    color: #111 !important;
+  }
+
+  .print-controls,
+  .screen-only,
+  .print-lab-intro,
+  .print-table-card > footer {
+    display: none !important;
+  }
+
+  .print-table-card {
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .print-table-card > header {
+    display: block !important;
+    border: 0 !important;
+    padding: 0 0 8pt !important;
+  }
+
+  .table-print-title {
+    color: #111 !important;
+    font-size: 16pt !important;
+  }
+
+  .table-print-title + p {
+    color: #333 !important;
+    font-size: 8pt !important;
+  }
+
+  .print-table-wrapper,
+  .print-table-wrapper > div {
+    overflow: visible !important;
+  }
+
+  .print-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    border-collapse: collapse !important;
+    color: #111 !important;
+    font-size: 8pt !important;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #555 !important;
+    padding: 4pt 5pt !important;
+    background: #fff !important;
+    color: #111 !important;
+    white-space: normal !important;
+  }
+
+  .print-table thead th {
+    background: #eee !important;
+  }
+
+  .print-table .print-group-row th {
+    background: #ddd !important;
+    text-align: left !important;
+  }
+
+  .print-table .print-group-row,
+  .print-table .print-data-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

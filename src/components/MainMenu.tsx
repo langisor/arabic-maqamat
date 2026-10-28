@@ -24,6 +24,7 @@ import {
   Globe,
   GitFork,
   Package,
+  Printer,
 } from "lucide-react"
 import { ValidLab } from "../state/workspace-state"
 import { ViolinTuningPreset } from "./ViolinFingerboard"
@@ -141,6 +142,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       title: "Dills",
       arabic: "تمارين المقامات",
       icon: GraduationCap,
+    },
+    {
+      id: "print-services",
+      title: "Print Services Lab",
+      arabic: "مختبر خدمات الطباعة",
+      icon: Printer,
     },
   ]
 

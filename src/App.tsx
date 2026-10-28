@@ -42,6 +42,7 @@ import { EarnPractice } from "./components/EarnPractice"
 import { ThemeToggle } from "./components/ThemeToggle"
 import { PWAInstallButton } from "./components/PWAInstallButton"
 import { SheetMusicInteractiveViewer } from "./components/SheetMusicInteractiveViewer"
+import { PrintServicesLab } from "./components/PrintServicesLab"
 import { Button } from "./components/ui/button"
 import { MusicXMLExporter } from "./score/musicxml-exporter"
 
@@ -58,6 +59,7 @@ import {
   Radio,
   GraduationCap,
   FileMusic,
+  Printer,
 } from "lucide-react"
 
 function StudioContent() {
@@ -286,6 +288,12 @@ function StudioContent() {
       label: "Dills",
       arabic: "تمارين المقامات",
       icon: GraduationCap,
+    },
+    {
+      id: "print-services",
+      label: "Print Services",
+      arabic: "خدمات الطباعة",
+      icon: Printer,
     },
   ]
 
@@ -605,6 +613,7 @@ function StudioContent() {
         )}
 
         {activeLab === "earn-practice" && <EarnPractice timbre={timbre} />}
+        {activeLab === "print-services" && <PrintServicesLab />}
         {activeLab === "dills" && (
           <EarnPractice timbre={timbre} maqam={currentMaqam} mode="drills" />
         )}
