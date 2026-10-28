@@ -384,6 +384,15 @@ export function SVGStaff({
               }
               onMouseLeave={() => onNoteHover?.(null)}
               onClick={() => onNoteClick?.(note.pitch)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  onNoteClick?.(note.pitch)
+                }
+              }}
+              role={onNoteClick ? "button" : undefined}
+              tabIndex={onNoteClick ? 0 : undefined}
+              aria-label={onNoteClick ? `Play ${note.pitch.toString()}` : undefined}
               style={{ cursor: onNoteClick ? "pointer" : "default" }}
             >
               {/* Ledger lines are drawn before the notehead so the note remains legible. */}

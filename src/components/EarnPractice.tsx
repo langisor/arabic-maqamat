@@ -36,6 +36,7 @@ import {
   TrainingStorage,
   type TrainingStats,
 } from "../theory/training-progress"
+import { SVGStaff } from "./SVGStaff"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import {
@@ -474,8 +475,20 @@ function PracticeDrillsLab({
   const [stats, setStats] = useState<TrainingStats>(() =>
     TrainingStorage.getStats()
   )
+  const [activeSoundingPitch, setActiveSoundingPitch] =
+    useState<ArabicPitch | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const noteHighlightTimeoutRef = useRef<number | null>(null)
   const metadata = DRILL_TYPES_CATALOGUE.find((item) => item.id === type)!
+
+  useEffect(
+    () => () => {
+      if (noteHighlightTimeoutRef.current !== null) {
+        window.clearTimeout(noteHighlightTimeoutRef.current)
+      }
+    },
+    []
+  )
 
   const generate = () => {
     try {
@@ -531,13 +544,45 @@ function PracticeDrillsLab({
     }
   }
 
+  const playNote = async (pitch: ArabicPitch) => {
+    if (!melody) return
+    try {
+      await MicrotonalAudioEngine.startAudioContext()
+      const noteDuration = Math.round(60_000 / melody.tempoBpm)
+      MicrotonalAudioEngine.playSequence(
+        [pitch],
+        noteDuration,
+        timbre,
+        undefined,
+        undefined,
+        undefined,
+        "practice-drills"
+      )
+      setActiveSoundingPitch(pitch)
+      setError(null)
+      if (noteHighlightTimeoutRef.current !== null) {
+        window.clearTimeout(noteHighlightTimeoutRef.current)
+      }
+      noteHighlightTimeoutRef.current = window.setTimeout(() => {
+        setActiveSoundingPitch(null)
+        noteHighlightTimeoutRef.current = null
+      }, noteDuration)
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? `Audio could not start: ${cause.message}`
+          : "Audio could not start."
+      )
+    }
+  }
+
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:flex-row sm:items-center">
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
             <GraduationCap className="size-5 text-amber-400" />
-            Dills
+            Drills
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">
             Generate focused maqam exercises, follow each How To guide, and
@@ -653,6 +698,24 @@ function PracticeDrillsLab({
               <p className="mt-1 text-sm text-muted-foreground">
                 {melody.description}
               </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Select a note on the staff to hear it.
+              </p>
+              <SVGStaff
+                notes={melody.notes.map((note) => ({
+                  pitch: note.pitch,
+                  isTonic: note.pitch.equals(maqam.getTonic()),
+                  arabicName: note.pitch.toDisplayString(),
+                  roleLabel: note.positionNumber
+                    ? `P${note.positionNumber}`
+                    : note.isShiftPoint
+                      ? "Shift"
+                      : undefined,
+                }))}
+                title="Generated exercise staff"
+                onNoteClick={(pitch) => void playNote(pitch)}
+                activeSoundingPitch={activeSoundingPitch}
+              />
               <ol
                 className="mt-3 flex flex-wrap gap-2"
                 aria-label="Exercise notes"
