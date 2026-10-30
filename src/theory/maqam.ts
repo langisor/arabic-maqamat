@@ -70,16 +70,16 @@ const AJNAS_BAYATI: JinsDefWithDirection[] = [
   },
 ]
 
-// const AJNAS_MUHAYYAR: JinsDefWithDirection[] = [
-//   { definition: AjnasLibrary.BAYATI, connection: "Ittisal", direction: "asc" },
-//   { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
-//   {
-//     definition: AjnasLibrary.NAHAWAND,
-//     connection: "Ittisal",
-//     direction: "desc",
-//   },
-//   { definition: AjnasLibrary.BAYATI, connection: "Infisal", direction: "desc" },
-// ]
+const AJNAS_MUHAYYAR: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.BAYATI, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+  { definition: AjnasLibrary.BAYATI, connection: "Infisal", direction: "desc" },
+]
 
 const AJNAS_HIJAZ: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
@@ -326,6 +326,14 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     verified: true,
   },
   {
+    id: "muhayyar",
+    name: "Muhayyar",
+    family: "Bayati",
+    templateId: "muhayyar",
+    sourceSlug: "bayati",
+    ajnas: AJNAS_MUHAYYAR,
+  },
+  {
     id: "bayati-shuri",
     name: "Bayati Shuri",
     family: "Bayati",
@@ -336,7 +344,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
   {
     id: "dalanshin",
     name: "Dalanshin",
-    family: "Bayati",
+    family: "Rast",
     templateId: "dalanshin",
     sourceSlug: "dalanshin",
     ajnas: AJNAS_BAYATI,
@@ -680,6 +688,7 @@ export interface MaqamScaleStructure {
   readonly sourceSlug?: string
   readonly verified?: boolean
   readonly description: string
+  
 }
 
 export class Maqam {
@@ -1527,6 +1536,32 @@ export class MaqamatCatalogue {
   /**
    * Constructs Maqam Muhayyar (Bayati family, octave-emphasized)
    */
+  public static buildMuhayyar(): Maqam {
+    const lower = new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 4))
+    const upper = new Jins(AjnasLibrary.RAST, new ArabicPitch("G", "♮", 4))
+
+    return new Maqam({
+      id: "muhayyar",
+      name: "Muhayyar",
+      arabicName: "مقام محير",
+      family: "Bayati",
+      lowerJins: lower,
+      connection: "Ittisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      alternateUpperAjnas: [
+        {
+          jins: new Jins(AjnasLibrary.BAYATI, new ArabicPitch("D", "♮", 5)),
+          role: "descent_only",
+          description: "Jins Bayati emphasized on the Muhayyar octave D5.",
+        },
+      ],
+      sayrDirection: "descending_octave_first",
+      network: this.buildBayati().network,
+      description:
+        "An octave-first version of Maqam Bayati. It uses Jins Rast on the fourth degree (G4) for ascent, emphasizes Jins Bayati on the octave (D5), then descends through the Bayati ajnas: D5–C5–B𝄳4–A4–G4–F4–E𝄳4–D4.",
+    })
+  }
 
   /**
    * Constructs Maqam Hijaz
@@ -2856,11 +2891,11 @@ export class MaqamatCatalogue {
         this.buildKirdan(),
         this.buildMahur(),
         this.buildBayati(),
+        this.buildMuhayyar(),
         this.buildBayatiShuri(),
         this.buildDalanshin(),
         this.buildNairuz(),
         this.buildYakah(),
-        // this.buildMuhayyar(),
         this.buildHijaz(),
         this.buildHijazkar(),
         this.buildNahawand(),

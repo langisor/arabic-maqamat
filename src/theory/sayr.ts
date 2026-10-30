@@ -317,27 +317,16 @@ export class SayrEngine {
         return {
           maqamId: 'muhayyar',
           name: 'Traditional Sayr of Maqam Muhayyar',
-          description: 'A descending octave-first sayr (سير هابط). Starts directly at the upper octave (Muhayyar D5), explores Nahawand on G4, then cascades through the D4-based lower Nahawand scale to the Qarar.',
+          description: 'An octave-first Bayati sayr (سير محير). Jins Rast on the fourth degree (G4) supports ascent to and emphasis on Jins Bayati at the Muhayyar octave (D5), followed by the characteristic descent: D5–C5–B𝄳4–A4–G4–F4–E𝄳4–D4.',
           steps: [
-            { phase: '1_EstablishTonic', phaseLabel: '1. Establish Octave Register', pitch: new ArabicPitch('D', '♮', 5), noteName: 'Muhayyar', durationBeats: 3, annotation: 'Opening firmly on high octave apex (Muhayyar D5)' },
-            { phase: '1_EstablishTonic', phaseLabel: '1. Establish Octave Register', pitch: new ArabicPitch('C', '♮', 5), noteName: 'Kirdan', durationBeats: 1.5, annotation: 'Stepwise lower neighbor' },
-            { phase: '1_EstablishTonic', phaseLabel: '1. Establish Octave Register', pitch: new ArabicPitch('D', '♮', 5), noteName: 'Muhayyar', durationBeats: 2, annotation: 'Reasserting Muhayyar octave prominence' },
-            { phase: '2_AscendToGhammaz', phaseLabel: '2. Upper Nahawand Branch', pitch: new ArabicPitch('B', '♭', 4), noteName: 'Ajam', durationBeats: 2, annotation: 'Entering Nahawand on G4 with B♭4' },
-            { phase: '2_AscendToGhammaz', phaseLabel: '2. Upper Jins Rast Branch', pitch: new ArabicPitch('A', '♮', 4), noteName: 'Husayni', durationBeats: 1.5, annotation: 'Stepwise glide through Husayni' },
-            { phase: '2_AscendToGhammaz', phaseLabel: '2. Upper Nahawand Branch', pitch: new ArabicPitch('G', '♮', 4), noteName: 'Nawa', durationBeats: 3, annotation: 'Arrival at Ghammaz pivot (Nawa G4)' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('A', '♮', 4), noteName: 'Husayni', durationBeats: 1.5, annotation: 'Ascending turn' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('B', '♭', 4), noteName: 'Ajam', durationBeats: 1.5, annotation: 'B♭4 coloration in upper Nahawand' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('C', '♮', 5), noteName: 'Kirdan', durationBeats: 2, annotation: 'Approaching octave peak' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('D', '♮', 5), noteName: 'Muhayyar', durationBeats: 2.5, annotation: 'Climactic high point' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('C', '♮', 5), noteName: 'Kirdan', durationBeats: 1, annotation: 'Turning toward main descent' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('B', '♭', 4), noteName: 'Ajam', durationBeats: 1.5, annotation: 'Transitioning to Bayati descent with B♭4' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('A', '♮', 4), noteName: 'Husayni', durationBeats: 1.5, annotation: 'Downward scalar movement' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Register Exploration', pitch: new ArabicPitch('G', '♮', 4), noteName: 'Nawa', durationBeats: 2, annotation: 'Resting on Ghammaz G4' },
-            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('F', '♮', 4), noteName: 'Jiharkah', durationBeats: 2, annotation: 'Entering lower Jins Bayati' },
-            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('E', '♭', 4), noteName: 'Nahawand', durationBeats: 2, annotation: 'Characteristic minor 2nd descent' },
-            { phase: '5_Qafla', phaseLabel: '5. Cadential Qafla', pitch: new ArabicPitch('F', '♮', 4), noteName: 'Jiharkah', durationBeats: 1, annotation: 'Cadential breath' },
-            { phase: '5_Qafla', phaseLabel: '5. Cadential Qafla', pitch: new ArabicPitch('E', '♭', 4), noteName: 'Nahawand', durationBeats: 1.5, annotation: 'Leading downward step' },
-            { phase: '5_Qafla', phaseLabel: '5. Cadential Qafla', pitch: new ArabicPitch('D', '♮', 4), noteName: 'Dukah', durationBeats: 4, annotation: 'Final resolute resolution on Qarar Dukah (D4)' }
+            { phase: '1_EstablishTonic', phaseLabel: '1. Establish Muhayyar Octave', pitch: new ArabicPitch('D', '♮', 5), noteName: 'Muhayyar', durationBeats: 3, annotation: 'Open on and emphasize the octave tonic (D5)' },
+            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '2. Octave Descent', pitch: new ArabicPitch('C', '♮', 5), noteName: 'Kirdan', durationBeats: 1.5, annotation: 'Descend from the Bayati octave' },
+            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '2. Octave Descent', pitch: new ArabicPitch('B', '𝄳', 4), noteName: 'Awj', durationBeats: 1.5, annotation: 'Rast color below Kirdan' },
+            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '2. Octave Descent', pitch: new ArabicPitch('A', '♮', 4), noteName: 'Husayni', durationBeats: 1.5, annotation: 'Continue the stepwise descent' },
+            { phase: '4_DescentReturn', phaseLabel: '3. Return through Bayati', pitch: new ArabicPitch('G', '♮', 4), noteName: 'Nawa', durationBeats: 2, annotation: 'Fourth-degree pivot and Rast jins root' },
+            { phase: '4_DescentReturn', phaseLabel: '3. Return through Bayati', pitch: new ArabicPitch('F', '♮', 4), noteName: 'Jiharkah', durationBeats: 1.5, annotation: 'Enter the lower Bayati jins' },
+            { phase: '5_Qafla', phaseLabel: '4. Cadential Qafla', pitch: new ArabicPitch('E', '𝄳', 4), noteName: 'Sikah', durationBeats: 1.5, annotation: 'Characteristic Bayati half-flat second' },
+            { phase: '5_Qafla', phaseLabel: '4. Cadential Qafla', pitch: new ArabicPitch('D', '♮', 4), noteName: 'Dukah', durationBeats: 4, annotation: 'Resolve to the Bayati tonic (D4)' }
           ]
         };
 
