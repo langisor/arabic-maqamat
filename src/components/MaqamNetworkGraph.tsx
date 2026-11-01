@@ -1,6 +1,11 @@
 // src/components/MaqamNetworkGraph.tsx
 import React, { useState, useMemo } from "react"
-import { Maqam, ModulationNode, NetworkPathway } from "../theory/maqam"
+import {
+  Maqam,
+  MaqamatCatalogue,
+  ModulationNode,
+  NetworkPathway,
+} from "../theory/maqam"
 import { formatPitchWithLargeAccidentalReact } from "../core/pitch-styling"
 import { AjnasLibrary, Jins } from "../theory/jins"
 import { MicrotonalAudioEngine, TimbreType } from "../audio/microtonal-audio"
@@ -100,6 +105,41 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
     () => activeJins?.getBaggageNotes() ?? [],
     [activeJins]
   )
+
+  const pathIdentification = useMemo(() => {
+    if (!activeNode || !activeJins) return null
+
+    const matchedMaqam =
+      activeNode.scaleDegree === 1 || activeNode.scaleDegree === 8
+        ? maqam
+        : MaqamatCatalogue.getAll().find(
+            (candidate) =>
+              candidate.getTonic().equals(maqam.getTonic()) &&
+              candidate.lowerJins.definition.id ===
+                maqam.lowerJins.definition.id &&
+              candidate.upperJins.definition.id === activeJins.definition.id &&
+              candidate.upperJins.root.equals(activeNode.root)
+          )
+
+    const pitches = matchedMaqam
+      ? matchedMaqam.getScale()
+      : [
+          ...maqam.lowerJins.getPitches(),
+          ...activeJins.getPitches(),
+          ...maqam.extraPitches,
+        ]
+          .sort((a, b) => a.toQuarterToneIndex() - b.toQuarterToneIndex())
+          .filter(
+            (pitch, index, all) =>
+              all.findIndex((candidate) => candidate.equals(pitch)) === index
+          )
+
+    return {
+      name: matchedMaqam?.name ?? `${maqam.name} · ${activeNode.jinsName}`,
+      isCatalogueMatch: Boolean(matchedMaqam),
+      pitches,
+    }
+  }, [activeNode, activeJins, maqam])
 
   // Audio Playback
   const handlePlayNodeJins = (
@@ -709,6 +749,49 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                 </span>
               </div>
             </div>
+
+            {pathIdentification && (
+              <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 md:col-span-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">
+                      Path Maqam Detection
+                    </span>
+                    <h4 className="mt-1 text-base font-bold text-white">
+                      {pathIdentification.name}
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Based on selected path: {maqam.name} →{" "}
+                      {activeNode.jinsName}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={
+                      pathIdentification.isCatalogueMatch
+                        ? "border-emerald-500/50 text-emerald-300"
+                        : "border-sky-500/50 text-sky-300"
+                    }
+                  >
+                    {pathIdentification.isCatalogueMatch
+                      ? "Catalogue match"
+                      : "Pathway estimate"}
+                  </Badge>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {pathIdentification.pitches.map((pitch, index) => (
+                    <span
+                      key={`${pitch.toQuarterToneIndex()}-${index}`}
+                      className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 font-mono text-sm text-slate-100"
+                    >
+                      {formatPitchWithLargeAccidentalReact(pitch, {
+                        size: "large",
+                      })}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
