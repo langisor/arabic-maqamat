@@ -1,5 +1,6 @@
 // src/components/MaqamNetworkGraph.tsx
 import React, { useState, useMemo } from "react"
+import { ArabicPitch } from "../core/pitch"
 import {
   Maqam,
   MaqamatCatalogue,
@@ -35,6 +36,42 @@ interface MaqamNetworkGraphProps {
   className?: string
 }
 
+interface SavedNetworkPath {
+  id: string
+  maqamName: string
+  pathName: string
+  pitches: { quarterToneIndex: number; label: string }[]
+}
+
+const SAVED_NETWORK_PATHS_KEY = "maqam-network-saved-paths-v1"
+
+const loadSavedNetworkPaths = (): SavedNetworkPath[] => {
+  try {
+    const raw = localStorage.getItem(SAVED_NETWORK_PATHS_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (item): item is SavedNetworkPath =>
+        typeof item?.id === "string" &&
+        typeof item?.maqamName === "string" &&
+        typeof item?.pathName === "string" &&
+        Array.isArray(item?.pitches) &&
+        item.pitches.every(
+          (pitch: unknown) =>
+            typeof pitch === "object" &&
+            pitch !== null &&
+            typeof (pitch as SavedNetworkPath["pitches"][number])
+              .quarterToneIndex === "number" &&
+            typeof (pitch as SavedNetworkPath["pitches"][number]).label ===
+              "string"
+        )
+    )
+  } catch {
+    return []
+  }
+}
+
 export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
   maqam,
   timbre = "violin",
@@ -45,7 +82,13 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
   const [frequencyFilter, setFrequencyFilter] = useState<
     "all" | "common" | "uncommon" | "rare"
   >("all")
-  const [, setActivePlayingId] = useState<string | null>(null)
+  const [activePlayingId, setActivePlayingId] = useState<string | null>(null)
+  const [savedPaths, setSavedPaths] = useState<SavedNetworkPath[]>(
+    loadSavedNetworkPaths
+  )
+  const [isNamingPath, setIsNamingPath] = useState(false)
+  const [pathNameDraft, setPathNameDraft] = useState("")
+  const [storageError, setStorageError] = useState<string | null>(null)
 
   const network = maqam.network
 
@@ -140,6 +183,48 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
       pitches,
     }
   }, [activeNode, activeJins, maqam])
+
+  const playPitchSeries = (pitches: ArabicPitch[], playbackId: string) => {
+    if (activePlayingId) return
+    setActivePlayingId(playbackId)
+    MicrotonalAudioEngine.playSequence(
+      pitches,
+      450,
+      timbre,
+      undefined,
+      () => setActivePlayingId(null),
+      undefined,
+      playbackId
+    )
+  }
+
+  const saveNamedPath = () => {
+    const name = pathNameDraft.trim()
+    if (!name || !pathIdentification) return
+
+    const savedPath: SavedNetworkPath = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      maqamName: maqam.name,
+      pathName: name,
+      pitches: pathIdentification.pitches.map((pitch) => ({
+        quarterToneIndex: pitch.toQuarterToneIndex(),
+        label: pitch.toDisplayString(),
+      })),
+    }
+    const updatedPaths = [savedPath, ...savedPaths]
+    setSavedPaths(updatedPaths)
+    try {
+      localStorage.setItem(
+        SAVED_NETWORK_PATHS_KEY,
+        JSON.stringify(updatedPaths)
+      )
+      setStorageError(null)
+      setIsNamingPath(false)
+      setPathNameDraft("")
+    } catch {
+      setStorageError("Could not save this path in browser storage.")
+    }
+  }
 
   // Audio Playback
   const handlePlayNodeJins = (
@@ -765,19 +850,93 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                       {activeNode.jinsName}
                     </p>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={
-                      pathIdentification.isCatalogueMatch
-                        ? "border-emerald-500/50 text-emerald-300"
-                        : "border-sky-500/50 text-sky-300"
-                    }
-                  >
-                    {pathIdentification.isCatalogueMatch
-                      ? "Catalogue match"
-                      : "Pathway estimate"}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={
+                        pathIdentification.isCatalogueMatch
+                          ? "border-emerald-500/50 text-emerald-300"
+                          : "border-sky-500/50 text-sky-300"
+                      }
+                    >
+                      {pathIdentification.isCatalogueMatch
+                        ? "Catalogue match"
+                        : "Pathway estimate"}
+                    </Badge>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={Boolean(activePlayingId)}
+                      onClick={() =>
+                        playPitchSeries(
+                          pathIdentification.pitches,
+                          "detected-path"
+                        )
+                      }
+                      className="h-8 gap-1.5 border-emerald-500/40 px-2.5 text-xs text-emerald-300"
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                      Play Path
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPathNameDraft(pathIdentification.name)
+                        setIsNamingPath(true)
+                      }}
+                      className="h-8 px-2.5 text-xs text-amber-300"
+                    >
+                      Name it
+                    </Button>
+                  </div>
                 </div>
+                {isNamingPath && (
+                  <form
+                    className="mt-3 flex flex-wrap items-center gap-2"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      saveNamedPath()
+                    }}
+                  >
+                    <label className="sr-only" htmlFor="saved-path-name">
+                      Name this pitch series
+                    </label>
+                    <input
+                      id="saved-path-name"
+                      autoFocus
+                      value={pathNameDraft}
+                      onChange={(event) => setPathNameDraft(event.target.value)}
+                      placeholder="Name this path or maqam"
+                      maxLength={60}
+                      className="h-9 min-w-48 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-amber-500"
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={!pathNameDraft.trim()}
+                      className="h-9"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9"
+                      onClick={() => setIsNamingPath(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </form>
+                )}
+                {storageError && (
+                  <p role="alert" className="mt-2 text-xs text-rose-300">
+                    {storageError}
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {pathIdentification.pitches.map((pitch, index) => (
                     <span
@@ -790,6 +949,53 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                     </span>
                   ))}
                 </div>
+                {savedPaths.length > 0 && (
+                  <div className="mt-4 border-t border-slate-800 pt-3">
+                    <p className="mb-2 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                      Saved paths
+                    </p>
+                    <div className="space-y-2">
+                      {savedPaths.map((savedPath) => (
+                        <div
+                          key={savedPath.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-white">
+                              {savedPath.pathName}
+                            </p>
+                            <p className="truncate text-xs text-slate-400">
+                              {savedPath.maqamName} ·{" "}
+                              {savedPath.pitches
+                                .map((pitch) => pitch.label)
+                                .join(" · ")}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={Boolean(activePlayingId)}
+                            onClick={() =>
+                              playPitchSeries(
+                                savedPath.pitches.map((pitch) =>
+                                  ArabicPitch.fromQuarterToneIndex(
+                                    pitch.quarterToneIndex
+                                  )
+                                ),
+                                `saved-path-${savedPath.id}`
+                              )
+                            }
+                            className="h-8 shrink-0 gap-1.5 text-xs text-emerald-300"
+                          >
+                            <Play className="h-3.5 w-3.5 fill-current" />
+                            Play
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
