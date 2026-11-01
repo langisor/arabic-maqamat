@@ -196,7 +196,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
       <CardHeader className="border-b border-slate-800/80 pb-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <div className="mb-1 flex items-center gap-2">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
               <span className="text-[11px] font-bold tracking-widest text-amber-400 uppercase">
                 Maqam as Graph &amp; Small-World Network
               </span>
@@ -219,7 +219,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
           </div>
 
           {/* Frequency Filter Pills */}
-          <div className="flex items-center gap-1.5 self-start rounded-xl border border-slate-800 bg-slate-950 p-1 text-xs sm:self-auto">
+          <div className="flex flex-wrap items-center gap-1.5 self-start rounded-xl border border-slate-800 bg-slate-950 p-1 text-xs sm:self-auto">
             <span className="px-2 text-[11px] font-medium text-slate-400">
               Filter:
             </span>
@@ -243,217 +243,228 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
 
       <CardContent className="space-y-6 pt-6">
         {/* Network Diagram Viewport */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-inner">
-          <svg
-            viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-            className="h-auto max-h-95 w-full select-none"
+        <div className="rounded-2xl border border-slate-800 bg-slate-950 p-3 shadow-inner sm:p-4">
+          <div
+            className="touch-pan-x scrollbar-thin overflow-x-auto overflow-y-hidden rounded-xl"
+            role="region"
+            aria-label={`${maqam.name} network graph; scroll horizontally to view the full diagram`}
+            tabIndex={0}
           >
-            <defs>
-              {/* Arrowhead markers */}
-              <marker
-                id="arrow-common"
-                viewBox="0 0 10 10"
-                refX="22"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
-              </marker>
-              <marker
-                id="arrow-uncommon"
-                viewBox="0 0 10 10"
-                refX="22"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
-              </marker>
-              <marker
-                id="arrow-rare"
-                viewBox="0 0 10 10"
-                refX="22"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b" />
-              </marker>
-
-              {/* Radial glow for selected node */}
-              <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-
-            {/* Background ambient network lines */}
-            <circle
-              cx={CENTER_X}
-              cy={CENTER_Y}
-              r={RADIUS_Y}
-              fill="none"
-              stroke="rgba(255,255,255,0.03)"
-              strokeWidth="1"
-              strokeDasharray="4 4"
-            />
-            <ellipse
-              cx={CENTER_X}
-              cy={CENTER_Y}
-              rx={RADIUS_X}
-              ry={RADIUS_Y}
-              fill="none"
-              stroke="rgba(245,158,11,0.05)"
-              strokeWidth="1.5"
-            />
-
-            {/* Pathways / Edges */}
-            {network.pathways.map((path, idx) => {
-              const fromPos = nodePositions.get(path.fromDegree)
-              const toPos = nodePositions.get(path.toDegree)
-              if (!fromPos || !toPos) return null
-
-              const isPathActive =
-                activeNode &&
-                (activeNode.scaleDegree === path.fromDegree ||
-                  activeNode.scaleDegree === path.toDegree)
-
-              const strokeColor =
-                path.frequency === "common"
-                  ? "#10b981"
-                  : path.frequency === "uncommon"
-                    ? "#38bdf8"
-                    : "#f59e0b"
-
-              const strokeWidth = isPathActive ? 2.5 : 1.2
-              const opacity = isPathActive ? 0.9 : 0.35
-              const marker = `url(#arrow-${path.frequency})`
-
-              return (
-                <g key={`path-${idx}`}>
-                  <line
-                    x1={fromPos.x}
-                    y1={fromPos.y}
-                    x2={toPos.x}
-                    y2={toPos.y}
-                    stroke={strokeColor}
-                    strokeWidth={strokeWidth}
-                    strokeOpacity={opacity}
-                    strokeDasharray={
-                      path.technique === "Infisal" ? "5 3" : "none"
-                    }
-                    markerEnd={marker}
-                    className="transition-all duration-200"
-                  />
-                </g>
-              )
-            })}
-
-            {/* Nodes */}
-            {filteredNodes.map((node) => {
-              const pos = nodePositions.get(node.scaleDegree)
-              if (!pos) return null
-
-              const isSelected = activeNode?.scaleDegree === node.scaleDegree
-              const isRoot = node.scaleDegree === 1
-              const isGhammaz = node.root.equals(maqam.getGhammaz())
-              return (
-                <g
-                  key={`node-${node.jinsId}-${node.scaleDegree}`}
-                  transform={`translate(${pos.x}, ${pos.y})`}
-                  onClick={() => {
-                    setSelectedNodeDegree(node.scaleDegree)
-                    onSelectNode?.(node)
-                  }}
-                  className="group cursor-pointer"
+            <svg
+              viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+              className="block h-auto max-h-95 w-full min-w-[560px] select-none sm:min-w-0"
+            >
+              <defs>
+                {/* Arrowhead markers */}
+                <marker
+                  id="arrow-common"
+                  viewBox="0 0 10 10"
+                  refX="22"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto-start-reverse"
                 >
-                  {/* Glow circle for active/selected */}
-                  {isSelected && (
-                    <circle
-                      r="36"
-                      fill="url(#nodeGlow)"
-                      className="animate-pulse"
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
+                </marker>
+                <marker
+                  id="arrow-uncommon"
+                  viewBox="0 0 10 10"
+                  refX="22"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+                </marker>
+                <marker
+                  id="arrow-rare"
+                  viewBox="0 0 10 10"
+                  refX="22"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b" />
+                </marker>
+
+                {/* Radial glow for selected node */}
+                <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* Background ambient network lines */}
+              <circle
+                cx={CENTER_X}
+                cy={CENTER_Y}
+                r={RADIUS_Y}
+                fill="none"
+                stroke="rgba(255,255,255,0.03)"
+                strokeWidth="1"
+                strokeDasharray="4 4"
+              />
+              <ellipse
+                cx={CENTER_X}
+                cy={CENTER_Y}
+                rx={RADIUS_X}
+                ry={RADIUS_Y}
+                fill="none"
+                stroke="rgba(245,158,11,0.05)"
+                strokeWidth="1.5"
+              />
+
+              {/* Pathways / Edges */}
+              {network.pathways.map((path, idx) => {
+                const fromPos = nodePositions.get(path.fromDegree)
+                const toPos = nodePositions.get(path.toDegree)
+                if (!fromPos || !toPos) return null
+
+                const isPathActive =
+                  activeNode &&
+                  (activeNode.scaleDegree === path.fromDegree ||
+                    activeNode.scaleDegree === path.toDegree)
+
+                const strokeColor =
+                  path.frequency === "common"
+                    ? "#10b981"
+                    : path.frequency === "uncommon"
+                      ? "#38bdf8"
+                      : "#f59e0b"
+
+                const strokeWidth = isPathActive ? 2.5 : 1.2
+                const opacity = isPathActive ? 0.9 : 0.35
+                const marker = `url(#arrow-${path.frequency})`
+
+                return (
+                  <g key={`path-${idx}`}>
+                    <line
+                      x1={fromPos.x}
+                      y1={fromPos.y}
+                      x2={toPos.x}
+                      y2={toPos.y}
+                      stroke={strokeColor}
+                      strokeWidth={strokeWidth}
+                      strokeOpacity={opacity}
+                      strokeDasharray={
+                        path.technique === "Infisal" ? "5 3" : "none"
+                      }
+                      markerEnd={marker}
+                      className="transition-all duration-200"
                     />
-                  )}
+                  </g>
+                )
+              })}
 
-                  {/* Outer circle */}
-                  <circle
-                    r={isSelected ? 26 : 22}
-                    fill={
-                      isSelected
-                        ? "#f59e0b"
-                        : isRoot
-                          ? "#059669"
-                          : isGhammaz
-                            ? "#0284c7"
-                            : "#1e293b"
-                    }
-                    stroke={
-                      isSelected
-                        ? "#fef08a"
-                        : isRoot
-                          ? "#34d399"
-                          : isGhammaz
-                            ? "#38bdf8"
-                            : "#475569"
-                    }
-                    strokeWidth={isSelected ? 3 : 2}
-                    className="transition-all duration-200 group-hover:scale-110"
-                  />
+              {/* Nodes */}
+              {filteredNodes.map((node) => {
+                const pos = nodePositions.get(node.scaleDegree)
+                if (!pos) return null
 
-                  {/* Scale Degree Number */}
-                  <text
-                    x="0"
-                    y="-9"
-                    textAnchor="middle"
-                    fill={
-                      isSelected || isRoot || isGhammaz ? "#0f172a" : "#f8fafc"
-                    }
-                    fontSize="10"
-                    fontWeight="bold"
-                    fontFamily="monospace"
+                const isSelected = activeNode?.scaleDegree === node.scaleDegree
+                const isRoot = node.scaleDegree === 1
+                const isGhammaz = node.root.equals(maqam.getGhammaz())
+                return (
+                  <g
+                    key={`node-${node.jinsId}-${node.scaleDegree}`}
+                    transform={`translate(${pos.x}, ${pos.y})`}
+                    onClick={() => {
+                      setSelectedNodeDegree(node.scaleDegree)
+                      onSelectNode?.(node)
+                    }}
+                    className="group cursor-pointer"
                   >
-                    Deg {node.scaleDegree}
-                  </text>
+                    {/* Glow circle for active/selected */}
+                    {isSelected && (
+                      <circle
+                        r="36"
+                        fill="url(#nodeGlow)"
+                        className="animate-pulse"
+                      />
+                    )}
 
-                  {/* Note Name */}
-                  <text
-                    x="0"
-                    y="6"
-                    textAnchor="middle"
-                    fill={
-                      isSelected || isRoot || isGhammaz ? "#0f172a" : "#cbd5e1"
-                    }
-                    fontSize="9"
-                    fontWeight="black"
-                    fontFamily="monospace"
-                  >
-                    {node.root.toScientificString()}
-                  </text>
+                    {/* Outer circle */}
+                    <circle
+                      r={isSelected ? 26 : 22}
+                      fill={
+                        isSelected
+                          ? "#f59e0b"
+                          : isRoot
+                            ? "#059669"
+                            : isGhammaz
+                              ? "#0284c7"
+                              : "#1e293b"
+                      }
+                      stroke={
+                        isSelected
+                          ? "#fef08a"
+                          : isRoot
+                            ? "#34d399"
+                            : isGhammaz
+                              ? "#38bdf8"
+                              : "#475569"
+                      }
+                      strokeWidth={isSelected ? 3 : 2}
+                      className="transition-all duration-200 group-hover:scale-110"
+                    />
 
-                  {/* Label under node */}
-                  <text
-                    x="0"
-                    y={isSelected ? 44 : 40}
-                    textAnchor="middle"
-                    fill={isSelected ? "#f59e0b" : "#94a3b8"}
-                    fontSize="9"
-                    fontWeight="semibold"
-                    className="select-none"
-                  >
-                    {node.jinsName}
-                  </text>
-                </g>
-              )
-            })}
-          </svg>
+                    {/* Scale Degree Number */}
+                    <text
+                      x="0"
+                      y="-9"
+                      textAnchor="middle"
+                      fill={
+                        isSelected || isRoot || isGhammaz
+                          ? "#0f172a"
+                          : "#f8fafc"
+                      }
+                      fontSize="10"
+                      fontWeight="bold"
+                      fontFamily="monospace"
+                    >
+                      Deg {node.scaleDegree}
+                    </text>
 
-          {/* Graph Legend Overlay */}
-          <div className="absolute bottom-3 left-3 flex flex-wrap gap-x-4 gap-y-1 rounded-xl border border-slate-800 bg-slate-900/90 p-2.5 text-[11px] text-slate-300 backdrop-blur-xs">
+                    {/* Note Name */}
+                    <text
+                      x="0"
+                      y="6"
+                      textAnchor="middle"
+                      fill={
+                        isSelected || isRoot || isGhammaz
+                          ? "#0f172a"
+                          : "#cbd5e1"
+                      }
+                      fontSize="9"
+                      fontWeight="black"
+                      fontFamily="monospace"
+                    >
+                      {node.root.toScientificString()}
+                    </text>
+
+                    {/* Label under node */}
+                    <text
+                      x="0"
+                      y={isSelected ? 44 : 40}
+                      textAnchor="middle"
+                      fill={isSelected ? "#f59e0b" : "#94a3b8"}
+                      fontSize="9"
+                      fontWeight="semibold"
+                      className="select-none"
+                    >
+                      {node.jinsName}
+                    </text>
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
+
+          {/* Graph legend remains visible below the horizontally scrollable diagram. */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 rounded-xl border border-slate-800 bg-slate-900/90 p-2.5 text-[11px] text-slate-300">
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
               <span>Degree 1 (Root Qarar)</span>
