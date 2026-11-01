@@ -36,7 +36,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
   onSelectNode,
   className = "",
 }) => {
-  const [selectedNodeDegree, setSelectedNodeDegree] = useState<number>(1)
+  const [selectedNodeKey, setSelectedNodeKey] = useState<string | null>(null)
   const [frequencyFilter, setFrequencyFilter] = useState<
     "all" | "common" | "uncommon" | "rare"
   >("all")
@@ -55,10 +55,11 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
   const activeNode = useMemo(() => {
     if (filteredNodes.length === 0) return null
     return (
-      filteredNodes.find((n) => n.scaleDegree === selectedNodeDegree) ||
-      filteredNodes[0]
+      filteredNodes.find(
+        (n) => `${n.jinsId}:${n.scaleDegree}` === selectedNodeKey
+      ) || filteredNodes[0]
     )
-  }, [filteredNodes, selectedNodeDegree])
+  }, [filteredNodes, selectedNodeKey])
 
   // Outgoing and incoming pathways for active node
   const nodePathways = useMemo(() => {
@@ -71,6 +72,15 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
     )
     return { outgoing, incoming }
   }, [network, activeNode])
+
+  const activePathDegrees = useMemo(() => {
+    if (!activeNode) return new Set<number>()
+    return new Set([
+      activeNode.scaleDegree,
+      ...nodePathways.outgoing.map((path) => path.toDegree),
+      ...nodePathways.incoming.map((path) => path.fromDegree),
+    ])
+  }, [activeNode, nodePathways])
 
   // Resolve jins definition and baggage notes for active node
   const activeJinsDef = useMemo(() => {
@@ -149,27 +159,44 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
   const RADIUS_Y = 135
 
   // Node positions mapped in an ellipse or hub-and-spoke layout
-  const nodePositions = useMemo(() => {
-    if (filteredNodes.length === 0) return new Map()
-    const map = new Map<
-      number,
+  const { nodePositions, degreePositions } = useMemo(() => {
+    if (filteredNodes.length === 0) {
+      return {
+        nodePositions: new Map(),
+        degreePositions: new Map(),
+      }
+    }
+    const positions = new Map<
+      string,
       { x: number; y: number; node: ModulationNode }
     >()
-    const total = filteredNodes.length
+    const degreeAnchors = new Map<number, { x: number; y: number }>()
+    const degrees = [
+      ...new Set(filteredNodes.map((node) => node.scaleDegree)),
+    ].sort((a, b) => a - b)
 
-    // Sort nodes by scale degree
-    const sorted = [...filteredNodes].sort(
-      (a, b) => a.scaleDegree - b.scaleDegree
-    )
-
-    sorted.forEach((node, idx) => {
-      // Scale degree 1 at bottom-center or left
-      const angle = (idx / total) * 2 * Math.PI - Math.PI / 2
+    degrees.forEach((degree, idx) => {
+      const angle = (idx / degrees.length) * 2 * Math.PI - Math.PI / 2
       const x = CENTER_X + RADIUS_X * Math.cos(angle)
       const y = CENTER_Y + RADIUS_Y * Math.sin(angle)
-      map.set(node.scaleDegree, { x, y, node })
+
+      const group = filteredNodes.filter((node) => node.scaleDegree === degree)
+      const fanOut = group.length >= 4
+      degreeAnchors.set(degree, { x, y: y - (fanOut ? 50 : 0) })
+      group.forEach((node, nodeIndex) => {
+        // Give alternate ajnas at the same scale degree their own visible slot.
+        const spread = fanOut
+          ? ((nodeIndex % 3) - 1) * 140
+          : (nodeIndex - (group.length - 1) / 2) * 110
+        const rowOffset = fanOut && nodeIndex >= 3 ? 50 : 0
+        positions.set(`${node.jinsId}:${node.scaleDegree}`, {
+          x: x + (group.length > 1 ? spread : 0),
+          y: y - (fanOut ? 50 : 0) + rowOffset,
+          node,
+        })
+      })
     })
-    return map
+    return { nodePositions: positions, degreePositions: degreeAnchors }
   }, [filteredNodes, CENTER_X, CENTER_Y])
 
   if (!network || network.nodes.length === 0) {
@@ -319,8 +346,8 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
 
               {/* Pathways / Edges */}
               {network.pathways.map((path, idx) => {
-                const fromPos = nodePositions.get(path.fromDegree)
-                const toPos = nodePositions.get(path.toDegree)
+                const fromPos = degreePositions.get(path.fromDegree)
+                const toPos = degreePositions.get(path.toDegree)
                 if (!fromPos || !toPos) return null
 
                 const isPathActive =
@@ -361,10 +388,14 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
 
               {/* Nodes */}
               {filteredNodes.map((node) => {
-                const pos = nodePositions.get(node.scaleDegree)
+                const nodeKey = `${node.jinsId}:${node.scaleDegree}`
+                const pos = nodePositions.get(nodeKey)
                 if (!pos) return null
 
-                const isSelected = activeNode?.scaleDegree === node.scaleDegree
+                const isSelected =
+                  activeNode?.jinsId === node.jinsId &&
+                  activeNode.scaleDegree === node.scaleDegree
+                const isOnActivePath = activePathDegrees.has(node.scaleDegree)
                 const isRoot = node.scaleDegree === 1
                 const isGhammaz = node.root.equals(maqam.getGhammaz())
                 return (
@@ -372,7 +403,7 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                     key={`node-${node.jinsId}-${node.scaleDegree}`}
                     transform={`translate(${pos.x}, ${pos.y})`}
                     onClick={() => {
-                      setSelectedNodeDegree(node.scaleDegree)
+                      setSelectedNodeKey(nodeKey)
                       onSelectNode?.(node)
                     }}
                     className="group cursor-pointer"
@@ -396,18 +427,24 @@ export const MaqamNetworkGraph: React.FC<MaqamNetworkGraphProps> = ({
                             ? "#059669"
                             : isGhammaz
                               ? "#0284c7"
-                              : "#1e293b"
+                              : node.frequency === "rare"
+                                ? "#78350f"
+                                : node.frequency === "uncommon"
+                                  ? "#164e63"
+                                  : "#1e293b"
                       }
                       stroke={
                         isSelected
                           ? "#fef08a"
                           : isRoot
                             ? "#34d399"
-                            : isGhammaz
-                              ? "#38bdf8"
-                              : "#475569"
+                            : isOnActivePath
+                              ? "#34d399"
+                              : isGhammaz
+                                ? "#38bdf8"
+                                : "#475569"
                       }
-                      strokeWidth={isSelected ? 3 : 2}
+                      strokeWidth={isSelected ? 3 : isOnActivePath ? 2.5 : 2}
                       className="transition-all duration-200 group-hover:scale-110"
                     />
 
