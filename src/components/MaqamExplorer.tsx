@@ -48,6 +48,7 @@ import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { MaqamNetworkGraph } from "./MaqamNetworkGraph"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
 import { SVGStaff } from "./SVGStaff"
+import { removeNaturalMarks } from "@/lib/utils"
 
 interface Props {
   currentMaqam: Maqam
@@ -922,7 +923,7 @@ export const MaqamExplorer: React.FC<Props> = ({
                         </div>
                         <div className="mt-2 flex items-center justify-between border-t border-slate-900 pt-2 text-[11px]">
                           <span className="font-mono font-semibold text-amber-300">
-                            Target: {item.noteName}
+                            Target: {removeNaturalMarks(item.noteName)}
                           </span>
                           <span className="font-mono text-[10px] text-slate-400">
                             {stepDeltaQt === 0

@@ -3,6 +3,7 @@ import { MaqamatCatalogue, type Maqam } from "../theory/maqam"
 import type { AudioTransportStatus } from "../audio/audio-transport"
 import type { ValidLab } from "../state/workspace-state"
 import { useLanguage } from "../state/language"
+import { removeNaturalMarks } from "../lib/utils"
 
 interface Props {
   maqam: Maqam
@@ -154,7 +155,7 @@ export function SessionBar({
           <div className="col-span-2 sm:col-span-1 min-w-0">
             <dt className="text-[10px] text-muted-foreground">{t("scale")}</dt>
             <dd className="truncate font-mono font-semibold" title={scale}>
-              {scale}
+              Hide Natural: {removeNaturalMarks(scale)}
             </dd>
           </div>
         </dl>

@@ -34,6 +34,7 @@ import {
 import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { useLanguage } from "../state/language"
+import { removeNaturalMarks } from "@/lib/utils"
 
 interface Props {
   currentMaqam: Maqam
@@ -198,7 +199,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
     <div className="space-y-6">
       {/* 5-Phase Sayr Architecture */}
       <Card className="border-slate-800 bg-slate-900/90 shadow-xl">
-        <CardHeader className="border-border/60 border-b pb-5">
+        <CardHeader className="border-b border-border/60 pb-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -306,7 +307,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
 
           {/* Step-by-Step Melodic Sequence */}
           <div>
-            <div className="text-muted-foreground mb-3 flex items-center justify-between text-xs">
+            <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
               <span>{t("clickNodeToPlay")}</span>
               <span>
                 {t("totalSteps")}: {sayrData.steps.length}
@@ -328,7 +329,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
                       #{idx + 1}
                     </span>
                     <span className="my-0.5 font-mono text-sm font-bold">
-                      {step.pitch.toScientificString()}
+                      {removeNaturalMarks(step.pitch.toScientificString())}
                     </span>
                     <span className="font-serif text-[10px] opacity-90">
                       {step.noteName}
@@ -346,7 +347,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
                     <span className="text-xs font-bold text-amber-400">
                       {sayrData.steps[activeStepIndex].phaseLabel}
                     </span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-xs text-muted-foreground">
                       · Note: {sayrData.steps[activeStepIndex].noteName} (
                       {sayrData.steps[
                         activeStepIndex
@@ -369,7 +370,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
 
       {/* Interactive Qafla (Cadence) Validator */}
       <Card className="border-slate-800 bg-slate-900/90 shadow-xl">
-        <CardHeader className="border-border/60 border-b pb-3">
+        <CardHeader className="border-b border-border/60 pb-3">
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-amber-400" />
             <CardTitle className="text-lg">{t("qaflaEngine")}</CardTitle>
@@ -380,7 +381,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-xs font-medium">
+            <span className="text-xs font-medium text-muted-foreground">
               {t("tryPresets")}:
             </span>
             <Button
@@ -409,7 +410,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/80 p-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-xs font-semibold">
+                <span className="text-xs font-semibold text-muted-foreground">
                   {t("currentCadenceSequence")}:
                 </span>
                 <div className="flex items-center gap-1.5 font-mono text-base font-bold">
@@ -454,7 +455,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
 
       {/* Modulation Engine: Three-Tier Categories (Abu Shumays) */}
       <Card className="border-slate-800 bg-slate-900/90 shadow-xl">
-        <CardHeader className="border-border/60 flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader className="flex flex-col gap-3 border-b border-border/60 pb-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <RefreshCw className="h-5 w-5 text-amber-400" />
@@ -483,7 +484,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-4 rounded-xl border border-slate-800 bg-slate-950/70 p-4">
               <div>
-                <label className="text-muted-foreground mb-1 block text-xs font-semibold">
+                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
                   {t("targetModulationMaqam")}:
                 </label>
                 <select
@@ -499,7 +500,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
                 </select>
               </div>
               <div>
-                <div className="text-muted-foreground mb-2 flex items-center justify-between text-xs">
+                <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
                   <span>Passage Duration (Length of Excursion):</span>
                   <Badge variant="secondary" className="font-mono text-xs">
                     {measureDuration} {t("measures")}
@@ -532,7 +533,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
             <div className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950/70 p-4">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                  <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     Classification Tier
                   </span>
                   <Badge
@@ -561,7 +562,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
                   {modulationAnalysis.description}
                 </p>
               </div>
-              <div className="text-muted-foreground mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-[11px]">
+              <div className="mt-3 flex items-center justify-between border-t border-slate-900 pt-3 text-[11px] text-muted-foreground">
                 <span>Family Relationship:</span>
                 <span
                   className={`font-semibold ${modulationAnalysis.isSameFamily ? "text-emerald-400" : "text-amber-400"}`}
@@ -578,7 +579,7 @@ export const SayrQaflaLab: React.FC<Props> = ({
 
       {/* Modal Terminology Guide Card */}
       <Card className="border-slate-800 bg-slate-900/90 shadow-xl">
-        <CardHeader className="border-border/60 border-b pb-3">
+        <CardHeader className="border-b border-border/60 pb-3">
           <div className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-amber-400" />
             <CardTitle className="text-lg">{t("termsGlossary")}</CardTitle>
