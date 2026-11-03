@@ -34,7 +34,6 @@ import {
 import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
 import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { useLanguage } from "../state/language"
-import { removeNaturalMarks } from "@/lib/utils"
 
 interface Props {
   currentMaqam: Maqam
@@ -329,7 +328,8 @@ export const SayrQaflaLab: React.FC<Props> = ({
                       #{idx + 1}
                     </span>
                     <span className="my-0.5 font-mono text-sm font-bold">
-                      {removeNaturalMarks(step.pitch.toScientificString())}
+                      {/* {removeNaturalMarks(step.pitch.toScientificString())} */}
+                      {step.pitch.toDisplayString()}
                     </span>
                     <span className="font-serif text-[10px] opacity-90">
                       {step.noteName}
