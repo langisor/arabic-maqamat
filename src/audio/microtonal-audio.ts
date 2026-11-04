@@ -39,6 +39,7 @@ export class MicrotonalAudioEngine {
     { timbre: TimbreType; frequencies: number[] }
   >()
   private static droneSession: TransportSession | null = null
+  private static nextNoteSessionId = 1
 
   /**
    * Initializes Tone.js audio graph with professional Arabic acoustic modeling.
@@ -148,16 +149,23 @@ export class MicrotonalAudioEngine {
     if (!this.isInitialized) {
       this.initAudio()
     }
-    return AudioOutput.start().then(() => {
+    return AudioOutput.start()
+  }
+
+  public static async prepareTimbre(timbre: TimbreType): Promise<void> {
+    await this.startAudioContext()
+    if (timbre === "oud") {
       if (!this.oudSamplerReady) {
         throw new Error("Oud sampler was not initialized.")
       }
-      return this.oudSamplerReady
-    })
+      await this.oudSamplerReady
+    }
   }
 
   private static requestAudioContext(): void {
-    void this.startAudioContext().catch(() => {})
+    void this.startAudioContext().catch((error: unknown) => {
+      AudioTransport.reportPlaybackError(error)
+    })
   }
 
   /**
@@ -211,22 +219,32 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = "violin",
     velocity: number = 0.7
   ): void {
-    this.requestAudioContext()
     const octaveAdjustedPitch = timbre === "oud" ? pitch.transpose(-24) : pitch
     const freq = octaveAdjustedPitch.toFrequency(this.referenceA4)
-    const now = Tone.now()
-
-    try {
+    const scope = `microtonal-note-${this.nextNoteSessionId++}`
+    const session = AudioTransport.startSession(scope, "Note")
+    session.onCancel(() => {
+      const instrument = timbre === "oud" ? this.oudSampler : this.violinSynth
+      instrument?.triggerRelease(freq, Tone.now())
+    })
+    void this.prepareTimbre(timbre).then(() => {
+      if (!session.isActive()) return
+      AudioTransport.clearPlaybackError()
       this.triggerFrequency(
         freq,
         durationSeconds,
         timbre,
         this.scaleVelocity(timbre, velocity),
-        now
+        Tone.now()
       )
-    } catch {
-      // In case Tone context was interrupted
-    }
+      session.setTimeout(
+        () => session.finish(),
+        Math.max(0, durationSeconds) * 1000 + (timbre === "oud" ? 350 : 220)
+      )
+    }).catch((error: unknown) => {
+      AudioTransport.reportPlaybackError(error)
+      session.finish()
+    })
   }
 
   /**
@@ -238,20 +256,31 @@ export class MicrotonalAudioEngine {
     timbre: TimbreType = "violin",
     velocity: number = 0.7
   ): void {
-    this.requestAudioContext()
-    const now = Tone.now()
-    try {
-      const octaveAdjustedFrequency = timbre === "oud" ? freq / 2 : freq
+    const octaveAdjustedFrequency = timbre === "oud" ? freq / 2 : freq
+    const scope = `microtonal-note-${this.nextNoteSessionId++}`
+    const session = AudioTransport.startSession(scope, "Note")
+    session.onCancel(() => {
+      const instrument = timbre === "oud" ? this.oudSampler : this.violinSynth
+      instrument?.triggerRelease(octaveAdjustedFrequency, Tone.now())
+    })
+    void this.prepareTimbre(timbre).then(() => {
+      if (!session.isActive()) return
+      AudioTransport.clearPlaybackError()
       this.triggerFrequency(
         octaveAdjustedFrequency,
         durationSeconds,
         timbre,
         velocity,
-        now
+        Tone.now()
       )
-    } catch {
-      // Fallback safe
-    }
+      session.setTimeout(
+        () => session.finish(),
+        Math.max(0, durationSeconds) * 1000 + (timbre === "oud" ? 350 : 220)
+      )
+    }).catch((error: unknown) => {
+      AudioTransport.reportPlaybackError(error)
+      session.finish()
+    })
   }
 
   private static triggerFrequency(
@@ -289,7 +318,6 @@ export class MicrotonalAudioEngine {
     scope: string = "microtonal-sequence"
   ): void {
     this.stopSequence(scope)
-    this.requestAudioContext()
 
     if (pitches.length === 0) {
       if (onComplete) onComplete()
@@ -307,41 +335,20 @@ export class MicrotonalAudioEngine {
       }
     })
 
-    const startTime = audioTime ?? Tone.now()
     const intervalSeconds = intervalMs / 1000
-
-    pitches.forEach((pitch, index) => {
-      const stepTime = startTime + index * intervalSeconds
-      Tone.getDraw().schedule(() => {
-        if (!session.isActive()) return
-        const octaveAdjustedPitch =
-          timbre === "oud" ? pitch.transpose(-24) : pitch
-
-        const frequency = octaveAdjustedPitch.toFrequency(this.referenceA4)
-        console.log(`Pitch: ${pitch.toString()}, Freq: ${frequency}`)
-        voices.frequencies.push(frequency)
-        this.triggerFrequency(
-          frequency,
-          intervalSeconds * 0.92,
-          timbre,
-          this.scaleVelocity(timbre, 0.75),
-          Tone.now()
-        )
-        if (onStepChange) onStepChange(index)
-      }, stepTime)
-    })
-
-    Tone.getDraw().schedule(
-      () => {
-        if (!session.isActive()) return
-        if (onStepChange) onStepChange(-1)
-        if (onComplete) onComplete()
-        if (this.sequenceVoices.get(scope) === voices) {
-          this.sequenceVoices.delete(scope)
-        }
-        session.finish()
-      },
-      startTime + pitches.length * intervalSeconds
+    this.scheduleSequence(
+      pitches.map((pitch) => ({
+        pitch,
+        durationSeconds: intervalSeconds * 0.92,
+      })),
+      pitches.map((_, index) => index * intervalSeconds),
+      intervalSeconds * pitches.length,
+      timbre,
+      onStepChange,
+      onComplete,
+      audioTime,
+      session,
+      voices
     )
   }
 
@@ -359,7 +366,6 @@ export class MicrotonalAudioEngine {
     scope: string = "microtonal-sequence"
   ): void {
     this.stopSequence(scope)
-    this.requestAudioContext()
 
     if (notes.length === 0) {
       if (onComplete) onComplete()
@@ -377,40 +383,114 @@ export class MicrotonalAudioEngine {
       }
     })
 
-    const startTime = audioTime ?? Tone.now()
     const secondsPerQuarter = 60 / tempoBpm
     let accumulatedSeconds = 0
-
-    notes.forEach((note, index) => {
-      const stepTime = startTime + accumulatedSeconds
-      const noteDurationSec = Math.max(
+    const stepOffsets: number[] = []
+    const sequenceNotes = notes.map((note) => {
+      stepOffsets.push(accumulatedSeconds)
+      const durationSeconds = Math.max(
         0.08,
         note.durationQuarter * secondsPerQuarter
       )
-      Tone.getDraw().schedule(() => {
-        if (!session.isActive()) return
-        voices.frequencies.push(note.pitch.toFrequency(this.referenceA4))
-        this.triggerFrequency(
-          note.pitch.toFrequency(this.referenceA4),
-          noteDurationSec * 0.92,
-          timbre,
-          this.scaleVelocity(timbre, 0.75),
-          Tone.now()
-        )
-        if (onStepChange) onStepChange(index)
-      }, stepTime)
-      accumulatedSeconds += noteDurationSec
+      accumulatedSeconds += durationSeconds
+      return { pitch: note.pitch, durationSeconds: durationSeconds * 0.92 }
     })
+    this.scheduleSequence(
+      sequenceNotes,
+      stepOffsets,
+      accumulatedSeconds,
+      timbre,
+      onStepChange,
+      onComplete,
+      audioTime,
+      session,
+      voices
+    )
+  }
 
-    Tone.getDraw().schedule(() => {
+  private static scheduleSequence(
+    notes: { pitch: ArabicPitch; durationSeconds: number }[],
+    stepOffsets: number[],
+    totalDuration: number,
+    timbre: TimbreType,
+    onStepChange: ((index: number) => void) | undefined,
+    onComplete: (() => void) | undefined,
+    requestedAudioTime: number | undefined,
+    session: TransportSession,
+    voices: { timbre: TimbreType; frequencies: number[] }
+  ): void {
+    void this.prepareTimbre(timbre).then(() => {
       if (!session.isActive()) return
-      if (onStepChange) onStepChange(-1)
-      if (onComplete) onComplete()
-      if (this.sequenceVoices.get(scope) === voices) {
-        this.releaseSequenceVoices(voices)
-      }
+      AudioTransport.clearPlaybackError()
+
+      const startTime = Math.max(
+        requestedAudioTime ?? Tone.now() + 0.05,
+        Tone.now() + 0.05
+      )
+      let nextNote = 0
+      const scheduleInterval = session.setInterval(() => {
+        const lookaheadLimit = Tone.now() + 0.1
+        while (
+          nextNote < notes.length &&
+          startTime + stepOffsets[nextNote] < lookaheadLimit
+        ) {
+          const index = nextNote++
+          const { pitch, durationSeconds } = notes[index]
+          const octaveAdjustedPitch =
+            timbre === "oud" ? pitch.transpose(-24) : pitch
+          const frequency = octaveAdjustedPitch.toFrequency(this.referenceA4)
+          const stepTime = startTime + stepOffsets[index]
+          voices.frequencies.push(frequency)
+          this.triggerFrequency(
+            frequency,
+            durationSeconds,
+            timbre,
+            this.scaleVelocity(timbre, 0.75),
+            stepTime
+          )
+          try {
+            Tone.getDraw().schedule(() => {
+              if (session.isActive()) onStepChange?.(index)
+            }, stepTime)
+          } catch (error: unknown) {
+            AudioTransport.reportPlaybackError(error)
+            onStepChange?.(index)
+          }
+        }
+
+        if (nextNote === notes.length) {
+          globalThis.clearInterval(scheduleInterval)
+          const completeSequence = () => {
+            if (!session.isActive()) return
+            onStepChange?.(-1)
+            onComplete?.()
+            if (this.sequenceVoices.get(session.scope) === voices) {
+              this.sequenceVoices.delete(session.scope)
+            }
+            session.finish()
+          }
+          try {
+            Tone.getDraw().schedule(completeSequence, startTime + totalDuration)
+          } catch (error: unknown) {
+            AudioTransport.reportPlaybackError(error)
+            session.setTimeout(
+              completeSequence,
+              Math.max(0, (startTime + totalDuration - Tone.now()) * 1000)
+            )
+          }
+          session.setTimeout(
+            () => session.finish(),
+            Math.max(0, (startTime + totalDuration - Tone.now()) * 1000) + 100
+          )
+        }
+      }, 25)
+      AudioTransport.clearPlaybackError()
+    }).catch((error: unknown) => {
+      AudioTransport.reportPlaybackError(error)
+      onStepChange?.(-1)
+      onComplete?.()
       session.finish()
-    }, startTime + accumulatedSeconds)
+    })
   }
 
   /**
@@ -428,7 +508,6 @@ export class MicrotonalAudioEngine {
    * Continuous background drone (Qarar / Tanpura) on the Maqam root note.
    */
   public static toggleDrone(pitch: ArabicPitch, enable: boolean): void {
-    this.requestAudioContext()
     if (!enable) {
       const session = this.droneSession
       if (!session?.isActive()) return
@@ -448,7 +527,14 @@ export class MicrotonalAudioEngine {
       this.disposeDrone()
       if (this.droneSession === session) this.droneSession = null
     })
-    this.startDrone(pitch)
+    void this.startAudioContext().then(() => {
+      if (!session.isActive()) return
+      AudioTransport.clearPlaybackError()
+      this.startDrone(pitch)
+    }).catch((error: unknown) => {
+      AudioTransport.reportPlaybackError(error)
+      session.finish()
+    })
   }
 
   private static startDrone(pitch: ArabicPitch): void {

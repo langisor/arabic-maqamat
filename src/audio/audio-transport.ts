@@ -8,6 +8,7 @@ export interface AudioTransportStatus {
   audioContextReady: boolean;
   audioStarting: boolean;
   audioStartupError: string | null;
+  audioPlaybackError: string | null;
   activeSessions: TransportSessionStatus[];
 }
 
@@ -38,12 +39,14 @@ export class AudioTransport {
   private static audioContextReady = false;
   private static audioStartup: Promise<void> | null = null;
   private static audioStartupError: string | null = null;
+  private static audioPlaybackError: string | null = null;
 
   public static getStatus(): AudioTransportStatus {
     return {
       audioContextReady: this.audioContextReady,
       audioStarting: this.audioStartup !== null,
       audioStartupError: this.audioStartupError,
+      audioPlaybackError: this.audioPlaybackError,
       activeSessions: Array.from(this.sessions.values(), ({ scope, activity }) => ({
         scope,
         activity,
@@ -179,6 +182,17 @@ export class AudioTransport {
   public static registerGlobalStopHandler(handler: () => void): () => void {
     this.globalStopHandlers.add(handler);
     return () => this.globalStopHandlers.delete(handler);
+  }
+
+  public static reportPlaybackError(error: unknown): void {
+    this.audioPlaybackError = error instanceof Error ? error.message : String(error);
+    this.publish();
+  }
+
+  public static clearPlaybackError(): void {
+    if (this.audioPlaybackError === null) return;
+    this.audioPlaybackError = null;
+    this.publish();
   }
 
   private static finishSession(record: SessionRecord): void {

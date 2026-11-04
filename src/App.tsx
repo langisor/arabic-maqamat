@@ -151,6 +151,9 @@ function StudioContent() {
   useEffect(() => {
     const unsubscribe = AudioTransport.subscribe((status) => {
       setTransportStatus(status)
+      setIsDroneActive(
+        status.activeSessions.some(({ scope }) => scope === "drone")
+      )
     })
     return () => unsubscribe()
   }, [])

@@ -166,7 +166,7 @@ When changing stored schemas, validate untrusted data, keep storage versions exp
 
 ## Audio and transport
 
-`MicrotonalAudioEngine` in `src/audio/microtonal-audio.ts` owns the Tone.js instruments, DSP chain, drone, and sequence playback. The Oud sampler repitches the MP3 recordings in `public/samples/oud/` to support the full 24-EDO pitch range. `MetronomeAudioEngine` owns metronome scheduling. Audio contexts may begin suspended until the user interacts with the page.
+`MicrotonalAudioEngine` in `src/audio/microtonal-audio.ts` owns the Tone.js instruments, DSP chain, drone, and sequence playback. Audio-context startup is independent of the Oud sampler; Oud playback waits for its samples while synthesized timbres remain available. Sequences schedule notes against the audio clock and use `Tone.Draw` only for UI synchronization. The Oud sampler repitches the MP3 recordings in `public/samples/oud/` to support the full 24-EDO pitch range. `MetronomeAudioEngine` owns metronome scheduling. Audio contexts may begin suspended until the user interacts with the page.
 
 `AudioTransport` is the shared owner of named sessions and their timers/cancellation callbacks. Use unique, descriptive scopes for playback features. Finish a session when playback completes; stop its scope when playback is interrupted; register cancellation cleanup for resources such as MediaRecorder or microphone tracks. Avoid independent timers that can outlive a lab or continue after a maqam change.
 

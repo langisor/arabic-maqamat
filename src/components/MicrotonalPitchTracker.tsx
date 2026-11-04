@@ -4,6 +4,7 @@ import { ArabicPitch } from '../core/pitch';
 import { getPitchThemeClasses } from '../core/pitch-styling';
 import { Maqam } from '../theory/maqam';
 import { MicrotonalAudioEngine, type TimbreType } from '../audio/microtonal-audio';
+import { AudioTransport } from '../audio/audio-transport';
 import {
   MicrotonalPitchDetector,
   type PitchDetectionResult,
@@ -61,6 +62,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const detectorRef = useRef<MicrotonalPitchDetector | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,6 +104,14 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
     detectorRef.current?.setInTuneCentsTolerance(tuningToleranceCents);
   }, [tuningToleranceCents]);
 
+  useEffect(() => {
+    return AudioTransport.subscribe((status) => {
+      if (!status.activeSessions.some(({ scope }) => scope === 'drone')) {
+        setDronePlaying(false);
+      }
+    });
+  }, []);
+
   const stopMicrophone = useCallback(() => {
     if (animationFrameRef.current !== null) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -115,6 +125,10 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
+    sourceNodeRef.current?.disconnect();
+    sourceNodeRef.current = null;
+    analyserRef.current?.disconnect();
+    analyserRef.current = null;
     if (dronePitchRef.current) {
       MicrotonalAudioEngine.toggleDrone(dronePitchRef.current, false);
       dronePitchRef.current = null;
@@ -161,6 +175,7 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
       analyserNode.fftSize = 2048;
       analyserNode.smoothingTimeConstant = 0.1;
       sourceNode.connect(analyserNode);
+      sourceNodeRef.current = sourceNode;
       analyserRef.current = analyserNode;
 
       setIsListening(true);
@@ -181,6 +196,10 @@ export const MicrotonalPitchTracker: React.FC<Props> = ({
     let lastTime = 0;
 
     const loop = (currentTime: number) => {
+      if (lastTime !== 0 && currentTime - lastTime < 1000 / 30) {
+        animationFrameRef.current = requestAnimationFrame(loop);
+        return;
+      }
       if (lastTime === 0) {
         lastTime = currentTime;
       }

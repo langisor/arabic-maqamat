@@ -35,6 +35,8 @@ export class MicrotonalPitchDetector {
   private readonly bufferSize: number;
   private readonly minPeriod: number;
   private readonly maxPeriod: number;
+  private readonly nsdf: Float32Array;
+  private readonly energyPrefix: Float64Array;
   private referenceA4: number;
   private clarityThreshold: number;
   private volumeThresholdRms: number;
@@ -57,6 +59,8 @@ export class MicrotonalPitchDetector {
     // Detect frequencies between 75 Hz (around D2) and 1400 Hz (around F6)
     this.minPeriod = Math.floor(sampleRate / 1400);
     this.maxPeriod = Math.ceil(sampleRate / 75);
+    this.nsdf = new Float32Array(this.maxPeriod);
+    this.energyPrefix = new Float64Array(bufferSize + 1);
   }
 
   public setReferenceA4(hz: number): void {
@@ -102,23 +106,34 @@ export class MicrotonalPitchDetector {
     }
 
     // 2. Normalized Square Difference Function (NSDF / YIN-style autocorrelation)
-    const nsdf = new Float32Array(this.maxPeriod);
-    for (let tau = 0; tau < this.maxPeriod; tau++) {
+    const analysisSize = Math.min(buffer.length, this.bufferSize);
+    const maxPeriod = Math.min(this.maxPeriod, analysisSize - 1);
+    if (maxPeriod <= this.minPeriod) return null;
+
+    this.energyPrefix[0] = 0;
+    for (let i = 0; i < analysisSize; i++) {
+      this.energyPrefix[i + 1] =
+        this.energyPrefix[i] + buffer[i] * buffer[i];
+    }
+
+    const nsdf = this.nsdf;
+    for (let tau = 0; tau < maxPeriod; tau++) {
       let acf = 0;
-      let divisor = 0;
-      for (let i = 0; i < this.bufferSize - tau; i++) {
+      for (let i = 0; i < analysisSize - tau; i++) {
         acf += buffer[i] * buffer[i + tau];
-        divisor += buffer[i] * buffer[i] + buffer[i + tau] * buffer[i + tau];
       }
+      const divisor =
+        this.energyPrefix[analysisSize - tau] +
+        this.energyPrefix[analysisSize] -
+        this.energyPrefix[tau];
       nsdf[tau] = divisor > 0 ? (2 * acf) / divisor : 0;
     }
 
     // 3. Peak Picking with Parabolic Interpolation (MPM Algorithm)
-    const peaks: { tau: number; val: number }[] = [];
     let globalMax = 0;
     let passedZeroCross = false;
 
-    for (let tau = this.minPeriod; tau < this.maxPeriod - 1; tau++) {
+    for (let tau = this.minPeriod; tau < maxPeriod - 1; tau++) {
       if (!passedZeroCross) {
         if (nsdf[tau] < 0) {
           passedZeroCross = true;
@@ -127,22 +142,36 @@ export class MicrotonalPitchDetector {
       }
 
       if (nsdf[tau] > nsdf[tau - 1] && nsdf[tau] >= nsdf[tau + 1] && nsdf[tau] > 0) {
-        peaks.push({ tau, val: nsdf[tau] });
         if (nsdf[tau] > globalMax) {
           globalMax = nsdf[tau];
         }
       }
     }
 
-    if (peaks.length === 0 || globalMax < this.clarityThreshold) {
+    if (globalMax < this.clarityThreshold) {
       return null;
     }
 
     // Select the first peak that achieves at least 80% of globalMax (prevents octave errors)
     const thresholdCutoff = Math.max(this.clarityThreshold, globalMax * 0.8);
-    const chosenPeak = peaks.find((p) => p.val >= thresholdCutoff) ?? peaks[0];
-    const bestPeriod = chosenPeak.tau;
-    const maxCorrelation = chosenPeak.val;
+    let bestPeriod = -1;
+    passedZeroCross = false;
+    for (let tau = this.minPeriod; tau < maxPeriod - 1; tau++) {
+      if (!passedZeroCross) {
+        if (nsdf[tau] < 0) passedZeroCross = true;
+        continue;
+      }
+      if (
+        nsdf[tau] > nsdf[tau - 1] &&
+        nsdf[tau] >= nsdf[tau + 1] &&
+        nsdf[tau] >= thresholdCutoff
+      ) {
+        bestPeriod = tau;
+        break;
+      }
+    }
+    if (bestPeriod < 0) return null;
+    const maxCorrelation = nsdf[bestPeriod];
 
     // Refine period using parabolic interpolation around the peak
     const y1 = nsdf[bestPeriod - 1];

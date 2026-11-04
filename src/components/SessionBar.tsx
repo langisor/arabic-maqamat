@@ -182,6 +182,7 @@ export function SessionBar({
             className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground"
             role="status"
             aria-live="polite"
+            title={transportStatus.audioPlaybackError ?? undefined}
           >
             <Radio
               className={`h-3.5 w-3.5 ${isDroneActive ? "text-amber-500" : ""}`}
@@ -189,13 +190,20 @@ export function SessionBar({
             />
             {isDroneActive ? t("droneOn") : t("drone")}
             <span aria-hidden="true">·</span>
-            {transportStatus.audioStarting
+            {transportStatus.audioPlaybackError
+              ? t("audioPlaybackFailed")
+              : transportStatus.audioStarting
               ? t("audioStarting")
               : transportStatus.activeSessions.length > 0
                 ? `${t("audioActive")}: ${transportStatus.activeSessions.length}`
                 : transportStatus.audioContextReady
                   ? t("audioReady")
                   : t("audioIdle")}
+            {transportStatus.audioPlaybackError && (
+              <span className="sr-only">
+                : {transportStatus.audioPlaybackError}
+              </span>
+            )}
           </span>
           <label className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground">
             <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
