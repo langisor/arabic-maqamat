@@ -499,15 +499,15 @@ export class SayrEngine {
         return {
           maqamId: 'ajam-ushayran',
           name: 'Descending Sayr of Maqam ‘Ajam ‘Ushayran',
-          description: 'A descending octave-first sayr from B♭4 through Nahawand and Kurd colors before resolving through ‘Ajam to B♭3.',
+          description: 'A descending sayr that begins on Nahawand at the sixth degree (G4), moves through Kurd on the third degree (D4), and resolves through ‘Ajam on B♭3.',
           steps: [
-            { phase: '1_EstablishTonic', phaseLabel: '1. Establish Tonic', pitch: new ArabicPitch('B', '♭', 4), noteName: 'Nahawand', durationBeats: 2, annotation: 'Upper starting point on B♭4' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Exploration', pitch: new ArabicPitch('A', '♮', 4), noteName: 'Nahawand', durationBeats: 1, annotation: 'Descending through the upper register' },
-            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Exploration', pitch: new ArabicPitch('G', '♮', 4), noteName: 'Nahawand', durationBeats: 1, annotation: 'Approach to the ghammaz F4' },
-            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('F', '♮', 4), noteName: 'Kurd', durationBeats: 2, annotation: 'Kurd descent begins on F4' },
-            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('E', '♭', 4), noteName: 'Kurd', durationBeats: 1, annotation: 'Stepwise return through E♭4' },
-            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('D', '♮', 4), noteName: 'Kurd', durationBeats: 1, annotation: 'Continuing the descent' },
-            { phase: '5_Qafla', phaseLabel: '5. Cadential Qafla', pitch: new ArabicPitch('C', '♮', 4), noteName: '‘Ajam', durationBeats: 1, annotation: 'Final approach through ‘Ajam' },
+            { phase: '1_EstablishTonic', phaseLabel: '1. Establish Tonic', pitch: new ArabicPitch('B', '♭', 4), noteName: 'Nahawand', durationBeats: 2, annotation: 'Begin at the upper octave before descending through Nahawand' },
+            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Exploration', pitch: new ArabicPitch('A', '♮', 4), noteName: 'Nahawand', durationBeats: 1, annotation: 'Descend through the sixth-degree Nahawand' },
+            { phase: '3_UpperExploration_Or_Modulation', phaseLabel: '3. Upper Exploration', pitch: new ArabicPitch('G', '♮', 4), noteName: 'Nahawand', durationBeats: 1, annotation: 'Tonicize G4, the root of Nahawand on degree six' },
+            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('F', '♮', 4), noteName: 'Kurd', durationBeats: 2, annotation: 'Continue the descent through Kurd' },
+            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('E', '♭', 4), noteName: 'Kurd', durationBeats: 1, annotation: 'Step down through E♭4 in Kurd' },
+            { phase: '4_DescentReturn', phaseLabel: '4. Descent Return', pitch: new ArabicPitch('D', '♮', 4), noteName: 'Kurd', durationBeats: 1, annotation: 'Tonicize D4, the root of Kurd on degree three' },
+            { phase: '5_Qafla', phaseLabel: '5. Cadential Qafla', pitch: new ArabicPitch('C', '♮', 4), noteName: '‘Ajam', durationBeats: 1, annotation: 'Resolve downward through the tonic ‘Ajam jins' },
             { phase: '5_Qafla', phaseLabel: '5. Cadential Qafla', pitch: new ArabicPitch('B', '♭', 3), noteName: '‘Ajam Ushayran', durationBeats: 4, annotation: 'Resolution on the lower tonic B♭3' }
           ]
         };

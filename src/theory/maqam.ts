@@ -46,6 +46,20 @@ const AJNAS_AJAM: JinsDefWithDirection[] = [
   },
 ]
 
+const AJNAS_AJAM_USHAYRAN: JinsDefWithDirection[] = [
+  {
+    definition: AjnasLibrary.SECONDARY_AJAM,
+    connection: "Ittisal",
+    direction: "asc",
+  },
+  { definition: AjnasLibrary.KURD, connection: "Ittisal", direction: "asc" },
+  {
+    definition: AjnasLibrary.NAHAWAND,
+    connection: "Ittisal",
+    direction: "desc",
+  },
+]
+
 const AJNAS_SHAWQ_AFZA: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.AJAM, connection: "Ittisal", direction: "asc" },
   { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
@@ -295,7 +309,7 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
     family: "‘Ajam",
     templateId: "ajam-ushayran",
     sourceSlug: "ajam_ushayran",
-    ajnas: AJNAS_AJAM,
+    ajnas: AJNAS_AJAM_USHAYRAN,
     verified: true,
   },
 
@@ -2207,11 +2221,11 @@ export class MaqamatCatalogue {
    * Constructs Maqam Ajam Ushayran
    */
   public static buildAjamUshayran(): Maqam {
-    const lower = new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("B", "♭", 3))
-    const upper = new Jins(
-      AjnasLibrary.UPPER_AJAM,
-      new ArabicPitch("F", "♮", 4)
+    const lower = new Jins(
+      AjnasLibrary.SECONDARY_AJAM,
+      new ArabicPitch("B", "♭", 3)
     )
+    const upper = new Jins(AjnasLibrary.KURD, new ArabicPitch("D", "♮", 4))
 
     return new Maqam({
       id: "ajam-ushayran",
@@ -2221,23 +2235,21 @@ export class MaqamatCatalogue {
       lowerJins: lower,
       connection: "Ittisal",
       upperJins: upper,
-      ghammaz: new ArabicPitch("F", "♮", 4),
+      ghammaz: new ArabicPitch("D", "♮", 4),
       alternateUpperAjnas: [
         {
-          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("B", "♭", 4)),
-          role: "descent_only",
-          description: "Nahawand descent from the upper register",
-        },
-        {
-          jins: new Jins(AjnasLibrary.KURD, new ArabicPitch("F", "♮", 4)),
-          role: "descent_only",
-          description: "Kurd descent through the middle register",
+          jins: new Jins(AjnasLibrary.NAHAWAND, new ArabicPitch("G", "♮", 4)),
+          role: "upper_secondary",
+          description: "Nahawand on the sixth degree, tonicized in the descent",
         },
       ],
       sayrDirection: "descending_octave_first",
-      extraPitches: [new ArabicPitch("B", "♭", 4)],
+      extraPitches: [
+        new ArabicPitch("A", "♮", 4),
+        new ArabicPitch("B", "♭", 4),
+      ],
       description:
-        "An archaic ‘Ajam variant whose sayr descends through Nahawand, Kurd, and ‘Ajam rather than centering the fifth degree. The characteristic descent is B♭4, A4, G4, F4, E♭4, D4, C4, B♭3.",
+        "An archaic ‘Ajam variant with a descending sayr that begins on Nahawand at G4 (the sixth degree), moves through Kurd on D4 (the third degree), and resolves on ‘Ajam at B♭3. Its scale is B♭3, C4, D4, E♭4, F4, G4, A4, B♭4.",
       verified: false,
     })
   }
