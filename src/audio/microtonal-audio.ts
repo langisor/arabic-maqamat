@@ -479,7 +479,7 @@ export class MicrotonalAudioEngine {
             )
           }
           session.setTimeout(
-            () => session.finish(),
+            completeSequence,
             Math.max(0, (startTime + totalDuration - Tone.now()) * 1000) + 100
           )
         }
