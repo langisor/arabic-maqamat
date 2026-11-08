@@ -106,12 +106,13 @@ const BUILDER_PRESETS: PresetTemplate[] = [
   {
     name: "Maqam Hijazkar Kurd (حجازكار كرد)",
     arabicName: "مقام حجازكار كرد",
-    lowerJinsId: "kurd",
-    tonic: { diatonic: "D", accidental: "♮", octave: 4 },
-    connection: "Ittisal",
+    lowerJinsId: "hijaz",
+    tonic: { diatonic: "C", accidental: "♮", octave: 4 },
+    connection: "Infisal",
     upperJinsId: "hijaz",
     family: "Kurd",
-    description: "Somber Kurd root on D with brilliant upper Hijaz on G4.",
+    description:
+      "Hijaz on C4 followed by Hijaz on G4, forming C4, D♭4, E4, F4, G4, A♭4, B4, and C5.",
   },
 ]
 
@@ -155,6 +156,8 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
   const [connectionType, setConnectionType] =
     useState<MaqamConnection>("Infisal")
   const [upperJinsId, setUpperJinsId] = useState<string>("hijaz")
+  const [familyOverride, setFamilyOverride] =
+    useState<MaqamFamilyMnemonic | null>(null)
   const [customMaqamName, setCustomMaqamName] = useState<string>("")
   const [customArabicName, setCustomArabicName] = useState<string>("")
   const [isPlayingScale, setIsPlayingScale] = useState<boolean>(false)
@@ -211,6 +214,8 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
   }, [customArabicName, lowerDef.arabicName, upperDef.arabicName])
 
   const familyMnemonic: MaqamScaleStructure["family"] = useMemo(() => {
+    if (familyOverride) return familyOverride
+
     switch (lowerDef.id) {
       case "rast":
         return "Rast"
@@ -233,7 +238,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
       default:
         return "Rast"
     }
-  }, [lowerDef.id])
+  }, [familyOverride, lowerDef.id])
 
   const constructedMaqam = useMemo(() => {
     try {
@@ -301,6 +306,7 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
     setLowerJinsId(preset.lowerJinsId)
     setUpperJinsId(preset.upperJinsId)
     setConnectionType(preset.connection)
+    setFamilyOverride(preset.family)
     setCustomMaqamName(preset.name)
     setCustomArabicName(preset.arabicName)
     const targetTonic = new ArabicPitch(
@@ -427,7 +433,10 @@ export const MaqamBuilderDrawer: React.FC<MaqamBuilderDrawerProps> = ({
                 </label>
                 <select
                   value={lowerJinsId}
-                  onChange={(e) => setLowerJinsId(e.target.value)}
+                  onChange={(e) => {
+                    setLowerJinsId(e.target.value)
+                    setFamilyOverride(null)
+                  }}
                   className="w-full cursor-pointer rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-amber-300 shadow-xs focus:border-amber-500 focus:outline-none"
                 >
                   {allAjnas.map((j) => (

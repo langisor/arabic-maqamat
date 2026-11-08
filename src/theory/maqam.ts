@@ -236,6 +236,11 @@ const AJNAS_HIJAZKAR: JinsDefWithDirection[] = [
   },
 ]
 
+const AJNAS_HIJAZKAR_KURD: JinsDefWithDirection[] = [
+  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.HIJAZ, connection: "Infisal", direction: "asc" },
+]
+
 const AJNAS_JIHARKAH: JinsDefWithDirection[] = [
   {
     definition: AjnasLibrary.JIHARKAH,
@@ -390,10 +395,10 @@ export const MAQAM_INDEX: readonly MaqamIndexEntry[] = [
   {
     id: "hijazkar-kurd",
     name: "Hijazkar Kurd",
-    family: "Hijaz",
-    templateId: "hijaz",
+    family: "Kurd",
+    templateId: "hijazkar-kurd",
     sourceSlug: "hijazkar_kurd",
-    ajnas: AJNAS_HIJAZKAR,
+    ajnas: AJNAS_HIJAZKAR_KURD,
   },
 
   {
@@ -1742,6 +1747,28 @@ export class MaqamatCatalogue {
   }
 
   /**
+   * Constructs Hijazkar Kurd as two Hijaz jins separated by a whole tone.
+   */
+  public static buildHijazkarKurd(): Maqam {
+    const lower = new Jins(AjnasLibrary.KURD, new ArabicPitch("C", "♮", 4))
+    const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4))
+
+    return new Maqam({
+      id: "hijazkar-kurd",
+      name: "Hijazkar Kurd",
+      arabicName: "مقام حجازكار كرد",
+      family: "Kurd",
+      lowerJins: lower,
+      connection: "Infisal",
+      upperJins: upper,
+      ghammaz: new ArabicPitch("G", "♮", 4),
+      description:
+        "• Root (Lower Jins): Jins Kurd on the tonic (C – D♭ – E♭ – F, or with the characteristic Kurd second).• Upper Jins: Features Jins Hijazkar (or Hijaz) characteristics toward the upper octave, creating its signature tension and ornate chromatic movement. • Unlike standard Maqam Kurd—where the dominant is typically on the 4th degree—Hijazkar Kurd features its dominant (Ghaz/Ghamaz) on the 5th degree.",
+      verified: true,
+    })
+  }
+
+  /**
    * Constructs Maqam Nahawand
    */
   public static buildNahawand(): Maqam {
@@ -2910,6 +2937,7 @@ export class MaqamatCatalogue {
         this.buildYakah(),
         this.buildHijaz(),
         this.buildHijazkar(),
+        this.buildHijazkarKurd(),
         this.buildNahawand(),
         this.buildNahawandMurassaa(),
         this.buildFarahfaza(),
