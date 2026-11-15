@@ -503,7 +503,7 @@ export function SheetMusicInteractiveViewer({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 sm:max-w-xl sm:flex-1 sm:justify-end sm:gap-4">
-          <div className="flex min-w-[150px] flex-1 items-center gap-2">
+          <div className="flex min-w-37.5 flex-1 items-center gap-2">
             <Gauge className="h-4 w-4 shrink-0 text-muted-foreground" />
             <label
               htmlFor="score-tempo"
@@ -558,16 +558,16 @@ export function SheetMusicInteractiveViewer({
         </div>
       )}
 
-      <ScrollArea className="music-print-container music-scroll-frame relative h-[70vh] max-h-[550px] min-h-[360px] w-full bg-white p-3 sm:h-[550px] sm:p-4 dark:bg-zinc-950">
+      <ScrollArea className="music-print-container music-scroll-frame relative h-[70vh] max-h-137.5 min-h-90 w-full bg-white p-3 sm:h-137.5 sm:p-4 dark:bg-zinc-950">
         {!isLoaded && !error && (
-          <div className="flex h-[450px] flex-col items-center justify-center gap-2 text-sm text-muted-foreground print:hidden">
+          <div className="flex h-112.5 flex-col items-center justify-center gap-2 text-sm text-muted-foreground print:hidden">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span>Loading sheet music…</span>
           </div>
         )}
         {error && (
           <div
-            className="flex h-[450px] items-center justify-center p-6 text-center text-sm text-destructive print:hidden"
+            className="flex h-112.5 items-center justify-center p-6 text-center text-sm text-destructive print:hidden"
             role="alert"
           >
             Unable to load this score: {error}
