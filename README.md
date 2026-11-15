@@ -29,7 +29,8 @@ The studio navigation opens these labs:
 - **Violin Fingerboard:** explore scale and custom-sequence fingerings.
 - **Oud Studio:** play six paired Arabic-tuned courses across quarter-tone positions and audition the selected maqam.
 - **Sayr & Qafla:** inspect melodic trajectories, modulation, and cadential phrases.
-- **Score & MusicXML:** render notation, inspect or copy MusicXML, and download exports.
+- **Score & MusicXML:** render notation, inspect or copy MusicXML, adjust score
+  zoom, play and seek through measures, and print or download a PDF.
 - **24-EDO Tuning:** inspect quarter-tone pitch positions and note relationships.
 - **Jins Classifier:** analyze a pitch phrase against the available ajnas.
 - **Learn & Practice:** use one learning hub for maqam theory, listening and pitch-recognition practice, and focused instrument drills. Practice recordings and progress tools are available within the practice sections.
