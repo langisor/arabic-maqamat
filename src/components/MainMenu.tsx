@@ -26,7 +26,7 @@ import {
   Package,
   Printer,
 } from "lucide-react"
-import { ValidLab } from "../state/workspace-state"
+import { LEARNING_LABS, ValidLab } from "../state/workspace-state"
 import { ViolinTuningPreset } from "./ViolinFingerboard"
 import { TimbreType } from "../audio/microtonal-audio"
 import { useLanguage } from "../state/language"
@@ -127,20 +127,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     },
     {
       id: "training",
-      title: "Training Lab & Pedagogy Drills",
-      arabic: "مختبر التدريب والتمرين",
-      icon: GraduationCap,
-    },
-    {
-      id: "earn-practice",
-      title: "Earn Practice",
-      arabic: "تدريب المقامات",
-      icon: GraduationCap,
-    },
-    {
-      id: "dills",
-      title: "Dills",
-      arabic: "تمارين المقامات",
+      title: "Learn & Practice",
+      arabic: "التعلّم والتدريب",
       icon: GraduationCap,
     },
     {
@@ -419,7 +407,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <div className="space-y-1">
                 {labsList.map((lab) => {
                   const Icon = lab.icon
-                  const isActive = activeLab === lab.id
+                  const isActive =
+                    lab.id === "training"
+                      ? LEARNING_LABS.includes(activeLab)
+                      : activeLab === lab.id
                   return (
                     <button
                       key={lab.id}

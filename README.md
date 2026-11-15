@@ -32,7 +32,7 @@ The studio navigation opens these labs:
 - **Score & MusicXML:** render notation, inspect or copy MusicXML, and download exports.
 - **24-EDO Tuning:** inspect quarter-tone pitch positions and note relationships.
 - **Jins Classifier:** analyze a pitch phrase against the available ajnas.
-- **Practice & Training:** build and quiz scales, practice pitch recognition and sight-reading, and record takes for playback and comparison. Takes persist in browser IndexedDB and can be renamed, downloaded, and deleted.
+- **Learn & Practice:** use one learning hub for maqam theory, listening and pitch-recognition practice, and focused instrument drills. Practice recordings and progress tools are available within the practice sections.
 
 The app also provides a synthesized violin, a sample-based Oud, and kanun timbres, drone and metronome controls, theme and language selection, shareable lab/maqam URLs, an always-visible session summary, and installable PWA support. Shared async feedback patterns expose loading, status, and recoverable errors.
 
@@ -132,7 +132,9 @@ Lab selection and maqam selection are synchronized with the URL query string. Fo
 /?lab=training&maqam=rast
 ```
 
-The supported lab IDs are `explorer`, `transposition`, `violin`, `oud`, `sayr`, `score`, `tuning`, `detector`, and `training`. The maqam parameter is checked against the catalogue before use. Browser back/forward navigation restores valid lab and maqam selections.
+The supported lab IDs include `explorer`, `transposition`, `violin`, `oud`, `sayr`, `score`, `tuning`, `detector`, and `training`, plus the Learn & Practice sections `earn-practice` and `dills`. The maqam parameter is checked against the catalogue before use. Browser back/forward navigation restores valid lab and maqam selections.
+
+The Learn & Practice hub groups theory, listening practice, and skill drills under one navigation entry. Existing workspace lab IDs (`training`, `earn-practice`, and `dills`) remain valid so saved selections continue to open the corresponding section.
 
 Keep music-theory calculations in `core/`, `theory/`, `score/`, `audio/`, or `violin/` modules where practical. Lab components should focus on UI and coordinate shared operations through props or the shared state/engine modules.
 

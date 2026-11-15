@@ -11,6 +11,7 @@ import { AudioTransport } from "./audio/audio-transport"
 import { AudioOutput } from "./audio/audio-output"
 import { useIsMobile } from "./hooks/use-mobile"
 import {
+  LEARNING_LABS,
   ValidLab,
   deserializePitch,
   getWorkspaceState,
@@ -61,6 +62,7 @@ import {
   GraduationCap,
   FileMusic,
   Printer,
+  Headphones,
 } from "lucide-react"
 
 function StudioContent() {
@@ -283,20 +285,8 @@ function StudioContent() {
     },
     {
       id: "training",
-      label: "Theory & Baggage",
-      arabic: "النظرية وزخرفة الأجناس",
-      icon: BookOpen,
-    },
-    {
-      id: "earn-practice",
-      label: "Earn Practice",
-      arabic: "تدريب المقامات",
-      icon: GraduationCap,
-    },
-    {
-      id: "dills",
-      label: "Dills",
-      arabic: "تمارين المقامات",
+      label: "Learn & Practice",
+      arabic: "التعلّم والتدريب",
       icon: GraduationCap,
     },
     {
@@ -452,7 +442,10 @@ function StudioContent() {
           <div className="mx-auto flex max-w-dvh flex-wrap items-center gap-1 py-2 sm:justify-center sm:gap-2 sm:py-2.5">
             {navTabs.map((tab) => {
               const Icon = tab.icon
-              const isActive = activeLab === tab.id
+              const isActive =
+                tab.id === "training"
+                  ? LEARNING_LABS.includes(activeLab)
+                  : activeLab === tab.id
               const primaryLabel = language === "ar" ? tab.arabic : tab.label
               return (
                 <button
@@ -607,27 +600,72 @@ function StudioContent() {
           </div>
         )}
 
-        {activeLab === "training" && (
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-              <h2 className="flex items-center gap-2 text-xl font-bold text-white">
-                <BookOpen className="h-5 w-5 text-amber-400" />
-                Maqamat Theory &amp; Jins Baggage Compendium
+        {LEARNING_LABS.includes(activeLab) && (
+          <section className="space-y-6">
+            <header className="rounded-2xl border border-border bg-card p-4">
+              <h2 className="flex items-center gap-2 text-xl font-bold">
+                <GraduationCap className="h-5 w-5 text-amber-400" />
+                {language === "ar" ? "التعلّم والتدريب" : "Learn & Practice"}
               </h2>
-              <p className="mt-1 text-xs text-slate-400">
-                Theoretical foundations grounded in Sami Abu Shumays&apos;
-                &quot;Maqam Analysis: A Primer&quot;
+              <p className="mt-1 text-sm text-muted-foreground">
+                {language === "ar"
+                  ? "استكشف نظرية المقامات، ودرّب أذنك، وتدرّب على الجمل الموسيقية."
+                  : "Explore maqam theory, train your ear, and practice focused musical phrases."}
               </p>
-            </div>
-            <MaqamFacts />
-          </div>
-        )}
+              <nav
+                className="mt-4 flex flex-wrap gap-2"
+                aria-label={
+                  language === "ar"
+                    ? "أقسام التعلّم والتدريب"
+                    : "Learn and practice sections"
+                }
+              >
+                {[
+                  {
+                    id: "training" as const,
+                    label: language === "ar" ? "النظرية والمقامات" : "Theory",
+                    icon: BookOpen,
+                  },
+                  {
+                    id: "earn-practice" as const,
+                    label: language === "ar" ? "تدريب الاستماع" : "Listening Practice",
+                    icon: Headphones,
+                  },
+                  {
+                    id: "dills" as const,
+                    label: language === "ar" ? "تمارين المهارات" : "Skill Drills",
+                    icon: Music,
+                  },
+                ].map((section) => {
+                  const Icon = section.icon
+                  const isActive = activeLab === section.id
+                  return (
+                    <Button
+                      key={section.id}
+                      type="button"
+                      variant={isActive ? "default" : "outline"}
+                      aria-current={isActive ? "page" : undefined}
+                      onClick={() => setActiveLab(section.id)}
+                      className="gap-2"
+                    >
+                      <Icon className="size-4" />
+                      {section.label}
+                    </Button>
+                  )
+                })}
+              </nav>
+            </header>
 
-        {activeLab === "earn-practice" && <EarnPractice timbre={timbre} />}
-        {activeLab === "print-services" && <PrintServicesLab />}
-        {activeLab === "dills" && (
-          <EarnPractice timbre={timbre} maqam={currentMaqam} mode="drills" />
+            {activeLab === "training" && <MaqamFacts />}
+            {activeLab === "earn-practice" && (
+              <EarnPractice timbre={timbre} />
+            )}
+            {activeLab === "dills" && (
+              <EarnPractice timbre={timbre} maqam={currentMaqam} mode="drills" />
+            )}
+          </section>
         )}
+        {activeLab === "print-services" && <PrintServicesLab />}
       </main>
 
       {/* Global Interactive Drawers */}
@@ -676,8 +714,8 @@ function StudioContent() {
           <span>
             {t("instrumentStudioFooter")} -{" "}
             {language === "en"
-              ? "Implemented and organized by Faris Alhodlai"
-              : "تم التجميع بواسطة فارس الهذلي"}
+              ? "Implemented and organized by Faris Alhodali - [langisor-app@proton.me]"
+              : " -  langisor-app@proton.me تم التجميع بواسطة فارس الهذلي"}
           </span>
         </div>
       </footer>

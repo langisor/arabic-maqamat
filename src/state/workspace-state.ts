@@ -37,6 +37,12 @@ export const VALID_LABS: readonly ValidLab[] = [
   "print-services",
 ] as const
 
+export const LEARNING_LABS: readonly ValidLab[] = [
+  "training",
+  "earn-practice",
+  "dills",
+]
+
 export interface SerializedPitch {
   diatonic: DiatonicBase
   accidental: MicrotonalAccidental

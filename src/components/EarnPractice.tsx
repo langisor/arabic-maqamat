@@ -595,7 +595,7 @@ function PracticeDrillsLab({
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
             <GraduationCap className="size-5 text-amber-400" />
-            Drills
+            Skill Drills
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">
             Generate focused maqam exercises, follow each How To guide, and
@@ -1284,7 +1284,7 @@ export function EarnPractice({
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
             <BookOpen className="size-5 text-amber-400" />
-            Earn Practice
+            Listening Practice
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">
             Build a practice boundary from the ajnas and maqamat you want to
