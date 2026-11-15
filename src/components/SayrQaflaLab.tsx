@@ -1,5 +1,5 @@
 // src/components/SayrQaflaLab.tsx
-import React, { useState, useEffect } from "react"
+import React, { lazy, Suspense, useState, useEffect } from "react"
 import { Maqam, MaqamatCatalogue } from "../theory/maqam"
 import { ArabicPitch } from "../core/pitch"
 import { getPitchThemeClasses } from "../core/pitch-styling"
@@ -31,9 +31,18 @@ import {
   Compass,
   GitFork,
 } from "lucide-react"
-import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
-import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
 import { useLanguage } from "../state/language"
+
+const SayrVisualizationDialog = lazy(() =>
+  import("./SayrVisualizationDialog").then((module) => ({
+    default: module.SayrVisualizationDialog,
+  }))
+)
+const ModulationPathwaysDrawer = lazy(() =>
+  import("./ModulationPathwaysDrawer").then((module) => ({
+    default: module.ModulationPathwaysDrawer,
+  }))
+)
 
 interface Props {
   currentMaqam: Maqam
@@ -649,22 +658,28 @@ export const SayrQaflaLab: React.FC<Props> = ({
       </Card>
 
       {/* Sayr Visualization Dialog */}
-      <SayrVisualizationDialog
-        open={showSayrDialog}
-        onOpenChange={setShowSayrDialog}
-        maqam={currentMaqam}
-        timbre={timbre}
-      />
+      {showSayrDialog && (
+        <Suspense fallback={null}>
+          <SayrVisualizationDialog
+            open={showSayrDialog}
+            onOpenChange={setShowSayrDialog}
+            maqam={currentMaqam}
+            timbre={timbre}
+          />
+        </Suspense>
+      )}
 
       {/* Standalone Modulation Pathways Drawer */}
       {showModulationDrawerLocal && (
-        <ModulationPathwaysDrawer
-          open={showModulationDrawerLocal}
-          onOpenChange={setShowModulationDrawerLocal}
-          currentMaqam={currentMaqam}
-          onSelectMaqam={onSelectMaqam}
-          timbre={timbre}
-        />
+        <Suspense fallback={null}>
+          <ModulationPathwaysDrawer
+            open={showModulationDrawerLocal}
+            onOpenChange={setShowModulationDrawerLocal}
+            currentMaqam={currentMaqam}
+            onSelectMaqam={onSelectMaqam}
+            timbre={timbre}
+          />
+        </Suspense>
       )}
     </div>
   )

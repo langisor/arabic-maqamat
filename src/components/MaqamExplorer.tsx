@@ -1,5 +1,12 @@
 // src/components/MaqamExplorer.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import { Maqam, MaqamatCatalogue } from "../theory/maqam"
 import {
   ArabicPitch,
@@ -43,12 +50,25 @@ import {
   Package,
   ExternalLink,
 } from "lucide-react"
-import { SayrVisualizationDialog } from "./SayrVisualizationDialog"
-import { ModulationPathwaysDrawer } from "./ModulationPathwaysDrawer"
-import { MaqamNetworkGraph } from "./MaqamNetworkGraph"
 import { MaqamTermTooltip } from "./MaqamTermTooltip"
 import { SVGStaff } from "./SVGStaff"
 import { removeNaturalMarks } from "@/lib/utils"
+
+const SayrVisualizationDialog = lazy(() =>
+  import("./SayrVisualizationDialog").then((module) => ({
+    default: module.SayrVisualizationDialog,
+  }))
+)
+const ModulationPathwaysDrawer = lazy(() =>
+  import("./ModulationPathwaysDrawer").then((module) => ({
+    default: module.ModulationPathwaysDrawer,
+  }))
+)
+const MaqamNetworkGraph = lazy(() =>
+  import("./MaqamNetworkGraph").then((module) => ({
+    default: module.MaqamNetworkGraph,
+  }))
+)
 
 interface Props {
   currentMaqam: Maqam
@@ -510,7 +530,9 @@ export const MaqamExplorer: React.FC<Props> = ({
 
         <CardContent className="space-y-6 pt-6">
           {explorerTab === "network" ? (
-            <MaqamNetworkGraph maqam={currentMaqam} timbre={timbre} />
+            <Suspense fallback={<div role="status">Loading network…</div>}>
+              <MaqamNetworkGraph maqam={currentMaqam} timbre={timbre} />
+            </Suspense>
           ) : explorerTab === "svg-staff" ? (
             <SVGStaff
               notes={maqamStaffNotes}
@@ -1127,23 +1149,27 @@ export const MaqamExplorer: React.FC<Props> = ({
 
       {/* Standalone Sayr Dialog */}
       {showSayrDialogLocal && (
-        <SayrVisualizationDialog
-          open={showSayrDialogLocal}
-          onOpenChange={setShowSayrDialogLocal}
-          maqam={currentMaqam}
-          timbre={timbre}
-        />
+        <Suspense fallback={null}>
+          <SayrVisualizationDialog
+            open={showSayrDialogLocal}
+            onOpenChange={setShowSayrDialogLocal}
+            maqam={currentMaqam}
+            timbre={timbre}
+          />
+        </Suspense>
       )}
 
       {/* Standalone Modulation Pathways Drawer */}
       {showModulationDrawerLocal && (
-        <ModulationPathwaysDrawer
-          open={showModulationDrawerLocal}
-          onOpenChange={setShowModulationDrawerLocal}
-          currentMaqam={currentMaqam}
-          onSelectMaqam={onSelectMaqam}
-          timbre={timbre}
-        />
+        <Suspense fallback={null}>
+          <ModulationPathwaysDrawer
+            open={showModulationDrawerLocal}
+            onOpenChange={setShowModulationDrawerLocal}
+            currentMaqam={currentMaqam}
+            onSelectMaqam={onSelectMaqam}
+            timbre={timbre}
+          />
+        </Suspense>
       )}
     </div>
   )

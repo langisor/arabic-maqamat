@@ -3,7 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react"
+import React, {
+  lazy,
+  Suspense,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react"
 import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import { MicrotonalAudioEngine, TimbreType } from "./audio/microtonal-audio"
@@ -26,25 +33,17 @@ import { ThemeProvider } from "./components/theme-provider"
 import { MainMenu } from "./components/MainMenu"
 import { SessionBar } from "./components/SessionBar"
 import { MaqamExplorer } from "./components/MaqamExplorer"
-import { ViolinTuningPreset } from "./components/ViolinFingerboard"
-import { SayrQaflaLab } from "./components/SayrQaflaLab"
-import { MaqamNetworkGraph } from "./components/MaqamNetworkGraph"
-import { MicrotonalPitchTracker } from "./components/MicrotonalPitchTracker"
 import { Metronome } from "./components/Metronome"
-import { MaqamFacts } from "./components/MaqamFacts"
-import { MaqamBuilderDrawer } from "./components/MaqamBuilderDrawer"
-import { MaqamFactsDrawer } from "./components/MaqamFactsDrawer"
-import { SayrVisualizationDialog } from "./components/SayrVisualizationDialog"
-import { ModulationPathwaysDrawer } from "./components/ModulationPathwaysDrawer"
-import { JinsAnalysisTool } from "./components/JinsAnalysisTool"
-import { JinsAnalysisDrawer } from "./components/JinsAnalysisDrawer"
-import { InstrumentStudio } from "./features/instruments/InstrumentStudio"
-import { EarnPractice } from "./components/EarnPractice"
 import { ThemeToggle } from "./components/ThemeToggle"
 import { PWAInstallButton } from "./components/PWAInstallButton"
-import { SheetMusicInteractiveViewer } from "./components/SheetMusicInteractiveViewer"
-import { PrintServicesLab } from "./components/PrintServicesLab"
 import { Button } from "./components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card"
 import { MusicXMLExporter } from "./score/musicxml-exporter"
 
 // Icons
@@ -64,6 +63,179 @@ import {
   Printer,
   Headphones,
 } from "lucide-react"
+import type { ViolinTuningPreset } from "./components/ViolinFingerboard"
+
+const SayrQaflaLab = lazy(() =>
+  import("./components/SayrQaflaLab").then((module) => ({
+    default: module.SayrQaflaLab,
+  }))
+)
+const MaqamNetworkGraph = lazy(() =>
+  import("./components/MaqamNetworkGraph").then((module) => ({
+    default: module.MaqamNetworkGraph,
+  }))
+)
+const MicrotonalPitchTracker = lazy(() =>
+  import("./components/MicrotonalPitchTracker").then((module) => ({
+    default: module.MicrotonalPitchTracker,
+  }))
+)
+const MaqamFacts = lazy(() =>
+  import("./components/MaqamFacts").then((module) => ({
+    default: module.MaqamFacts,
+  }))
+)
+const MaqamBuilderDrawer = lazy(() =>
+  import("./components/MaqamBuilderDrawer").then((module) => ({
+    default: module.MaqamBuilderDrawer,
+  }))
+)
+const MaqamFactsDrawer = lazy(() =>
+  import("./components/MaqamFactsDrawer").then((module) => ({
+    default: module.MaqamFactsDrawer,
+  }))
+)
+const SayrVisualizationDialog = lazy(() =>
+  import("./components/SayrVisualizationDialog").then((module) => ({
+    default: module.SayrVisualizationDialog,
+  }))
+)
+const ModulationPathwaysDrawer = lazy(() =>
+  import("./components/ModulationPathwaysDrawer").then((module) => ({
+    default: module.ModulationPathwaysDrawer,
+  }))
+)
+const JinsAnalysisTool = lazy(() =>
+  import("./components/JinsAnalysisTool").then((module) => ({
+    default: module.JinsAnalysisTool,
+  }))
+)
+const JinsAnalysisDrawer = lazy(() =>
+  import("./components/JinsAnalysisDrawer").then((module) => ({
+    default: module.JinsAnalysisDrawer,
+  }))
+)
+const InstrumentStudio = lazy(() =>
+  import("./features/instruments/InstrumentStudio").then((module) => ({
+    default: module.InstrumentStudio,
+  }))
+)
+const EarnPractice = lazy(() =>
+  import("./components/EarnPractice").then((module) => ({
+    default: module.EarnPractice,
+  }))
+)
+const SheetMusicInteractiveViewer = lazy(() =>
+  import("./components/SheetMusicInteractiveViewer").then((module) => ({
+    default: module.SheetMusicInteractiveViewer,
+  }))
+)
+const PrintServicesLab = lazy(() =>
+  import("./components/PrintServicesLab").then((module) => ({
+    default: module.PrintServicesLab,
+  }))
+)
+
+interface LearningStartGuideProps {
+  language: "en" | "ar"
+  currentLab: ValidLab
+  maqam: Maqam
+  onNavigate: (lab: ValidLab) => void
+  onDismiss: () => void
+}
+
+function LearningStartGuide({
+  language,
+  currentLab,
+  maqam,
+  onNavigate,
+  onDismiss,
+}: LearningStartGuideProps) {
+  const isArabic = language === "ar"
+  const steps = [
+    {
+      lab: "training" as const,
+      icon: BookOpen,
+      title: isArabic ? "تعرّف على المقامات" : "Learn the maqam basics",
+      description: isArabic
+        ? "ابدأ بمفاهيم المقام وعائلاته لتفهم ما يميّز كل مقام."
+        : "Start with core concepts and maqam families to understand what makes each maqam distinct.",
+      action: isArabic ? "استكشف النظرية" : "Explore theory",
+    },
+    {
+      lab: "earn-practice" as const,
+      icon: Headphones,
+      title: isArabic ? "درّب أذنك" : "Train your ear",
+      description: isArabic
+        ? "استمع إلى أجناس ومقامات، ثم اختر ما تسمعه وتحقّق من إجابتك."
+        : "Listen to ajnas and maqamat, identify what you hear, and check your answer.",
+      action: isArabic ? "ابدأ تدريب الاستماع" : "Start listening practice",
+    },
+    {
+      lab: "dills" as const,
+      icon: Music,
+      title: isArabic ? "تدرّب على العزف" : "Practice playing",
+      description: isArabic
+        ? `أنشئ تمريناً موجّهاً على مقام ${maqam.arabicName || maqam.name}.`
+        : `Generate a focused exercise for ${maqam.name}.`,
+      action: isArabic ? "افتح تمارين المهارات" : "Open skill drills",
+    },
+  ]
+
+  return (
+    <Card aria-labelledby="learning-start-title">
+      <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-1.5">
+          <CardTitle id="learning-start-title" className="text-lg">
+            {isArabic ? "ابدأ من هنا" : "Start here"}
+          </CardTitle>
+          <CardDescription>
+            {isArabic
+              ? "مسار بسيط للتعلّم: افهم المقام، أنصت إليه، ثم تدرّب على عزفه."
+              : "A simple path: understand a maqam, listen for it, then practice playing it."}
+          </CardDescription>
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={onDismiss}>
+          {isArabic ? "إخفاء الدليل" : "Hide guide"}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <ol className="grid gap-3 md:grid-cols-3">
+          {steps.map((step, index) => {
+            const Icon = step.icon
+            const isCurrent = currentLab === step.lab
+            return (
+              <li
+                key={step.lab}
+                className="flex flex-col items-start gap-3 rounded-xl border border-border bg-muted/30 p-4"
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    {index + 1}
+                  </span>
+                  <Icon aria-hidden="true" />
+                  <span>{step.title}</span>
+                </div>
+                <p className="flex-1 text-sm text-muted-foreground">
+                  {step.description}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isCurrent ? "default" : "outline"}
+                  onClick={() => onNavigate(step.lab)}
+                >
+                  {step.action}
+                </Button>
+              </li>
+            )
+          })}
+        </ol>
+      </CardContent>
+    </Card>
+  )
+}
 
 function StudioContent() {
   const { language, setLanguage, t } = useLanguage()
@@ -87,6 +259,8 @@ function StudioContent() {
   const [activeLab, setActiveLab] = useState<ValidLab>(
     () => getWorkspaceState().global.activeLab
   )
+  const [isLearningGuideDismissed, setIsLearningGuideDismissed] =
+    useState(false)
   const [timbre, setTimbre] = useState<TimbreType>(
     () => getWorkspaceState().global.timbre
   )
@@ -479,6 +653,16 @@ function StudioContent() {
 
       {/* Main Workspace Area */}
       <main className="mx-auto w-full max-w-7xl flex-1 p-3 sm:p-6 lg:p-8">
+        <Suspense
+          fallback={
+            <div
+              role="status"
+              className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground"
+            >
+              {language === "ar" ? "جارٍ تحميل القسم..." : "Loading section..."}
+            </div>
+          }
+        >
         {(activeLab === "explorer" || activeLab === "transposition") && (
           <MaqamExplorer
             currentMaqam={currentMaqam}
@@ -620,6 +804,15 @@ function StudioContent() {
                     : "Learn and practice sections"
                 }
               >
+                {isLearningGuideDismissed && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => setIsLearningGuideDismissed(false)}
+                  >
+                    {language === "ar" ? "اعرض دليل البداية" : "Show start guide"}
+                  </Button>
+                )}
                 {[
                   {
                     id: "training" as const,
@@ -656,6 +849,16 @@ function StudioContent() {
               </nav>
             </header>
 
+            {!isLearningGuideDismissed && (
+              <LearningStartGuide
+                language={language}
+                currentLab={activeLab}
+                maqam={currentMaqam}
+                onNavigate={setActiveLab}
+                onDismiss={() => setIsLearningGuideDismissed(true)}
+              />
+            )}
+
             {activeLab === "training" && <MaqamFacts />}
             {activeLab === "earn-practice" && (
               <EarnPractice timbre={timbre} />
@@ -666,47 +869,64 @@ function StudioContent() {
           </section>
         )}
         {activeLab === "print-services" && <PrintServicesLab />}
+        </Suspense>
       </main>
 
       {/* Global Interactive Drawers */}
-      <MaqamBuilderDrawer
-        open={isBuilderOpen}
-        onOpenChange={setIsBuilderOpen}
-        onSelectMaqam={handleSelectMaqam}
-        timbre={timbre}
-      />
-
-      <MaqamFactsDrawer
-        open={isFactsOpen}
-        onOpenChange={setIsFactsOpen}
-        timbre={timbre}
-        currentMaqam={currentMaqam}
-        onSelectMaqam={handleSelectMaqam}
-      />
-
-      <SayrVisualizationDialog
-        open={isSayrDialogOpen}
-        onOpenChange={setIsSayrDialogOpen}
-        maqam={currentMaqam}
-        timbre={timbre}
-      />
-
-      <ModulationPathwaysDrawer
-        open={isModulationOpen}
-        onOpenChange={setIsModulationOpen}
-        currentMaqam={currentMaqam}
-        timbre={timbre}
-        onSelectMaqam={handleSelectMaqam}
-      />
-
-      <JinsAnalysisDrawer
-        open={isJinsAnalysisDrawerOpen}
-        onOpenChange={setIsJinsAnalysisDrawerOpen}
-        timbre={timbre}
-        onTimbreChange={setTimbre}
-        initialJinsId={currentMaqam.lowerJins.definition.id}
-        initialRoot={currentMaqam.getTonic()}
-      />
+      {isBuilderOpen && (
+        <Suspense fallback={null}>
+          <MaqamBuilderDrawer
+            open={isBuilderOpen}
+            onOpenChange={setIsBuilderOpen}
+            onSelectMaqam={handleSelectMaqam}
+            timbre={timbre}
+          />
+        </Suspense>
+      )}
+      {isFactsOpen && (
+        <Suspense fallback={null}>
+          <MaqamFactsDrawer
+            open={isFactsOpen}
+            onOpenChange={setIsFactsOpen}
+            timbre={timbre}
+            currentMaqam={currentMaqam}
+            onSelectMaqam={handleSelectMaqam}
+          />
+        </Suspense>
+      )}
+      {isSayrDialogOpen && (
+        <Suspense fallback={null}>
+          <SayrVisualizationDialog
+            open={isSayrDialogOpen}
+            onOpenChange={setIsSayrDialogOpen}
+            maqam={currentMaqam}
+            timbre={timbre}
+          />
+        </Suspense>
+      )}
+      {isModulationOpen && (
+        <Suspense fallback={null}>
+          <ModulationPathwaysDrawer
+            open={isModulationOpen}
+            onOpenChange={setIsModulationOpen}
+            currentMaqam={currentMaqam}
+            timbre={timbre}
+            onSelectMaqam={handleSelectMaqam}
+          />
+        </Suspense>
+      )}
+      {isJinsAnalysisDrawerOpen && (
+        <Suspense fallback={null}>
+          <JinsAnalysisDrawer
+            open={isJinsAnalysisDrawerOpen}
+            onOpenChange={setIsJinsAnalysisDrawerOpen}
+            timbre={timbre}
+            onTimbreChange={setTimbre}
+            initialJinsId={currentMaqam.lowerJins.definition.id}
+            initialRoot={currentMaqam.getTonic()}
+          />
+        </Suspense>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border/80 bg-background px-6 py-4 text-center text-xs text-muted-foreground">
