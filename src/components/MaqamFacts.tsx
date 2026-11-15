@@ -15,6 +15,8 @@ import {
 } from "./ui/card"
 import { Badge } from "./ui/badge"
 import { BookOpen, Sparkles, Layers, Compass, Info, Network, Package } from "lucide-react"
+import { useLanguage } from "../state/language"
+import { learningText } from "../state/learning-copy"
 
 interface FactSection {
   id: string
@@ -99,6 +101,7 @@ interface MaqamFactsProps {
 
 export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
   const [expandedSection, setExpandedSection] = useState<string[]>([])
+  const { language } = useLanguage()
 
   return (
     <Card className={`border-amber-800/30 bg-linear-to-r from-amber-950/40 via-slate-900/90 to-indigo-950/40 ${className}`}>
@@ -109,9 +112,14 @@ export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
               <Info className="h-5 w-5 text-amber-400" />
             </div>
             <div>
-              <CardTitle className="text-xl">Maqam Facts</CardTitle>
+              <CardTitle className="text-xl">
+                {learningText(language, "Maqam Facts")}
+              </CardTitle>
               <CardDescription className="text-xs text-slate-300">
-                Classical Arabic modal system fundamentals &amp; Abu Shumays Primer insights
+                {learningText(
+                  language,
+                  "Classical Arabic modal system fundamentals & Abu Shumays Primer insights"
+                )}
               </CardDescription>
             </div>
           </div>
@@ -129,10 +137,12 @@ export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
                 <AccordionTrigger className="hover:text-amber-300">
                   <div className="flex items-center gap-2">
                     <Icon className={`h-4 w-4 ${section.highlighted ? "text-amber-400" : "text-slate-400"}`} />
-                    <span className="font-semibold">{section.title}</span>
+                    <span className="font-semibold">
+                      {learningText(language, section.title)}
+                    </span>
                     {section.highlighted && (
                       <Badge variant="outline" className="text-[9px] text-amber-400 border-amber-500/30">
-                        Essential
+                        {learningText(language, "Essential")}
                       </Badge>
                     )}
                   </div>
@@ -142,7 +152,9 @@ export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
                     {section.content.map((fact, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500/70" />
-                        <span className="leading-relaxed">{fact}</span>
+                        <span className="leading-relaxed">
+                          {learningText(language, fact)}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -155,7 +167,13 @@ export const MaqamFacts: React.FC<MaqamFactsProps> = ({ className = "" }) => {
           <div className="flex items-start gap-2">
             <Sparkles className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
             <p className="text-xs text-amber-200/90 leading-relaxed">
-              <span className="font-semibold">Practical note:</span> The family and mood are carried by the ajnas and their baggage notes, not by an isolated scale formula. Navigating the network graph reveals authentic pathways between modal regions.
+              <span className="font-semibold">
+                {learningText(language, "Practical note:")}
+              </span>{" "}
+              {learningText(
+                language,
+                "The family and mood are carried by the ajnas and their baggage notes, not by an isolated scale formula. Navigating the network graph reveals authentic pathways between modal regions."
+              )}
             </p>
           </div>
         </div>

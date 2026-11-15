@@ -33,6 +33,7 @@ import {
 import { Maqam, MaqamatCatalogue, type MaqamFamilyMnemonic } from "../theory/maqam"
 import { MicrotonalAudioEngine, type TimbreType } from "../audio/microtonal-audio"
 import { useLanguage } from "../state/language"
+import { learningText } from "../state/learning-copy"
 
 interface FactSection {
   id: string
@@ -157,6 +158,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
   onSelectMaqam,
 }) => {
   const { language } = useLanguage()
+  const localize = (text: string) => learningText(language, text)
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "taxonomy-grid",
     "core-concepts",
@@ -210,13 +212,15 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
               </div>
               <div>
                 <DrawerTitle className="text-xl font-bold flex items-center gap-2">
-                  <span>Maqam Theory &amp; 8 Families</span>
+                  <span>{localize("Maqam Theory & 8 Families")}</span>
                   <span className="font-arabic text-amber-400 text-sm font-semibold">
                     (نظرية المقامات وعائلاتها)
                   </span>
                 </DrawerTitle>
                 <DrawerDescription className="text-xs text-slate-400">
-                  Reference for classical Arabic modal music theory, jins baggage, network pathways, and root-jins family classification
+                  {localize(
+                    "Reference for classical Arabic modal music theory, jins baggage, network pathways, and root-jins family classification"
+                  )}
                 </DrawerDescription>
               </div>
             </div>
@@ -225,7 +229,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
               size="sm"
               onClick={() => onOpenChange(false)}
               className="h-8 w-8 p-0 text-slate-400 hover:text-white cursor-pointer"
-              aria-label="Close"
+              aria-label={localize("Close")}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -238,22 +242,24 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold tracking-widest uppercase text-amber-400">
-                    The 8 Fundamental Families
+                    {localize("The 8 Fundamental Families")}
                   </span>
                   <Badge variant="secondary" className="font-arabic text-[11px] font-bold bg-amber-500/20 text-amber-300">
                     حسب الجنس الأصل
                   </Badge>
                 </div>
                 <h3 className="mt-1 text-lg font-extrabold text-white">
-                  Maqam Family Taxonomy
+                  {localize("Maqam Family Taxonomy")}
                 </h3>
               </div>
               <p className="max-w-md text-xs text-slate-300">
-                The family system{" "}
+                {localize("The family system")}{" "}
                 <span className="font-serif text-sm font-bold text-amber-300">
-                  groups maqamat by shared root jins
+                  {localize("groups maqamat by shared root jins")}
                 </span>{" "}
-                in MaqamWorld. Click a card to select a representative maqam:
+                {localize(
+                  "in MaqamWorld. Click a card to select a representative maqam:"
+                )}
               </p>
             </div>
 
@@ -286,18 +292,20 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                         </span>
                         {isSelected && (
                           <Badge variant="default" className="text-[9px] px-1 py-0 h-4 bg-amber-500 text-slate-950 font-bold">
-                            Active
+                            {localize("Active")}
                           </Badge>
                         )}
                       </div>
                       <span className="mt-1 block text-xs font-bold truncate">
-                        {fam.mnemonic}
+                        {language === "ar" ? fam.arabicName : fam.mnemonic}
                       </span>
                       <span className="mt-0.5 block text-[10px] text-amber-400/90 font-arabic">
                         {fam.arabicName}
                       </span>
                       <span className="mt-0.5 block text-[10px] text-slate-400 truncate">
-                        {fam.rootJinsDef.name}
+                        {language === "ar"
+                          ? fam.rootJinsDef.arabicName || fam.rootJinsDef.name
+                          : fam.rootJinsDef.name}
                       </span>
                     </button>
 
@@ -309,10 +317,18 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                           onClick={() => handleAuditionSample(sampleMaqam.id)}
                           disabled={Boolean(isAuditioning)}
                           className="h-6 w-full text-[10px] p-0 text-slate-300 hover:text-white hover:bg-amber-500/20"
-                          title={`Listen to ${sampleMaqam.name}`}
+                          title={`${localize("Listen to")} ${
+                            language === "ar"
+                              ? sampleMaqam.arabicName || sampleMaqam.name
+                              : sampleMaqam.name
+                          }`}
                         >
                           <Volume2 className={`h-2.5 w-2.5 mr-1 text-amber-400 ${isAuditioning ? "animate-pulse" : ""}`} />
-                          <span>{isAuditioning ? "Playing" : "Hear"}</span>
+                          <span>
+                            {isAuditioning
+                              ? localize("Playing")
+                              : localize("Hear")}
+                          </span>
                         </Button>
                       </div>
                     )}
@@ -323,7 +339,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
             {independentMaqamat.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-amber-800/30 pt-3">
                 <span className="text-xs font-semibold text-slate-300">
-                  Maqamat outside a family:
+                  {localize("Maqamat outside a family:")}
                 </span>
                 {independentMaqamat.map((independentMaqam) => (
                   <Button
@@ -334,7 +350,9 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                     onClick={() => handleLoadMaqam(independentMaqam.id)}
                     className="h-7 border-amber-500/30 text-xs text-amber-200 hover:bg-amber-500/10"
                   >
-                    {independentMaqam.name}
+                    {language === "ar"
+                      ? independentMaqam.arabicName || independentMaqam.name
+                      : independentMaqam.name}
                   </Button>
                 ))}
               </div>
@@ -349,6 +367,9 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
             {MAQAM_FACTS_DATA.map((section) => {
               const Icon = section.icon
               const isAuditioning = auditioningMaqamId === section.sampleMaqamId
+              const sampleMaqam = section.sampleMaqamId
+                ? MaqamatCatalogue.findById(section.sampleMaqamId)
+                : undefined
               return (
                 <AccordionItem
                   key={section.id}
@@ -362,13 +383,10 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                       </div>
                       <div>
                         <span className="font-semibold text-sm block">
-                          {section.title}
+                          {language === "ar"
+                            ? section.arabicTitle
+                            : section.title}
                         </span>
-                        {language === "ar" && (
-                          <span className="font-arabic text-xs text-amber-400/80 block">
-                            {section.arabicTitle}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </AccordionTrigger>
@@ -377,7 +395,9 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                       {section.content.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2.5">
                           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                          <span className="leading-relaxed">{item}</span>
+                          <span className="leading-relaxed">
+                            {localize(item)}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -385,7 +405,12 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                     {section.sampleMaqamId && (
                       <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
                         <span className="text-[11px] text-slate-400 font-mono">
-                          Example: Maqam {section.sampleMaqamId.toUpperCase()}
+                          {language === "ar"
+                            ? `مثال: مقام ${
+                                sampleMaqam?.arabicName ||
+                                section.sampleMaqamId.toUpperCase()
+                              }`
+                            : `Example: Maqam ${section.sampleMaqamId.toUpperCase()}`}
                         </span>
                         <div className="flex items-center gap-2">
                           <Button
@@ -396,7 +421,11 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                             className="h-7 text-xs gap-1 border-slate-700 bg-slate-800 text-slate-200 hover:text-white cursor-pointer"
                           >
                             <Volume2 className={`h-3 w-3 text-amber-400 ${isAuditioning ? "animate-pulse" : ""}`} />
-                            <span>{isAuditioning ? "Playing..." : "Listen"}</span>
+                            <span>
+                              {isAuditioning
+                                ? localize("Playing...")
+                                : localize("Listen")}
+                            </span>
                           </Button>
                           {onSelectMaqam && (
                             <Button
@@ -405,7 +434,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
                               onClick={() => handleLoadMaqam(section.sampleMaqamId)}
                               className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300 cursor-pointer"
                             >
-                              <span>Explore in Studio</span>
+                              <span>{localize("Explore in Studio")}</span>
                               <ExternalLink className="h-3 w-3" />
                             </Button>
                           )}
@@ -422,7 +451,9 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
         <DrawerFooter className="border-t border-slate-800/80 px-6 py-3 flex flex-row items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span>Tone.js 24-EDO Microtonal Tuning Standard</span>
+            <span>
+              {localize("Tone.js 24-EDO Microtonal Tuning Standard")}
+            </span>
           </div>
           <Button
             variant="outline"
@@ -430,7 +461,7 @@ export const MaqamFactsDrawer: React.FC<MaqamFactsDrawerProps> = ({
             onClick={() => onOpenChange(false)}
             className="border-slate-700 cursor-pointer"
           >
-            Close Reference
+            {localize("Close Reference")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

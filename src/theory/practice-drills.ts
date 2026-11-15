@@ -66,7 +66,7 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'sequence-3',
     titleEn: 'Sequences of 3',
-    titleAr: 'متتاليات ثلاثية (Sequences of 3)',
+    titleAr: 'متتاليات ثلاثية',
     descriptionEn: 'Three-note pedagogical step patterns (1-2-3, 2-3-4, 3-4-5...) developing agility and microtonal accuracy.',
     descriptionAr: 'حركات لحنية ثلاثية متتالية تعزز استقلالية الأصابع وسرعة الانتقال ووضوح المسافات الصوتية.',
     icon: 'Layers',
@@ -86,7 +86,7 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'position-shift',
     titleEn: 'Position Shift Drills',
-    titleAr: 'تمارين التنقل بين المراكز (Violin Position Shifts)',
+    titleAr: 'تمارين التنقل بين المواقع على الكمان',
     descriptionEn: 'Violin shifts between 1st and 3rd positions on Ghammaz pivots and octave leaps with guide finger technique.',
     descriptionAr: 'الانتقال بالكمان بين البوزيسيون الأول والثالث عند نغمة الغماز أو قفزة الجواب مع الزحلقة التعبيرية.',
     icon: 'ArrowUpRight',
@@ -96,7 +96,7 @@ export const DRILL_TYPES_CATALOGUE: DrillTypeMetadata[] = [
   {
     id: 'sightreading',
     titleEn: 'Algorithmic Sight-Reading',
-    titleAr: 'قراءة النوتة اللحظية (Sight-Reading)',
+    titleAr: 'قراءة النوتة الفورية',
     descriptionEn: 'Randomized authentic phrases generated algorithmically with authentic Sayr motion and Qafla cadences.',
     descriptionAr: 'توليد جمل لحنية عشوائية تحاكي سير المقام الشرقي وقفلاته الأصيلة لاختبار القراءة المباشرة.',
     icon: 'Music',

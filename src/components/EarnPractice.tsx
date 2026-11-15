@@ -54,6 +54,8 @@ import {
   QuestionnaireItem,
   QuestionnaireTitle,
 } from "./ui/questionnaire"
+import { useLanguage, type Language } from "../state/language"
+import { learningText } from "../state/learning-copy"
 
 type PracticeMethod =
   "identify-jins" | "identify-maqam" | "identify-degree" | "play-performance"
@@ -278,7 +280,8 @@ function getBoundaryMaqamat(boundary: PracticeBoundary): Maqam[] {
 
 function createListeningQuestion(
   boundary: PracticeBoundary,
-  method: Exclude<PracticeMethod, "play-performance">
+  method: Exclude<PracticeMethod, "play-performance">,
+  language: Language
 ): ListeningQuestion | null {
   if (method === "identify-jins") {
     const candidates = getBoundaryJins(boundary)
@@ -288,14 +291,17 @@ function createListeningQuestion(
     const pitches = randomize(jins.getPitches()).slice(0, 3)
     return {
       method,
-      prompt: "Listen to the phrase and identify the Jins.",
-      targetLabel: target.name,
+      prompt:
+        language === "ar"
+          ? "استمع إلى الجملة وحدّد الجنس."
+          : "Listen to the phrase and identify the Jins.",
+      targetLabel: language === "ar" ? target.arabicName : target.name,
       answerId: target.id,
       options: makeChoiceOptions(
         target,
         candidates,
         (item) => item.id,
-        (item) => item.name
+        (item) => language === "ar" ? item.arabicName : item.name
       ),
       pitches,
     }
@@ -308,14 +314,19 @@ function createListeningQuestion(
   if (method === "identify-maqam") {
     return {
       method,
-      prompt: "Listen to the phrase and identify the Maqam.",
-      targetLabel: target.name,
+      prompt:
+        language === "ar"
+          ? "استمع إلى الجملة وحدّد المقام."
+          : "Listen to the phrase and identify the Maqam.",
+      targetLabel:
+        language === "ar" ? target.arabicName || target.name : target.name,
       answerId: target.id,
       options: makeChoiceOptions(
         target,
         maqamat,
         (item) => item.id,
-        (item) => item.name
+        (item) =>
+          language === "ar" ? item.arabicName || item.name : item.name
       ),
       pitches: randomize(target.getScale()).slice(0, 4),
     }
@@ -326,19 +337,26 @@ function createListeningQuestion(
   const degreeIndex = 1 + Math.floor(Math.random() * (scale.length - 1))
   return {
     method,
-    prompt: `This is ${target.name}. Listen to the tonic, then the second pitch.`,
-    targetLabel: target.name,
+    prompt:
+      language === "ar"
+        ? `هذا مقام ${target.arabicName || target.name}. استمع إلى القرار ثم النغمة الثانية.`
+        : `This is ${target.name}. Listen to the tonic, then the second pitch.`,
+    targetLabel: language === "ar" ? target.arabicName || target.name : target.name,
     answerId: String(degreeIndex + 1),
     options: Array.from({ length: scale.length }, (_, index) => ({
       id: String(index + 1),
-      label: `Degree ${index + 1}`,
+      label:
+        language === "ar"
+          ? `الدرجة ${index + 1}`
+          : `Degree ${index + 1}`,
     })),
     pitches: [target.getTonic(), scale[degreeIndex]],
   }
 }
 
 function createPerformanceTarget(
-  boundary: PracticeBoundary
+  boundary: PracticeBoundary,
+  language: Language
 ): PerformanceTarget | null {
   const jins = getBoundaryJins(boundary)
   const maqamat = getBoundaryMaqamat(boundary)
@@ -354,14 +372,18 @@ function createPerformanceTarget(
     if (!target) return null
     return {
       kind,
-      name: target.name,
+      name: language === "ar" ? target.arabicName : target.name,
       pitches: new Jins(target, target.defaultRoot).getPitches(),
     }
   }
 
   const target = randomItem(maqamat)
   if (!target) return null
-  return { kind, name: target.name, pitches: target.getScale() }
+  return {
+    kind,
+    name: language === "ar" ? target.arabicName || target.name : target.name,
+    pitches: target.getScale(),
+  }
 }
 
 function getPracticeMethods(boundary: PracticeBoundary): PracticeMethod[] {
@@ -382,10 +404,10 @@ function isMethodCompatible(
   return jinsIds.length > 0 || maqamIds.length > 0
 }
 
-function rating(percent: number): string {
-  if (percent >= 80) return "Strong"
-  if (percent >= 55) return "Developing"
-  return "Keep practicing"
+function rating(percent: number, language: "en" | "ar"): string {
+  if (percent >= 80) return learningText(language, "Strong")
+  if (percent >= 55) return learningText(language, "Developing")
+  return learningText(language, "Keep practicing")
 }
 
 function analyzeRecording(
@@ -464,6 +486,8 @@ function PracticeDrillsLab({
   timbre: TimbreType
   maqam: Maqam
 }) {
+  const { language } = useLanguage()
+  const localize = (text: string) => learningText(language, text)
   const [type, setType] = useState<PracticeDrillType>("scale-run")
   const [direction, setDirection] = useState<
     "both" | "ascending" | "descending"
@@ -482,6 +506,31 @@ function PracticeDrillsLab({
   const [error, setError] = useState<string | null>(null)
   const noteHighlightTimeoutRef = useRef<number | null>(null)
   const metadata = DRILL_TYPES_CATALOGUE.find((item) => item.id === type)!
+  const maqamDisplayName =
+    language === "ar" ? maqam.arabicName || maqam.name : maqam.name
+  const melodyTitle = melody
+    ? language === "ar"
+      ? `${maqamDisplayName} · ${
+          type === "scale-run"
+            ? direction === "both"
+              ? "تمرين السلم صعوداً وهبوطاً"
+              : direction === "ascending"
+                ? "تمرين السلم صعوداً"
+                : "تمرين السلم هبوطاً"
+            : type === "sequence-3"
+              ? "متتاليات ثلاثية"
+              : type === "sequence-4"
+                ? "متتاليات رباعية"
+                : type === "position-shift"
+                  ? variation === "ghammaz-pivot"
+                    ? "انتقال عند الغماز"
+                    : variation === "octave-leap"
+                      ? "قفزة أوكتاف"
+                      : "زحلقة تعبيرية"
+                  : `تمرين قراءة فورية (${melody.difficulty})`
+        }`
+      : melody.title
+    : ""
 
   const stopReference = () => {
     MicrotonalAudioEngine.stopSequence("practice-drills")
@@ -526,7 +575,7 @@ function PracticeDrillsLab({
       setError(
         cause instanceof Error
           ? cause.message
-          : "Could not generate this exercise."
+          : localize("Could not generate this exercise.")
       )
     }
   }
@@ -551,7 +600,7 @@ function PracticeDrillsLab({
       setError(
         cause instanceof Error
           ? `Audio could not start: ${cause.message}`
-          : "Audio could not start."
+          : localize("Audio could not start.")
       )
     }
   }
@@ -584,7 +633,7 @@ function PracticeDrillsLab({
       setError(
         cause instanceof Error
           ? `Audio could not start: ${cause.message}`
-          : "Audio could not start."
+          : localize("Audio could not start.")
       )
     }
   }
@@ -595,37 +644,43 @@ function PracticeDrillsLab({
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
             <GraduationCap className="size-5 text-amber-400" />
-            Skill Drills
+            {localize("Skill Drills")}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">
-            Generate focused maqam exercises, follow each How To guide, and
-            build your practice record.
+            {localize(
+              "Generate focused maqam exercises, follow each How To guide, and build your practice record."
+            )}
           </p>
         </div>
         <div
           className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm"
-          aria-label="Training progress"
+          aria-label={localize("Training progress")}
         >
           <Trophy className="size-4 text-amber-400" />
           <span>{stats.xp} XP</span>
-          <span className="text-muted-foreground">· Level {stats.level}</span>
           <span className="text-muted-foreground">
-            · {stats.melodiesPracticed} exercises
+            · {localize("Level")} {stats.level}
+          </span>
+          <span className="text-muted-foreground">
+            · {stats.melodiesPracticed}{" "}
+            {language === "ar" ? "تمارين" : "exercises"}
           </span>
         </div>
       </header>
       <Card>
         <CardHeader>
-          <CardTitle>Practice generator</CardTitle>
+          <CardTitle>{localize("Practice generator")}</CardTitle>
           <CardDescription>
-            {maqam.name} · {metadata.descriptionEn} Focus:{" "}
-            {metadata.pedagogicalFocus}
+            {maqamDisplayName} ·{" "}
+            {language === "ar" ? metadata.descriptionAr : metadata.descriptionEn}{" "}
+            {language === "ar" ? "التركيز: " : "Focus: "}
+            {localize(metadata.pedagogicalFocus)}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-sm font-medium">
-              Practice type
+              {localize("Practice type")}
               <select
                 value={type}
                 onChange={(event) => {
@@ -637,14 +692,14 @@ function PracticeDrillsLab({
               >
                 {DRILL_TYPES_CATALOGUE.map((item) => (
                   <option key={item.id} value={item.id}>
-                    {item.titleEn}
+                    {language === "ar" ? item.titleAr : item.titleEn}
                   </option>
                 ))}
               </select>
             </label>
             {["scale-run", "sequence-3", "sequence-4"].includes(type) ? (
               <label className="flex flex-col gap-1 text-sm font-medium">
-                Direction
+                {localize("Direction")}
                 <select
                   value={direction}
                   onChange={(event) =>
@@ -652,14 +707,16 @@ function PracticeDrillsLab({
                   }
                   className="h-10 rounded-md border border-input bg-background px-3"
                 >
-                  <option value="both">Ascending and descending</option>
-                  <option value="ascending">Ascending</option>
-                  <option value="descending">Descending</option>
+                  <option value="both">
+                    {localize("Ascending and descending")}
+                  </option>
+                  <option value="ascending">{localize("Ascending")}</option>
+                  <option value="descending">{localize("Descending")}</option>
                 </select>
               </label>
             ) : type === "position-shift" ? (
               <label className="flex flex-col gap-1 text-sm font-medium">
-                Shift variation
+                {localize("Shift variation")}
                 <select
                   value={variation}
                   onChange={(event) =>
@@ -667,35 +724,40 @@ function PracticeDrillsLab({
                   }
                   className="h-10 rounded-md border border-input bg-background px-3"
                 >
-                  <option value="ghammaz-pivot">Ghammaz pivot</option>
-                  <option value="octave-leap">Octave leap</option>
-                  <option value="expressive-slide">Expressive slide</option>
+                  <option value="ghammaz-pivot">
+                    {localize("Ghammaz pivot")}
+                  </option>
+                  <option value="octave-leap">{localize("Octave leap")}</option>
+                  <option value="expressive-slide">
+                    {localize("Expressive slide")}
+                  </option>
                 </select>
               </label>
             ) : (
               <div className="flex items-center text-sm text-muted-foreground">
-                Sight-reading · 8 measures · Level 1
+                {localize("Sight-reading · 8 measures · Level 1")}
               </div>
             )}
           </div>
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
             <h3 className="flex items-center gap-2 font-semibold">
               <HelpCircle className="size-4 text-amber-500" />
-              How To: {metadata.titleEn}
+              {localize("How To:")}{" "}
+              {language === "ar" ? metadata.titleAr : metadata.titleEn}
             </h3>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
               {DRILL_HOW_TO[type].map((step) => (
-                <li key={step}>{step}</li>
+                <li key={step}>{localize(step)}</li>
               ))}
             </ol>
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">
-              {error}
+              {localize(error)}
             </p>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={generate}>Generate exercise</Button>
+            <Button onClick={generate}>{localize("Generate exercise")}</Button>
             {melody && (
               <Button
                 variant="outline"
@@ -709,7 +771,9 @@ function PracticeDrillsLab({
                 ) : (
                   <Play data-icon="inline-start" />
                 )}
-                {isReferencePlaying ? "Stop" : "Play reference"}
+                {isReferencePlaying
+                  ? localize("Stop")
+                  : localize("Play reference")}
               </Button>
             )}
           </div>
@@ -718,12 +782,12 @@ function PracticeDrillsLab({
               className="rounded-xl border border-border p-4"
               aria-live="polite"
             >
-              <h3 className="font-semibold">{melody.title}</h3>
+              <h3 className="font-semibold">{melodyTitle}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {melody.description}
+                {language === "ar" ? metadata.descriptionAr : melody.description}
               </p>
               <p className="mt-3 text-sm text-muted-foreground">
-                Select a note on the staff to hear it.
+                {localize("Select a note on the staff to hear it.")}
               </p>
               <SVGStaff
                 notes={melody.notes.map((note) => ({
@@ -731,18 +795,20 @@ function PracticeDrillsLab({
                   isTonic: note.pitch.equals(maqam.getTonic()),
                   arabicName: note.pitch.toDisplayString(),
                   roleLabel: note.positionNumber
-                    ? `P${note.positionNumber}`
+                    ? language === "ar"
+                      ? `الموقع ${note.positionNumber}`
+                      : `P${note.positionNumber}`
                     : note.isShiftPoint
-                      ? "Shift"
+                      ? localize("Shift")
                       : undefined,
                 }))}
-                title="Generated exercise staff"
+                title={localize("Generated exercise staff")}
                 onNoteClick={(pitch) => void playNote(pitch)}
                 activeSoundingPitch={activeSoundingPitch}
               />
               <ol
                 className="mt-3 flex flex-wrap gap-2"
-                aria-label="Exercise notes"
+                aria-label={localize("Exercise notes")}
               >
                 {melody.notes.map((note, index) => (
                   <li
@@ -754,7 +820,9 @@ function PracticeDrillsLab({
                     </span>
                     {note.positionNumber && (
                       <span className="ml-1 text-xs text-muted-foreground">
-                        P{note.positionNumber}
+                        {language === "ar"
+                          ? `الموقع ${note.positionNumber}`
+                          : `P${note.positionNumber}`}
                       </span>
                     )}
                   </li>
@@ -770,7 +838,9 @@ function PracticeDrillsLab({
                     )
                     .map((note, index) => (
                       <li key={`${melody.id}-hint-${index}`}>
-                        {note.shiftInstruction || note.pedagogicalNote}
+                        {localize(
+                          note.shiftInstruction || note.pedagogicalNote || ""
+                        )}
                       </li>
                     ))}
                 </ul>
@@ -788,6 +858,8 @@ export function EarnPractice({
   maqam,
   mode = "boundaries",
 }: EarnPracticeProps) {
+  const { language } = useLanguage()
+  const localize = (text: string) => learningText(language, text)
   const [initialSaved] = useState(loadSavedBoundaries)
   const [customBoundaries, setCustomBoundaries] = useState(
     initialSaved.boundaries
@@ -1092,7 +1164,11 @@ export function EarnPractice({
   }
 
   const deleteBoundary = (boundary: PracticeBoundary) => {
-    if (!window.confirm(`Delete "${boundary.name}"?`)) return
+    const confirmation =
+      language === "ar"
+        ? `هل تريد حذف «${boundary.name}»؟`
+        : `Delete "${boundary.name}"?`
+    if (!window.confirm(confirmation)) return
     const next = customBoundaries.filter((item) => item.id !== boundary.id)
     const error = persistBoundaries(next)
     if (error) {
@@ -1127,7 +1203,7 @@ export function EarnPractice({
     boundary: PracticeBoundary,
     method: Exclude<PracticeMethod, "play-performance">
   ) => {
-    const nextQuestion = createListeningQuestion(boundary, method)
+    const nextQuestion = createListeningQuestion(boundary, method, language)
     if (!nextQuestion) {
       setPracticeError(
         "This practice has no available targets for that method."
@@ -1146,7 +1222,7 @@ export function EarnPractice({
   }
 
   const startPerformancePractice = (boundary: PracticeBoundary) => {
-    const target = createPerformanceTarget(boundary)
+    const target = createPerformanceTarget(boundary, language)
     if (!target) {
       setPracticeError("This practice has no available performance targets.")
       return
@@ -1237,7 +1313,7 @@ export function EarnPractice({
   const nextQuestion = () => {
     if (!activeBoundary || !activeMethod || activeMethod === "play-performance")
       return
-    const next = createListeningQuestion(activeBoundary, activeMethod)
+    const next = createListeningQuestion(activeBoundary, activeMethod, language)
     if (!next) {
       setPracticeError("This practice has no available questions.")
       return
@@ -1284,17 +1360,18 @@ export function EarnPractice({
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-white">
             <BookOpen className="size-5 text-amber-400" />
-            Listening Practice
+            {localize("Listening Practice")}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">
-            Build a practice boundary from the ajnas and maqamat you want to
-            master, then listen, identify, and play.
+            {localize(
+              "Build a practice boundary from the ajnas and maqamat you want to master, then listen, identify, and play."
+            )}
           </p>
         </div>
         {!activeBoundary && !draft && (
           <Button onClick={() => openBuilder()}>
             <Plus data-icon="inline-start" />
-            New practice boundary
+            {localize("New practice boundary")}
           </Button>
         )}
       </header>
@@ -1304,7 +1381,7 @@ export function EarnPractice({
           role="alert"
           className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
         >
-          {storageError}
+          {localize(storageError)}
         </div>
       )}
 
@@ -1313,7 +1390,7 @@ export function EarnPractice({
           role="alert"
           className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
         >
-          {practiceError}
+          {localize(practiceError)}
         </div>
       )}
 
@@ -1324,18 +1401,19 @@ export function EarnPractice({
               <div>
                 <CardTitle>
                   {editingId
-                    ? "Edit practice boundary"
-                    : "Create a practice boundary"}
+                    ? localize("Edit practice boundary")
+                    : localize("Create a practice boundary")}
                 </CardTitle>
                 <CardDescription>
-                  Step {draftStep + 1} of 3 · Name it, choose your material, and
-                  select practice methods.
+                  {localize("Step ")}
+                  {draftStep + 1} / 3 ·{" "}
+                  {localize("Name it, choose your material, and select practice methods.")}
                 </CardDescription>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Close boundary builder"
+                aria-label={localize("Close boundary builder")}
                 onClick={closeBuilder}
               >
                 <X />
@@ -1347,17 +1425,17 @@ export function EarnPractice({
               <QuestionnaireItem name={`practice-boundary-step-${draftStep}`}>
                 <QuestionnaireTitle>
                   {draftStep === 0
-                    ? "Name this practice"
+                    ? localize("Name this practice")
                     : draftStep === 1
-                      ? "Choose what to practice"
-                      : "Choose practice methods"}
+                      ? localize("Choose what to practice")
+                      : localize("Choose practice methods")}
                 </QuestionnaireTitle>
                 <QuestionnaireDescription>
                   {draftStep === 0
-                    ? "Give your boundary a name you will recognize in your practice list."
+                    ? localize("Give your boundary a name you will recognize in your practice list.")
                     : draftStep === 1
-                      ? "Select one or more ajnas and maqamat to include."
-                      : "Only methods compatible with your selected material can be enabled."}
+                      ? localize("Select one or more ajnas and maqamat to include.")
+                      : localize("Only methods compatible with your selected material can be enabled.")}
                 </QuestionnaireDescription>
 
                 {draftStep === 0 && (
@@ -1366,14 +1444,14 @@ export function EarnPractice({
                       htmlFor="practice-boundary-name"
                       className="text-sm font-medium"
                     >
-                      Boundary name
+                      {localize("Boundary name")}
                     </label>
                     <Input
                       id="practice-boundary-name"
                       autoFocus
                       maxLength={60}
                       value={draft.name}
-                      placeholder="e.g. Bayati and Rast review"
+                      placeholder={localize("e.g. Bayati and Rast review")}
                       onChange={(event) =>
                         setDraft({ ...draft, name: event.target.value })
                       }
@@ -1385,7 +1463,8 @@ export function EarnPractice({
                   <div className="mt-4 grid gap-5 lg:grid-cols-2">
                     <fieldset className="flex min-w-0 flex-col gap-2">
                       <legend className="mb-2 text-sm font-semibold">
-                        Ajnas ({draft.jinsIds.length} selected)
+                        {localize("Ajnas (")}
+                        {draft.jinsIds.length} {localize(" selected)")}
                       </legend>
                       <div className="grid max-h-80 gap-2 overflow-y-auto rounded-xl border border-border p-3 sm:grid-cols-2">
                         {ALL_JINS.map((jins) => (
@@ -1406,10 +1485,12 @@ export function EarnPractice({
                               className="accent-primary"
                             />
                             <span className="min-w-0 truncate">
-                              {jins.name}
+                              {language === "ar"
+                                ? jins.arabicName || jins.name
+                                : jins.name}
                             </span>
                             <span className="ms-auto text-xs text-muted-foreground">
-                              {jins.sizeLabel}
+                              {localize(jins.sizeLabel)}
                             </span>
                           </label>
                         ))}
@@ -1417,7 +1498,8 @@ export function EarnPractice({
                     </fieldset>
                     <fieldset className="flex min-w-0 flex-col gap-2">
                       <legend className="mb-2 text-sm font-semibold">
-                        Maqamat ({draft.maqamIds.length} selected)
+                        {localize("Maqamat (")}
+                        {draft.maqamIds.length} {localize(" selected)")}
                       </legend>
                       <div className="grid max-h-80 gap-2 overflow-y-auto rounded-xl border border-border p-3 sm:grid-cols-2">
                         {ALL_MAQAMAT.map((maqam) => (
@@ -1437,7 +1519,11 @@ export function EarnPractice({
                               }
                               className="accent-primary"
                             />
-                            <span className="truncate">{maqam.name}</span>
+                            <span className="truncate">
+                              {language === "ar"
+                                ? maqam.arabicName || maqam.name
+                                : maqam.name}
+                            </span>
                           </label>
                         ))}
                       </div>
@@ -1447,7 +1533,9 @@ export function EarnPractice({
 
                 {draftStep === 2 && (
                   <fieldset className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <legend className="sr-only">Practice methods</legend>
+                    <legend className="sr-only">
+                      {localize("Practice methods")}
+                    </legend>
                     {methodChoices.map((method) => {
                       const compatible = isMethodCompatible(
                         method,
@@ -1472,19 +1560,23 @@ export function EarnPractice({
                           />
                           <span className="flex flex-col gap-1">
                             <span className="font-medium">
-                              {METHOD_DETAILS[method].title}
+                              {localize(METHOD_DETAILS[method].title)}
                             </span>
                             <span className="text-sm text-muted-foreground">
-                              {METHOD_DETAILS[method].description}
+                              {localize(METHOD_DETAILS[method].description)}
                             </span>
                           </span>
                         </label>
                       )
                     })}
                     <p className="text-sm text-muted-foreground sm:col-span-2">
-                      Selected: {draft.jinsIds.length} ajnas,{" "}
-                      {draft.maqamIds.length} maqamat, {draft.methods.length}{" "}
-                      methods.
+                      {localize("Selected: ")}
+                      {draft.jinsIds.length}
+                      {localize(" ajnas, ")}
+                      {draft.maqamIds.length}
+                      {localize(" maqamat, ")}
+                      {draft.methods.length}
+                      {localize(" methods.")}
                     </p>
                   </fieldset>
                 )}
@@ -1493,7 +1585,7 @@ export function EarnPractice({
 
             {builderError && (
               <p role="alert" className="mt-4 text-sm text-destructive">
-                {builderError}
+                {localize(builderError)}
               </p>
             )}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
@@ -1506,11 +1598,11 @@ export function EarnPractice({
                 }}
               >
                 <ChevronLeft data-icon="inline-start" />
-                Back
+                {localize("Back")}
               </Button>
               {draftStep < 2 ? (
                 <Button onClick={moveDraftForward}>
-                  Continue
+                  {localize("Continue")}
                   <ChevronRight data-icon="inline-end" />
                 </Button>
               ) : (
@@ -1518,7 +1610,9 @@ export function EarnPractice({
                   onClick={() => {
                     if (!availableMethods.length) {
                       setBuilderError(
-                        "Select at least one practice method compatible with your targets."
+                        localize(
+                          "Select at least one practice method compatible with your targets."
+                        )
                       )
                       return
                     }
@@ -1526,7 +1620,7 @@ export function EarnPractice({
                   }}
                 >
                   <Save data-icon="inline-start" />
-                  Save boundary
+                  {localize("Save boundary")}
                 </Button>
               )}
             </div>
@@ -1541,35 +1635,36 @@ export function EarnPractice({
               <div>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <Badge variant="amber">
-                    {METHOD_DETAILS[activeMethod].title}
+                    {localize(METHOD_DETAILS[activeMethod].title)}
                   </Badge>
                   <Badge variant="muted">{activeBoundary.name}</Badge>
                 </div>
                 <CardTitle>
                   {activeMethod === "play-performance"
-                    ? "Prepare your instrument"
-                    : METHOD_DETAILS[activeMethod].title}
+                    ? localize("Prepare your instrument")
+                    : localize(METHOD_DETAILS[activeMethod].title)}
                 </CardTitle>
                 <CardDescription>
                   {activeMethod === "play-performance"
-                    ? "Play the prompted Maqam or Jins. You will have four seconds to get ready, followed by up to 12 seconds to perform."
-                    : question?.prompt}
+                    ? localize("Play the prompted Maqam or Jins. You will have four seconds to get ready, followed by up to 12 seconds to perform.")
+                    : question && localize(question.prompt)}
                 </CardDescription>
                 <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                   <h3 className="flex items-center gap-2 text-sm font-semibold">
                     <HelpCircle className="size-4 text-amber-500" />
-                    How To: {METHOD_DETAILS[activeMethod].title}
+                    {localize("How To:")}{" "}
+                    {localize(METHOD_DETAILS[activeMethod].title)}
                   </h3>
                   <ol className="mt-1 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
                     {METHOD_DETAILS[activeMethod].howTo.map((step) => (
-                      <li key={step}>{step}</li>
+                      <li key={step}>{localize(step)}</li>
                     ))}
                   </ol>
                 </div>
               </div>
               <Button variant="outline" onClick={exitPractice}>
                 <X data-icon="inline-start" />
-                Exit Practice
+                {localize("Exit Practice")}
               </Button>
             </div>
           </CardHeader>
@@ -1581,11 +1676,11 @@ export function EarnPractice({
                     <p className="text-sm font-medium">
                       {question.method === "identify-degree"
                         ? question.prompt
-                        : "Listen, then choose an answer."}
+                        : localize("Listen, then choose an answer.")}
                     </p>
                     {question.method === "identify-degree" && (
                       <p className="mt-1 text-xs text-muted-foreground">
-                        Tonic first; the second pitch is a higher scale degree.
+                        {localize("Tonic first; the second pitch is a higher scale degree.")}
                       </p>
                     )}
                   </div>
@@ -1594,7 +1689,7 @@ export function EarnPractice({
                     onClick={() => void playPitches(question.pitches)}
                   >
                     <RotateCcw data-icon="inline-start" />
-                    Replay
+                    {localize("Replay")}
                   </Button>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -1631,7 +1726,7 @@ export function EarnPractice({
                             ""
                           )}
                         </span>
-                        {option.label}
+                        {localize(option.label)}
                       </button>
                     )
                   })}
@@ -1646,23 +1741,29 @@ export function EarnPractice({
                     }
                   >
                     {selectedAnswer === question.answerId
-                      ? "Correct."
-                      : `Not quite. The answer is ${
-                          question.method === "identify-degree"
-                            ? `degree ${question.answerId}`
-                            : question.targetLabel
-                        }. Review the How To steps, replay the example, and try the next question.`}
+                      ? localize("Correct.")
+                      : language === "ar"
+                        ? `ليست الإجابة الصحيحة. الإجابة هي ${
+                            question.method === "identify-degree"
+                              ? `الدرجة ${question.answerId}`
+                              : question.targetLabel
+                          }. راجع خطوات التمرين، وأعد المثال، ثم جرّب السؤال التالي.`
+                        : `Not quite. The answer is ${
+                            question.method === "identify-degree"
+                              ? `degree ${question.answerId}`
+                              : question.targetLabel
+                          }. Review the How To steps, replay the example, and try the next question.`}
                   </p>
                 )}
                 <div className="flex justify-end">
                   {answerChecked ? (
                     <Button onClick={nextQuestion}>
-                      Next question
+                      {localize("Next question")}
                       <ChevronRight data-icon="inline-end" />
                     </Button>
                   ) : (
                     <Button disabled={!selectedAnswer} onClick={submitAnswer}>
-                      Check answer
+                      {localize("Check answer")}
                       <Check data-icon="inline-end" />
                     </Button>
                   )}
@@ -1677,11 +1778,14 @@ export function EarnPractice({
                     <Headphones className="mt-0.5 size-5 text-amber-400" />
                     <div className="flex-1">
                       <p className="font-semibold">
-                        Play {performanceTarget.kind} {performanceTarget.name}
+                        {language === "ar"
+                          ? `اعزف ${performanceTarget.kind === "Jins" ? "جنس" : "مقام"} ${performanceTarget.name}`
+                          : `Play ${performanceTarget.kind} ${performanceTarget.name}`}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Use your instrument to explore the target. Select Replay
-                        for a reference, then start when ready.
+                        {localize(
+                          "Use your instrument to explore the target. Select Replay for a reference, then start when ready."
+                        )}
                       </p>
                     </div>
                     <Button
@@ -1691,7 +1795,7 @@ export function EarnPractice({
                       }
                     >
                       <RotateCcw data-icon="inline-start" />
-                      Replay
+                      {localize("Replay")}
                     </Button>
                   </div>
                 </div>
@@ -1703,7 +1807,7 @@ export function EarnPractice({
                     className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center"
                   >
                     <span className="text-sm text-muted-foreground">
-                      Recording starts in
+                      {localize("Recording starts in")}
                     </span>
                     <span className="text-5xl font-bold text-amber-300 tabular-nums">
                       {countdown}
@@ -1716,14 +1820,16 @@ export function EarnPractice({
                     <div className="flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2 font-medium">
                         <span className="size-2 animate-pulse rounded-full bg-destructive" />
-                        Recording · {recordSeconds}s / 12s
+                        {localize("Recording")}&nbsp;· {recordSeconds}
+                        {language === "ar" ? "ث" : "s"} / 12
+                        {language === "ar" ? "ث" : "s"}
                       </span>
-                      <Badge variant="rose">Live</Badge>
+                      <Badge variant="rose">{localize("Live")}</Badge>
                     </div>
                     <div
                       className="h-2 overflow-hidden rounded-full bg-muted"
                       role="progressbar"
-                      aria-label="Recording time"
+                      aria-label={localize("Recording time")}
                       aria-valuemin={0}
                       aria-valuemax={12}
                       aria-valuenow={recordSeconds}
@@ -1738,14 +1844,17 @@ export function EarnPractice({
 
                 {recordingReport && (
                   <section
-                    aria-label="Performance analysis report"
+                    aria-label={localize("Performance analysis report")}
                     className="flex flex-col gap-4 rounded-xl border border-border p-4"
                   >
                     <div>
-                      <h3 className="font-semibold">Performance report</h3>
+                      <h3 className="font-semibold">
+                        {localize("Performance report")}
+                      </h3>
                       <p className="text-sm text-muted-foreground">
-                        Analyzed {recordingReport.duration.toFixed(1)} seconds
-                        of your recording.
+                        {localize("Analyzed ")}
+                        {recordingReport.duration.toFixed(1)}
+                        {localize(" seconds of your recording.")}
                       </p>
                     </div>
                     {recordingReport.sampleCount > 0 ? (
@@ -1753,59 +1862,65 @@ export function EarnPractice({
                         <div className="grid gap-3 sm:grid-cols-3">
                           <div className="rounded-lg bg-muted/40 p-3">
                             <p className="text-xs text-muted-foreground">
-                              Intonation
+                              {localize("Intonation")}
                             </p>
                             <p className="mt-1 font-semibold">
-                              {rating(recordingReport.intonationPercent)}
+                              {rating(recordingReport.intonationPercent, language)}
                             </p>
                             <p className="text-sm">
-                              {recordingReport.intonationPercent}% in tune
+                              {recordingReport.intonationPercent}%
+                              {localize(" in tune")}
                             </p>
                           </div>
                           <div className="rounded-lg bg-muted/40 p-3">
                             <p className="text-xs text-muted-foreground">
-                              Boundary notes
+                              {localize("Boundary notes")}
                             </p>
                             <p className="mt-1 font-semibold">
-                              {rating(recordingReport.boundaryPercent)}
+                              {rating(recordingReport.boundaryPercent, language)}
                             </p>
                             <p className="text-sm">
-                              {recordingReport.boundaryPercent}% in target
+                              {recordingReport.boundaryPercent}%
+                              {localize(" in target")}
                             </p>
                           </div>
                           <div className="rounded-lg bg-muted/40 p-3">
                             <p className="text-xs text-muted-foreground">
-                              Average deviation
+                              {localize("Average deviation")}
                             </p>
                             <p className="mt-1 font-semibold">
                               ±{recordingReport.averageCents}¢
                             </p>
                             <p className="text-sm">
-                              from the nearest 24-EDO pitch
+                              {localize("from the nearest 24-EDO pitch")}
                             </p>
                           </div>
                         </div>
                         <div className="rounded-lg border border-border p-3 text-sm">
-                          <p className="font-medium">Practice advice</p>
+                          <p className="font-medium">
+                            {localize("Practice advice")}
+                          </p>
                           <ul className="mt-2 list-disc pl-5 text-muted-foreground">
                             {recordingReport.intonationPercent < 80 && (
                               <li>
-                                Sustain each note and listen for a steady center
-                                before moving on.
+                                {localize(
+                                  "Sustain each note and listen for a steady center before moving on."
+                                )}
                               </li>
                             )}
                             {recordingReport.boundaryPercent < 80 && (
                               <li>
-                                Review the target scale and focus on its
-                                characteristic quarter-tone steps.
+                                {localize(
+                                  "Review the target scale and focus on its characteristic quarter-tone steps."
+                                )}
                               </li>
                             )}
                             {recordingReport.intonationPercent >= 80 &&
                               recordingReport.boundaryPercent >= 80 && (
                                 <li>
-                                  Good control. Try a more varied phrase while
-                                  keeping the Maqam&apos;s characteristic notes
-                                  clear.
+                                  {localize(
+                                    "Good control. Try a more varied phrase while keeping the Maqam's characteristic notes clear."
+                                  )}
                                 </li>
                               )}
                           </ul>
@@ -1813,8 +1928,9 @@ export function EarnPractice({
                       </>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Play a few sustained notes and record again to receive
-                        skill levels and advice.
+                        {localize(
+                          "Play a few sustained notes and record again to receive skill levels and advice."
+                        )}
                       </p>
                     )}
                   </section>
@@ -1828,16 +1944,18 @@ export function EarnPractice({
                     >
                       <Mic data-icon="inline-start" />
                       {isStartingRecording
-                        ? "Preparing microphone..."
+                        ? localize("Preparing microphone...")
                         : recordingReport
-                          ? "Record again"
-                          : "Start"}
+                          ? localize("Record again")
+                          : localize("Start")}
                     </Button>
                   )}
                   {(isRecording || countdown !== null) && (
                     <Button variant="destructive" onClick={checkRecording}>
                       <Check data-icon="inline-start" />
-                      {countdown !== null ? "Cancel countdown" : "Check"}
+                      {countdown !== null
+                        ? localize("Cancel countdown")
+                        : localize("Check")}
                     </Button>
                   )}
                 </div>
@@ -1851,18 +1969,19 @@ export function EarnPractice({
         <>
           <div
             className="flex flex-wrap items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm"
-            aria-label="Training progress"
+            aria-label={localize("Training progress")}
           >
             <Trophy className="size-4 text-amber-500" />
             <span>{trainingStats.xp} XP</span>
             <span className="text-muted-foreground">
-              · Level {trainingStats.level}
+              · {localize("Level")} {trainingStats.level}
             </span>
             <span className="text-muted-foreground">
-              · Current streak {trainingStats.streak}
+              · {localize("Current streak")} {trainingStats.streak}
             </span>
             <span className="text-muted-foreground">
-              · {trainingStats.completedQuizzes} answers checked
+              · {trainingStats.completedQuizzes}{" "}
+              {localize("answers checked")}
             </span>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -1877,16 +1996,27 @@ export function EarnPractice({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="mb-2 flex flex-wrap items-center gap-2">
-                          {isPreset && <Badge variant="amber">Built-in</Badge>}
+                          {isPreset && (
+                            <Badge variant="amber">
+                              {localize("Built-in")}
+                            </Badge>
+                          )}
                           <Badge variant="muted">
-                            {jinsCount} ajnas · {maqamCount} maqamat
+                            {jinsCount}
+                            {localize(" ajnas · ")}
+                            {maqamCount}
+                            {localize(" maqamat")}
                           </Badge>
                         </div>
-                        <CardTitle>{boundary.name}</CardTitle>
+                        <CardTitle>
+                          {isPreset
+                            ? localize(boundary.name)
+                            : boundary.name}
+                        </CardTitle>
                         <CardDescription className="mt-2">
                           {isPreset
-                            ? "A preconfigured collection that cannot be changed or deleted."
-                            : "Your saved practice boundary."}
+                            ? localize("A preconfigured collection that cannot be changed or deleted.")
+                            : localize("Your saved practice boundary.")}
                         </CardDescription>
                       </div>
                       <div className="flex gap-1">
@@ -1895,8 +2025,8 @@ export function EarnPractice({
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              aria-label={`Edit ${boundary.name}`}
-                              title="Edit boundary"
+                              aria-label={`${localize("Edit ")}${boundary.name}`}
+                              title={localize("Edit boundary")}
                               onClick={() => openBuilder(boundary)}
                             >
                               <Pencil />
@@ -1904,8 +2034,8 @@ export function EarnPractice({
                             <Button
                               variant="ghost"
                               size="icon-sm"
-                              aria-label={`Delete ${boundary.name}`}
-                              title="Delete boundary"
+                              aria-label={`${localize("Delete ")}${boundary.name}`}
+                              title={localize("Delete boundary")}
                               onClick={() => deleteBoundary(boundary)}
                             >
                               <Trash2 />
@@ -1915,8 +2045,8 @@ export function EarnPractice({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Export ${boundary.name} as JSON`}
-                          title="Export JSON"
+                          aria-label={`${localize("Export ")}${boundary.name}${localize(" as JSON")}`}
+                          title={localize("Export JSON")}
                           onClick={() => exportBoundary(boundary)}
                         >
                           <Download />
@@ -1929,13 +2059,13 @@ export function EarnPractice({
                       <div className="flex flex-wrap gap-2">
                         {methods.map((method) => (
                           <Badge key={method} variant="muted">
-                            {METHOD_DETAILS[method].title}
+                            {localize(METHOD_DETAILS[method].title)}
                           </Badge>
                         ))}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Select compatible methods to begin practicing.
+                        {localize("Select compatible methods to begin practicing.")}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-2">
@@ -1960,8 +2090,8 @@ export function EarnPractice({
                             <Play data-icon="inline-start" />
                           )}
                           {method === "play-performance"
-                            ? "Play"
-                            : METHOD_DETAILS[method].title}
+                            ? localize("Play")
+                            : localize(METHOD_DETAILS[method].title)}
                         </Button>
                       ))}
                     </div>
