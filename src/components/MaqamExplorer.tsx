@@ -1,5 +1,5 @@
 // src/components/MaqamExplorer.tsx
-import React, { useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { Maqam, MaqamatCatalogue } from "../theory/maqam"
 import {
   ArabicPitch,
@@ -53,6 +53,7 @@ import { removeNaturalMarks } from "@/lib/utils"
 interface Props {
   currentMaqam: Maqam
   onSelectMaqam: (maqam: Maqam) => void
+  focusTransposition?: boolean
   timbre: TimbreType
   isPlayingScale: boolean
   onPlayScale: (pitches: ArabicPitch[]) => void
@@ -69,6 +70,7 @@ interface Props {
 export const MaqamExplorer: React.FC<Props> = ({
   currentMaqam,
   onSelectMaqam,
+  focusTransposition = false,
   timbre,
   isPlayingScale,
   onPlayScale,
@@ -83,6 +85,7 @@ export const MaqamExplorer: React.FC<Props> = ({
   const [showSayrDialogLocal, setShowSayrDialogLocal] = useState(false)
   const [showModulationDrawerLocal, setShowModulationDrawerLocal] =
     useState(false)
+  const transpositionPanelRef = useRef<HTMLDivElement>(null)
   const [explorerTab, setExplorerTabState] = useState<
     "structure" | "network" | "svg-staff"
   >(() => getWorkspaceState().drafts.explorer.viewTab)
@@ -91,6 +94,15 @@ export const MaqamExplorer: React.FC<Props> = ({
     setExplorerTabState(tab)
     updateWorkspaceDraft("explorer", { viewTab: tab })
   }
+
+  useEffect(() => {
+    if (focusTransposition) {
+      transpositionPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+    }
+  }, [focusTransposition])
 
   const handleOpenSayr = () => {
     if (onOpenSayrVisualization) {
@@ -820,7 +832,11 @@ export const MaqamExplorer: React.FC<Props> = ({
           )}
 
           {/* Dynamic Transposition Hub */}
-          <div className="border-border/60 border-t pt-6">
+          <div
+            ref={transpositionPanelRef}
+            className="scroll-mt-24 border-border/60 border-t pt-6"
+            aria-labelledby="maqam-transposition-title"
+          >
             <Tabs
               value={transpositionTab}
               onValueChange={setTranspositionTab}
@@ -831,7 +847,9 @@ export const MaqamExplorer: React.FC<Props> = ({
                   <div className="flex items-center gap-2">
                     <SlidersHorizontal className="h-4 w-4 text-amber-400" />
                     <span className="text-xs font-bold tracking-widest text-amber-400 uppercase">
-                      Maqam Transposition Hub (تصوير المقامات)
+                      <span id="maqam-transposition-title">
+                        Maqam Transposition Hub (تصوير المقامات)
+                      </span>
                     </span>
                     {isTransposed && (
                       <Badge

@@ -53,6 +53,7 @@ import {
   Compass,
   Network,
   Mic,
+  ArrowLeftRight,
   BookOpen,
   GitFork,
   Package,
@@ -237,6 +238,12 @@ function StudioContent() {
       label: "Maqam Explorer",
       arabic: "مستكشف المقامات",
       icon: Layers,
+    },
+    {
+      id: "transposition",
+      label: "Transposition Lab",
+      arabic: "مختبر التصوير المقامي",
+      icon: ArrowLeftRight,
     },
     {
       id: "jins-analysis",
@@ -479,10 +486,11 @@ function StudioContent() {
 
       {/* Main Workspace Area */}
       <main className="mx-auto w-full max-w-7xl flex-1 p-3 sm:p-6 lg:p-8">
-        {activeLab === "explorer" && (
+        {(activeLab === "explorer" || activeLab === "transposition") && (
           <MaqamExplorer
             currentMaqam={currentMaqam}
             onSelectMaqam={handleSelectMaqam}
+            focusTransposition={activeLab === "transposition"}
             timbre={timbre}
             isPlayingScale={isPlayingScale}
             onPlayScale={handlePlayScale}
