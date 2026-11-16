@@ -15,8 +15,9 @@ export class MicrotonalAudioEngine {
   private static masterLimiter: Tone.Limiter | null = null
   private static masterReverb: Tone.Freeverb | null = null
 
-  // Synths & FX
-  private static violinSynth: Tone.PolySynth | null = null
+  // Instruments & FX
+  private static violinSampler: Tone.Sampler | null = null
+  private static violinSamplerReady: Promise<void> | null = null
   private static violinFilter: Tone.Filter | null = null
   private static violinVibrato: Tone.Vibrato | null = null
   private static oudSampler: Tone.Sampler | null = null
@@ -58,36 +59,46 @@ export class MicrotonalAudioEngine {
       wet: 0.2,
     }).connect(this.masterGain)
 
-    // 3. Acoustic Arabic Violin Model:
-    // Bowed strings have rich harmonics (sawtooth base with dual mode spread),
-    // vocal formant filtering, subtle left-hand vibrato (5.2Hz), and smooth bowing envelope.
-    this.violinVibrato = new Tone.Vibrato({
+    // 3. Sampled Arabic Violin with filtering and subtle left-hand vibrato.
+    const violinVibrato = new Tone.Vibrato({
       frequency: 5.2,
       depth: 0.16,
       type: "sine",
     }).connect(this.masterReverb)
+    this.violinVibrato = violinVibrato
 
-    this.violinFilter = new Tone.Filter({
+    const violinFilter = new Tone.Filter({
       frequency: 3400,
       type: "lowpass",
       rolloff: -24,
       Q: 1.8,
-    }).connect(this.violinVibrato)
+    }).connect(violinVibrato)
+    this.violinFilter = violinFilter
 
-    this.violinSynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: "fatsawtooth",
-        count: 2,
-        spread: 12,
-      },
-      envelope: {
-        attack: 0.06, // gentle bow grip
-        decay: 0.22,
-        sustain: 0.85, // singing bowed sustain
-        release: 0.22, // natural string body ring down
-      },
-    }).connect(this.violinFilter)
-    this.violinSynth.volume.value = -2
+    this.violinSamplerReady = new Promise<void>((resolve, reject) => {
+      this.violinSampler = new Tone.Sampler({
+        urls: {
+          A3: "A3.mp3",
+          A4: "A4.mp3",
+          A5: "A5.mp3",
+          C4: "C4.mp3",
+          C5: "C5.mp3",
+          E4: "E4.mp3",
+          E5: "E5.mp3",
+          E6: "E6.mp3",
+          G3: "G3.mp3",
+          G4: "G4.mp3",
+          G5: "G5.mp3",
+        },
+        baseUrl: `${import.meta.env.BASE_URL}samples/violin/`,
+        attack: 0.06,
+        release: 0.22,
+        onload: resolve,
+        onerror: reject,
+      }).connect(violinFilter)
+      this.violinSampler.volume.value = -2
+    })
+    void this.violinSamplerReady.catch(() => {})
 
     // 4. Acoustic Oud Model:
     // Plucked pear-shaped lute with wooden body resonance, fast percussive transient,
@@ -154,12 +165,14 @@ export class MicrotonalAudioEngine {
 
   public static async prepareTimbre(timbre: TimbreType): Promise<void> {
     await this.startAudioContext()
-    if (timbre === "oud") {
-      if (!this.oudSamplerReady) {
-        throw new Error("Oud sampler was not initialized.")
-      }
-      await this.oudSamplerReady
+    const samplerReady =
+      timbre === "oud" ? this.oudSamplerReady : this.violinSamplerReady
+    if (!samplerReady) {
+      throw new Error(
+        `${timbre === "oud" ? "Oud" : "Violin"} sampler was not initialized.`
+      )
     }
+    await samplerReady
   }
 
   private static requestAudioContext(): void {
@@ -224,7 +237,7 @@ export class MicrotonalAudioEngine {
     const scope = `microtonal-note-${this.nextNoteSessionId++}`
     const session = AudioTransport.startSession(scope, "Note")
     session.onCancel(() => {
-      const instrument = timbre === "oud" ? this.oudSampler : this.violinSynth
+      const instrument = timbre === "oud" ? this.oudSampler : this.violinSampler
       instrument?.triggerRelease(freq, Tone.now())
     })
     void this.prepareTimbre(timbre).then(() => {
@@ -260,7 +273,7 @@ export class MicrotonalAudioEngine {
     const scope = `microtonal-note-${this.nextNoteSessionId++}`
     const session = AudioTransport.startSession(scope, "Note")
     session.onCancel(() => {
-      const instrument = timbre === "oud" ? this.oudSampler : this.violinSynth
+      const instrument = timbre === "oud" ? this.oudSampler : this.violinSampler
       instrument?.triggerRelease(octaveAdjustedFrequency, Tone.now())
     })
     void this.prepareTimbre(timbre).then(() => {
@@ -290,7 +303,7 @@ export class MicrotonalAudioEngine {
     velocity: number,
     audioTime: number
   ): void {
-    const instrument = timbre === "oud" ? this.oudSampler : this.violinSynth
+    const instrument = timbre === "oud" ? this.oudSampler : this.violinSampler
     instrument?.triggerAttackRelease(
       frequency,
       durationSeconds,
@@ -593,7 +606,7 @@ export class MicrotonalAudioEngine {
   }): void {
     if (voices.frequencies.length === 0) return
     const instrument =
-      voices.timbre === "oud" ? this.oudSampler : this.violinSynth
+      voices.timbre === "oud" ? this.oudSampler : this.violinSampler
     try {
       instrument?.triggerRelease(voices.frequencies, Tone.now())
     } catch {
@@ -610,7 +623,7 @@ export class MicrotonalAudioEngine {
 
   public static stopAllPlayback(): void {
     try {
-      this.violinSynth?.releaseAll()
+      this.violinSampler?.releaseAll()
       this.oudSampler?.releaseAll()
     } catch {
       // The audio context may have been interrupted.
