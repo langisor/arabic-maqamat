@@ -24,6 +24,7 @@ An interactive React studio for exploring Arabic maqamat, ajnas (jins), quarter-
 
 The studio navigation opens these labs:
 
+- **Compact Mode:** hide the lab navigation, select a Maqam from a flat list, and play all quarter-tone positions across a two-octave Oud or Violin fingerboard. Build an optional ascending custom pitch series of up to 16 pitches within two octaves.
 - **Maqam & 8 Families:** browse the maqam catalogue, family information, scale structure, and tonic.
 - **Transposition Lab:** transpose a maqam to a target tonic while retaining its interval structure.
 - **Violin Fingerboard:** explore scale and custom-sequence fingerings.
@@ -98,6 +99,8 @@ src/
     microtonal-audio.ts         Tone.js instruments, notes, sequences, drones
     metronome-engine.ts         Metronome scheduling and sound choices
   components/
+    CompactMode.tsx               Compact view, Maqam picker, and custom pitch-series sheet
+    FreeInteractiveFingerboard.tsx  Two-octave all-pitch Oud and Violin board
     *Lab.tsx                    Individual learning and exploration labs
     ScoreViewer.tsx             MusicXML view, sheet rendering, export controls
     SessionBar.tsx              Shared maqam, tonic, ghammaz, drone/audio and lab links

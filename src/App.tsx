@@ -34,6 +34,7 @@ import { ThemeProvider } from "./components/theme-provider"
 import { MainMenu } from "./components/MainMenu"
 import { SessionBar } from "./components/SessionBar"
 import { MaqamExplorer } from "./components/MaqamExplorer"
+import { CompactMode } from "./components/CompactMode"
 import { Metronome } from "./components/Metronome"
 import { ThemeToggle } from "./components/ThemeToggle"
 import { PWAInstallButton } from "./components/PWAInstallButton"
@@ -262,6 +263,7 @@ function StudioContent() {
   const [activeLab, setActiveLab] = useState<ValidLab>(
     () => getWorkspaceState().global.activeLab
   )
+  const [isCompactMode, setIsCompactMode] = useState(false)
   const [isLearningGuideDismissed, setIsLearningGuideDismissed] =
     useState(false)
   const [timbre, setTimbre] = useState<TimbreType>(
@@ -481,24 +483,26 @@ function StudioContent() {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           {/* Brand & Menu */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <MainMenu
-              activeLab={activeLab}
-              onNavigateLab={setActiveLab}
-              violinTuning={violinTuning}
-              onViolinTuningChange={setViolinTuning}
-              timbre={timbre}
-              onTimbreChange={handleSelectInstrument}
-              isDroneActive={isDroneActive}
-              onToggleDrone={() => handleToggleDrone()}
-              onOpenMaqamBuilder={() => setIsBuilderOpen(true)}
-              onOpenMaqamFacts={() => setIsFactsOpen(true)}
-              onOpenSayrVisualization={() => setIsSayrDialogOpen(true)}
-              onOpenModulationPathways={() => setIsModulationOpen(true)}
-              onOpenJinsAnalysis={() => setIsJinsAnalysisDrawerOpen(true)}
-              onOpenAudioSettings={() => {}}
-              systemTuningMode={systemTuningMode}
-              onSystemTuningChange={setSystemTuningMode}
-            />
+            {!isCompactMode && (
+              <MainMenu
+                activeLab={activeLab}
+                onNavigateLab={setActiveLab}
+                violinTuning={violinTuning}
+                onViolinTuningChange={setViolinTuning}
+                timbre={timbre}
+                onTimbreChange={handleSelectInstrument}
+                isDroneActive={isDroneActive}
+                onToggleDrone={() => handleToggleDrone()}
+                onOpenMaqamBuilder={() => setIsBuilderOpen(true)}
+                onOpenMaqamFacts={() => setIsFactsOpen(true)}
+                onOpenSayrVisualization={() => setIsSayrDialogOpen(true)}
+                onOpenModulationPathways={() => setIsModulationOpen(true)}
+                onOpenJinsAnalysis={() => setIsJinsAnalysisDrawerOpen(true)}
+                onOpenAudioSettings={() => {}}
+                systemTuningMode={systemTuningMode}
+                onSystemTuningChange={setSystemTuningMode}
+              />
+            )}
 
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-tr from-amber-600 to-amber-400 text-xs font-black text-slate-950 shadow-md shadow-amber-500/20 sm:h-8 sm:w-8 sm:rounded-xl sm:text-sm">
@@ -522,56 +526,71 @@ function StudioContent() {
           {/* Quick Controls & Tools - Responsive */}
           <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto sm:flex-nowrap sm:gap-2">
             {/* Drone Toggle Button */}
-            <Button
-              variant={isDroneActive ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleToggleDrone()}
-              className={`h-7 cursor-pointer gap-1 rounded-xl px-2 text-[11px] transition-all sm:h-8 sm:gap-1.5 sm:px-2.5 sm:text-xs ${
-                isDroneActive
-                  ? "animate-pulse bg-amber-500 font-semibold text-slate-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
-                  : "border-slate-700 text-slate-300 hover:border-slate-600"
-              }`}
-              title={
-                isDroneActive
-                  ? `${t("stopAudio")} · ${t("drone")}`
-                  : `${t("drone")} · ${currentMaqam.getTonic().toString()}`
-              }
-            >
-              <Radio
-                className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${isDroneActive ? "text-slate-950" : "text-amber-400"}`}
-              />
-              <span className="xs:inline hidden">{t("drone")}:</span>
-              <span className="font-mono font-bold">
-                {currentMaqam.getTonic().toString()}
-              </span>
-            </Button>
+            {!isCompactMode && (
+              <Button
+                variant={isDroneActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleToggleDrone()}
+                className={`h-7 cursor-pointer gap-1 rounded-xl px-2 text-[11px] transition-all sm:h-8 sm:gap-1.5 sm:px-2.5 sm:text-xs ${
+                  isDroneActive
+                    ? "animate-pulse bg-amber-500 font-semibold text-slate-950 shadow-md shadow-amber-500/20 hover:bg-amber-400"
+                    : "border-slate-700 text-slate-300 hover:border-slate-600"
+                }`}
+                title={
+                  isDroneActive
+                    ? `${t("stopAudio")} · ${t("drone")}`
+                    : `${t("drone")} · ${currentMaqam.getTonic().toString()}`
+                }
+              >
+                <Radio
+                  className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${isDroneActive ? "text-slate-950" : "text-amber-400"}`}
+                />
+                <span className="xs:inline hidden">{t("drone")}:</span>
+                <span className="font-mono font-bold">
+                  {currentMaqam.getTonic().toString()}
+                </span>
+              </Button>
+            )}
 
             {/* Timbre Switcher (large screens) */}
-            <div className="hidden items-center rounded-xl border border-slate-800 bg-slate-900 p-0.5 text-xs lg:flex">
-              {(["violin", "oud"] as TimbreType[]).map((tVal) => (
-                <button
-                  key={tVal}
-                  onClick={() => handleSelectInstrument(tVal)}
-                  className={`rounded-lg px-2.5 py-1 font-medium capitalize transition-all ${
-                    timbre === tVal
-                      ? "border border-amber-500/30 bg-amber-500/20 text-amber-300"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  {tVal === "violin"
-                    ? t("instrumentViolin")
-                    : t("instrumentOud")}
-                </button>
-              ))}
-            </div>
+            {!isCompactMode && (
+              <div className="hidden items-center rounded-xl border border-slate-800 bg-slate-900 p-0.5 text-xs lg:flex">
+                {(["violin", "oud"] as TimbreType[]).map((tVal) => (
+                  <button
+                    key={tVal}
+                    onClick={() => handleSelectInstrument(tVal)}
+                    className={`rounded-lg px-2.5 py-1 font-medium capitalize transition-all ${
+                      timbre === tVal
+                        ? "border border-amber-500/30 bg-amber-500/20 text-amber-300"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    {tVal === "violin"
+                      ? t("instrumentViolin")
+                      : t("instrumentOud")}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Metronome Popover */}
-            <Metronome />
+            {!isCompactMode && <Metronome />}
 
             {/* PWA Install */}
-            <PWAInstallButton />
+            {!isCompactMode && <PWAInstallButton />}
 
             {/* Theme & Language */}
+            <Button
+              variant={isCompactMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsCompactMode((current) => !current)}
+              className="h-7 px-2 text-[11px] sm:h-8 sm:px-2.5 sm:text-xs"
+              aria-pressed={isCompactMode}
+            >
+              {isCompactMode
+                ? language === "ar" ? "الوضع الكامل" : "Full Mode"
+                : language === "ar" ? "الوضع البسيط" : "Compact Mode"}
+            </Button>
             <ThemeToggle />
             <Button
               variant="ghost"
@@ -587,23 +606,26 @@ function StudioContent() {
       </header>
 
       {/* Session Status Ribbon */}
-      <SessionBar
-        maqam={currentMaqam}
-        isDroneActive={isDroneActive}
-        transportStatus={transportStatus}
-        masterVolume={masterVolume}
-        onMasterVolumeChange={(volume) => {
-          AudioOutput.setVolume(volume)
-          setMasterVolume(volume)
-        }}
-        onStopAll={() => AudioTransport.stopAll()}
-        onNavigate={setActiveLab}
-        onSelectFamily={handleSelectFamily}
-        onSelectMaqam={handleSelectMaqam}
-      />
+      {!isCompactMode && (
+        <SessionBar
+          maqam={currentMaqam}
+          isDroneActive={isDroneActive}
+          transportStatus={transportStatus}
+          masterVolume={masterVolume}
+          onMasterVolumeChange={(volume) => {
+            AudioOutput.setVolume(volume)
+            setMasterVolume(volume)
+          }}
+          onStopAll={() => AudioTransport.stopAll()}
+          onNavigate={setActiveLab}
+          onSelectFamily={handleSelectFamily}
+          onSelectMaqam={handleSelectMaqam}
+        />
+      )}
 
       {/* Navigation Sub-header / Main Tabs Switcher - Responsive with Touch Momentum */}
-      <div className="relative border-b border-border/80 bg-muted/60">
+      {!isCompactMode && (
+        <div className="relative border-b border-border/80 bg-muted/60">
         {/* Subtle mobile edge fade indicators */}
         {isMobile && (
           <>
@@ -652,7 +674,8 @@ function StudioContent() {
             })}
           </div>
         </nav>
-      </div>
+        </div>
+      )}
 
       {/* Main Workspace Area */}
       <main className="mx-auto w-full max-w-7xl flex-1 p-3 sm:p-6 lg:p-8">
@@ -666,6 +689,17 @@ function StudioContent() {
             </div>
           }
         >
+        {isCompactMode && (
+          <CompactMode
+            currentMaqam={currentMaqam}
+            onSelectMaqam={handleSelectMaqam}
+            instrument={selectedInstrument}
+            onInstrumentChange={handleSelectInstrument}
+            violinTuning={violinTuning}
+            onViolinTuningChange={setViolinTuning}
+          />
+        )}
+        <div className={isCompactMode ? "hidden" : ""}>
         {(activeLab === "explorer" || activeLab === "transposition") && (
           <MaqamExplorer
             currentMaqam={currentMaqam}
@@ -872,6 +906,7 @@ function StudioContent() {
           </section>
         )}
         {activeLab === "print-services" && <PrintServicesLab />}
+        </div>
         </Suspense>
       </main>
 
@@ -932,7 +967,9 @@ function StudioContent() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-border/80 bg-background px-6 py-4 text-center text-xs text-muted-foreground">
+      <footer
+        className={`border-t border-border/80 bg-background px-6 py-4 text-center text-xs text-muted-foreground ${isCompactMode ? "hidden" : ""}`}
+      >
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 sm:flex-row">
           <span>
             {t("instrumentStudioFooter")} -{" "}
