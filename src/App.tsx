@@ -11,6 +11,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react"
+import appPackage from "../package.json"
 import { Maqam, MaqamatCatalogue } from "./theory/maqam"
 import { ArabicPitch } from "./core/pitch"
 import { MicrotonalAudioEngine, TimbreType } from "./audio/microtonal-audio"
@@ -64,6 +65,8 @@ import {
   Headphones,
 } from "lucide-react"
 import type { ViolinTuningPreset } from "./components/ViolinFingerboard"
+
+const APP_VERSION = appPackage.version
 
 const SayrQaflaLab = lazy(() =>
   import("./components/SayrQaflaLab").then((module) => ({
@@ -936,6 +939,9 @@ function StudioContent() {
             {language === "en"
               ? "Implemented and organized by Faris Alhodali - [langisor-app@proton.me]"
               : " -  langisor-app@proton.me تم التجميع بواسطة فارس الهذلي"}
+          </span>
+          <span className="text-muted-foreground">
+            {t("versionLabel")}: {APP_VERSION}
           </span>
         </div>
       </footer>
