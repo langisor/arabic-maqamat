@@ -1,3 +1,6 @@
-Drop violin sample files here (mp3, matching the names in
-src/lib/audio_engine.ts's VIOLIN_SAMPLE_MAP, e.g. g3.mp3, d4.mp3, a4.mp3,
-e5.mp3, a5.mp3). Until then the app runs on a synth fallback automatically.
+The violin sampler loads the MP3 files in this folder through `Tone.Sampler` in
+`src/audio/microtonal-audio.ts`. Filenames must match the note names in its
+`urls` map, including capitalization. Available samples are:
+
+`A3`, `A4`, `A5`, `A6`, `C4`, `C5`, `C6`, `C7`, `E4`, `E5`, `E6`, `G3`, `G4`,
+`G5`, and `G6`.
