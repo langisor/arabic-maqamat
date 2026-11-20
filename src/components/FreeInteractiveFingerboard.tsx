@@ -30,6 +30,7 @@ interface BoardCourse {
 
 const POSITION_COUNT = 24
 const FIRST_POSITION_MARKS = [4, 8, 12, 16]
+const PITCH_SEQUENCE_SCOPE = "compact-fingerboard-pitches"
 
 function getPositionOffset(position: number) {
   const normalizedDistance = 1 - 2 ** (-position / 24)
@@ -51,7 +52,9 @@ export function FreeInteractiveFingerboard({
   const [oudTuning, setOudTuning] = useState<OudTuning>("arabic")
   const [activePitch, setActivePitch] = useState<number | null>(null)
   const [audioError, setAudioError] = useState<string | null>(null)
+  const [isPlayingPitches, setIsPlayingPitches] = useState(false)
   const activePitchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const playbackRequest = useRef(0)
 
   const courses = useMemo<BoardCourse[]>(() => {
     if (instrument === "oud") {
@@ -125,6 +128,8 @@ export function FreeInteractiveFingerboard({
       if (activePitchTimeout.current !== null) {
         clearTimeout(activePitchTimeout.current)
       }
+      playbackRequest.current += 1
+      MicrotonalAudioEngine.stopSequence(PITCH_SEQUENCE_SCOPE)
     },
     []
   )
@@ -146,6 +151,59 @@ export function FreeInteractiveFingerboard({
           : isArabic
             ? "تعذّر تشغيل النغمة."
             : "Could not play this pitch."
+      )
+    }
+  }
+
+  const handlePlayPitches = async () => {
+    if (isPlayingPitches) {
+      playbackRequest.current += 1
+      MicrotonalAudioEngine.stopSequence(PITCH_SEQUENCE_SCOPE)
+      setIsPlayingPitches(false)
+      setActivePitch(null)
+      return
+    }
+
+    const pitches =
+      customPitches.length > 0 ? customPitches : currentMaqam.getScale()
+    const requestId = playbackRequest.current + 1
+    playbackRequest.current = requestId
+    setIsPlayingPitches(true)
+    setAudioError(null)
+    if (activePitchTimeout.current !== null) {
+      clearTimeout(activePitchTimeout.current)
+      activePitchTimeout.current = null
+    }
+
+    try {
+      await MicrotonalAudioEngine.prepareTimbre(instrument)
+      if (playbackRequest.current !== requestId) return
+
+      MicrotonalAudioEngine.playSequence(
+        pitches,
+        550,
+        instrument,
+        (index) => {
+          setActivePitch(
+            index < 0 ? null : (pitches[index]?.toQuarterToneIndex() ?? null)
+          )
+        },
+        () => {
+          setIsPlayingPitches(false)
+          setActivePitch(null)
+        },
+        undefined,
+        PITCH_SEQUENCE_SCOPE
+      )
+    } catch (error) {
+      if (playbackRequest.current !== requestId) return
+      setIsPlayingPitches(false)
+      setAudioError(
+        error instanceof Error
+          ? error.message
+          : isArabic
+            ? "تعذّر تشغيل النغمات."
+            : "Could not play these pitches."
       )
     }
   }
@@ -294,6 +352,21 @@ export function FreeInteractiveFingerboard({
           onClick={() => setReverseStrings((current) => !current)}
         >
           {isArabic ? "عكس الأوتار" : "Reverse strings"}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={isPlayingPitches ? "default" : "outline"}
+          aria-pressed={isPlayingPitches}
+          onClick={() => void handlePlayPitches()}
+        >
+          {isArabic
+            ? isPlayingPitches
+              ? "إيقاف النغمات"
+              : "تشغيل النغمات"
+            : isPlayingPitches
+              ? "Stop Pitches"
+              : "Play Pitches"}
         </Button>
         <div
           className="ms-auto flex gap-1"
