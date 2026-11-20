@@ -171,9 +171,19 @@ export function CompactMode({
             </span>
           </p>
         </div>
-        <Button type="button" onClick={openCustomSheet}>
-          {isArabic ? "نغمات مخصصة" : "Custom Pitches"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={customPitches.length === 0}
+            onClick={() => setCustomPitches([])}
+          >
+            {isArabic ? "استعادة المقام" : "Restore Maqam"}
+          </Button>
+          <Button type="button" onClick={openCustomSheet}>
+            {isArabic ? "نغمات مخصصة" : "Custom Pitches"}
+          </Button>
+        </div>
       </div>
 
       <FreeInteractiveFingerboard

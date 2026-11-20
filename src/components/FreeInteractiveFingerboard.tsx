@@ -28,7 +28,13 @@ interface BoardCourse {
   openPitch: ArabicPitch
 }
 
-const POSITION_COUNT = 48
+const POSITION_COUNT = 24
+const FIRST_POSITION_MARKS = [4, 8, 12, 16]
+
+function getPositionOffset(position: number) {
+  const normalizedDistance = 1 - 2 ** (-position / 24)
+  return 8 + (normalizedDistance / 0.5) * 86
+}
 
 export function FreeInteractiveFingerboard({
   currentMaqam,
@@ -144,6 +150,52 @@ export function FreeInteractiveFingerboard({
     }
   }
 
+  const renderPitchButton = (
+    course: BoardCourse,
+    position: number,
+    vertical: boolean
+  ) => {
+    const pitch = course.openPitch.transpose(position)
+    const pitchIndex = pitch.toQuarterToneIndex()
+    const pitchClass = ((pitchIndex % 24) + 24) % 24
+    const isTonic = pitchClass === tonicPitchClass
+    const isMaqamPitch = maqamPitchClasses.has(pitchClass)
+    const isCustomPitch = customPitchClasses.has(pitchClass)
+    const isActive = activePitch === pitchIndex
+    const colorClass = isTonic
+      ? "border-amber-300 bg-amber-400 text-slate-950"
+      : isMaqamPitch
+        ? "border-sky-300 bg-sky-900 text-white"
+        : "border-slate-600 bg-slate-950 text-slate-300"
+
+    return (
+      <button
+        key={`${course.id}-${position}`}
+        type="button"
+        onClick={() => void playPitch(pitch)}
+        aria-label={`${course.label}, ${pitch.toString()}, ${position === 0 ? (isArabic ? "مفتوح" : "open") : `${position * 50} cents`}`}
+        aria-pressed={isActive}
+        title={`${pitch.toString()} · ${position * 50} cents`}
+        className={`absolute ${
+          vertical ? "left-1/2 -translate-x-1/2" : "top-1/2 -translate-y-1/2"
+        } z-20 flex size-9 items-center justify-center rounded-full border font-mono text-[9px] font-semibold transition-colors hover:border-amber-300 hover:bg-amber-400 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:outline-none ${
+          position % 2 === 1 ? "border-dashed" : "border-solid"
+        } ${
+          isActive
+            ? "border-white bg-amber-300 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
+            : colorClass
+        } ${isCustomPitch ? "ring-2 ring-violet-300 ring-offset-1 ring-offset-slate-950" : ""}`}
+        style={
+          vertical
+            ? { top: `${getPositionOffset(position)}%` }
+            : { left: `${getPositionOffset(position)}%` }
+        }
+      >
+        {pitch.toString()}
+      </button>
+    )
+  }
+
   const tuningLabels =
     instrument === "oud"
       ? isArabic
@@ -168,8 +220,8 @@ export function FreeInteractiveFingerboard({
           </h2>
           <p className="text-xs text-muted-foreground">
             {isArabic
-              ? "جميع درجات ربع الصوت ضمن مدى أوكتافين"
-              : "All quarter-tone positions across two octaves"}
+              ? "درجات ربع الصوت ضمن مدى أوكتاف واحد"
+              : "Quarter-tone positions across one octave"}
           </p>
         </div>
         <div
@@ -270,101 +322,99 @@ export function FreeInteractiveFingerboard({
       </div>
 
       <div
-        className={`max-h-[65vh] overflow-auto rounded-xl border border-border bg-slate-950/70 p-3 ${
-          orientation === "horizontal"
-            ? "overscroll-x-contain"
-            : "overscroll-y-contain"
+        className={`overflow-x-auto overscroll-x-contain rounded-xl border border-border bg-slate-950/90 p-3 ${
+          orientation === "vertical" ? "max-h-[65vh] overflow-y-auto" : ""
         }`}
       >
-        <div
-          className={
-            orientation === "horizontal"
-              ? "min-w-max space-y-3"
-              : "flex min-w-max items-start gap-3"
-          }
-        >
-          {displayedCourses.map((course) => (
-            <div
-              key={course.id}
-              className={
-                orientation === "horizontal"
-                  ? "flex items-center gap-2 border-b border-slate-700/70 pb-3 last:border-0"
-                  : "flex flex-col items-center gap-2 border-e border-slate-700/70 pe-3 last:border-0"
-              }
-            >
+        {orientation === "horizontal" ? (
+          <div className="relative min-w-[760px] pt-5">
+            {FIRST_POSITION_MARKS.map((position, index) => (
               <div
-                className={
-                  orientation === "horizontal"
-                    ? "w-20 shrink-0 text-xs font-semibold text-slate-300"
-                    : "w-16 shrink-0 text-center text-xs font-semibold text-slate-300"
-                }
+                key={position}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 z-10 border-s-2 border-sky-500/80"
+                style={{ left: `${getPositionOffset(position)}%` }}
               >
-                <span className="block">{course.label}</span>
-                <span className="font-mono text-[10px] text-slate-500">
-                  {course.openPitch.toString()}
+                <span className="absolute -top-5 -translate-x-1/2 font-mono text-[10px] font-bold text-sky-300">
+                  {index + 1}
                 </span>
               </div>
-              <div
-                className={`flex gap-1 ${
-                  orientation === "horizontal"
-                    ? "items-center border-t border-amber-700/60 pt-1"
-                    : "flex-col items-center border-s border-amber-700/60 ps-1"
-                }`}
-              >
-                {Array.from({ length: POSITION_COUNT + 1 }, (_, position) => {
-                  const pitch = course.openPitch.transpose(position)
-                  const pitchIndex = pitch.toQuarterToneIndex()
-                  const pitchClass = ((pitchIndex % 24) + 24) % 24
-                  const isTonic = pitchClass === tonicPitchClass
-                  const isMaqamPitch = maqamPitchClasses.has(pitchClass)
-                  const isCustomPitch = customPitchClasses.has(pitchClass)
-                  const isActive = activePitch === pitchIndex
-                  const colorClass = isTonic
-                    ? "border-amber-200 bg-amber-500 text-slate-950"
-                    : isMaqamPitch
-                      ? "border-sky-300 bg-sky-700 text-white"
-                      : "border-slate-700 bg-slate-800 text-slate-300"
-
-                  return (
-                    <button
-                      key={`${course.id}-${position}`}
-                      type="button"
-                      onClick={() => void playPitch(pitch)}
-                      aria-label={`${course.label}, ${pitch.toString()}, ${position === 0 ? (isArabic ? "مفتوح" : "open") : `${position * 50} cents`}`}
-                      aria-pressed={isActive}
-                      title={`${pitch.toString()} · ${position * 50} cents`}
-                      className={`flex h-8 w-10 shrink-0 items-center justify-center rounded-md border font-mono text-[10px] font-semibold transition-colors hover:border-amber-300 hover:bg-amber-400 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:outline-none ${
-                        isActive
-                          ? "border-white bg-amber-300 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
-                          : colorClass
-                      } ${isCustomPitch ? "ring-2 ring-violet-300 ring-offset-1 ring-offset-slate-950" : ""}`}
-                    >
-                      {pitch.toString()}
-                    </button>
-                  )
-                })}
+            ))}
+            <div
+              aria-hidden="true"
+              className="absolute top-5 bottom-0 left-[8%] z-10 w-1 bg-amber-100/90"
+            />
+            {displayedCourses.map((course) => (
+              <div key={course.id} className="relative h-11">
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-x-0 top-1/2 z-0 border-t border-sky-700/80"
+                />
+                <div className="absolute inset-y-0 left-0 z-20 flex w-[7%] items-center font-mono text-[10px] font-semibold text-slate-300">
+                  {course.openPitch.toString()}
+                </div>
+                {Array.from({ length: POSITION_COUNT + 1 }, (_, position) =>
+                  renderPitchButton(course, position, false)
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="relative flex h-[720px] w-max gap-3 ps-5">
+            {FIRST_POSITION_MARKS.map((position, index) => (
+              <div
+                key={position}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-sky-500/80"
+                style={{ top: `${getPositionOffset(position)}%` }}
+              >
+                <span className="absolute -start-5 -translate-y-1/2 font-mono text-[10px] font-bold text-sky-300">
+                  {index + 1}
+                </span>
+              </div>
+            ))}
+            {displayedCourses.map((course) => (
+              <div key={course.id} className="relative h-full w-14">
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-1/2 z-0 border-s border-sky-700/80"
+                />
+                <div className="absolute inset-x-0 top-0 z-20 text-center font-mono text-[10px] font-semibold text-slate-300">
+                  {course.openPitch.toString()}
+                </div>
+                {Array.from({ length: POSITION_COUNT + 1 }, (_, position) =>
+                  renderPitchButton(course, position, true)
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-slate-700" />
+          <span className="size-3 rounded-full border border-dashed border-slate-400" />
+          {isArabic ? "نغمة ربع صوتية" : "Quarter tone"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-3 border-s-2 border-sky-500" />
+          {isArabic ? "علامات الوضع الأول" : "First-position tape"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded-full border border-slate-600 bg-slate-950" />
           {isArabic ? "نغمات أخرى" : "Other pitches"}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-sky-700" />
+          <span className="size-3 rounded-full border border-sky-300 bg-sky-900" />
           {isArabic ? "درجات المقام" : "Maqam pitches"}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-amber-500" />
+          <span className="size-3 rounded-full border border-amber-300 bg-amber-400" />
           {isArabic ? "القرار" : "Tonic"}
         </span>
         {customPitches.length > 0 && (
           <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-sm border-2 border-violet-300" />
+            <span className="size-3 rounded-full border-2 border-violet-300" />
             {isArabic ? "النغمات المخصصة" : "Custom pitches"}
           </span>
         )}
