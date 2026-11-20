@@ -111,8 +111,6 @@ export function FreeInteractiveFingerboard({
       ),
     [currentMaqam]
   )
-  const tonicPitchClass =
-    ((currentMaqam.getTonic().toQuarterToneIndex() % 24) + 24) % 24
   const customPitchClasses = useMemo(
     () =>
       new Set(
@@ -122,6 +120,12 @@ export function FreeInteractiveFingerboard({
       ),
     [customPitches]
   )
+  const highlightedPitchClasses =
+    customPitches.length > 0 ? customPitchClasses : maqamPitchClasses
+  const tonicPitchClass =
+    (((customPitches[0] ?? currentMaqam.getTonic()).toQuarterToneIndex() % 24) +
+      24) %
+    24
 
   useEffect(
     () => () => {
@@ -217,12 +221,12 @@ export function FreeInteractiveFingerboard({
     const pitchIndex = pitch.toQuarterToneIndex()
     const pitchClass = ((pitchIndex % 24) + 24) % 24
     const isTonic = pitchClass === tonicPitchClass
-    const isMaqamPitch = maqamPitchClasses.has(pitchClass)
+    const isHighlightedPitch = highlightedPitchClasses.has(pitchClass)
     const isCustomPitch = customPitchClasses.has(pitchClass)
     const isActive = activePitch === pitchIndex
     const colorClass = isTonic
       ? "border-amber-300 bg-slate-950/20 text-amber-200"
-      : isMaqamPitch
+      : isHighlightedPitch
         ? "border-sky-300 bg-slate-950/20 text-white"
         : "border-slate-600 bg-slate-950/20 text-slate-300"
 
@@ -418,16 +422,16 @@ export function FreeInteractiveFingerboard({
                 key={position}
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-y-0 z-0 w-[3px] -translate-x-1/2 border-x border-blue-500/40 bg-indigo-500/25 shadow-[0_0_9px_rgba(59,130,246,.22)]"
-                style={{ left: `${getPositionOffset(position+0.4)}%` }}
+                style={{ left: `${getPositionOffset(position + 0.4)}%` }}
               >
-                <span className="absolute -top-5 -translate-x-1/2 font-mono text-[11px] font-bold text-indigo-300 pt-5">
+                <span className="absolute -top-5 -translate-x-1/2 pt-5 font-mono text-[11px] font-bold text-indigo-300">
                   {index + 1}
                 </span>
               </div>
             ))}
             <div
               aria-hidden="true"
-              className="absolute top-5 bottom-0 left-[8%] z-10 w-[7px] border-x border-[#d4c5a5] bg-linear-to-r from-[#8d7b5f] via-[#eee5cf] to-[#9a876a] shadow-[2px_0_5px_rgba(0,0,0,.65)]"
+              className="absolute top-5 bottom-0 left-[8%] z-10 w-1.75 border-x border-[#d4c5a5] bg-linear-to-r from-[#8d7b5f] via-[#eee5cf] to-[#9a876a] shadow-[2px_0_5px_rgba(0,0,0,.65)]"
             />
             {displayedCourses.map((course) => (
               <div key={course.id} className="relative h-11">
@@ -445,7 +449,7 @@ export function FreeInteractiveFingerboard({
             ))}
           </div>
         ) : (
-          <div className="relative flex h-[720px] w-max gap-3 ps-5">
+          <div className="relative flex h-180 w-max gap-3 ps-5">
             {FIRST_POSITION_MARKS.map((position, index) => (
               <div
                 key={position}
