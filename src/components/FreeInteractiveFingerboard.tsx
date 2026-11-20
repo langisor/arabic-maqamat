@@ -29,7 +29,7 @@ interface BoardCourse {
 }
 
 const POSITION_COUNT = 24
-const FIRST_POSITION_MARKS = [4, 8, 12, 16]
+const FIRST_POSITION_MARKS = [0, 4, 6]
 const PITCH_SEQUENCE_SCOPE = "compact-fingerboard-pitches"
 
 function getPositionOffset(position: number) {
@@ -221,10 +221,10 @@ export function FreeInteractiveFingerboard({
     const isCustomPitch = customPitchClasses.has(pitchClass)
     const isActive = activePitch === pitchIndex
     const colorClass = isTonic
-      ? "border-amber-300 bg-amber-400 text-slate-950"
+      ? "border-amber-300 bg-slate-950/20 text-amber-200"
       : isMaqamPitch
-        ? "border-sky-300 bg-sky-900 text-white"
-        : "border-slate-600 bg-slate-950 text-slate-300"
+        ? "border-sky-300 bg-slate-950/20 text-white"
+        : "border-slate-600 bg-slate-950/20 text-slate-300"
 
     return (
       <button
@@ -405,7 +405,7 @@ export function FreeInteractiveFingerboard({
               <div
                 key={position}
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 z-10 border-s-2 border-sky-500/80"
+                className="pointer-events-none absolute inset-y-0 z-0 w-0.5 -translate-x-1/2 bg-sky-500/80"
                 style={{ left: `${getPositionOffset(position)}%` }}
               >
                 <span className="absolute -top-5 -translate-x-1/2 font-mono text-[10px] font-bold text-sky-300">
@@ -438,7 +438,7 @@ export function FreeInteractiveFingerboard({
               <div
                 key={position}
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-sky-500/80"
+                className="pointer-events-none absolute inset-x-0 z-0 -translate-y-1/2 border-t-2 border-sky-500/80"
                 style={{ top: `${getPositionOffset(position)}%` }}
               >
                 <span className="absolute -start-5 -translate-y-1/2 font-mono text-[10px] font-bold text-sky-300">
