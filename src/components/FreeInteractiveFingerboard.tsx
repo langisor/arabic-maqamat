@@ -225,9 +225,9 @@ export function FreeInteractiveFingerboard({
     const isCustomPitch = customPitchClasses.has(pitchClass)
     const isActive = activePitch === pitchIndex
     const colorClass = isTonic
-      ? "border-amber-300 bg-slate-950/20 text-amber-200"
+      ? "border-amber-300 bg-amber-400 text-blue-800"
       : isHighlightedPitch
-        ? "border-sky-300 bg-slate-950/20 text-white"
+        ? "border-sky-300 bg-sky-600 text-white"
         : "border-slate-600 bg-slate-950/20 text-slate-300"
 
     return (
