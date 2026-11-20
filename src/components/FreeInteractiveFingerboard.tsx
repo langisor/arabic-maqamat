@@ -29,7 +29,7 @@ interface BoardCourse {
 }
 
 const POSITION_COUNT = 24
-const FIRST_POSITION_MARKS = [0, 4, 6]
+const FIRST_POSITION_MARKS = [4, 8, 10, 14]
 const PITCH_SEQUENCE_SCOPE = "compact-fingerboard-pitches"
 
 function getPositionOffset(position: number) {
@@ -236,20 +236,25 @@ export function FreeInteractiveFingerboard({
         title={`${pitch.toString()} · ${position * 50} cents`}
         className={`absolute ${
           vertical ? "left-1/2 -translate-x-1/2" : "top-1/2 -translate-y-1/2"
-        } z-20 flex size-9 items-center justify-center rounded-full border font-mono text-[9px] font-semibold transition-colors hover:border-amber-300 hover:bg-amber-400 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:outline-none ${
+        } z-20 flex size-10 flex-col items-center justify-center rounded-full border font-mono text-[9px] leading-none font-semibold transition-colors hover:border-amber-300 hover:bg-amber-400 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:outline-none ${
           position % 2 === 1 ? "border-dashed" : "border-solid"
         } ${
           isActive
             ? "border-white bg-amber-300 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.6)]"
             : colorClass
-        } ${isCustomPitch ? "ring-2 ring-violet-300 ring-offset-1 ring-offset-slate-950" : ""}`}
+        } ${isCustomPitch ? "ring-2 ring-violet-300 ring-offset-1 ring-offset-[#100e0d]" : ""}`}
         style={
           vertical
             ? { top: `${getPositionOffset(position)}%` }
             : { left: `${getPositionOffset(position)}%` }
         }
       >
-        {pitch.toString()}
+        <span>{pitch.toString()}</span>
+        {position > 0 && (
+          <span className="mt-0.5 text-[8px] font-normal opacity-70">
+            {Number((position / 2).toFixed(1))}
+          </span>
+        )}
       </button>
     )
   }
@@ -395,33 +400,40 @@ export function FreeInteractiveFingerboard({
       </div>
 
       <div
-        className={`overflow-x-auto overscroll-x-contain rounded-xl border border-border bg-slate-950/90 p-3 ${
+        className={`overflow-x-auto overscroll-x-contain rounded-xl border border-[#313035] bg-[#08090d] p-3 ${
           orientation === "vertical" ? "max-h-[65vh] overflow-y-auto" : ""
         }`}
       >
         {orientation === "horizontal" ? (
-          <div className="relative min-w-[760px] pt-5">
+          <div
+            className="relative min-w-[1200px] overflow-hidden rounded-md border-y border-[#40332b] py-1 pt-5 shadow-inner"
+            style={{
+              backgroundColor: "#191411",
+              backgroundImage:
+                "radial-gradient(ellipse at 28% 48%, rgba(111,69,39,.22), transparent 52%), repeating-linear-gradient(2deg, transparent 0 17px, rgba(227,178,124,.045) 18px, transparent 19px 33px), linear-gradient(90deg, #171310, #211812 42%, #171310)",
+            }}
+          >
             {FIRST_POSITION_MARKS.map((position, index) => (
               <div
                 key={position}
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 z-0 w-0.5 -translate-x-1/2 bg-sky-500/80"
+                className="pointer-events-none absolute inset-y-0 z-0 w-[3px] -translate-x-1/2 border-x border-blue-500/40 bg-indigo-500/25 shadow-[0_0_9px_rgba(59,130,246,.22)]"
                 style={{ left: `${getPositionOffset(position)}%` }}
               >
-                <span className="absolute -top-5 -translate-x-1/2 font-mono text-[10px] font-bold text-sky-300">
+                <span className="absolute -top-5 -translate-x-1/2 font-mono text-[11px] font-bold text-indigo-300">
                   {index + 1}
                 </span>
               </div>
             ))}
             <div
               aria-hidden="true"
-              className="absolute top-5 bottom-0 left-[8%] z-10 w-1 bg-amber-100/90"
+              className="absolute top-5 bottom-0 left-[8%] z-10 w-[7px] border-x border-[#d4c5a5] bg-gradient-to-r from-[#8d7b5f] via-[#eee5cf] to-[#9a876a] shadow-[2px_0_5px_rgba(0,0,0,.65)]"
             />
             {displayedCourses.map((course) => (
               <div key={course.id} className="relative h-11">
                 <div
                   aria-hidden="true"
-                  className="absolute inset-x-0 top-1/2 z-0 border-t border-sky-700/80"
+                  className="absolute inset-x-0 top-1/2 z-0 border-t border-[#71a8d7]/80 shadow-[0_1px_2px_rgba(123,190,255,.35)]"
                 />
                 <div className="absolute inset-y-0 left-0 z-20 flex w-[7%] items-center font-mono text-[10px] font-semibold text-slate-300">
                   {course.openPitch.toString()}
