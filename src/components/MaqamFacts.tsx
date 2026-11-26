@@ -37,6 +37,7 @@ const maqamFacts: FactSection[] = [
       "The root jins defines the family, while the melodic course or sayr is shaped by the movement between ajnas and their pivots.",
       "The root jins is the first jins in the scale and it anchors the maqam's character.",
       "The ghammaz is the most important secondary emphasis, usually the note most often used as a pivot or modulation point.",
+      "Maqamat are easier to memorize when you recognize which scale degrees are altered and whether they are raised or lowered. For example, starting from Kurd on D4, raising the second degree by a quarter tone gives Bayati; lowering the fourth degree by a semitone to F♯ gives Saba.",
       "MaqamWorld groups maqamat into eight families by shared root jins: ‘Ajam, Bayati, Hijaz, Kurd, Nahawand, Nikriz, Rast, and Sikah. Saba is listed among maqamat outside a family."
     ]
   },

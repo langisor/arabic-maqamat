@@ -10,6 +10,8 @@ const arabicCopy: Record<string, string> = {
     "جنس الأصل هو الجنس الأول في السلم، وهو الذي يرسّخ طابع المقام.",
   "The ghammaz is the most important secondary emphasis, usually the note most often used as a pivot or modulation point.":
     "الغماز هو أهم مركز لحني ثانوي، وغالباً ما يكون نغمة ارتكاز أو نقطة للتحويل.",
+  "Maqamat are easier to memorize when you recognize which scale degrees are altered and whether they are raised or lowered. For example, starting from Kurd on D4, raising the second degree by a quarter tone gives Bayati; lowering the fourth degree by a semitone to F♯ gives Saba.":
+    "يسهل حفظ المقامات عند تمييز الدرجات المتغيرة ومعرفة ما إذا كانت مرفوعة أم مخفوضة. فمثلاً، انطلاقاً من كرد على ري 4، يؤدي رفع الدرجة الثانية ربع تون إلى بياتي، وخفض الدرجة الرابعة نصف تون إلى فا دييز إلى الصبا.",
   "MaqamWorld groups maqamat into eight families by shared root jins: ‘Ajam, Bayati, Hijaz, Kurd, Nahawand, Nikriz, Rast, and Sikah. Saba is listed among maqamat outside a family.":
     "يصنّف موقع مقام وورلد المقامات في ثماني عائلات بحسب جنس الأصل المشترك: عجم، بياتي، حجاز، كرد، نهاوند، نكريز، راست، وسيكاه. ويُدرج الصبا ضمن المقامات المستقلة.",
   "Jins Baggage (زخرفة الجنس)": "زخرفة الجنس",
