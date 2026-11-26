@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react"
 import { ArabicPitch } from "../core/pitch"
+import type { DiatonicBase, MicrotonalAccidental } from "../core/pitch"
+import { ArabicNoteSpine } from "../core/note-spine"
 import type { TimbreType } from "../audio/microtonal-audio"
 import type { ViolinTuningPreset } from "./ViolinFingerboard"
 import type { Maqam } from "../theory/maqam"
@@ -44,6 +46,14 @@ export function CompactMode({
   const [draftPitches, setDraftPitches] = useState<ArabicPitch[]>([])
   const [nextPitchIndex, setNextPitchIndex] = useState("")
   const [customError, setCustomError] = useState<string | null>(null)
+  const [targetDiatonic, setTargetDiatonic] = useState<DiatonicBase>(
+    currentMaqam.getTonic().diatonic
+  )
+  const [targetAccidental, setTargetAccidental] =
+    useState<MicrotonalAccidental>(currentMaqam.getTonic().accidental)
+  const [targetOctave, setTargetOctave] = useState(
+    currentMaqam.getTonic().octave
+  )
 
   const maqams = useMemo(() => {
     const catalogueMaqams = MaqamatCatalogue.getAll()
@@ -77,6 +87,19 @@ export function CompactMode({
     },
     (_, index) => lastDraftIndex + index + 1
   )
+  const baseMaqam = useMemo(() => {
+    const baseId = currentMaqam.id.split("-transposed-")[0]
+    return MaqamatCatalogue.findById(baseId) ?? currentMaqam
+  }, [currentMaqam])
+  const originalTonic = baseMaqam.getTonic()
+  const currentTonic = currentMaqam.getTonic()
+  const targetTonic = new ArabicPitch(
+    targetDiatonic,
+    targetAccidental,
+    targetOctave
+  )
+  const transposeTo = (pitch: ArabicPitch) =>
+    onSelectMaqam(baseMaqam.transpose(pitch))
 
   const openCustomSheet = () => {
     const tonic = currentMaqam.getTonic()
@@ -175,6 +198,14 @@ export function CompactMode({
           <Button
             type="button"
             variant="outline"
+            disabled={currentTonic.equals(originalTonic)}
+            onClick={() => onSelectMaqam(baseMaqam)}
+          >
+            {isArabic ? "إعادة القرار" : "Reset tonic"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
             disabled={customPitches.length === 0}
             onClick={() => setCustomPitches([])}
           >
@@ -185,6 +216,134 @@ export function CompactMode({
           </Button>
         </div>
       </div>
+
+      <section
+        className="space-y-3 rounded-2xl border border-border bg-card p-4"
+        aria-labelledby="compact-transposition-title"
+      >
+        <div>
+          <h2 id="compact-transposition-title" className="font-semibold">
+            {isArabic
+              ? "تصوير المقام / تغيير القرار"
+              : "Transpose Maqam / Change Tonic"}
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {isArabic
+              ? "اختر قراراً جديداً مع الحفاظ على أبعاد المقام."
+              : "Choose a new tonic while preserving the maqam intervals."}
+          </p>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">
+            {isArabic ? "درجات تقليدية" : "Classical targets"}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: isArabic ? "الأصل" : "Original", pitch: originalTonic },
+              {
+                label: isArabic ? "الدرجة الثانية" : "2nd degree",
+                pitch: originalTonic.transpose(4),
+              },
+              {
+                label: isArabic ? "الغمّاز" : "Ghammaz",
+                pitch: baseMaqam.getGhammaz(),
+              },
+              {
+                label: isArabic ? "الجواب" : "Octave apex",
+                pitch: originalTonic.transpose(24),
+              },
+            ].map(({ label, pitch }) => (
+              <Button
+                key={label}
+                type="button"
+                size="sm"
+                variant={currentTonic.equals(pitch) ? "default" : "outline"}
+                onClick={() => transposeTo(pitch)}
+              >
+                {label} · {pitch.toString()}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">
+            {isArabic
+              ? "السلم الصوتي العربي (١٢ درجة)"
+              : "12-note Arabic spine"}
+          </h3>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {ArabicNoteSpine.getSpine().map((note) => (
+              <Button
+                key={note.transliteration}
+                type="button"
+                size="sm"
+                variant={
+                  currentTonic.equals(note.pitch) ? "default" : "outline"
+                }
+                onClick={() => transposeTo(note.pitch)}
+              >
+                <span className="font-mono">{note.pitch.toString()}</span>
+                <span>
+                  {isArabic ? note.arabicName : note.transliteration.trim()}
+                </span>
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[repeat(3,minmax(0,1fr))_auto] sm:items-end">
+          <label className="grid gap-1 text-sm">
+            <span>{isArabic ? "النغمة" : "Note"}</span>
+            <select
+              value={targetDiatonic}
+              onChange={(event) =>
+                setTargetDiatonic(event.target.value as DiatonicBase)
+              }
+              className="h-9 rounded-lg border border-border bg-background px-2"
+            >
+              {(["C", "D", "E", "F", "G", "A", "B"] as DiatonicBase[]).map(
+                (note) => (
+                  <option key={note}>{note}</option>
+                )
+              )}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{isArabic ? "العلامة" : "Accidental"}</span>
+            <select
+              value={targetAccidental}
+              onChange={(event) =>
+                setTargetAccidental(event.target.value as MicrotonalAccidental)
+              }
+              className="h-9 rounded-lg border border-border bg-background px-2"
+            >
+              {(
+                ["𝄫", "♭", "𝄳", "♮", "𝄲", "♯", "𝄪"] as MicrotonalAccidental[]
+              ).map((accidental) => (
+                <option key={accidental}>{accidental}</option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span>{isArabic ? "الأوكتاف" : "Octave"}</span>
+            <select
+              value={targetOctave}
+              onChange={(event) => setTargetOctave(Number(event.target.value))}
+              className="h-9 rounded-lg border border-border bg-background px-2"
+            >
+              {[3, 4, 5].map((octave) => (
+                <option key={octave} value={octave}>
+                  {octave}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button type="button" onClick={() => transposeTo(targetTonic)}>
+            {isArabic
+              ? `تصوير إلى ${targetTonic.toString()}`
+              : `Transpose to ${targetTonic.toString()}`}
+          </Button>
+        </div>
+      </section>
 
       <FreeInteractiveFingerboard
         currentMaqam={currentMaqam}

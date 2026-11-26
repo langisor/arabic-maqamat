@@ -45,11 +45,12 @@ export function FreeInteractiveFingerboard({
   onViolinTuningChange,
   customPitches,
 }: FreeInteractiveFingerboardProps) {
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
   const isArabic = language === "ar"
   const [orientation, setOrientation] = useState<BoardOrientation>("horizontal")
   const [reverseStrings, setReverseStrings] = useState(instrument === "violin")
   const [oudTuning, setOudTuning] = useState<OudTuning>("arabic")
+  const [includeBassCourse, setIncludeBassCourse] = useState(false)
   const [activePitch, setActivePitch] = useState<number | null>(null)
   const [audioError, setAudioError] = useState<string | null>(null)
   const [isPlayingPitches, setIsPlayingPitches] = useState(false)
@@ -58,7 +59,9 @@ export function FreeInteractiveFingerboard({
 
   const courses = useMemo<BoardCourse[]>(() => {
     if (instrument === "oud") {
-      return OUD_COURSES.map((course) => ({
+      return OUD_COURSES.filter(
+        (course) => includeBassCourse || course.id !== "course-6"
+      ).map((course) => ({
         id: course.id,
         label: isArabic ? course.arabicLabel : course.label,
         openPitch:
@@ -95,7 +98,7 @@ export function FreeInteractiveFingerboard({
           : new ArabicPitch("E", "♮", 5),
       },
     ]
-  }, [instrument, isArabic, oudTuning, violinTuning])
+  }, [includeBassCourse, instrument, isArabic, oudTuning, violinTuning])
 
   const displayedCourses = useMemo(
     () => (reverseStrings ? [...courses].reverse() : courses),
@@ -377,6 +380,17 @@ export function FreeInteractiveFingerboard({
               ? "Stop Pitches"
               : "Play Pitches"}
         </Button>
+        {instrument === "oud" && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            aria-pressed={includeBassCourse}
+            onClick={() => setIncludeBassCourse((included) => !included)}
+          >
+            {t(includeBassCourse ? "oudRemoveBassCourse" : "oudAddBassCourse")}
+          </Button>
+        )}
         <div
           className="ms-auto flex gap-1"
           role="group"
