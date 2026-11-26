@@ -270,6 +270,24 @@ export class AjnasLibrary {
       "Baggage intervals use negative offsets below the root and positive offsets above the top pitch.",
     verified: true,
   }
+
+  public static readonly HUZAM_HIJAZ: JinsDefinition = {
+    id: "huzam-hijaz",
+    name: "Hijaz",
+    arabicName: "حجاز",
+    type: "Tetrachord",
+    sizeLabel: "4-note",
+    intervals: [2, 5, 3], // G to A♭ (2), A♭ to B𝄳 (5), B𝄳 to C (3)
+    description:
+      "The upper Hijaz branch used in Maqam Huzam, running from G through A♭ and B𝄳 to C.",
+    hasQuarterTones: true,
+    defaultRoot: new ArabicPitch("G", "♮", 4),
+    tonicCharacteristic: "Hijaz branch on the third degree",
+    baggageIntervals: [-4, 3, 7],
+    baggageDescription:
+      "The upper notes preserve the Huzam scale relationship from G4 through C5.",
+    verified: true,
+  }
   public static readonly HIJAZ_MURASSAA: JinsDefinition = {
     id: "hijaz-murassaa",
     name: "Hijaz Murassa‘",
@@ -703,6 +721,7 @@ export class AjnasLibrary {
       // 4-note (Tetrachords)
       this.BAYATI,
       this.HIJAZ,
+      this.HUZAM_HIJAZ,
       this.HIJAZ_MURASSAA,
       this.KURD,
       this.LAMI,

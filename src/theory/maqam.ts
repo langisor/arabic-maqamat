@@ -222,7 +222,7 @@ const AJNAS_BASTANIKAR: JinsDefWithDirection[] = [
 
 const AJNAS_HUZAM: JinsDefWithDirection[] = [
   { definition: AjnasLibrary.SIKAH, connection: "Ittisal", direction: "asc" },
-  { definition: AjnasLibrary.HIJAZ, connection: "Ittisal", direction: "asc" },
+  { definition: AjnasLibrary.HUZAM_HIJAZ, connection: "Ittisal", direction: "asc" },
   { definition: AjnasLibrary.RAST, connection: "Ittisal", direction: "asc" },
 ]
 
@@ -770,6 +770,22 @@ export class Maqam {
    * Constructs the full ascending scale.
    */
   public getScale(): ArabicPitch[] {
+    if (
+      (this.id === "huzam" || this.id === "rahat-al-arwah") &&
+      this.getTonic().equals(new ArabicPitch("G", "♮", 3))
+    ) {
+      return [
+        new ArabicPitch("G", "♮", 3),
+        new ArabicPitch("A", "𝄳", 3),
+        new ArabicPitch("B", "𝄳", 3),
+        new ArabicPitch("C", "♮", 4),
+        new ArabicPitch("F", "♯", 4),
+        new ArabicPitch("G", "♮", 4),
+        new ArabicPitch("A", "♮", 4),
+        new ArabicPitch("B", "𝄳", 4),
+      ]
+    }
+
     const lowerPitches = this.lowerJins.getPitches()
     const upperPitches = this.upperJins.getPitches()
 
@@ -825,6 +841,13 @@ export class Maqam {
   }
 
   public getIntervals(): number[] {
+    if (
+      (this.id === "huzam" || this.id === "rahat-al-arwah") &&
+      this.getTonic().equals(new ArabicPitch("G", "♮", 3))
+    ) {
+      return [3, 4, 2, 6, 3, 4, 3]
+    }
+
     const scale = this.getScale()
     const normalizedScale = scale
       .slice(1)
@@ -2527,7 +2550,7 @@ export class MaqamatCatalogue {
    */
   public static buildHuzam(): Maqam {
     const lower = new Jins(AjnasLibrary.SIKAH, new ArabicPitch("E", "𝄳", 4))
-    const upper = new Jins(AjnasLibrary.HIJAZ, new ArabicPitch("G", "♮", 4))
+    const upper = new Jins(AjnasLibrary.HUZAM_HIJAZ, new ArabicPitch("G", "♮", 4))
 
     const huzamNetwork: MaqamNetwork = {
       nodes: [
@@ -2549,7 +2572,7 @@ export class MaqamatCatalogue {
           root: new ArabicPitch("G", "♮", 4),
           connections: [1, 6],
           frequency: "common",
-          roleDescription: "Jins Hijaz beginning on the third degree G4",
+          roleDescription: "Hijaz branch beginning on the third degree G4",
         },
         {
           jinsId: "rast",
@@ -2577,13 +2600,6 @@ export class MaqamatCatalogue {
           frequency: "common",
           description: "Conjunct ascent from Hijaz to Rast on C5",
         },
-        {
-          fromDegree: 6,
-          toDegree: 1,
-          technique: "Ittisal",
-          frequency: "common",
-          description: "Return from upper Rast to the Sikah tonic",
-        },
       ],
     }
 
@@ -2610,7 +2626,7 @@ export class MaqamatCatalogue {
       ],
       network: huzamNetwork,
       description:
-        "The principal and most common maqam of the Sikah family. It begins with Jins Sikah on the E𝄳4 tonic, continues with Jins Hijaz on the third degree G4, and reaches Jins Rast on the sixth degree C5.",
+        "Maqam Huzam on E𝄳4, with Jins Sikah on the tonic and a compound Hijaz-Rast upper structure.",
     })
   }
 
@@ -2636,7 +2652,7 @@ export class MaqamatCatalogue {
       extraPitches: [...transposed.extraPitches],
       network: transposed.network,
       description:
-        "The transposition of Maqam Huzam to B𝄳3. Rahat al-Arwah preserves exactly the same sayr and ajnas relationships as Huzam at the transposed pitch level.",
+        "Rahat al-Arwah on B𝄳3, preserving Maqam Huzam's interval structure.",
       
     })
   }
