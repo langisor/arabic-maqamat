@@ -770,22 +770,6 @@ export class Maqam {
    * Constructs the full ascending scale.
    */
   public getScale(): ArabicPitch[] {
-    if (
-      (this.id === "huzam" || this.id === "rahat-al-arwah") &&
-      this.getTonic().equals(new ArabicPitch("G", "♮", 3))
-    ) {
-      return [
-        new ArabicPitch("G", "♮", 3),
-        new ArabicPitch("A", "𝄳", 3),
-        new ArabicPitch("B", "𝄳", 3),
-        new ArabicPitch("C", "♮", 4),
-        new ArabicPitch("F", "♯", 4),
-        new ArabicPitch("G", "♮", 4),
-        new ArabicPitch("A", "♮", 4),
-        new ArabicPitch("B", "𝄳", 4),
-      ]
-    }
-
     const lowerPitches = this.lowerJins.getPitches()
     const upperPitches = this.upperJins.getPitches()
 
@@ -841,20 +825,6 @@ export class Maqam {
   }
 
   public getIntervals(): number[] {
-    if (
-      this.id === "huzam" &&
-      this.getTonic().equals(new ArabicPitch("E", "𝄳", 4))
-    ) {
-      return [3, 4, 2, 6, 3, 4, 3]
-    }
-
-    if (
-      this.id === "rahat-al-arwah" &&
-      this.getTonic().equals(new ArabicPitch("B", "𝄳", 3))
-    ) {
-      return [3, 4, 2, 6, 3, 4, 3]
-    }
-
     const scale = this.getScale()
     const normalizedScale = scale
       .slice(1)

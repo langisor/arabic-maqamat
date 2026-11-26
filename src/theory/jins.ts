@@ -277,9 +277,9 @@ export class AjnasLibrary {
     arabicName: "حجاز",
     type: "Tetrachord",
     sizeLabel: "4-note",
-    intervals: [2, 5, 3], // G to A♭ (2), A♭ to B𝄳 (5), B𝄳 to C (3)
+    intervals: [2, 6, 2], // G to A♭ (2), A♭ to B (6), B to C (2)
     description:
-      "The upper Hijaz branch used in Maqam Huzam, running from G through A♭ and B𝄳 to C.",
+      "The upper Hijaz branch used in Maqam Huzam, running from G through A♭ and B natural to C.",
     hasQuarterTones: true,
     defaultRoot: new ArabicPitch("G", "♮", 4),
     tonicCharacteristic: "Hijaz branch on the third degree",
