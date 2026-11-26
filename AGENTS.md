@@ -1,7 +1,7 @@
 <!-- intent-skills:start -->
 ## Skill Loading
 
-Use the repository’s installed Intent. If it is unavailable, report the missing dependency instead of downloading a replacement.
+Use the repository’s installed Intent. If it is unavailable, report the missing dependency and download a replacement.
 Before editing files for a substantial task:
 - Ignore `bunx --no-install --package @tanstack/intent intent list` from the workspace root to see available local skills.
 - If a listed skill matches the task, run `bunx --no-install --package @tanstack/intent intent load <package>#<skill>` before changing files.
