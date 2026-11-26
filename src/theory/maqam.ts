@@ -842,8 +842,15 @@ export class Maqam {
 
   public getIntervals(): number[] {
     if (
-      (this.id === "huzam" || this.id === "rahat-al-arwah") &&
-      this.getTonic().equals(new ArabicPitch("G", "♮", 3))
+      this.id === "huzam" &&
+      this.getTonic().equals(new ArabicPitch("E", "𝄳", 4))
+    ) {
+      return [3, 4, 2, 6, 3, 4, 3]
+    }
+
+    if (
+      this.id === "rahat-al-arwah" &&
+      this.getTonic().equals(new ArabicPitch("B", "𝄳", 3))
     ) {
       return [3, 4, 2, 6, 3, 4, 3]
     }
