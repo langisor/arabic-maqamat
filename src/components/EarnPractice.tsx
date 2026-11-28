@@ -628,10 +628,23 @@ function PracticeDrillsLab({
           (60_000 / settings.bpm) *
           (timeSignature.beatUnit === 8 ? 0.5 : 1)
         metronomeScrollTimerRef.current = window.setInterval(() => {
-          const nextIndex = Math.min(
-            practiceStaffNoteCount - 1,
-            activePracticeNoteIndexRef.current + 1
-          )
+          const lastNoteIndex = Math.max(0, practiceStaffNoteCount - 1)
+          if (activePracticeNoteIndexRef.current >= lastNoteIndex) {
+            if (metronomeScrollTimerRef.current !== null) {
+              window.clearInterval(metronomeScrollTimerRef.current)
+              metronomeScrollTimerRef.current = null
+            }
+            metronomeStateUnsubscribeRef.current?.()
+            metronomeStateUnsubscribeRef.current = null
+            if (metronomeStartedRef.current) {
+              MetronomeAudioEngine.stop()
+            }
+            metronomeStartedRef.current = false
+            setIsMetronomePracticeRunning(false)
+            return
+          }
+
+          const nextIndex = activePracticeNoteIndexRef.current + 1
           activePracticeNoteIndexRef.current = nextIndex
           setActivePracticeNoteIndex(nextIndex)
           setStaffScrollX(
