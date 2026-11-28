@@ -527,6 +527,9 @@ function PracticeDrillsLab({
   )
   const [isMetronomePracticeRunning, setIsMetronomePracticeRunning] =
     useState(false)
+  const [activePracticeNoteIndex, setActivePracticeNoteIndex] = useState<
+    number | null
+  >(null)
   const [staffScrollX, setStaffScrollX] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const noteHighlightTimeoutRef = useRef<number | null>(null)
@@ -534,6 +537,7 @@ function PracticeDrillsLab({
   const metronomeScrollTimerRef = useRef<number | null>(null)
   const metronomeStartedRef = useRef(false)
   const metronomeRequestRef = useRef(0)
+  const activePracticeNoteIndexRef = useRef(0)
   const maqamKeySignature = getMaqamKeySignature(maqam)
   const staffStartX = 105 + maqamKeySignature.length * 12
   const metadata = DRILL_TYPES_CATALOGUE.find((item) => item.id === type)!
@@ -585,6 +589,8 @@ function PracticeDrillsLab({
     }
     metronomeStartedRef.current = false
     setIsMetronomePracticeRunning(false)
+    activePracticeNoteIndexRef.current = 0
+    setActivePracticeNoteIndex(null)
     setStaffScrollX(staffStartX)
   }
 
@@ -592,6 +598,7 @@ function PracticeDrillsLab({
     async (
       practiceStaffStartX: number,
       practiceStaffEndX: number,
+      practiceStaffNoteCount: number,
       currentLanguage: Language
     ) => {
       const requestId = ++metronomeRequestRef.current
@@ -607,6 +614,8 @@ function PracticeDrillsLab({
         MetronomeAudioEngine.setVolume(settings.volume / 100)
 
         setStaffScrollX(practiceStaffStartX)
+        activePracticeNoteIndexRef.current = 0
+        setActivePracticeNoteIndex(0)
         const wasAlreadyPlaying = MetronomeAudioEngine.getIsPlaying()
         metronomeStartedRef.current = !wasAlreadyPlaying
         await MetronomeAudioEngine.start()
@@ -619,8 +628,14 @@ function PracticeDrillsLab({
           (60_000 / settings.bpm) *
           (timeSignature.beatUnit === 8 ? 0.5 : 1)
         metronomeScrollTimerRef.current = window.setInterval(() => {
-          setStaffScrollX((currentX) =>
-            Math.min(practiceStaffEndX, (currentX ?? practiceStaffStartX) + 60)
+          const nextIndex = Math.min(
+            practiceStaffNoteCount - 1,
+            activePracticeNoteIndexRef.current + 1
+          )
+          activePracticeNoteIndexRef.current = nextIndex
+          setActivePracticeNoteIndex(nextIndex)
+          setStaffScrollX(
+            Math.min(practiceStaffEndX, practiceStaffStartX + nextIndex * 60)
           )
         }, beatDurationMs)
         metronomeStateUnsubscribeRef.current?.()
@@ -632,6 +647,8 @@ function PracticeDrillsLab({
               metronomeScrollTimerRef.current = null
             }
             metronomeStartedRef.current = false
+            activePracticeNoteIndexRef.current = 0
+            setActivePracticeNoteIndex(null)
             setIsMetronomePracticeRunning(false)
           })
         setIsMetronomePracticeRunning(true)
@@ -645,6 +662,8 @@ function PracticeDrillsLab({
           metronomeScrollTimerRef.current = null
         }
         metronomeStartedRef.current = false
+        activePracticeNoteIndexRef.current = 0
+        setActivePracticeNoteIndex(null)
         setIsMetronomePracticeRunning(false)
         setError(
           cause instanceof Error
@@ -661,7 +680,12 @@ function PracticeDrillsLab({
     const timer = window.setTimeout(() => {
       if (practiceCountdown <= 1) {
         setPracticeCountdown(null)
-        void beginMetronomePractice(staffStartX, staffEndX, language)
+        void beginMetronomePractice(
+          staffStartX,
+          staffEndX,
+          staffNoteXs.length,
+          language
+        )
       } else {
         setPracticeCountdown(practiceCountdown - 1)
       }
@@ -672,6 +696,7 @@ function PracticeDrillsLab({
     language,
     practiceCountdown,
     staffEndX,
+    staffNoteXs.length,
     staffStartX,
   ])
 
@@ -1029,6 +1054,7 @@ function PracticeDrillsLab({
                 keySignatureNotes={maqamKeySignature}
                 showPitchLabels={showStaffPitchLabels}
                 autoScrollX={staffScrollX}
+                activeNoteIndex={activePracticeNoteIndex}
                 onNoteClick={(pitch) => void playNote(pitch)}
                 activeSoundingPitch={activeSoundingPitch}
               />

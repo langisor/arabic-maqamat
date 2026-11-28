@@ -42,6 +42,7 @@ interface SVGStaffProps {
   title?: string
   showPitchLabels?: boolean
   autoScrollX?: number | null
+  activeNoteIndex?: number | null
   onNoteHover?: (note: SVGStaffNote | null) => void
   onNoteClick?: (pitch: ArabicPitch) => void
   hoveredNote?: SVGStaffNote | null
@@ -58,6 +59,7 @@ export function SVGStaff({
   title = "Interactive Musical Staff",
   showPitchLabels = true,
   autoScrollX = null,
+  activeNoteIndex = null,
   onNoteHover,
   onNoteClick,
   hoveredNote = null,
@@ -386,6 +388,8 @@ export function SVGStaff({
           const stepOffset = note.stepOffset ?? calculateStaffY(note.pitch).step
           const isHovered = hoveredNote?.pitch.equals(note.pitch)
           const isSounding = activeSoundingPitch?.equals(note.pitch)
+          const isRhythmActive = activeNoteIndex === index
+          const isHighlighted = isHovered || isSounding || isRhythmActive
 
           // The staff spans diatonic steps 0 through 12; add ledger lines only
           // when notes extend beyond it, at every other step (line positions).
@@ -445,6 +449,7 @@ export function SVGStaff({
               role={onNoteClick ? "button" : undefined}
               tabIndex={onNoteClick ? 0 : undefined}
               aria-label={onNoteClick ? `Play ${note.pitch.toString()}` : undefined}
+              aria-current={isRhythmActive ? "step" : undefined}
               style={{ cursor: onNoteClick ? "pointer" : "default" }}
             >
               {/* Ledger lines are drawn before the notehead so the note remains legible. */}
@@ -465,7 +470,7 @@ export function SVGStaff({
                 y1={noteY}
                 x2={stemX}
                 y2={stemEndY}
-                stroke={isHovered || isSounding ? "#e2e8f0" : noteColor}
+                stroke={isHighlighted ? "#e2e8f0" : noteColor}
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
@@ -475,9 +480,9 @@ export function SVGStaff({
                 cy={noteY}
                 rx="10.5"
                 ry="7.5"
-                fill={noteFill}
-                stroke={isHovered || isSounding ? "#ffffff" : noteColor}
-                strokeWidth="1.3"
+                fill={isRhythmActive ? "#ffffff" : noteFill}
+                stroke={isHighlighted ? "#ffffff" : noteColor}
+                strokeWidth={isRhythmActive ? "2.5" : "1.3"}
                 filter={noteFilter}
               />
               <g transform={`rotate(-22 ${noteX} ${noteY})`}>
@@ -500,14 +505,14 @@ export function SVGStaff({
                     rx="4"
                     fill="#0b0f19"
                     fillOpacity="0.94"
-                    stroke={isHovered || isSounding ? "#ffffff" : noteColor}
+                    stroke={isHighlighted ? "#ffffff" : noteColor}
                     strokeWidth="1"
                   />
                   <text
                     x={noteX}
                     y={pitchPillY + 2}
                     textAnchor="middle"
-                    fill={isHovered || isSounding ? "#ffffff" : "#f8fafc"}
+                    fill={isHighlighted ? "#ffffff" : "#f8fafc"}
                     fontSize="10.5"
                     fontWeight="bold"
                     fontFamily="monospace"
