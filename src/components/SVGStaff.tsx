@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import { ArabicPitch } from "../core/pitch"
 import { calculateStaffY } from "./staff-layout"
 
@@ -37,7 +38,10 @@ interface SVGStaffProps {
   notes: SVGStaffNote[]
   baggageBoundaries?: SVGStaffBoundary[]
   coreBoundary?: SVGStaffBoundary | null
+  keySignatureNotes?: ArabicPitch[]
   title?: string
+  showPitchLabels?: boolean
+  autoScrollX?: number | null
   onNoteHover?: (note: SVGStaffNote | null) => void
   onNoteClick?: (pitch: ArabicPitch) => void
   hoveredNote?: SVGStaffNote | null
@@ -50,7 +54,10 @@ export function SVGStaff({
   notes,
   baggageBoundaries = [],
   coreBoundary = null,
+  keySignatureNotes = [],
   title = "Interactive Musical Staff",
+  showPitchLabels = true,
+  autoScrollX = null,
   onNoteHover,
   onNoteClick,
   hoveredNote = null,
@@ -58,14 +65,34 @@ export function SVGStaff({
   selectedDefName,
   selectedDefSizeLabel,
 }: SVGStaffProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const firstNoteX = 105 + keySignatureNotes.length * 12
   // Keep a useful minimum canvas size while extending the viewBox for long sequences.
-  const staffWidth = Math.max(
-    850,
-    105 + Math.max(0, notes.length - 1) * 60 + 70
+  const lastNoteX = notes.reduce(
+    (lastX, note, index) =>
+      Math.max(lastX, note.staffX ?? firstNoteX + index * 60),
+    firstNoteX
   )
+  const staffWidth = Math.max(850, lastNoteX + 70)
   // Explicit staffX values allow callers to control spacing; the fallback keeps
   // the first note clear of the clef and places later notes at regular intervals.
-  const noteXAt = (index: number) => notes[index].staffX ?? 105 + index * 60
+  const noteXAt = (index: number) =>
+    notes[index].staffX ?? firstNoteX + index * 60
+
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    const svg = container?.querySelector("svg")
+    if (!container || !svg || autoScrollX === null) return
+
+    const scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width
+    container.scrollTo({
+      left: Math.max(
+        0,
+        autoScrollX * scale - container.clientWidth / 2
+      ),
+      behavior: "smooth",
+    })
+  }, [autoScrollX])
 
   // Collapse adjacent notes with the same section label into a single bracket.
   // A later recurrence of a label starts a new section rather than joining across gaps.
@@ -88,7 +115,10 @@ export function SVGStaff({
   }, [])
 
   return (
-    <div className="relative touch-pan-x scrollbar-thin overflow-x-auto rounded-2xl border border-slate-800/80 bg-linear-to-b from-slate-950 to-slate-900 p-2 shadow-inner sm:p-5">
+    <div
+      ref={scrollContainerRef}
+      className="relative touch-pan-x scrollbar-thin overflow-x-auto rounded-2xl border border-slate-800/80 bg-linear-to-b from-slate-950 to-slate-900 p-2 shadow-inner sm:p-5"
+    >
       <div className="mb-2 flex items-center justify-between gap-3 text-[11px] text-slate-300">
         <span className="font-semibold tracking-[0.18em] text-purple-300 uppercase">
           {title}
@@ -216,6 +246,28 @@ export function SVGStaff({
             fill="#94a3b8"
           />
         </g>
+        {keySignatureNotes.map((pitch, index) => (
+          <text
+            key={`${pitch.diatonic}-${pitch.accidental}`}
+            x={78 + index * 12}
+            y={
+              calculateStaffY(
+                new ArabicPitch(
+                  pitch.diatonic,
+                  pitch.accidental,
+                  pitch.diatonic === "A" || pitch.diatonic === "B" ? 4 : 5
+                )
+              ).y + 4
+            }
+            textAnchor="middle"
+            fill="#f8fafc"
+            fontSize="18"
+            fontWeight="bold"
+            aria-label={`${pitch.accidental} ${pitch.diatonic}`}
+          >
+            {pitch.accidental}
+          </text>
+        ))}
         {/* Baggage regions are shaded spans with a lower bracket and centered label. */}
         {baggageBoundaries.map((boundary) => (
           <g key={boundary.label}>
@@ -437,29 +489,33 @@ export function SVGStaff({
                   strokeLinecap="round"
                 />
               </g>
-              {/* Keep the written pitch above the note; stems-down notes use a lower offset. */}
-              <rect
-                x={noteX - 17}
-                y={pitchPillY - 9}
-                width="34"
-                height="15"
-                rx="4"
-                fill="#0b0f19"
-                fillOpacity="0.94"
-                stroke={isHovered || isSounding ? "#ffffff" : noteColor}
-                strokeWidth="1"
-              />
-              <text
-                x={noteX}
-                y={pitchPillY + 2}
-                textAnchor="middle"
-                fill={isHovered || isSounding ? "#ffffff" : "#f8fafc"}
-                fontSize="10.5"
-                fontWeight="bold"
-                fontFamily="monospace"
-              >
-                {note.pitch.toString()}
-              </text>
+              {showPitchLabels && (
+                <>
+                  {/* Keep the written pitch above the note; stems-down notes use a lower offset. */}
+                  <rect
+                    x={noteX - 17}
+                    y={pitchPillY - 9}
+                    width="34"
+                    height="15"
+                    rx="4"
+                    fill="#0b0f19"
+                    fillOpacity="0.94"
+                    stroke={isHovered || isSounding ? "#ffffff" : noteColor}
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={noteX}
+                    y={pitchPillY + 2}
+                    textAnchor="middle"
+                    fill={isHovered || isSounding ? "#ffffff" : "#f8fafc"}
+                    fontSize="10.5"
+                    fontWeight="bold"
+                    fontFamily="monospace"
+                  >
+                    {note.pitch.toString()}
+                  </text>
+                </>
+              )}
               {/* The remaining labels show its Arabic name, tonic-relative cents, and role. */}
               <text
                 x={noteX}
@@ -480,11 +536,9 @@ export function SVGStaff({
                 fontSize="9"
                 fontFamily="monospace"
               >
-                {note.isTonic
+                {note.isTonic || (note.offsetCents ?? 0) === 0
                   ? "0¢"
-                  : note.isBaggage
-                    ? `${note.offsetCents ?? 0}¢`
-                    : `+${note.offsetCents ?? 0}¢`}
+                  : `${(note.offsetCents ?? 0) > 0 ? "+" : ""}${note.offsetCents}¢`}
               </text>
               <text
                 x={noteX}

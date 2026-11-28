@@ -5,6 +5,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Eye,
+  EyeOff,
   GraduationCap,
   Headphones,
   HelpCircle,
@@ -23,6 +25,10 @@ import {
   MicrotonalAudioEngine,
   type TimbreType,
 } from "../audio/microtonal-audio"
+import {
+  MetronomeAudioEngine,
+  TIME_SIGNATURE_PRESETS,
+} from "../audio/metronome-engine"
 import { MicrotonalPitchDetector } from "../audio/pitch-detector"
 import { ArabicPitch } from "../core/pitch"
 import { AjnasLibrary, Jins, type JinsDefinition } from "../theory/jins"
@@ -56,6 +62,7 @@ import {
 } from "./ui/questionnaire"
 import { useLanguage, type Language } from "../state/language"
 import { learningText } from "../state/learning-copy"
+import { getWorkspaceState } from "../state/workspace-state"
 
 type PracticeMethod =
   "identify-jins" | "identify-maqam" | "identify-degree" | "play-performance"
@@ -479,6 +486,17 @@ const DRILL_HOW_TO: Record<PracticeDrillType, string[]> = {
   ],
 }
 
+function getMaqamKeySignature(maqam: Maqam): ArabicPitch[] {
+  const seenLetters = new Set<ArabicPitch["diatonic"]>()
+  return maqam.getScale().filter((pitch) => {
+    if (pitch.accidental === "♮" || seenLetters.has(pitch.diatonic)) {
+      return false
+    }
+    seenLetters.add(pitch.diatonic)
+    return true
+  })
+}
+
 function PracticeDrillsLab({
   timbre,
   maqam,
@@ -503,9 +521,25 @@ function PracticeDrillsLab({
   const [activeSoundingPitch, setActiveSoundingPitch] =
     useState<ArabicPitch | null>(null)
   const [isReferencePlaying, setIsReferencePlaying] = useState(false)
+  const [showStaffPitchLabels, setShowStaffPitchLabels] = useState(true)
+  const [practiceCountdown, setPracticeCountdown] = useState<number | null>(
+    null
+  )
+  const [isMetronomePracticeRunning, setIsMetronomePracticeRunning] =
+    useState(false)
+  const [staffScrollX, setStaffScrollX] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const noteHighlightTimeoutRef = useRef<number | null>(null)
+  const metronomeStateUnsubscribeRef = useRef<(() => void) | null>(null)
+  const metronomeScrollTimerRef = useRef<number | null>(null)
+  const metronomeStartedRef = useRef(false)
+  const metronomeRequestRef = useRef(0)
+  const maqamKeySignature = getMaqamKeySignature(maqam)
+  const staffStartX = 105 + maqamKeySignature.length * 12
   const metadata = DRILL_TYPES_CATALOGUE.find((item) => item.id === type)!
+  const staffNoteXs =
+    melody?.notes.map((_, index) => staffStartX + index * 60) ?? []
+  const staffEndX = staffNoteXs[staffNoteXs.length - 1] ?? staffStartX
   const maqamDisplayName =
     language === "ar" ? maqam.arabicName || maqam.name : maqam.name
   const melodyTitle = melody
@@ -537,9 +571,121 @@ function PracticeDrillsLab({
     setIsReferencePlaying(false)
   }
 
+  const stopMetronomePractice = () => {
+    metronomeRequestRef.current += 1
+    setPracticeCountdown(null)
+    metronomeStateUnsubscribeRef.current?.()
+    metronomeStateUnsubscribeRef.current = null
+    if (metronomeScrollTimerRef.current !== null) {
+      window.clearInterval(metronomeScrollTimerRef.current)
+      metronomeScrollTimerRef.current = null
+    }
+    if (metronomeStartedRef.current) {
+      MetronomeAudioEngine.stop()
+    }
+    metronomeStartedRef.current = false
+    setIsMetronomePracticeRunning(false)
+    setStaffScrollX(staffStartX)
+  }
+
+  const beginMetronomePractice = useCallback(
+    async (
+      practiceStaffStartX: number,
+      practiceStaffEndX: number,
+      currentLanguage: Language
+    ) => {
+      const requestId = ++metronomeRequestRef.current
+      try {
+        const settings = getWorkspaceState().global.metronome
+        const timeSignature =
+          TIME_SIGNATURE_PRESETS.find(
+            (preset) => preset.id === settings.timeSignatureId
+          ) ?? MetronomeAudioEngine.getTimeSignature()
+        MetronomeAudioEngine.setBpm(settings.bpm)
+        MetronomeAudioEngine.setTimeSignature(timeSignature)
+        MetronomeAudioEngine.setSoundType(settings.soundType)
+        MetronomeAudioEngine.setVolume(settings.volume / 100)
+
+        setStaffScrollX(practiceStaffStartX)
+        const wasAlreadyPlaying = MetronomeAudioEngine.getIsPlaying()
+        metronomeStartedRef.current = !wasAlreadyPlaying
+        await MetronomeAudioEngine.start()
+        if (requestId !== metronomeRequestRef.current) return
+        if (!MetronomeAudioEngine.getIsPlaying()) {
+          throw new Error("The metronome stopped before practice could begin.")
+        }
+
+        const beatDurationMs =
+          (60_000 / settings.bpm) *
+          (timeSignature.beatUnit === 8 ? 0.5 : 1)
+        metronomeScrollTimerRef.current = window.setInterval(() => {
+          setStaffScrollX((currentX) =>
+            Math.min(practiceStaffEndX, (currentX ?? practiceStaffStartX) + 60)
+          )
+        }, beatDurationMs)
+        metronomeStateUnsubscribeRef.current?.()
+        metronomeStateUnsubscribeRef.current =
+          MetronomeAudioEngine.subscribeState((isPlaying) => {
+            if (isPlaying) return
+            if (metronomeScrollTimerRef.current !== null) {
+              window.clearInterval(metronomeScrollTimerRef.current)
+              metronomeScrollTimerRef.current = null
+            }
+            metronomeStartedRef.current = false
+            setIsMetronomePracticeRunning(false)
+          })
+        setIsMetronomePracticeRunning(true)
+        setError(null)
+      } catch (cause) {
+        if (requestId !== metronomeRequestRef.current) return
+        metronomeStateUnsubscribeRef.current?.()
+        metronomeStateUnsubscribeRef.current = null
+        if (metronomeScrollTimerRef.current !== null) {
+          window.clearInterval(metronomeScrollTimerRef.current)
+          metronomeScrollTimerRef.current = null
+        }
+        metronomeStartedRef.current = false
+        setIsMetronomePracticeRunning(false)
+        setError(
+          cause instanceof Error
+            ? `Metronome could not start: ${cause.message}`
+            : learningText(currentLanguage, "Metronome could not start.")
+        )
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (practiceCountdown === null) return
+    const timer = window.setTimeout(() => {
+      if (practiceCountdown <= 1) {
+        setPracticeCountdown(null)
+        void beginMetronomePractice(staffStartX, staffEndX, language)
+      } else {
+        setPracticeCountdown(practiceCountdown - 1)
+      }
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [
+    beginMetronomePractice,
+    language,
+    practiceCountdown,
+    staffEndX,
+    staffStartX,
+  ])
+
   useEffect(
     () => () => {
+      metronomeRequestRef.current += 1
       MicrotonalAudioEngine.stopSequence("practice-drills")
+      metronomeStateUnsubscribeRef.current?.()
+      if (metronomeScrollTimerRef.current !== null) {
+        window.clearInterval(metronomeScrollTimerRef.current)
+      }
+      if (metronomeStartedRef.current) {
+        MetronomeAudioEngine.stop()
+      }
       if (noteHighlightTimeoutRef.current !== null) {
         window.clearTimeout(noteHighlightTimeoutRef.current)
       }
@@ -548,6 +694,7 @@ function PracticeDrillsLab({
   )
 
   const generate = () => {
+    stopMetronomePractice()
     stopReference()
     try {
       const next = PracticeDrillEngine.generateDrill(maqam, {
@@ -582,6 +729,7 @@ function PracticeDrillsLab({
 
   const playMelody = async () => {
     if (!melody) return
+    stopMetronomePractice()
     try {
       await MicrotonalAudioEngine.startAudioContext()
       MicrotonalAudioEngine.playSequence(
@@ -684,6 +832,7 @@ function PracticeDrillsLab({
               <select
                 value={type}
                 onChange={(event) => {
+                  stopMetronomePractice()
                   stopReference()
                   setType(event.target.value as PracticeDrillType)
                   setMelody(null)
@@ -789,10 +938,84 @@ function PracticeDrillsLab({
               <p className="mt-3 text-sm text-muted-foreground">
                 {localize("Select a note on the staff to hear it.")}
               </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  aria-pressed={showStaffPitchLabels}
+                  onClick={() =>
+                    setShowStaffPitchLabels((showLabels) => !showLabels)
+                  }
+                >
+                  {showStaffPitchLabels ? (
+                    <EyeOff data-icon="inline-start" />
+                  ) : (
+                    <Eye data-icon="inline-start" />
+                  )}
+                  {localize(
+                    showStaffPitchLabels
+                      ? "Hide note labels"
+                      : "Show note labels"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  aria-pressed={
+                    practiceCountdown !== null || isMetronomePracticeRunning
+                  }
+                  onClick={() => {
+                    if (
+                      practiceCountdown !== null ||
+                      isMetronomePracticeRunning
+                    ) {
+                      stopMetronomePractice()
+                    } else {
+                      stopReference()
+                      setError(null)
+                      setPracticeCountdown(3)
+                    }
+                  }}
+                >
+                  {practiceCountdown !== null ||
+                  isMetronomePracticeRunning ? (
+                    <Square data-icon="inline-start" />
+                  ) : (
+                    <Play data-icon="inline-start" />
+                  )}
+                  {localize(
+                    practiceCountdown !== null ||
+                      isMetronomePracticeRunning
+                      ? "Stop practice"
+                      : "Start practice"
+                  )}
+                </Button>
+              </div>
+              {(practiceCountdown !== null ||
+                isMetronomePracticeRunning) && (
+                <div
+                  className="mt-3 flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span className="text-sm text-muted-foreground">
+                    {localize(
+                      practiceCountdown !== null
+                        ? "Get ready to play with the metronome."
+                        : "Play along with the metronome."
+                    )}
+                  </span>
+                  {practiceCountdown !== null && (
+                    <span className="text-2xl font-bold tabular-nums text-amber-400">
+                      {practiceCountdown}
+                    </span>
+                  )}
+                </div>
+              )}
               <SVGStaff
-                notes={melody.notes.map((note) => ({
+                notes={melody.notes.map((note, index) => ({
                   pitch: note.pitch,
+                  staffX: staffNoteXs[index],
                   isTonic: note.pitch.equals(maqam.getTonic()),
+                  offsetCents: maqam.getTonic().diffCents(note.pitch),
                   arabicName: note.pitch.toDisplayString(),
                   roleLabel: note.positionNumber
                     ? language === "ar"
@@ -803,6 +1026,9 @@ function PracticeDrillsLab({
                       : undefined,
                 }))}
                 title={localize("Generated exercise staff")}
+                keySignatureNotes={maqamKeySignature}
+                showPitchLabels={showStaffPitchLabels}
+                autoScrollX={staffScrollX}
                 onNoteClick={(pitch) => void playNote(pitch)}
                 activeSoundingPitch={activeSoundingPitch}
               />
